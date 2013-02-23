@@ -1,22 +1,17 @@
 ﻿namespace JustBelot.Common
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-
     public struct Card
     {
-        public CardType Type { get; set; }
-        public CardColor Color { get; set; }
-
         public Card(CardType type, CardColor color)
             : this()
         {
             this.Type = type;
             this.Color = color;
         }
+
+        public CardType Type { get; set; }
+
+        public CardColor Color { get; set; }
 
         public static Card operator ++(Card card)
         {

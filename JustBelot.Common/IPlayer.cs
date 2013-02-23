@@ -6,6 +6,8 @@
 
         GameManager Game { set; }
 
+        PlayerPosition Position { set; }
+
         void AddCard(Card card);
 
         AnnouncementType AskForAnnouncement();

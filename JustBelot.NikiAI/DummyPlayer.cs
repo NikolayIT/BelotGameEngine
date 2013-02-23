@@ -16,6 +16,8 @@
 
         public GameManager Game { private get; set; }
 
+        public PlayerPosition Position { private get; set; }
+
         public void AddCard(Card card)
         {
             this.cards.Add(card);
@@ -25,7 +27,6 @@
         {
             return AnnouncementType.Pass;
         }
-
 
         public Card PlayCard()
         {

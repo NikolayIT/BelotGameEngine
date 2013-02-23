@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace JustBelot.Common
+﻿namespace JustBelot.Common
 {
+    using System;
+    using System.Collections.Generic;
+
     public static class CardsHelper
     {
         public static List<Card> GetFullCardDeck()

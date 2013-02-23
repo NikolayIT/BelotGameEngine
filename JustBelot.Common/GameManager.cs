@@ -13,18 +13,36 @@
 
         private int dealNumber;
 
+        private int firstPlayerForTheGame;
+
         private DealManager dealManager;
 
         public GameManager(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
         {
             this.players = new List<IPlayer> { southPlayer, eastPlayer, northPlayer, westPlayer };
+
+            // South player
+            southPlayer.Game = this;
+            southPlayer.Position = PlayerPosition.South;
+
+            // East player
+            eastPlayer.Game = this;
+            eastPlayer.Position = PlayerPosition.East;
+
+            // North player
+            northPlayer.Game = this;
+            northPlayer.Position = PlayerPosition.North;
+
+            // West player
+            westPlayer.Game = this;
+            westPlayer.Position = PlayerPosition.West;
         }
 
         public bool IsGameOver
         {
             get
             {
-                throw new NotImplementedException();
+                return false; // (SouthNorthScore >= 151 || EastWestScore >= 151) && Last game is not "valat"
             }
         }
 
@@ -72,11 +90,68 @@
             }
         }
 
+        public IPlayer GetTeamMate(IPlayer player)
+        {
+            if (player == this[PlayerPosition.South])
+            {
+                return this[PlayerPosition.North];
+            }
+
+            if (player == this[PlayerPosition.North])
+            {
+                return this[PlayerPosition.South];
+            }
+
+            if (player == this[PlayerPosition.East])
+            {
+                return this[PlayerPosition.West];
+            }
+
+            if (player == this[PlayerPosition.West])
+            {
+                return this[PlayerPosition.East];
+            }
+
+            return null;
+        }
+
+        public IPlayer GetNextPlayer(IPlayer player)
+        {
+            if (player == this[PlayerPosition.South])
+            {
+                return this[PlayerPosition.East];
+            }
+
+            if (player == this[PlayerPosition.East])
+            {
+                return this[PlayerPosition.North];
+            }
+
+            if (player == this[PlayerPosition.North])
+            {
+                return this[PlayerPosition.West];
+            }
+
+            if (player == this[PlayerPosition.West])
+            {
+                return this[PlayerPosition.South];
+            }
+
+            return null;
+        }
+
+        public IPlayer GetFirstPlayerForTheDeal()
+        {
+            var firstPlayerForTheDeal = (this.dealNumber - this.firstPlayerForTheGame + 4) % 4;
+            return this[firstPlayerForTheDeal];
+        }
+
         public void StartNewGame()
         {
             this.southNorthScore = 0;
             this.eastWestScore = 0;
             this.dealNumber = 0;
+            this.firstPlayerForTheGame = RandomProvider.Next(0, 4);
 
             while (!this.IsGameOver)
             {
@@ -86,9 +161,9 @@
 
         public void StartNewDeal()
         {
-            this.dealManager = new DealManager(this, this.dealNumber);
-            this.dealManager.StartNewDeal();
             this.dealNumber++;
+            this.dealManager = new DealManager(this);
+            this.dealManager.StartNewDeal();
         }
     }
 }
