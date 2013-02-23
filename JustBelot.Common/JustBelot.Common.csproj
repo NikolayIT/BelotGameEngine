@@ -39,9 +39,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AnnouncementType.cs" />
+    <Compile Include="ContractType.cs" />
     <Compile Include="Card.cs" />
-    <Compile Include="CardColor.cs" />
+    <Compile Include="CardSuit.cs" />
     <Compile Include="CardsHelper.cs" />
     <Compile Include="CardType.cs" />
     <Compile Include="DealManager.cs" />

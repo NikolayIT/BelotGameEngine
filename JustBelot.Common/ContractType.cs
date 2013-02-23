@@ -1,7 +1,9 @@
 ﻿namespace JustBelot.Common
 {
-    public enum AnnouncementType
+    public enum ContractType
     {
+        ReDouble = 8,
+        Double = 7,
         AllTrumps = 6,
         NoTrumps = 5,
         Spades = 4,

@@ -25,20 +25,22 @@
             this.cards.Add(card);
         }
 
-        public AnnouncementType AskForAnnouncement()
+        public ContractType AskForContract()
         {
-            Console.Write("It's your turn! Please enter your announcement(A, N, S, H, D, C, P): ");
-            string announcement = Console.ReadLine();
-            switch (announcement.ToUpper())
+            // TODO: Improve user interaction
+
+            Console.Write("It's your turn! Please enter your contract (A, N, S, H, D, C, P, D1, D2): ");
+            var contract = Console.ReadLine();
+            switch (contract.ToUpper())
             {
-                case "A": return AnnouncementType.AllTrumps;
-                case "N": return AnnouncementType.NoTrumps;
-                case "S": return AnnouncementType.Spades;
-                case "H": return AnnouncementType.Hearts;
-                case "D": return AnnouncementType.Diamonds;
-                case "C": return AnnouncementType.Clubs;
-                case "P": return AnnouncementType.Pass;
-                default: return AnnouncementType.Pass;
+                case "A": return ContractType.AllTrumps;
+                case "N": return ContractType.NoTrumps;
+                case "S": return ContractType.Spades;
+                case "H": return ContractType.Hearts;
+                case "D": return ContractType.Diamonds;
+                case "C": return ContractType.Clubs;
+                case "P": return ContractType.Pass;
+                default: return ContractType.Pass;
             }
         }
 

@@ -24,9 +24,10 @@
             this.playerCards = new Card[4, 8]; // 4 players, 8 cards for each player
         }
 
-        public void StartNewDeal()
+        public void PlayDeal()
         {
-            // 1. Shuffle the card deck
+            // 1. Shuffle the card deck two times
+            this.cardDeck.Shuffle();
             this.cardDeck.Shuffle();
 
             // 2. Deal 5 cards to each player
@@ -41,8 +42,8 @@
                 }
             }
 
-            // 3. Ask for announcements and check if the announcements are correct
-            this.AskForAnnouncements();
+            // 3. Ask for contracts and check if the contracts are correct
+            this.AskForContracts();
 
             // 4. Deal 3 more cards to each player
             for (int player = 0; player <= 3; player++)
@@ -55,21 +56,28 @@
                 }
             }
 
+            // 5. Play first hand and ask for announcements like "terca", 50, 100, 150, 200, belot, et.
             // TODO: Play cards and check announcements (terca, 50, 100, 150, 200, belot, etc.)
-            // TODO: Check if played card is valid for the current context
-            // TODO: Evaluate game result and return it
+            // TODO: Check if the played card is valid
+
+            // 6. Play the other 7 hands
+            // TODO: Play cards and check announcements (belot)
+            // TODO: Check if the played card is valid
+
+            // 7. Count the result
+            // TODO: Evaluate game result and don't forget the "last 10" rule
         }
 
-        private void AskForAnnouncements()
+        private void AskForContracts()
         {
-            // TODO: Ask for announcements and check if announcements are correct
+            // TODO: Ask for contracts and check if contracts are correct
             var currentPlayer = this.game.GetFirstPlayerForTheDeal();
 
             var passesLeft = 4;
             while (passesLeft > 0)
             {
-                var announcement = currentPlayer.AskForAnnouncement();
-                if (announcement == AnnouncementType.Pass)
+                var contract = currentPlayer.AskForContract();
+                if (contract == ContractType.Pass)
                 {
                     passesLeft--;
                 }
@@ -77,6 +85,8 @@
                 {
                     passesLeft = 3;
                 }
+
+                // TODO: Inform game for the contracts
 
                 currentPlayer = this.game.GetNextPlayer(currentPlayer);
             }

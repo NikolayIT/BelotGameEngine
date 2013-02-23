@@ -7,10 +7,6 @@
     {
         private readonly List<IPlayer> players;
 
-        private int southNorthScore;
-
-        private int eastWestScore;
-
         private int dealNumber;
 
         private int firstPlayerForTheGame;
@@ -46,21 +42,9 @@
             }
         }
 
-        public int SouthNorthScore
-        {
-            get
-            {
-                return this.southNorthScore;
-            }
-        }
+        public int SouthNorthScore { get; private set; }
 
-        public int EastWestScore
-        {
-            get
-            {
-                return this.eastWestScore;
-            }
-        }
+        public int EastWestScore { get; private set; }
 
         public IPlayer this[PlayerPosition position]
         {
@@ -148,8 +132,8 @@
 
         public void StartNewGame()
         {
-            this.southNorthScore = 0;
-            this.eastWestScore = 0;
+            this.SouthNorthScore = 0;
+            this.EastWestScore = 0;
             this.dealNumber = 0;
             this.firstPlayerForTheGame = RandomProvider.Next(0, 4);
 
@@ -159,11 +143,16 @@
             }
         }
 
-        public void StartNewDeal()
+        private void StartNewDeal()
         {
             this.dealNumber++;
             this.dealManager = new DealManager(this);
-            this.dealManager.StartNewDeal();
+            this.dealManager.PlayDeal();
         }
+
+        // TODO: Give players access to previous contracts or inform them for the contracts
+        // TODO: Give players access to the cards that are already played or inform them
+        // TODO: Give players access to settings file?? AI players may use self-learning techniques and may need a place to store their variables
+        // TODO: SECURITY: Never expose other players cards (the AI players may use this security hole for cheating)
     }
 }

@@ -2,36 +2,36 @@
 {
     public struct Card
     {
-        public Card(CardType type, CardColor color)
+        public Card(CardType type, CardSuit suit)
             : this()
         {
             this.Type = type;
-            this.Color = color;
+            this.Suit = suit;
         }
 
         public CardType Type { get; set; }
 
-        public CardColor Color { get; set; }
+        public CardSuit Suit { get; set; }
 
         public static Card operator ++(Card card)
         {
-            var newCard = new Card(card.Type, card.Color);
+            var newCard = new Card(card.Type, card.Suit);
 
-            if (newCard.Color != CardColor.Spades)
+            if (newCard.Suit != CardSuit.Spades)
             {
-                newCard.Color++;
+                newCard.Suit++;
             }
             else
             {
                 if (newCard.Type == CardType.Ace)
                 {
                     newCard.Type = CardType.Seven;
-                    newCard.Color = CardColor.Club;
+                    newCard.Suit = CardSuit.Clubs;
                 }
                 else
                 {
                     newCard.Type++;
-                    newCard.Color = CardColor.Club;
+                    newCard.Suit = CardSuit.Clubs;
                 }
             }
 
@@ -40,7 +40,7 @@
 
         public override string ToString()
         {
-            return string.Format("{0}{1}", this.Type.ToString(), this.Color.ToString());
+            return string.Format("{0}{1}", this.Type.ToString(), this.Suit.ToString());
         }
     }
 }

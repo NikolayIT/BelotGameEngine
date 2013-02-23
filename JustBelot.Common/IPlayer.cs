@@ -10,7 +10,7 @@
 
         void AddCard(Card card);
 
-        AnnouncementType AskForAnnouncement();
+        ContractType AskForContract();
 
         Card PlayCard();
     }

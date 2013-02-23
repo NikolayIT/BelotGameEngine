@@ -9,7 +9,7 @@
     {
         public static void Main()
         {
-            Console.WriteLine("JustBelot 1.0.20130220");
+            Console.WriteLine("JustBelot 1.0.20130224");
             Console.Write("Please enter player name: ");
             var playerName = Console.ReadLine();
 

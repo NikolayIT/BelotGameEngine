@@ -22,9 +22,9 @@
             this.cards.Add(card);
         }
 
-        public AnnouncementType AskForAnnouncement()
+        public ContractType AskForContract()
         {
-            return AnnouncementType.Pass;
+            return ContractType.Pass;
         }
 
         public Card PlayCard()
