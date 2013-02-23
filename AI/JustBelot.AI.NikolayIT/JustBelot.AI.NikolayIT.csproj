@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A856E0E2-B3C1-4DD4-89BA-1C7D63C59D94}</ProjectGuid>
+    <ProjectGuid>{F6964A5D-9E3D-4468-9E7E-8C7DA66ACACD}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>JustBelot.NikiAI</RootNamespace>
-    <AssemblyName>JustBelot.NikiAI</AssemblyName>
+    <RootNamespace>JustBelot.AI.NikolayIT</RootNamespace>
+    <AssemblyName>JustBelot.AI.NikolayIT</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -39,13 +39,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DummyPlayer.cs" />
-    <Compile Include="PlayHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\JustBelot.Common\JustBelot.Common.csproj">
-      <Project>{82ad8d4f-16d6-4a27-a887-a6ffa6fbf03d}</Project>
+    <ProjectReference Include="..\..\JustBelot.Common\JustBelot.Common.csproj">
+      <Project>{82AD8D4F-16D6-4A27-A887-A6FFA6FBF03D}</Project>
       <Name>JustBelot.Common</Name>
     </ProjectReference>
   </ItemGroup>

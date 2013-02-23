@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("JustBelot.NikiAI")]
+[assembly: AssemblyTitle("JustBelot.AI.NikolayIT")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("JustBelot.NikiAI")]
+[assembly: AssemblyProduct("JustBelot.AI.NikolayIT")]
 [assembly: AssemblyCopyright("Copyright ©  2013")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("1726b4b3-6865-4d82-9f57-a61cd48388fc")]
+[assembly: Guid("edc6fc3f-45db-48c0-92d5-29465943a60d")]
 
 // Version information for an assembly consists of the following four values:
 //

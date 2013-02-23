@@ -1,6 +1,5 @@
-﻿namespace JustBelot.NikiAI
+﻿namespace JustBelot.AI.DummyPlayer
 {
-    using System;
     using System.Collections.Generic;
 
     using JustBelot.Common;
@@ -11,7 +10,7 @@
 
         public string Name
         {
-            get { return "Niki dummy bot"; }
+            get { return "Dummy bot"; }
         }
 
         public GameManager Game { private get; set; }
@@ -30,7 +29,11 @@
 
         public Card PlayCard()
         {
-            throw new NotImplementedException();
+            // Since this is a dummy player he will randomly return one of the possible cards
+            // TODO: Ask for the list of allowed cards
+            var cardToPlay = this.cards[RandomProvider.Next(0, this.cards.Count)];
+            this.cards.Remove(cardToPlay);
+            return cardToPlay;
         }
     }
 }

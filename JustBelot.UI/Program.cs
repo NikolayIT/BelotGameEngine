@@ -1,10 +1,9 @@
 ﻿namespace JustBelot.UI
 {
     using System;
-    using System.Collections.Generic;
 
+    using JustBelot.AI.DummyPlayer;
     using JustBelot.Common;
-    using JustBelot.NikiAI;
 
     public class Program
     {
@@ -12,7 +11,7 @@
         {
             Console.WriteLine("JustBelot 1.0.20130220");
             Console.Write("Please enter player name: ");
-            string playerName = Console.ReadLine();
+            var playerName = Console.ReadLine();
 
             IPlayer southPlayer = new ConsoleHumanPlayer(playerName);
             IPlayer eastPlayer = new DummyPlayer();

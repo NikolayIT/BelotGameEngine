@@ -9,20 +9,12 @@
     {
         private readonly List<Card> cards = new List<Card>();
 
-        private string playerName;
-
         public ConsoleHumanPlayer(string name)
         {
-            this.playerName = name;
+            this.Name = name;
         }
 
-        public string Name
-        {
-            get
-            {
-                return "Human player";
-            }
-        }
+        public string Name { get; private set; }
 
         public GameManager Game { private get; set; }
 
@@ -49,7 +41,6 @@
                 default: return AnnouncementType.Pass;
             }
         }
-
 
         public Card PlayCard()
         {

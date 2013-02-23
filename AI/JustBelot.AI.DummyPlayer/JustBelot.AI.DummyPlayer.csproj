@@ -4,16 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{20EEF86A-54CA-477B-95B6-880A78E2DBE3}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{8FE042AC-0EAF-4973-A000-98F2A3C7B694}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>JustBelot.UI</RootNamespace>
-    <AssemblyName>JustBelot.UI</AssemblyName>
+    <RootNamespace>JustBelot.AI.DummyPlayer</RootNamespace>
+    <AssemblyName>JustBelot.AI.DummyPlayer</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -41,20 +39,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConsoleHumanPlayer.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="DummyPlayer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\AI\JustBelot.AI.DummyPlayer\JustBelot.AI.DummyPlayer.csproj">
-      <Project>{8FE042AC-0EAF-4973-A000-98F2A3C7B694}</Project>
-      <Name>JustBelot.AI.DummyPlayer</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\JustBelot.Common\JustBelot.Common.csproj">
-      <Project>{82ad8d4f-16d6-4a27-a887-a6ffa6fbf03d}</Project>
+    <ProjectReference Include="..\..\JustBelot.Common\JustBelot.Common.csproj">
+      <Project>{82AD8D4F-16D6-4A27-A887-A6FFA6FBF03D}</Project>
       <Name>JustBelot.Common</Name>
     </ProjectReference>
   </ItemGroup>
