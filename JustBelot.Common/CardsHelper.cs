@@ -109,7 +109,7 @@
             return numberOfCombinations;
         }
 
-        public static List<Card> SortForAllThumbs(List<Card> cards)
+        public static List<Card> SortForAllTrump(List<Card> cards)
         {
             return cards.OrderByDescending(x => (int)x.Suit).ThenByDescending(x =>
             {
@@ -157,7 +157,7 @@
             }).ToList();
         }
 
-        public static List<Card> SortForNoThumbs(List<Card> cards)
+        public static List<Card> SortForNoTrump(List<Card> cards)
         {
             return cards.OrderByDescending(x => (int)x.Suit).ThenByDescending(x =>
             {

@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustBelot.AI.DummyPlayer", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustBelot.AI.NikolayIT", "AI\JustBelot.AI.NikolayIT\JustBelot.AI.NikolayIT.csproj", "{F6964A5D-9E3D-4468-9E7E-8C7DA66ACACD}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{24217175-7658-41BA-AA3E-F5A284C7FBA3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JustBelot.Common.Tests", "Tests\JustBelot.Common.Tests\JustBelot.Common.Tests.csproj", "{58341E5E-A1DD-43B7-AB46-FAD4355D4505}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,10 @@ Global
 		{F6964A5D-9E3D-4468-9E7E-8C7DA66ACACD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F6964A5D-9E3D-4468-9E7E-8C7DA66ACACD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F6964A5D-9E3D-4468-9E7E-8C7DA66ACACD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58341E5E-A1DD-43B7-AB46-FAD4355D4505}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58341E5E-A1DD-43B7-AB46-FAD4355D4505}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58341E5E-A1DD-43B7-AB46-FAD4355D4505}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58341E5E-A1DD-43B7-AB46-FAD4355D4505}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -40,5 +48,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{8FE042AC-0EAF-4973-A000-98F2A3C7B694} = {F5108C3A-7A0F-48B1-9F64-6B666D4988BA}
 		{F6964A5D-9E3D-4468-9E7E-8C7DA66ACACD} = {F5108C3A-7A0F-48B1-9F64-6B666D4988BA}
+		{58341E5E-A1DD-43B7-AB46-FAD4355D4505} = {24217175-7658-41BA-AA3E-F5A284C7FBA3}
 	EndGlobalSection
 EndGlobal

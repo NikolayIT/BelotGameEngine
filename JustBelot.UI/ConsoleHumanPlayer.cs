@@ -34,7 +34,7 @@
             switch (contract.ToUpper())
             {
                 case "A": return ContractType.AllTrumps;
-                case "N": return ContractType.NoTrumps;
+                case "N": return ContractType.NoTrump;
                 case "S": return ContractType.Spades;
                 case "H": return ContractType.Hearts;
                 case "D": return ContractType.Diamonds;

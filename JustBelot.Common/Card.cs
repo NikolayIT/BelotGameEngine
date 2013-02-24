@@ -38,9 +38,16 @@
             return newCard;
         }
 
+        public override int GetHashCode()
+        {
+            return ((int)this.Type * 8) + (int)this.Suit;
+        }
+
         public override string ToString()
         {
-            return string.Format("{0}{1}", this.Type.ToString(), this.Suit.ToString());
+            var type = CardsHelper.CardTypeToString(this.Type);
+            var color = CardsHelper.CardSuitToString(this.Suit);
+            return string.Format("{0}{1}", type, color);
         }
     }
 }
