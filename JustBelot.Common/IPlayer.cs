@@ -15,7 +15,7 @@ namespace JustBelot.Common
     {
         string Name { get; }
 
-        GameManager Game { set; }
+        GameInfo Game { set; }
 
         void StartNewGame(PlayerPosition position);
 
@@ -27,6 +27,6 @@ namespace JustBelot.Common
 
         IEnumerable<Declaration> AskForDeclarations();
 
-        Card PlayCard();
+        PlayAction PlayCard();
     }
 }

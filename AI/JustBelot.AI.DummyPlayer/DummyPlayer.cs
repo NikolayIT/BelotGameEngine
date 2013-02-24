@@ -8,12 +8,14 @@
     {
         private readonly List<Card> cards = new List<Card>();
 
-        public string Name
+        public DummyPlayer(string name)
         {
-            get { return "Dummy bot"; }
+            this.Name = name;
         }
 
-        public GameManager Game { private get; set; }
+        public string Name { get; private set; }
+
+        public GameInfo Game { private get; set; }
 
         private PlayerPosition Position { get; set; }
 
@@ -44,13 +46,14 @@
             return new List<Declaration>();
         }
 
-        public Card PlayCard()
+        public PlayAction PlayCard()
         {
             // Since this is a dummy player he will randomly return one of the possible cards
             // TODO: Ask for the list of allowed cards
             var cardToPlay = this.cards[RandomProvider.Next(0, this.cards.Count)];
             this.cards.Remove(cardToPlay);
-            return cardToPlay;
+            var action = new PlayAction { Card = cardToPlay };
+            return action;
         }
     }
 }

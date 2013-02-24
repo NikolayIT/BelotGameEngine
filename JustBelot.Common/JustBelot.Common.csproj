@@ -50,13 +50,17 @@
     <Compile Include="DealResult.cs" />
     <Compile Include="Declaration.cs" />
     <Compile Include="DeclarationType.cs" />
+    <Compile Include="GameInfo.cs" />
     <Compile Include="GameManager.cs" />
     <Compile Include="InvalidPlayerActionException.cs" />
     <Compile Include="IPlayer.cs" />
     <Compile Include="ListExtensions.cs" />
+    <Compile Include="PlayAction.cs" />
+    <Compile Include="PlayerInfo.cs" />
     <Compile Include="PlayerPosition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RandomGenerator.cs" />
+    <Compile Include="Trick.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

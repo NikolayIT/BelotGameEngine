@@ -18,20 +18,22 @@
         {
             this.players = new List<IPlayer> { southPlayer, eastPlayer, northPlayer, westPlayer };
 
+            var gameInfo = new GameInfo(this);
+
             // South player
-            southPlayer.Game = this;
+            southPlayer.Game = gameInfo;
             southPlayer.StartNewGame(PlayerPosition.South);
 
             // East player
-            eastPlayer.Game = this;
+            eastPlayer.Game = gameInfo;
             eastPlayer.StartNewGame(PlayerPosition.East);
 
             // North player
-            northPlayer.Game = this;
+            northPlayer.Game = gameInfo;
             northPlayer.StartNewGame(PlayerPosition.North);
 
             // West player
-            westPlayer.Game = this;
+            westPlayer.Game = gameInfo;
             westPlayer.StartNewGame(PlayerPosition.West);
         }
 
@@ -47,7 +49,7 @@
 
         public int EastWestScore { get; private set; }
 
-        public PlayerPosition this[IPlayer player]
+        internal PlayerPosition this[IPlayer player]
         {
             get
             {
@@ -75,7 +77,7 @@
             }
         }
 
-        public IPlayer this[PlayerPosition position]
+        internal IPlayer this[PlayerPosition position]
         {
             get
             {
@@ -95,68 +97,12 @@
             }
         }
 
-        public IPlayer this[int playerIndex]
+        internal IPlayer this[int playerIndex]
         {
             get
             {
                 return this.players[playerIndex % 4];
             }
-        }
-
-        public IPlayer GetTeamMate(IPlayer player)
-        {
-            if (player == this[PlayerPosition.South])
-            {
-                return this[PlayerPosition.North];
-            }
-
-            if (player == this[PlayerPosition.North])
-            {
-                return this[PlayerPosition.South];
-            }
-
-            if (player == this[PlayerPosition.East])
-            {
-                return this[PlayerPosition.West];
-            }
-
-            if (player == this[PlayerPosition.West])
-            {
-                return this[PlayerPosition.East];
-            }
-
-            return null;
-        }
-
-        public IPlayer GetNextPlayer(IPlayer player)
-        {
-            if (player == this[PlayerPosition.South])
-            {
-                return this[PlayerPosition.East];
-            }
-
-            if (player == this[PlayerPosition.East])
-            {
-                return this[PlayerPosition.North];
-            }
-
-            if (player == this[PlayerPosition.North])
-            {
-                return this[PlayerPosition.West];
-            }
-
-            if (player == this[PlayerPosition.West])
-            {
-                return this[PlayerPosition.South];
-            }
-
-            return null;
-        }
-
-        public IPlayer GetFirstPlayerForTheDeal()
-        {
-            var firstPlayerForTheDeal = (this.dealNumber - this.firstPlayerForTheGame + 4) % 4;
-            return this[firstPlayerForTheDeal];
         }
 
         public void StartNewGame()
@@ -172,6 +118,62 @@
             }
         }
 
+        internal IPlayer GetTeamMate(IPlayer player)
+        {
+            if (player == this[PlayerPosition.South])
+            {
+                return this[PlayerPosition.North];
+            }
+
+            if (player == this[PlayerPosition.North])
+            {
+                return this[PlayerPosition.South];
+            }
+
+            if (player == this[PlayerPosition.East])
+            {
+                return this[PlayerPosition.West];
+            }
+
+            if (player == this[PlayerPosition.West])
+            {
+                return this[PlayerPosition.East];
+            }
+
+            return null;
+        }
+
+        internal IPlayer GetNextPlayer(IPlayer player)
+        {
+            if (player == this[PlayerPosition.South])
+            {
+                return this[PlayerPosition.East];
+            }
+
+            if (player == this[PlayerPosition.East])
+            {
+                return this[PlayerPosition.North];
+            }
+
+            if (player == this[PlayerPosition.North])
+            {
+                return this[PlayerPosition.West];
+            }
+
+            if (player == this[PlayerPosition.West])
+            {
+                return this[PlayerPosition.South];
+            }
+
+            return null;
+        }
+
+        internal IPlayer GetFirstPlayerForTheDeal()
+        {
+            var firstPlayerForTheDeal = (this.dealNumber - this.firstPlayerForTheGame + 4) % 4;
+            return this[firstPlayerForTheDeal];
+        }
+        
         private void StartNewDeal()
         {
             this.dealNumber++;
