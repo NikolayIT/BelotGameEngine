@@ -32,9 +32,16 @@
             this.cards.Add(card);
         }
 
-        public ContractType AskForContract()
+        public BidType AskForBid()
         {
-            return ContractType.Pass;
+            // Dummy player always says pass
+            return BidType.Pass;
+        }
+
+        public IEnumerable<Declaration> AskForDeclarations()
+        {
+            // Dummy player never announce his declarations
+            return new List<Declaration>();
         }
 
         public Card PlayCard()

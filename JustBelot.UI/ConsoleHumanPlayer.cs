@@ -35,7 +35,7 @@
             this.cards.Add(card);
         }
 
-        public ContractType AskForContract()
+        public BidType AskForBid()
         {
             // TODO: Improve user interaction
 
@@ -43,15 +43,21 @@
             var contract = Console.ReadLine();
             switch (contract.ToUpper())
             {
-                case "A": return ContractType.AllTrumps;
-                case "N": return ContractType.NoTrump;
-                case "S": return ContractType.Spades;
-                case "H": return ContractType.Hearts;
-                case "D": return ContractType.Diamonds;
-                case "C": return ContractType.Clubs;
-                case "P": return ContractType.Pass;
-                default: return ContractType.Pass;
+                case "A": return BidType.AllTrumps;
+                case "N": return BidType.NoTrumps;
+                case "S": return BidType.Spades;
+                case "H": return BidType.Hearts;
+                case "D": return BidType.Diamonds;
+                case "C": return BidType.Clubs;
+                case "P": return BidType.Pass;
+                default: return BidType.Pass;
             }
+        }
+
+        public IEnumerable<Declaration> AskForDeclarations()
+        {
+            Console.WriteLine("Which of your declarations will you announce (100, 50, T1, T2... bla bla TODO...) ?");
+            throw new NotImplementedException();
         }
 
         public Card PlayCard()

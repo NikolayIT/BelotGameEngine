@@ -6,7 +6,7 @@
 
     public static class CardsHelper
     {
-        public static List<Card> GetFullCardDeck()
+        public static IEnumerable<Card> GetFullCardDeck()
         {
             var cards = new List<Card>();
             foreach (CardSuit cardSuit in Enum.GetValues(typeof(CardSuit)))
@@ -77,7 +77,7 @@
         /// <summary>
         /// Returns the number of "belot" combinations (king + queen of the same suit)
         /// </summary>
-        public static int NumberOfQueenAndKingCombinations(List<Card> cards)
+        public static int NumberOfQueenAndKingCombinations(IEnumerable<Card> cards)
         {
             var numberOfCombinations = 0;
             foreach (CardSuit cardSuit in Enum.GetValues(typeof(CardSuit)))

@@ -9,7 +9,7 @@
         /// <summary>
         /// Shuffle algorithm as seen on page 32 in the book "Algorithms" (4th edition) by Robert Sedgewick
         /// </summary>
-        public static List<T> Shuffle<T>(this List<T> source)
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
         {
             var array = source.ToList();
             var n = array.Count;

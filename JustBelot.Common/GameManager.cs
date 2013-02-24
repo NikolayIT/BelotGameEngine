@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.ComponentModel;
 
     public class GameManager
     {
@@ -45,6 +46,34 @@
         public int SouthNorthScore { get; private set; }
 
         public int EastWestScore { get; private set; }
+
+        public PlayerPosition this[IPlayer player]
+        {
+            get
+            {
+                if (player == this[PlayerPosition.South])
+                {
+                    return PlayerPosition.South;
+                }
+
+                if (player == this[PlayerPosition.East])
+                {
+                    return PlayerPosition.East;
+                }
+
+                if (player == this[PlayerPosition.North])
+                {
+                    return PlayerPosition.North;
+                }
+
+                if (player == this[PlayerPosition.West])
+                {
+                    return PlayerPosition.West;
+                }
+
+                throw new ArgumentException("Player not found in the game!");
+            }
+        }
 
         public IPlayer this[PlayerPosition position]
         {

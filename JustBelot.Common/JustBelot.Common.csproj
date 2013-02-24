@@ -39,12 +39,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ContractType.cs" />
+    <Compile Include="BidType.cs" />
     <Compile Include="Card.cs" />
     <Compile Include="CardSuit.cs" />
     <Compile Include="CardsHelper.cs" />
     <Compile Include="CardType.cs" />
+    <Compile Include="Contract.cs" />
+    <Compile Include="ContractType.cs" />
     <Compile Include="DealManager.cs" />
+    <Compile Include="DealResult.cs" />
+    <Compile Include="Declaration.cs" />
+    <Compile Include="DeclarationType.cs" />
     <Compile Include="GameManager.cs" />
     <Compile Include="InvalidPlayerActionException.cs" />
     <Compile Include="IPlayer.cs" />
