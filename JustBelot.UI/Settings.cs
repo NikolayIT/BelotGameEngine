@@ -8,6 +8,6 @@ namespace JustBelot.UI
 {
     public static class Settings
     {
-        public const string ProgramName = "JustBelot 1.0.20130224";
+        public const string ProgramName = "JustBelot 1.0.20130225";
     }
 }

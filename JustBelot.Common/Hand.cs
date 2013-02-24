@@ -9,7 +9,7 @@
     /// </summary>
     public class Hand : IList<Card>
     {
-        private readonly List<Card> cards;
+        private IList<Card> cards;
  
         public Hand()
         {
@@ -109,7 +109,35 @@
 
         public void Sort(ContractType contract)
         {
-            throw new NotImplementedException();
+            if (contract == ContractType.AllTrumps)
+            {
+                this.cards = CardsHelper.SortForAllTrump(this.cards);
+            }
+
+            if (contract == ContractType.NoTrumps)
+            {
+                this.cards = CardsHelper.SortForNoTrump(this.cards);
+            }
+
+            if (contract == ContractType.Spades)
+            {
+                this.cards = CardsHelper.SortForSuit(this.cards, CardSuit.Spades);
+            }
+
+            if (contract == ContractType.Hearts)
+            {
+                this.cards = CardsHelper.SortForSuit(this.cards, CardSuit.Hearts);
+            }
+
+            if (contract == ContractType.Diamonds)
+            {
+                this.cards = CardsHelper.SortForSuit(this.cards, CardSuit.Diamonds);
+            }
+
+            if (contract == ContractType.Clubs)
+            {
+                this.cards = CardsHelper.SortForSuit(this.cards, CardSuit.Clubs);
+            }
         }
     }
 }
