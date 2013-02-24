@@ -11,5 +11,6 @@
         Diamonds = 2,
         Clubs = 1,
         Pass = 0,
+        // NoContract = -1,
     }
 }

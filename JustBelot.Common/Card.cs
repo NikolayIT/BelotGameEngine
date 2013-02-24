@@ -1,5 +1,8 @@
 ﻿namespace JustBelot.Common
 {
+    using System;
+    using System.ComponentModel;
+
     public struct Card
     {
         public Card(CardType type, CardSuit suit)
@@ -36,6 +39,106 @@
             }
 
             return newCard;
+        }
+
+        public int GetValue(ContractType contract)
+        {
+            if (contract == ContractType.Pass || contract == ContractType.Double || contract == ContractType.ReDouble)
+            {
+                throw new InvalidEnumArgumentException("contract", (int)contract, typeof(ContractType));
+            }
+
+            if (contract == ContractType.AllTrumps
+                || (contract == ContractType.Clubs && this.Suit == CardSuit.Clubs)
+                || (contract == ContractType.Diamonds && this.Suit == CardSuit.Diamonds)
+                || (contract == ContractType.Hearts && this.Suit == CardSuit.Hearts)
+                || (contract == ContractType.Spades && this.Suit == CardSuit.Spades))
+            {
+                if (this.Type == CardType.Seven)
+                {
+                    return 0;
+                }
+
+                if (this.Type == CardType.Eight)
+                {
+                    return 0;
+                }
+
+                if (this.Type == CardType.Nine)
+                {
+                    return 14;
+                }
+
+                if (this.Type == CardType.Ten)
+                {
+                    return 10;
+                }
+
+                if (this.Type == CardType.Jack)
+                {
+                    return 20;
+                }
+
+                if (this.Type == CardType.Queen)
+                {
+                    return 3;
+                }
+
+                if (this.Type == CardType.King)
+                {
+                    return 4;
+                }
+
+                if (this.Type == CardType.Ace)
+                {
+                    return 11;
+                }
+            }
+            else
+            {
+                // Non-trump card
+                if (this.Type == CardType.Seven)
+                {
+                    return 0;
+                }
+
+                if (this.Type == CardType.Eight)
+                {
+                    return 0;
+                }
+
+                if (this.Type == CardType.Nine)
+                {
+                    return 0;
+                }
+
+                if (this.Type == CardType.Ten)
+                {
+                    return 10;
+                }
+
+                if (this.Type == CardType.Jack)
+                {
+                    return 2;
+                }
+
+                if (this.Type == CardType.Queen)
+                {
+                    return 3;
+                }
+
+                if (this.Type == CardType.King)
+                {
+                    return 4;
+                }
+
+                if (this.Type == CardType.Ace)
+                {
+                    return 11;
+                }
+            }
+
+            throw new Exception("Unable to determine card value!");
         }
 
         public override int GetHashCode()

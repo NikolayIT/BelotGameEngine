@@ -46,6 +46,7 @@
     <Compile Include="CardType.cs" />
     <Compile Include="DealManager.cs" />
     <Compile Include="GameManager.cs" />
+    <Compile Include="InvalidPlayerActionException.cs" />
     <Compile Include="IPlayer.cs" />
     <Compile Include="ListExtensions.cs" />
     <Compile Include="PlayerPosition.cs" />

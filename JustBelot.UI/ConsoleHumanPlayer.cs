@@ -18,7 +18,17 @@
 
         public GameManager Game { private get; set; }
 
-        public PlayerPosition Position { private get; set; }
+        private PlayerPosition Position { get; set; }
+
+        public void StartNewGame(PlayerPosition position)
+        {
+            this.Position = position;
+        }
+
+        public void StartNewDeal()
+        {
+            this.cards.Clear();
+        }
 
         public void AddCard(Card card)
         {

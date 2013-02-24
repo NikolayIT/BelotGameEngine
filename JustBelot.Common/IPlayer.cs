@@ -6,7 +6,9 @@
 
         GameManager Game { set; }
 
-        PlayerPosition Position { set; }
+        void StartNewGame(PlayerPosition position);
+
+        void StartNewDeal();
 
         void AddCard(Card card);
 

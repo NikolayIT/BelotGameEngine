@@ -12,7 +12,7 @@
 
         private readonly List<Card> cardDeck;
 
-        private Card[,] playerCards; // We are keeping local information about cards to prevent cheating from players (e.g. playing card that they don't own)
+        private readonly Card[,] playerCards; // We are keeping local information about cards to prevent cheating from players (e.g. playing card that they don't own)
 
         public DealManager(GameManager game)
         {
@@ -30,14 +30,24 @@
             this.cardDeck.Shuffle();
             this.cardDeck.Shuffle();
 
-            // 2. Deal 5 cards to each player
+            // 2. Deal 3 + 2 cards to each player (like the real world game ;))
             int cardNumber = 0;
-            for (int player = 0; player <= 3; player++)
+            for (int player = 0; player < 4; player++)
             {
-                for (int i = 0; i < 5; i++)
+                for (int i = 0; i < 3; i++)
                 {
                     this.game[player].AddCard(this.cardDeck[cardNumber]);
                     this.playerCards[player, i] = this.cardDeck[cardNumber];
+                    cardNumber++;
+                }
+            }
+
+            for (int player = 0; player < 4; player++)
+            {
+                for (int i = 0; i < 2; i++)
+                {
+                    this.game[player].AddCard(this.cardDeck[cardNumber]);
+                    this.playerCards[player, 3 + i] = this.cardDeck[cardNumber];
                     cardNumber++;
                 }
             }
@@ -46,7 +56,7 @@
             this.AskForContracts();
 
             // 4. Deal 3 more cards to each player
-            for (int player = 0; player <= 3; player++)
+            for (int player = 0; player < 4; player++)
             {
                 for (int i = 0; i < 3; i++)
                 {
@@ -65,30 +75,56 @@
             // TODO: Check if the played card is valid
 
             // 7. Count the result
-            // TODO: Evaluate game result and don't forget the "last 10" rule
+            // TODO: Evaluate game result and don't forget the "last 10" rule and announcements
         }
 
         private void AskForContracts()
         {
             // TODO: Ask for contracts and check if contracts are correct
             var currentPlayer = this.game.GetFirstPlayerForTheDeal();
+            var lastContract = ContractType.Pass;
 
             var passesLeft = 4;
             while (passesLeft > 0)
             {
                 var contract = currentPlayer.AskForContract();
+
                 if (contract == ContractType.Pass)
                 {
                     passesLeft--;
                 }
                 else
                 {
+                    if (contract == ContractType.ReDouble && lastContract != ContractType.Double)
+                    {
+                        throw new InvalidPlayerActionException(
+                            currentPlayer,
+                            string.Format("Invalid contract: ReDouble without Double! Last contract: {0}", lastContract));
+                    }
+
+                    if (contract == ContractType.Double && lastContract == ContractType.Pass)
+                    {
+                        throw new InvalidPlayerActionException(
+                            currentPlayer,
+                            string.Format("Invalid contract: Double on Pass! Last contract: {0}", lastContract));
+                    }
+
+
+                    // TODO: prevent the same team members to announce contract and then double
+                    if (contract <= lastContract && lastContract != ContractType.Double && lastContract != ContractType.ReDouble) // TODO: needs improvements
+                    {
+                        throw new InvalidPlayerActionException(
+                            currentPlayer,
+                            string.Format("Invalid contract: {0}! Last contract: {1}", contract, lastContract));
+                    }
+
                     passesLeft = 3;
                 }
 
-                // TODO: Inform game for the contracts
-
+                lastContract = contract;
                 currentPlayer = this.game.GetNextPlayer(currentPlayer);
+
+                // TODO: Inform game for the contracts (or the game may get contracts via deal manager) OR give last contracts as a parameter to Player.AskForContract()
             }
         }
     }

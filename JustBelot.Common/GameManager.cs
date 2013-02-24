@@ -19,19 +19,19 @@
 
             // South player
             southPlayer.Game = this;
-            southPlayer.Position = PlayerPosition.South;
+            southPlayer.StartNewGame(PlayerPosition.South);
 
             // East player
             eastPlayer.Game = this;
-            eastPlayer.Position = PlayerPosition.East;
+            eastPlayer.StartNewGame(PlayerPosition.East);
 
             // North player
             northPlayer.Game = this;
-            northPlayer.Position = PlayerPosition.North;
+            northPlayer.StartNewGame(PlayerPosition.North);
 
             // West player
             westPlayer.Game = this;
-            westPlayer.Position = PlayerPosition.West;
+            westPlayer.StartNewGame(PlayerPosition.West);
         }
 
         public bool IsGameOver
@@ -146,8 +146,15 @@
         private void StartNewDeal()
         {
             this.dealNumber++;
+
+            foreach (var player in this.players)
+            {
+                player.StartNewDeal();
+            }
+
             this.dealManager = new DealManager(this);
-            this.dealManager.PlayDeal();
+            this.dealManager.PlayDeal(); // var dealResult = 
+            // TODO: "С капо (валат) не се излиза
         }
 
         // TODO: Give players access to previous contracts or inform them for the contracts

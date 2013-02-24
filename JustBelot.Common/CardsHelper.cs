@@ -204,5 +204,96 @@
                 return 0;
             }).ToList();
         }
+
+        public static List<Card> SortForSuit(List<Card> cards, CardSuit suit)
+        {
+            return cards.OrderByDescending(x => (int)x.Suit).ThenByDescending(x =>
+            {
+                if (x.Suit == suit)
+                {
+                    if (x.Type == CardType.Jack)
+                    {
+                        return 16;
+                    }
+
+                    if (x.Type == CardType.Nine)
+                    {
+                        return 15;
+                    }
+
+                    if (x.Type == CardType.Ace)
+                    {
+                        return 14;
+                    }
+
+                    if (x.Type == CardType.Ten)
+                    {
+                        return 13;
+                    }
+
+                    if (x.Type == CardType.King)
+                    {
+                        return 12;
+                    }
+
+                    if (x.Type == CardType.Queen)
+                    {
+                        return 11;
+                    }
+
+                    if (x.Type == CardType.Eight)
+                    {
+                        return 10;
+                    }
+
+                    if (x.Type == CardType.Seven)
+                    {
+                        return 9;
+                    }
+                }
+
+                if (x.Type == CardType.Ace)
+                {
+                    return 8;
+                }
+
+                if (x.Type == CardType.Ten)
+                {
+                    return 7;
+                }
+
+                if (x.Type == CardType.King)
+                {
+                    return 6;
+                }
+
+                if (x.Type == CardType.Queen)
+                {
+                    return 5;
+                }
+
+                if (x.Type == CardType.Jack)
+                {
+                    return 4;
+                }
+
+                if (x.Type == CardType.Nine)
+                {
+                    return 3;
+                }
+
+                if (x.Type == CardType.Eight)
+                {
+                    return 2;
+                }
+
+                if (x.Type == CardType.Seven)
+                {
+                    return 1;
+                }
+
+                return 0;
+            }).ToList();
+        }
     }
 }
