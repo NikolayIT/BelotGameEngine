@@ -2,11 +2,12 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.ComponentModel;
 
     public class GameManager
     {
-        private readonly List<IPlayer> players;
+        private readonly IList<IPlayer> players;
+
+        private readonly GameInfo gameInfo;
 
         private int dealNumber;
 
@@ -18,22 +19,22 @@
         {
             this.players = new List<IPlayer> { southPlayer, eastPlayer, northPlayer, westPlayer };
 
-            var gameInfo = new GameInfo(this);
+            this.gameInfo = new GameInfo(this);
 
             // South player
-            southPlayer.Game = gameInfo;
+            southPlayer.Game = this.gameInfo;
             southPlayer.StartNewGame(PlayerPosition.South);
 
             // East player
-            eastPlayer.Game = gameInfo;
+            eastPlayer.Game = this.gameInfo;
             eastPlayer.StartNewGame(PlayerPosition.East);
 
             // North player
-            northPlayer.Game = gameInfo;
+            northPlayer.Game = this.gameInfo;
             northPlayer.StartNewGame(PlayerPosition.North);
 
             // West player
-            westPlayer.Game = gameInfo;
+            westPlayer.Game = this.gameInfo;
             westPlayer.StartNewGame(PlayerPosition.West);
         }
 
@@ -185,7 +186,7 @@
 
             this.dealManager = new DealManager(this);
             this.dealManager.PlayDeal(); // var dealResult = 
-            // TODO: "С капо (валат) не се излиза
+            // TODO: "С капо (валат) не се излиза"
         }
 
         // TODO: Give players access to previous contracts or inform them for the contracts

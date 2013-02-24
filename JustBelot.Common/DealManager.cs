@@ -3,6 +3,8 @@
     using System.Collections.Generic;
     using System.Diagnostics;
 
+    using JustBelot.Common.Extensions;
+
     /// <summary>
     /// Responsible for one deal (one particular allocation of 32 cards to the four players including the bidding, the play of the cards and the scoring based on those cards. 
     /// </summary>

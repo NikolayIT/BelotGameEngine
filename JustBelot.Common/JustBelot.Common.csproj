@@ -50,11 +50,13 @@
     <Compile Include="DealResult.cs" />
     <Compile Include="Declaration.cs" />
     <Compile Include="DeclarationType.cs" />
+    <Compile Include="Extensions\QueueExtensions.cs" />
     <Compile Include="GameInfo.cs" />
     <Compile Include="GameManager.cs" />
+    <Compile Include="Hand.cs" />
     <Compile Include="InvalidPlayerActionException.cs" />
     <Compile Include="IPlayer.cs" />
-    <Compile Include="ListExtensions.cs" />
+    <Compile Include="Extensions\ListExtensions.cs" />
     <Compile Include="PlayAction.cs" />
     <Compile Include="PlayerInfo.cs" />
     <Compile Include="PlayerPosition.cs" />

@@ -1,4 +1,4 @@
-﻿namespace JustBelot.Common
+﻿namespace JustBelot.Common.Extensions
 {
     using System.Collections.Generic;
     using System.Linq;
@@ -9,20 +9,17 @@
         /// <summary>
         /// Shuffle algorithm as seen on page 32 in the book "Algorithms" (4th edition) by Robert Sedgewick
         /// </summary>
-        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> source)
+        public static void Shuffle<T>(this List<T> source)
         {
-            var array = source.ToList();
-            var n = array.Count;
+            var n = source.Count;
             for (var i = 0; i < n; i++)
             {
                 // Exchange a[i] with random element in a[i..n-1]
                 var r = i + RandomProvider.Next(0, n - i);
-                var temp = array[i];
-                array[i] = array[r];
-                array[r] = temp;
+                var temp = source[i];
+                source[i] = source[r];
+                source[r] = temp;
             }
-
-            return array;
         }
 
         public static string ElementsAsString<T>(this List<T> source)

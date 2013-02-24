@@ -7,11 +7,12 @@
 
     public class ConsoleHumanPlayer : IPlayer
     {
-        private readonly List<Card> cards = new List<Card>();
+        private readonly Hand cards;
 
         public ConsoleHumanPlayer(string name)
         {
             this.Name = name;
+            this.cards = new Hand();
         }
 
         public string Name { get; private set; }
@@ -76,10 +77,28 @@
             ConsoleHelper.ClearAndResetConsole();
             ConsoleHelper.DrawTextBoxTopLeft(Settings.ProgramName, 0, 0, ConsoleColor.Black, ConsoleColor.DarkGray);
             ConsoleHelper.DrawTextBoxTopRight(string.Format("{0} - {1}", this.Game.SouthNorthScore, this.Game.EastWestScore), Console.WindowWidth - 1, 0, ConsoleColor.Black, ConsoleColor.DarkGray);
-            ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.West].Name, 2, 9, ConsoleColor.Black, ConsoleColor.White);
-            ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.East].Name, 80 - 2 - this.Game[PlayerPosition.East].Name.Length, 9, ConsoleColor.Black, ConsoleColor.White);
-            ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.North].Name, 40 - 1 - (this.Game[PlayerPosition.North].Name.Length / 2), 1, ConsoleColor.Black, ConsoleColor.White);
-            ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.South].Name, 40 - 1 - (this.Game[PlayerPosition.South].Name.Length / 2), 18, ConsoleColor.Black, ConsoleColor.White);
+            ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.West].Name, 2, 9, ConsoleColor.Black, ConsoleColor.Gray);
+            ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.East].Name, 80 - 2 - this.Game[PlayerPosition.East].Name.Length, 9, ConsoleColor.Black, ConsoleColor.Gray);
+            ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.North].Name, 40 - 1 - (this.Game[PlayerPosition.North].Name.Length / 2), 1, ConsoleColor.Black, ConsoleColor.Gray);
+            ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.South].Name, 40 - 1 - (this.Game[PlayerPosition.South].Name.Length / 2), 18, ConsoleColor.Black, ConsoleColor.Gray);
+
+            int left = 40 - 1 - (this.cards.ToString().Replace(" ", string.Empty).Length / 2);
+            foreach (var card in this.cards)
+            {
+                var cardAsString = card.ToString();
+                ConsoleColor color;
+                if (card.Suit == CardSuit.Diamonds || card.Suit == CardSuit.Hearts)
+                {
+                    color = ConsoleColor.Red;
+                }
+                else
+                {
+                    color = ConsoleColor.Black;
+                }
+
+                ConsoleHelper.WriteOnPosition(cardAsString, left, 17, color, ConsoleColor.White);
+                left += cardAsString.Length;
+            }
         }
     }
 }
