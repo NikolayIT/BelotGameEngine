@@ -92,6 +92,8 @@
                     passesLeft = 3;
                 }
 
+                this.game.GameInfo.InformForBid(new BidEventArgs(this.game[currentPlayer], bid));
+
                 lastBid = bid;
                 currentPlayer = this.game.GetNextPlayer(currentPlayer);
 

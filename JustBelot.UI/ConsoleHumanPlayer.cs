@@ -18,14 +18,42 @@
 
         public string Name { get; private set; }
 
-        public GameInfo Game { private get; set; }
+        private GameInfo Game { get; set; }
 
         private PlayerPosition Position { get; set; }
 
-        public void StartNewGame(PlayerPosition position)
+        public void StartNewGame(GameInfo game, PlayerPosition position)
         {
             Console.Clear();
             this.Position = position;
+            this.Game = game;
+            this.Game.PlayerBid += this.Game_PlayerBid;
+        }
+
+        private void Game_PlayerBid(BidEventArgs e)
+        {
+            this.Draw();
+            if (e.Position != this.Position)
+            {
+                if (e.Position == PlayerPosition.East)
+                {
+                    ConsoleHelper.DrawTextBoxTopRight(e.Bid.ToString(), 80 - 2 - this.Game[PlayerPosition.East].Name.Length - 2, 7);
+                }
+
+                if (e.Position == PlayerPosition.North)
+                {
+                    ConsoleHelper.DrawTextBoxTopLeft(e.Bid.ToString(), 40 - 2 - e.Bid.ToString().Length / 2, 2);
+                }
+
+                if (e.Position == PlayerPosition.West)
+                {
+                    ConsoleHelper.DrawTextBoxTopLeft(e.Bid.ToString(), this.Game[PlayerPosition.West].Name.Length + 3, 7);
+                }
+
+                ConsoleHelper.WriteOnPosition(string.Format("{0} from {1} player", e.Bid, e.Position), 0, 18);
+                ConsoleHelper.WriteOnPosition("Press enter to continue...", 0, 19);
+                Console.ReadLine();
+            }
         }
 
         public void StartNewDeal()

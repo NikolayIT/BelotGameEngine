@@ -7,8 +7,6 @@
     {
         private readonly IList<IPlayer> players;
 
-        private readonly GameInfo gameInfo;
-
         private int dealNumber;
 
         private int firstPlayerForTheGame;
@@ -19,23 +17,19 @@
         {
             this.players = new List<IPlayer> { southPlayer, eastPlayer, northPlayer, westPlayer };
 
-            this.gameInfo = new GameInfo(this);
+            this.GameInfo = new GameInfo(this);
 
             // South player
-            southPlayer.Game = this.gameInfo;
-            southPlayer.StartNewGame(PlayerPosition.South);
+            southPlayer.StartNewGame(this.GameInfo, PlayerPosition.South);
 
             // East player
-            eastPlayer.Game = this.gameInfo;
-            eastPlayer.StartNewGame(PlayerPosition.East);
+            eastPlayer.StartNewGame(this.GameInfo, PlayerPosition.East);
 
             // North player
-            northPlayer.Game = this.gameInfo;
-            northPlayer.StartNewGame(PlayerPosition.North);
+            northPlayer.StartNewGame(this.GameInfo, PlayerPosition.North);
 
             // West player
-            westPlayer.Game = this.gameInfo;
-            westPlayer.StartNewGame(PlayerPosition.West);
+            westPlayer.StartNewGame(this.GameInfo, PlayerPosition.West);
         }
 
         public bool IsGameOver
@@ -49,6 +43,8 @@
         public int SouthNorthScore { get; private set; }
 
         public int EastWestScore { get; private set; }
+
+        internal GameInfo GameInfo { get; private set; }
 
         internal PlayerPosition this[IPlayer player]
         {

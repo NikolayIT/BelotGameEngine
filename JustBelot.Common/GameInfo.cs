@@ -12,6 +12,10 @@
             this.gameManager = gameManager;
         }
 
+        public delegate void PlayerBidHandler(BidEventArgs e);
+
+        public event PlayerBidHandler PlayerBid;
+
         public int SouthNorthScore
         {
             get
@@ -42,6 +46,11 @@
             {
                 return new PlayerInfo(this.gameManager[playerIndex]);
             }
+        }
+
+        public void InformForBid(BidEventArgs eventArgs)
+        {
+            this.PlayerBid(eventArgs);
         }
     }
 }

@@ -39,6 +39,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BidEventArgs.cs" />
     <Compile Include="BidType.cs" />
     <Compile Include="Card.cs" />
     <Compile Include="CardSuit.cs" />

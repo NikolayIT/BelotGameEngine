@@ -15,13 +15,14 @@
 
         public string Name { get; private set; }
 
-        public GameInfo Game { private get; set; }
+        private GameInfo Game { get; set; }
 
         private PlayerPosition Position { get; set; }
 
-        public void StartNewGame(PlayerPosition position)
+        public void StartNewGame(GameInfo game, PlayerPosition position)
         {
             this.Position = position;
+            this.Game = game;
         }
 
         public void StartNewDeal()
