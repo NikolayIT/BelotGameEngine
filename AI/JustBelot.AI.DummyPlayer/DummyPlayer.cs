@@ -3,6 +3,7 @@
     using System.Collections.Generic;
 
     using JustBelot.Common;
+    using JustBelot.Common.Extensions;
 
     public class DummyPlayer : IPlayer
     {
@@ -35,10 +36,12 @@
             this.cards.Add(card);
         }
 
-        public BidType AskForBid()
+        public BidType AskForBid(Contract currentContract, IList<BidType> availableBids, IList<BidType> previousBids)
         {
+            return availableBids.RandomElement();
+
             // Dummy player always says pass
-            return BidType.Pass;
+            // return BidType.Pass;
         }
 
         public IEnumerable<Declaration> AskForDeclarations()

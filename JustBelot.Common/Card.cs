@@ -41,18 +41,13 @@
             return newCard;
         }
 
-        public int GetValue(BidType contract)
+        public int GetValue(ContractType contract)
         {
-            if (contract == BidType.Pass || contract == BidType.Double || contract == BidType.ReDouble)
-            {
-                throw new InvalidEnumArgumentException("contract", (int)contract, typeof(BidType));
-            }
-
-            if (contract == BidType.AllTrumps
-                || (contract == BidType.Clubs && this.Suit == CardSuit.Clubs)
-                || (contract == BidType.Diamonds && this.Suit == CardSuit.Diamonds)
-                || (contract == BidType.Hearts && this.Suit == CardSuit.Hearts)
-                || (contract == BidType.Spades && this.Suit == CardSuit.Spades))
+            if (contract == ContractType.AllTrumps
+                || (contract == ContractType.Clubs && this.Suit == CardSuit.Clubs)
+                || (contract == ContractType.Diamonds && this.Suit == CardSuit.Diamonds)
+                || (contract == ContractType.Hearts && this.Suit == CardSuit.Hearts)
+                || (contract == ContractType.Spades && this.Suit == CardSuit.Spades))
             {
                 if (this.Type == CardType.Seven)
                 {

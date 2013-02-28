@@ -9,7 +9,7 @@
         /// <summary>
         /// Shuffle algorithm as seen on page 32 in the book "Algorithms" (4th edition) by Robert Sedgewick
         /// </summary>
-        public static void Shuffle<T>(this List<T> source)
+        public static void Shuffle<T>(this IList<T> source)
         {
             var n = source.Count;
             for (var i = 0; i < n; i++)
@@ -22,7 +22,7 @@
             }
         }
 
-        public static string ElementsAsString<T>(this List<T> source)
+        public static string ElementsAsString<T>(this IList<T> source)
         {
             var sb = new StringBuilder();
             for (var i = 0; i < source.Count; i++)
@@ -38,6 +38,16 @@
             }
 
             return sb.ToString();
+        }
+
+        public static T RandomElement<T>(this IList<T> source)
+        {
+            if (source == null || source.Count == 0)
+            {
+                return default(T);
+            }
+
+            return source[RandomProvider.Next(0, source.Count)];
         }
     }
 }

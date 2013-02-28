@@ -17,7 +17,7 @@
             ConsoleHelper.ResizeConsole(80, 20);
             Console.OutputEncoding = Encoding.Unicode;
 
-            ConsoleHelper.DrawTextBoxTopLeft(Settings.ProgramName, 0, 0, ConsoleColor.Black, ConsoleColor.DarkGray);
+            Console.Title = Settings.ProgramName;
             ConsoleHelper.WriteOnPosition("Please enter player name: ", 20, 9, ConsoleColor.Black, ConsoleColor.DarkGray);
             var playerName = Console.ReadLine();
             Console.Clear();

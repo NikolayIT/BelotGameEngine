@@ -4,7 +4,7 @@ namespace JustBelot.Common
     /// <summary>
     /// Interface that must be implemented by every player (human or AI)
     /// Method calls:
-    /// 0. If an empty contructor is available it is called first
+    /// 0. If an empty constructor is available it is called first
     /// 1. StartNewGame is called when the game begins. Player position and game info are passed as arguments.
     /// 2. StartNewDeal is called for each card deal
     /// 3. AddCard is called 8 times (3+2+3) for each card deal. Card is passed as an argument.
@@ -22,7 +22,7 @@ namespace JustBelot.Common
 
         void AddCard(Card card);
 
-        BidType AskForBid();
+        BidType AskForBid(Contract currentContract, IList<BidType> availableBids, IList<BidType> previousBids);
 
         IEnumerable<Declaration> AskForDeclarations();
 

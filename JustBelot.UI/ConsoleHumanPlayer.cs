@@ -2,9 +2,9 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Text;
 
     using JustBelot.Common;
-    using System.Text;
 
     public class ConsoleHumanPlayer : IPlayer
     {
@@ -22,43 +22,20 @@
 
         private PlayerPosition Position { get; set; }
 
+        private Contract Contract { get; set; }
+
         public void StartNewGame(GameInfo game, PlayerPosition position)
         {
             Console.Clear();
             this.Position = position;
             this.Game = game;
-            this.Game.PlayerBid += this.Game_PlayerBid;
-        }
-
-        private void Game_PlayerBid(BidEventArgs e)
-        {
-            this.Draw();
-            if (e.Position != this.Position)
-            {
-                if (e.Position == PlayerPosition.East)
-                {
-                    ConsoleHelper.DrawTextBoxTopRight(e.Bid.ToString(), 80 - 2 - this.Game[PlayerPosition.East].Name.Length - 2, 7);
-                }
-
-                if (e.Position == PlayerPosition.North)
-                {
-                    ConsoleHelper.DrawTextBoxTopLeft(e.Bid.ToString(), 40 - 2 - e.Bid.ToString().Length / 2, 2);
-                }
-
-                if (e.Position == PlayerPosition.West)
-                {
-                    ConsoleHelper.DrawTextBoxTopLeft(e.Bid.ToString(), this.Game[PlayerPosition.West].Name.Length + 3, 7);
-                }
-
-                ConsoleHelper.WriteOnPosition(string.Format("{0} from {1} player", e.Bid, e.Position), 0, 18);
-                ConsoleHelper.WriteOnPosition("Press enter to continue...", 0, 19);
-                Console.ReadLine();
-            }
+            this.Game.PlayerBid += this.GamePlayerBid;
         }
 
         public void StartNewDeal()
         {
             this.cards.Clear();
+            this.Contract = new Contract();
             this.Draw();
         }
 
@@ -68,29 +45,98 @@
             this.Draw();
         }
 
-        public BidType AskForBid()
+        public BidType AskForBid(Contract currentContract, IList<BidType> availableBids, IList<BidType> previousBids)
         {
-            this.Draw();
-            ConsoleHelper.WriteOnPosition("P(ass), A(ll), N(o), S(♠), H(♥), D(♦), C(♣), 2(double), 4(re double)", 0, 19);
-            ConsoleHelper.WriteOnPosition("It's your turn! Please enter your bid: ", 0, 18);
-            var contract = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(contract))
+            this.Contract = currentContract;
+            while (true)
             {
-                return BidType.Pass;
-            }
+                this.Draw();
 
-            switch (char.ToUpper(contract[0]))
-            {
-                case 'A': return BidType.AllTrumps;
-                case 'N': return BidType.NoTrumps;
-                case 'S': return BidType.Spades;
-                case 'H': return BidType.Hearts;
-                case 'D': return BidType.Diamonds;
-                case 'C': return BidType.Clubs;
-                case 'P': return BidType.Pass;
-                case '2': return BidType.Double;
-                case '4': return BidType.ReDouble;
-                default: return BidType.Pass;
+                var availableBidsAsString = new StringBuilder();
+                foreach (var availableBid in availableBids)
+                {
+                    switch (availableBid)
+                    {
+                        case BidType.Pass:
+                            availableBidsAsString.Append("P(ass)");
+                            break;
+                        case BidType.Clubs:
+                            availableBidsAsString.Append("C(♣)");
+                            break;
+                        case BidType.Diamonds:
+                            availableBidsAsString.Append("D(♦)");
+                            break;
+                        case BidType.Hearts:
+                            availableBidsAsString.Append("H(♥)");
+                            break;
+                        case BidType.Spades:
+                            availableBidsAsString.Append("S(♠)");
+                            break;
+                        case BidType.NoTrumps:
+                            availableBidsAsString.Append("N(o)");
+                            break;
+                        case BidType.AllTrumps:
+                            availableBidsAsString.Append("A(ll)");
+                            break;
+                        case BidType.Double:
+                            availableBidsAsString.Append("2(double)");
+                            break;
+                        case BidType.ReDouble:
+                            availableBidsAsString.Append("4(re double)");
+                            break;
+                    }
+
+                    availableBidsAsString.Append(", ");
+                }
+
+                ConsoleHelper.WriteOnPosition(availableBidsAsString.ToString().Trim(' ', ','), 0, 19);
+                ConsoleHelper.WriteOnPosition("It's your turn! Please enter your bid: ", 0, 18);
+
+                var bid = BidType.Pass;
+
+                var playerContract = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(playerContract))
+                {
+                    continue;
+                }
+
+                switch (char.ToUpper(playerContract[0]))
+                {
+                    case 'A':
+                        bid = BidType.AllTrumps;
+                        break;
+                    case 'N':
+                        bid = BidType.NoTrumps;
+                        break;
+                    case 'S':
+                        bid = BidType.Spades;
+                        break;
+                    case 'H':
+                        bid = BidType.Hearts;
+                        break;
+                    case 'D':
+                        bid = BidType.Diamonds;
+                        break;
+                    case 'C':
+                        bid = BidType.Clubs;
+                        break;
+                    case 'P':
+                        bid = BidType.Pass;
+                        break;
+                    case '2':
+                        bid = BidType.Double;
+                        break;
+                    case '4':
+                        bid = BidType.ReDouble;
+                        break;
+                    default:
+                        continue;
+                }
+
+                if (availableBids.Contains(bid))
+                {
+                    return bid;
+                }
             }
         }
 
@@ -104,7 +150,7 @@
         public PlayAction PlayCard()
         {
             var sb = new StringBuilder();
-            for (int i = 0; i < cards.Count; i++)
+            for (int i = 0; i < this.cards.Count; i++)
             {
                 sb.AppendFormat("{0}({1}); ", i + 1, this.cards[i]);
             }
@@ -129,11 +175,37 @@
             }
         }
 
+        private void GamePlayerBid(BidEventArgs bidEventArgs)
+        {
+            this.Draw();
+            if (bidEventArgs.Position != this.Position)
+            {
+                if (bidEventArgs.Position == PlayerPosition.East)
+                {
+                    ConsoleHelper.DrawTextBoxTopRight(bidEventArgs.Bid.ToString(), 80 - 2 - this.Game[PlayerPosition.East].Name.Length - 2, 7);
+                }
+
+                if (bidEventArgs.Position == PlayerPosition.North)
+                {
+                    ConsoleHelper.DrawTextBoxTopLeft(bidEventArgs.Bid.ToString(), 40 - 2 - (bidEventArgs.Bid.ToString().Length / 2), 2);
+                }
+
+                if (bidEventArgs.Position == PlayerPosition.West)
+                {
+                    ConsoleHelper.DrawTextBoxTopLeft(bidEventArgs.Bid.ToString(), this.Game[PlayerPosition.West].Name.Length + 3, 7);
+                }
+
+                ConsoleHelper.WriteOnPosition(string.Format("{0} from {1} player", bidEventArgs.Bid, bidEventArgs.Position), 0, 18);
+                ConsoleHelper.WriteOnPosition("Press enter to continue...", 0, 19);
+                Console.ReadLine();
+            }
+        }
+
         private void Draw()
         {
             ConsoleHelper.ClearAndResetConsole();
-            ConsoleHelper.DrawTextBoxTopLeft(Settings.ProgramName, 0, 0, ConsoleColor.Black, ConsoleColor.DarkGray);
             ConsoleHelper.DrawTextBoxTopRight(string.Format("{0} - {1}", this.Game.SouthNorthScore, this.Game.EastWestScore), Console.WindowWidth - 1, 0, ConsoleColor.Black, ConsoleColor.DarkGray);
+            ConsoleHelper.DrawTextBoxTopLeft(this.Contract.ToString(), 0, 0, ConsoleColor.Black, ConsoleColor.DarkGray);
             ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.West].Name, 2, 8, ConsoleColor.Black, ConsoleColor.Gray);
             ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.East].Name, 80 - 2 - this.Game[PlayerPosition.East].Name.Length, 8, ConsoleColor.Black, ConsoleColor.Gray);
             ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.North].Name, 40 - 1 - (this.Game[PlayerPosition.North].Name.Length / 2), 1, ConsoleColor.Black, ConsoleColor.Gray);

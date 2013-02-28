@@ -1,7 +1,9 @@
 ﻿namespace JustBelot.Common
 {
+    using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
 
     using JustBelot.Common.Extensions;
 
@@ -16,6 +18,11 @@
 
         private readonly Card[,] playerCards; // We are keeping local information about cards to prevent cheating from players (e.g. playing card that they don't own)
 
+        private readonly List<Card> southNorthPlayersCardsTaken;
+        private readonly List<Card> eastWestPlayersCardsTaken;
+
+        private Contract finalContract;
+
         public DealManager(GameManager game)
         {
             this.game = game;
@@ -24,6 +31,9 @@
             Debug.Assert(this.cardDeck != null && this.cardDeck.Count == 32, "The card deck is not complete!");
 
             this.playerCards = new Card[4, 8]; // 4 players, 8 cards for each player
+
+            this.southNorthPlayersCardsTaken = new List<Card>();
+            this.eastWestPlayersCardsTaken = new List<Card>();
         }
 
         public DealResult PlayDeal()
@@ -37,7 +47,11 @@
             this.DealCardsToAllPlayers(2);
 
             // 3. Ask for bidding and check if the bidding are legal
-            this.Bidding();
+            var dealWillBePlayed = this.Bidding();
+            if (!dealWillBePlayed)
+            {
+                return new DealResult(false);
+            }
 
             // 4. Deal 3 more cards to each player
             this.DealCardsToAllPlayers(3);
@@ -49,44 +63,56 @@
             return this.PrepareDealResult();
         }
 
-        private void Bidding()
+        // TODO: Ask for bids and check if bids are legal
+        private bool Bidding()
         {
-            // TODO: Ask for bids and check if bids are legal
             var currentPlayer = this.game.GetFirstPlayerForTheDeal();
             var lastBid = BidType.Pass;
+            IList<BidType> previousBids = new List<BidType>();
+            var currentContract = new Contract();
 
             var passesLeft = 4;
             while (passesLeft > 0)
             {
-                var bid = currentPlayer.AskForBid();
-
+                var availableBids = currentContract.GetAvailableBidsAfterThisContract(this.game[this.game.GetTeamMate(currentPlayer)]);
+                var bid = currentPlayer.AskForBid(currentContract, availableBids, previousBids);
                 if (bid == BidType.Pass)
                 {
                     passesLeft--;
                 }
                 else
                 {
-                    if (bid == BidType.ReDouble && lastBid != BidType.Double)
+                    if (!availableBids.Contains(bid))
                     {
-                        throw new InvalidPlayerActionException(
-                            currentPlayer,
-                            string.Format("Invalid bid: ReDouble without Double! Previous bid: {0}", lastBid));
+                        throw new InvalidPlayerActionException(currentPlayer, string.Format("Invalid bid: {0}", bid));
                     }
 
-                    if (bid == BidType.Double && lastBid == BidType.Pass)
+                    switch (bid)
                     {
-                        throw new InvalidPlayerActionException(
-                            currentPlayer,
-                            string.Format("Invalid bid: Double on Pass! Previous bid: {0}", lastBid));
-                    }
-
-
-                    // TODO: prevent the same team members to make some bid and then double
-                    if (bid <= lastBid && lastBid != BidType.Double && lastBid != BidType.ReDouble) // TODO: needs improvements
-                    {
-                        throw new InvalidPlayerActionException(
-                            currentPlayer,
-                            string.Format("Invalid bid: {0}! Last bid: {1}", bid, lastBid));
+                        case BidType.Clubs:
+                            currentContract = new Contract(this.game[currentPlayer], ContractType.Clubs);
+                            break;
+                        case BidType.Diamonds:
+                            currentContract = new Contract(this.game[currentPlayer], ContractType.Diamonds);
+                            break;
+                        case BidType.Hearts:
+                            currentContract = new Contract(this.game[currentPlayer], ContractType.Hearts);
+                            break;
+                        case BidType.Spades:
+                            currentContract = new Contract(this.game[currentPlayer], ContractType.Spades);
+                            break;
+                        case BidType.NoTrumps:
+                            currentContract = new Contract(this.game[currentPlayer], ContractType.NoTrumps);
+                            break;
+                        case BidType.AllTrumps:
+                            currentContract = new Contract(this.game[currentPlayer], ContractType.AllTrumps);
+                            break;
+                        case BidType.Double:
+                            currentContract = new Contract(this.game[currentPlayer], currentContract.Type, true);
+                            break;
+                        case BidType.ReDouble:
+                            currentContract = new Contract(this.game[currentPlayer], currentContract.Type, false, true);
+                            break;
                     }
 
                     passesLeft = 3;
@@ -95,10 +121,11 @@
                 this.game.GameInfo.InformForBid(new BidEventArgs(this.game[currentPlayer], bid));
 
                 lastBid = bid;
+                previousBids.Add(bid);
                 currentPlayer = this.game.GetNextPlayer(currentPlayer);
-
-                // TODO: Inform game for the contracts (or the game may get contracts via deal manager) OR give last contracts as a parameter to Player.AskForContract()
             }
+
+            return currentContract.IsAvailable;
         }
 
         private void DealCardsToAllPlayers(int cardsCount)
@@ -127,6 +154,13 @@
 
                     var playedCard = this.game[player].PlayCard();
                 }
+
+                if (trickNumber == 8)
+                {
+                    // TODO: Save who takes the last trick
+                }
+
+                // southNorthPlayersCardsTaken.Add(); or eastWestPlayersCardsTaken.Add();
             }
 
             // 5. Play first hand and ask for announcements like "terca", 50, 100, 150, 200, belot, et.
@@ -143,6 +177,13 @@
         {
             // TODO: Evaluate game result and don't forget the "last 10" rule and announcements
             var result = new DealResult();
+
+            int southNorthCardPointsSum = this.southNorthPlayersCardsTaken.Sum(card => card.GetValue(this.finalContract.Type));
+            int eastWestCardPointsSum = this.eastWestPlayersCardsTaken.Sum(card => card.GetValue(this.finalContract.Type));
+
+
+            //result.SouthNorthPoints = 0;
+            //result.EastWestPoints = 0;
 
             return result;
         }
