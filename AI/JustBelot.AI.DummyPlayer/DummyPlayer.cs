@@ -38,10 +38,10 @@
 
         public BidType AskForBid(Contract currentContract, IList<BidType> availableBids, IList<BidType> previousBids)
         {
-            return availableBids.RandomElement();
+            //return availableBids.RandomElement();
 
             // Dummy player always says pass
-            // return BidType.Pass;
+            return BidType.Pass;
         }
 
         public IEnumerable<Declaration> AskForDeclarations()

@@ -11,6 +11,18 @@
             this.IsAvailable = true;
             this.Type = type;
             this.PlayerPosition = playerPosition;
+            this.OriginalBidder = playerPosition;
+            this.IsDoubled = isDoubled;
+            this.IsReDoubled = isReDoubled;
+        }
+
+        public Contract(PlayerPosition playerPosition, ContractType type, PlayerPosition originalBidder, bool isDoubled, bool isReDoubled)
+            : this()
+        {
+            this.IsAvailable = true;
+            this.Type = type;
+            this.PlayerPosition = playerPosition;
+            this.OriginalBidder = originalBidder;
             this.IsDoubled = isDoubled;
             this.IsReDoubled = isReDoubled;
         }
@@ -18,6 +30,8 @@
         public bool IsAvailable { get; private set; }
 
         public ContractType Type { get; private set; }
+
+        public PlayerPosition OriginalBidder { get; private set; }
 
         public PlayerPosition PlayerPosition { get; private set; }
 

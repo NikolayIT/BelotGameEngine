@@ -177,6 +177,7 @@
 
         private void GamePlayerBid(BidEventArgs bidEventArgs)
         {
+            this.Contract = bidEventArgs.CurrentContract;
             this.Draw();
             if (bidEventArgs.Position != this.Position)
             {

@@ -67,7 +67,6 @@
         private bool Bidding()
         {
             var currentPlayer = this.game.GetFirstPlayerForTheDeal();
-            var lastBid = BidType.Pass;
             IList<BidType> previousBids = new List<BidType>();
             var currentContract = new Contract();
 
@@ -108,19 +107,18 @@
                             currentContract = new Contract(this.game[currentPlayer], ContractType.AllTrumps);
                             break;
                         case BidType.Double:
-                            currentContract = new Contract(this.game[currentPlayer], currentContract.Type, true);
+                            currentContract = new Contract(this.game[currentPlayer], currentContract.Type, currentContract.PlayerPosition, true, false);
                             break;
                         case BidType.ReDouble:
-                            currentContract = new Contract(this.game[currentPlayer], currentContract.Type, false, true);
+                            currentContract = new Contract(this.game[currentPlayer], currentContract.Type, currentContract.PlayerPosition, false, true);
                             break;
                     }
 
                     passesLeft = 3;
                 }
 
-                this.game.GameInfo.InformForBid(new BidEventArgs(this.game[currentPlayer], bid));
+                this.game.GameInfo.InformForBid(new BidEventArgs(this.game[currentPlayer], bid, currentContract));
 
-                lastBid = bid;
                 previousBids.Add(bid);
                 currentPlayer = this.game.GetNextPlayer(currentPlayer);
             }
