@@ -16,9 +16,9 @@ namespace JustBelot.Common
     {
         string Name { get; }
 
-        void StartNewGame(GameInfo game, PlayerPosition position);
+        void StartNewGame(GameInfo gameInfo, PlayerPosition position);
 
-        void StartNewDeal();
+        void StartNewDeal(DealInfo dealInfo);
 
         void AddCard(Card card);
 

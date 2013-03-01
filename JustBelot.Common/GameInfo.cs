@@ -32,6 +32,14 @@
             }
         }
 
+        public int DealNumber
+        {
+            get
+            {
+                return this.gameManager.DealNumber;
+            }
+        }
+
         public PlayerInfo this[PlayerPosition position]
         {
             get
@@ -48,9 +56,12 @@
             }
         }
 
-        public void InformForBid(BidEventArgs eventArgs)
+        internal void InformForBid(BidEventArgs eventArgs)
         {
-            this.PlayerBid(eventArgs);
+            if (this.PlayerBid != null)
+            {
+                this.PlayerBid(eventArgs);
+            }
         }
     }
 }

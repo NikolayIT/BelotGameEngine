@@ -7,8 +7,6 @@
     {
         private readonly IList<IPlayer> players;
 
-        private int dealNumber;
-
         private int firstPlayerForTheGame;
 
         private DealManager dealManager;
@@ -43,6 +41,8 @@
         public int SouthNorthScore { get; private set; }
 
         public int EastWestScore { get; private set; }
+
+        public int DealNumber { get; private set; }
 
         internal GameInfo GameInfo { get; private set; }
 
@@ -106,7 +106,7 @@
         {
             this.SouthNorthScore = 0;
             this.EastWestScore = 0;
-            this.dealNumber = 0;
+            this.DealNumber = 0;
             this.firstPlayerForTheGame = RandomProvider.Next(0, 4);
 
             while (!this.IsGameOver)
@@ -167,21 +167,25 @@
 
         internal IPlayer GetFirstPlayerForTheDeal()
         {
-            var firstPlayerForTheDeal = (this.dealNumber - this.firstPlayerForTheGame + 4) % 4;
+            var firstPlayerForTheDeal = (this.DealNumber - this.firstPlayerForTheGame + 4) % 4;
             return this[firstPlayerForTheDeal];
         }
         
         private void StartNewDeal()
         {
-            this.dealNumber++;
+            this.DealNumber++;
+
+            var dealInfo = new DealInfo { FirstPlayerPosition = this[this.GetFirstPlayerForTheDeal()] };
 
             foreach (var player in this.players)
             {
-                player.StartNewDeal();
+                player.StartNewDeal(dealInfo);
             }
 
             this.dealManager = new DealManager(this);
-            this.dealManager.PlayDeal(); // var dealResult = 
+
+            var dealResult = this.dealManager.PlayDeal();
+
             // TODO: "С капо (валат) не се излиза"
         }
 

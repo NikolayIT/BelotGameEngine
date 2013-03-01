@@ -20,13 +20,13 @@
 
         private PlayerPosition Position { get; set; }
 
-        public void StartNewGame(GameInfo game, PlayerPosition position)
+        public void StartNewGame(GameInfo gameInfo, PlayerPosition position)
         {
             this.Position = position;
-            this.Game = game;
+            this.Game = gameInfo;
         }
 
-        public void StartNewDeal()
+        public void StartNewDeal(DealInfo dealInfo)
         {
             this.cards.Clear();
         }

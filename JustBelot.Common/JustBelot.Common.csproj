@@ -47,6 +47,7 @@
     <Compile Include="CardType.cs" />
     <Compile Include="Contract.cs" />
     <Compile Include="ContractType.cs" />
+    <Compile Include="DealInfo.cs" />
     <Compile Include="DealManager.cs" />
     <Compile Include="DealResult.cs" />
     <Compile Include="Declaration.cs" />
