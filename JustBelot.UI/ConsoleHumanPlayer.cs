@@ -112,19 +112,21 @@
             }
         }
 
-        public IEnumerable<Declaration> AskForDeclarations()
+        public IEnumerable<Declaration> AskForDeclarations(IEnumerable<Declaration> allowedDeclarations)
         {
             // TODO: Find declarations and ask user for them
             ConsoleHelper.WriteOnPosition("No declarations available.", 0, 18);
             return new List<Declaration>();
         }
 
-        public PlayAction PlayCard()
+        public PlayAction PlayCard(IEnumerable<Card> allowedCards)
         {
             var sb = new StringBuilder();
-            for (int i = 0; i < this.hand.Count; i++)
+            var allowedCardsList = new CardsCollection(allowedCards);
+            allowedCardsList.Sort(this.Contract.Type);
+            for (int i = 0; i < allowedCardsList.Count; i++)
             {
-                sb.AppendFormat("{0}({1}); ", i + 1, this.hand[i]);
+                sb.AppendFormat("{0}({1}); ", i + 1, allowedCardsList[i]);
             }
 
             while (true)
@@ -136,11 +138,11 @@
                 int cardIndex;
                 if (int.TryParse(cardIndexAsString, out cardIndex))
                 {
-                    if (cardIndex > 0 && cardIndex <= this.hand.Count)
+                    if (cardIndex > 0 && cardIndex <= allowedCardsList.Count)
                     {
                         // TODO: Ask player if he wants to announce belote
-                        var cardToPlay = this.hand[cardIndex - 1];
-                        this.hand.RemoveAt(cardIndex - 1);
+                        var cardToPlay = allowedCardsList[cardIndex - 1];
+                        this.hand.Remove(cardToPlay);
                         return new PlayAction(cardToPlay);
                     }
                 }
@@ -207,7 +209,7 @@
 
             if (bidEventArgs.Position == PlayerPosition.North)
             {
-                ConsoleHelper.DrawTextBoxTopLeft(bidEventArgs.Bid.ToString(), 40 - 1 - (bidEventArgs.Bid.ToString().Length / 2), 4);
+                ConsoleHelper.DrawTextBoxTopLeft(bidEventArgs.Bid.ToString(), 40 - (bidEventArgs.Bid.ToString().Length / 2), 4);
             }
 
             if (bidEventArgs.Position == PlayerPosition.West)
@@ -225,11 +227,11 @@
             // TODO: Refactor (extract constants, improve code)
             ConsoleHelper.ClearAndResetConsole();
             ConsoleHelper.DrawTextBoxTopRight(string.Format("{0} - {1}", this.Game.SouthNorthScore, this.Game.EastWestScore), Console.WindowWidth - 1, 0, ConsoleColor.Black, ConsoleColor.DarkGray);
-            string contractString = (this.Contract.IsAvailable ? this.Game[this.Contract.PlayerPosition].Name + ": " : string.Empty) + this.Contract.ToString();
+            var contractString = (this.Contract.IsAvailable ? this.Game[this.Contract.PlayerPosition].Name + ": " : string.Empty) + this.Contract.ToString();
             ConsoleHelper.DrawTextBoxTopLeft(contractString, 0, 0, ConsoleColor.Black, ConsoleColor.DarkGray);
-            string dealNumberString = string.Format("Deal №{0}", this.Game.DealNumber);
+            var dealNumberString = string.Format("Deal №{0}", this.Game.DealNumber);
             ConsoleHelper.WriteOnPosition(dealNumberString, 40 - (dealNumberString.Length / 2), 0, ConsoleColor.Gray);
-            string firstPlayerString = string.Format("(First: {0})", this.Game[this.Deal.FirstPlayerPosition].Name);
+            var firstPlayerString = string.Format("(First: {0})", this.Game[this.Deal.FirstPlayerPosition].Name);
             ConsoleHelper.WriteOnPosition(firstPlayerString, 40 - (firstPlayerString.Length / 2), 1, ConsoleColor.Gray);
             ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.West].Name, 2, 9, ConsoleColor.Black, ConsoleColor.Gray);
             ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.East].Name, 80 - 2 - this.Game[PlayerPosition.East].Name.Length, 9, ConsoleColor.Black, ConsoleColor.Gray);

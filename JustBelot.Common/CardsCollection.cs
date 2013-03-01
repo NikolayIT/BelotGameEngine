@@ -199,6 +199,7 @@
             }
         }
 
+        // TODO: Define comparators
         private static int CardSuitOrderValue(CardSuit suit)
         {
             switch (suit)

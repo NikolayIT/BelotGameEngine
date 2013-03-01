@@ -4,6 +4,7 @@
     using System.Linq;
 
     using JustBelot.Common.Extensions;
+    using System;
 
     /// <summary>
     /// Responsible for one deal (one particular allocation of 32 cards to the four players including the bidding, the play of the cards and the scoring based on those cards. 
@@ -44,7 +45,7 @@
             var contract = this.Bidding();
             if (!contract.IsAvailable)
             {
-                return new DealResult(false);
+                return new DealResult(false, contract);
             }
 
             // 4. Deal 3 more cards to each player
@@ -121,36 +122,43 @@
 
         private void DealCardsToAllPlayers(int cardsCount)
         {
-            for (int player = 0; player < 4; player++)
+            foreach (int playerId in Enum.GetValues(typeof(PlayerPosition)))
             {
                 var cards = new List<Card>();
                 for (int i = 0; i < cardsCount; i++)
                 {
                     cards.Add(this.cardDeck.Peek());
-                    this.playerCards[player].Add(this.cardDeck.Peek());
+                    this.playerCards[playerId].Add(this.cardDeck.Peek());
                     this.cardDeck.Dequeue();
                 }
 
-                this.game[player].AddCards(cards);
+                this.game[playerId].AddCards(cards);
             }
         }
 
         private void PlayCards(Contract contract)
         {
+            var currentPlayer = this.game.GetFirstPlayerForTheDeal();
+
             for (int trickNumber = 1; trickNumber <= 8; trickNumber++)
             {
-                for (int player = 0; player < 4; player++)
+                var currentTrickCards = new CardsCollection();
+
+                for (int i = 0; i < 4; i++)
                 {
-                    if (trickNumber == 1)
+                    if (trickNumber == 1 && contract.Type != ContractType.NoTrumps)
                     {
-                        if (contract.Type != ContractType.NoTrumps)
-                        {
-                            var playerDeclarations = this.game[player].AskForDeclarations();
-                        }
+                        var declarations = this.AskForDeclarations(currentPlayer);
                     }
 
-                    var playedCard = this.game[player].PlayCard();
+                    var playAction = this.PlayCard(currentPlayer);
+                    currentTrickCards.Add(playAction.Card);
+
+                    currentPlayer = this.game.GetNextPlayer(currentPlayer);
                 }
+
+                // Find who wins the trick
+                // currentPlayer = trickWinner
 
                 if (trickNumber == 8)
                 {
@@ -159,21 +167,31 @@
 
                 // southNorthPlayersCardsTaken.Add(); or eastWestPlayersCardsTaken.Add();
             }
+        }
 
-            // 5. Play first hand and ask for announcements like "terca", 50, 100, 150, 200, belot, et.
-            // TODO: Play cards and check announcements (terca, 50, 100, 150, 200, belot, etc.)
-            // TODO: Check if the played card is valid
-
-            // 6. Play the other 7 hands
+        private PlayAction PlayCard(IPlayer player)
+        {
+            IEnumerable<Card> allowedCards = this.playerCards[(int)game[player]];
             // TODO: Play cards and check announcements (belot)
+            var playAction = player.PlayCard(allowedCards);
             // TODO: Check if the played card is valid
-            // Trick is called a set of 4 cards played by each player in turn, during the play of a hand
+
+            this.playerCards[(int)this.game[player]].Remove(playAction.Card);
+            return playAction;
+        }
+
+        private IEnumerable<Declaration> AskForDeclarations(IPlayer player)
+        {
+            // TODO: Check announcements (terca, 50, 100, 150, 200, belot, etc.)
+            var allowedDeclarations = new List<Declaration>(); // TODO: List of valid declarations
+            var playerDeclarations = player.AskForDeclarations(allowedDeclarations);
+            return playerDeclarations;
         }
 
         private DealResult PrepareDealResult(Contract contract)
         {
             // TODO: Evaluate game result and don't forget the "last 10" rule and announcements
-            var result = new DealResult();
+            var result = new DealResult(true, contract);
 
             int southNorthCardPointsSum = this.southNorthPlayersCardsTaken.Sum(card => card.GetValue(contract.Type));
             int eastWestCardPointsSum = this.eastWestPlayersCardsTaken.Sum(card => card.GetValue(contract.Type));

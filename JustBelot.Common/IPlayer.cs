@@ -24,8 +24,8 @@ namespace JustBelot.Common
 
         BidType AskForBid(Contract currentContract, IList<BidType> allowedBids, IList<BidType> previousBids);
 
-        IEnumerable<Declaration> AskForDeclarations();
+        IEnumerable<Declaration> AskForDeclarations(IEnumerable<Declaration> allowedDeclarations);
 
-        PlayAction PlayCard();
+        PlayAction PlayCard(IEnumerable<Card> allowedCards);
     }
 }

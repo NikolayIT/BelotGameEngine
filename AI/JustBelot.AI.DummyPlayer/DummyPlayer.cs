@@ -47,17 +47,16 @@
             return BidType.Pass;
         }
 
-        public IEnumerable<Declaration> AskForDeclarations()
+        public IEnumerable<Declaration> AskForDeclarations(IEnumerable<Declaration> allowedDeclarations)
         {
             // Dummy player never announce his declarations
             return new List<Declaration>();
         }
 
-        public PlayAction PlayCard()
+        public PlayAction PlayCard(IEnumerable<Card> allowedCards)
         {
-            // Since this is a dummy player he will randomly return one of the possible cards
-            // TODO: Ask for the list of allowed cards
-            var cardToPlay = this.hand[RandomProvider.Next(0, this.hand.Count)];
+            // Since this is a dummy player he will randomly return one of the allowed cards
+            var cardToPlay = new List<Card>(allowedCards).RandomElement();
             this.hand.Remove(cardToPlay);
             var action = new PlayAction { Card = cardToPlay };
             return action;
