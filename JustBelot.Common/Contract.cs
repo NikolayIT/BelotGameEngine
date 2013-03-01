@@ -48,9 +48,6 @@
 
             var sb = new StringBuilder();
 
-            sb.Append(this.PlayerPosition);
-            sb.Append(": ");
-
             switch (this.Type)
             {
                 case ContractType.Clubs:

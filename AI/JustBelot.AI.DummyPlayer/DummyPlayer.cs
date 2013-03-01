@@ -7,7 +7,7 @@
 
     public class DummyPlayer : IPlayer
     {
-        private readonly List<Card> cards = new List<Card>();
+        private readonly Hand hand = new Hand();
 
         public DummyPlayer(string name)
         {
@@ -28,15 +28,18 @@
 
         public void StartNewDeal(DealInfo dealInfo)
         {
-            this.cards.Clear();
+            this.hand.Clear();
         }
 
-        public void AddCard(Card card)
+        public void AddCards(IEnumerable<Card> cards)
         {
-            this.cards.Add(card);
+            foreach (var card in cards)
+            {
+                this.hand.Add(card);
+            }
         }
 
-        public BidType AskForBid(Contract currentContract, IList<BidType> availableBids, IList<BidType> previousBids)
+        public BidType AskForBid(Contract currentContract, IList<BidType> allowedBids, IList<BidType> previousBids)
         {
             //return availableBids.RandomElement();
 
@@ -54,8 +57,8 @@
         {
             // Since this is a dummy player he will randomly return one of the possible cards
             // TODO: Ask for the list of allowed cards
-            var cardToPlay = this.cards[RandomProvider.Next(0, this.cards.Count)];
-            this.cards.Remove(cardToPlay);
+            var cardToPlay = this.hand[RandomProvider.Next(0, this.hand.Count)];
+            this.hand.Remove(cardToPlay);
             var action = new PlayAction { Card = cardToPlay };
             return action;
         }

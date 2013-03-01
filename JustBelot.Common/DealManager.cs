@@ -1,8 +1,6 @@
 ﻿namespace JustBelot.Common
 {
-    using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
 
     using JustBelot.Common.Extensions;
@@ -16,21 +14,18 @@
 
         private readonly Queue<Card> cardDeck;
 
-        private readonly Card[,] playerCards; // We are keeping local information about cards to prevent cheating from players (e.g. playing card that they don't own)
+        private readonly List<Card>[] playerCards; // We are keeping local information about cards to prevent cheating from players (e.g. playing card that they don't own)
 
         private readonly List<Card> southNorthPlayersCardsTaken;
         private readonly List<Card> eastWestPlayersCardsTaken;
-
-        private Contract finalContract;
 
         public DealManager(GameManager game)
         {
             this.game = game;
 
             this.cardDeck = new Queue<Card>(CardsHelper.GetFullCardDeck());
-            Debug.Assert(this.cardDeck != null && this.cardDeck.Count == 32, "The card deck is not complete!");
 
-            this.playerCards = new Card[4, 8]; // 4 players, 8 cards for each player
+            this.playerCards = new[] { new List<Card>(), new List<Card>(), new List<Card>(), new List<Card>() }; // 4 players
 
             this.southNorthPlayersCardsTaken = new List<Card>();
             this.eastWestPlayersCardsTaken = new List<Card>();
@@ -42,13 +37,12 @@
             this.cardDeck.Shuffle();
             this.cardDeck.Shuffle();
 
-            // 2. Deal 3 + 2 cards to each player (like in the real world game ;))
-            this.DealCardsToAllPlayers(3);
-            this.DealCardsToAllPlayers(2);
+            // 2. Deal 5 cards to each player
+            this.DealCardsToAllPlayers(5);
 
-            // 3. Ask for bidding and check if the bidding are legal
-            var dealWillBePlayed = this.Bidding();
-            if (!dealWillBePlayed)
+            // 3. Ask for bidding and check if the bids are legal
+            var contract = this.Bidding();
+            if (!contract.IsAvailable)
             {
                 return new DealResult(false);
             }
@@ -57,14 +51,13 @@
             this.DealCardsToAllPlayers(3);
 
             // 5. Play the game
-            this.PlayCards();
+            this.PlayCards(contract);
 
             // 6. Count the result
-            return this.PrepareDealResult();
+            return this.PrepareDealResult(contract);
         }
 
-        // TODO: Ask for bids and check if bids are legal
-        private bool Bidding()
+        private Contract Bidding()
         {
             var currentPlayer = this.game.GetFirstPlayerForTheDeal();
             IList<BidType> previousBids = new List<BidType>();
@@ -73,15 +66,15 @@
             var passesLeft = 4;
             while (passesLeft > 0)
             {
-                var availableBids = currentContract.GetAvailableBidsAfterThisContract(this.game[this.game.GetTeamMate(currentPlayer)]);
-                var bid = currentPlayer.AskForBid(currentContract, availableBids, previousBids);
+                var allowedBids = currentContract.GetAvailableBidsAfterThisContract(this.game[this.game.GetTeamMate(currentPlayer)]);
+                var bid = currentPlayer.AskForBid(currentContract, allowedBids, previousBids);
                 if (bid == BidType.Pass)
                 {
                     passesLeft--;
                 }
                 else
                 {
-                    if (!availableBids.Contains(bid))
+                    if (!allowedBids.Contains(bid))
                     {
                         throw new InvalidPlayerActionException(currentPlayer, string.Format("Invalid bid: {0}", bid));
                     }
@@ -123,23 +116,26 @@
                 currentPlayer = this.game.GetNextPlayer(currentPlayer);
             }
 
-            return currentContract.IsAvailable;
+            return currentContract;
         }
 
         private void DealCardsToAllPlayers(int cardsCount)
         {
             for (int player = 0; player < 4; player++)
             {
+                var cards = new List<Card>();
                 for (int i = 0; i < cardsCount; i++)
                 {
-                    this.game[player].AddCard(this.cardDeck.Peek());
-                    this.playerCards[player, i] = this.cardDeck.Peek();
+                    cards.Add(this.cardDeck.Peek());
+                    this.playerCards[player].Add(this.cardDeck.Peek());
                     this.cardDeck.Dequeue();
                 }
+
+                this.game[player].AddCards(cards);
             }
         }
 
-        private void PlayCards()
+        private void PlayCards(Contract contract)
         {
             for (int trickNumber = 1; trickNumber <= 8; trickNumber++)
             {
@@ -147,7 +143,10 @@
                 {
                     if (trickNumber == 1)
                     {
-                        var playerDeclarations = this.game[player].AskForDeclarations();
+                        if (contract.Type != ContractType.NoTrumps)
+                        {
+                            var playerDeclarations = this.game[player].AskForDeclarations();
+                        }
                     }
 
                     var playedCard = this.game[player].PlayCard();
@@ -171,13 +170,13 @@
             // Trick is called a set of 4 cards played by each player in turn, during the play of a hand
         }
 
-        private DealResult PrepareDealResult()
+        private DealResult PrepareDealResult(Contract contract)
         {
             // TODO: Evaluate game result and don't forget the "last 10" rule and announcements
             var result = new DealResult();
 
-            int southNorthCardPointsSum = this.southNorthPlayersCardsTaken.Sum(card => card.GetValue(this.finalContract.Type));
-            int eastWestCardPointsSum = this.eastWestPlayersCardsTaken.Sum(card => card.GetValue(this.finalContract.Type));
+            int southNorthCardPointsSum = this.southNorthPlayersCardsTaken.Sum(card => card.GetValue(contract.Type));
+            int eastWestCardPointsSum = this.eastWestPlayersCardsTaken.Sum(card => card.GetValue(contract.Type));
 
 
             //result.SouthNorthPoints = 0;

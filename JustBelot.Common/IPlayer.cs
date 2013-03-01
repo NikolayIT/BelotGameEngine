@@ -9,7 +9,7 @@ namespace JustBelot.Common
     /// 2. StartNewDeal is called for each card deal
     /// 3. AddCard is called 8 times (3+2+3) for each card deal. Card is passed as an argument.
     /// 4. AskForBid is called for each player until a contract is agreed
-    /// 5. Before the first card is played, the player is asked for declarations (e.g. four of a kind and a Tierce)
+    /// 5. If the contract is not "no trumps", before the first card is played, the player is asked for declarations (e.g. four of a kind and a tierce, etc.)
     /// 6. PlayCard is called 8 times until all cards are played
     /// </summary>
     public interface IPlayer
@@ -20,9 +20,9 @@ namespace JustBelot.Common
 
         void StartNewDeal(DealInfo dealInfo);
 
-        void AddCard(Card card);
+        void AddCards(IEnumerable<Card> cards);
 
-        BidType AskForBid(Contract currentContract, IList<BidType> availableBids, IList<BidType> previousBids);
+        BidType AskForBid(Contract currentContract, IList<BidType> allowedBids, IList<BidType> previousBids);
 
         IEnumerable<Declaration> AskForDeclarations();
 
