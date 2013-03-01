@@ -8,12 +8,12 @@
 
     public class ConsoleHumanPlayer : IPlayer
     {
-        private readonly Hand hand;
+        private readonly CardsCollection hand;
 
         public ConsoleHumanPlayer(string name)
         {
             this.Name = name;
-            this.hand = new Hand();
+            this.hand = new CardsCollection();
         }
 
         public string Name { get; private set; }

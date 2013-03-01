@@ -3,12 +3,61 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text;
 
-    public static class CardsHelper
+    /// <summary>
+    /// IList of Card wrapper
+    /// </summary>
+    public class CardsCollection : IList<Card>
     {
-        public static IEnumerable<Card> GetFullCardDeck()
+        private IList<Card> cards;
+ 
+        public CardsCollection()
         {
-            var cards = new List<Card>();
+            this.cards = new List<Card>();
+        }
+
+        public CardsCollection(IEnumerable<Card> cardsList)
+            : this()
+        {
+            foreach (var card in cardsList)
+            {
+                this.cards.Add(card);
+            }
+        }
+
+        public int Count
+        {
+            get
+            {
+                return this.cards.Count;
+            }
+        }
+
+        public bool IsReadOnly
+        {
+            get
+            {
+                return true;
+            }
+        }
+
+        public Card this[int index]
+        {
+            get
+            {
+                return this.cards[index];
+            }
+
+            set
+            {
+                this.cards[index] = value;
+            }
+        }
+
+        public static CardsCollection GetFullCardDeck()
+        {
+            var cards = new CardsCollection();
             foreach (CardSuit cardSuit in Enum.GetValues(typeof(CardSuit)))
             {
                 foreach (CardType cardType in Enum.GetValues(typeof(CardType)))
@@ -20,71 +69,79 @@
             return cards;
         }
 
-        public static string CardTypeToString(CardType cardType)
+        public int IndexOf(Card item)
         {
-            string cardTypeAsString = null;
-            switch (cardType)
-            {
-                case CardType.Ace:
-                    cardTypeAsString = "A";
-                    break;
-                case CardType.King:
-                    cardTypeAsString = "K";
-                    break;
-                case CardType.Queen:
-                    cardTypeAsString = "Q";
-                    break;
-                case CardType.Jack:
-                    cardTypeAsString = "J";
-                    break;
-                case CardType.Ten:
-                    cardTypeAsString = "10";
-                    break;
-                case CardType.Nine:
-                    cardTypeAsString = "9";
-                    break;
-                case CardType.Eight:
-                    cardTypeAsString = "8";
-                    break;
-                case CardType.Seven:
-                    cardTypeAsString = "7";
-                    break;
-            }
-            return cardTypeAsString;
+            return this.cards.IndexOf(item);
         }
 
-        public static string CardSuitToString(CardSuit cardSuit)
+        public void Insert(int index, Card item)
         {
-            string cardSuitAsString = null;
-            switch (cardSuit)
+            this.cards.Insert(index, item);
+        }
+
+        public void Add(Card item)
+        {
+            this.cards.Add(item);
+        }
+
+        public void RemoveAt(int index)
+        {
+            this.cards.RemoveAt(index);
+        }
+
+        public bool Remove(Card item)
+        {
+            var removed = this.cards.Remove(item);
+            return removed;
+        }
+
+        public void Clear()
+        {
+            this.cards.Clear();
+        }
+
+        public bool Contains(Card item)
+        {
+            return this.cards.Contains(item);
+        }
+
+        public void CopyTo(Card[] array, int arrayIndex)
+        {
+            this.cards.CopyTo(array, arrayIndex);
+        }
+
+        public IEnumerator<Card> GetEnumerator()
+        {
+            return this.cards.GetEnumerator();
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator();
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            foreach (var card in this.cards)
             {
-                case CardSuit.Spades:
-                    cardSuitAsString = "\u2660";
-                    break;
-                case CardSuit.Hearts:
-                    cardSuitAsString = "\u2665";
-                    break;
-                case CardSuit.Diamonds:
-                    cardSuitAsString = "\u2666";
-                    break;
-                case CardSuit.Clubs:
-                    cardSuitAsString = "\u2663";
-                    break;
+                sb.AppendFormat("{0} ", card);
             }
-            return cardSuitAsString;
+
+            return sb.ToString().Trim();
         }
 
         /// <summary>
         /// Returns the number of "belot" combinations (king + queen of the same suit)
         /// </summary>
-        public static int NumberOfQueenAndKingCombinations(IEnumerable<Card> cards)
+        public int NumberOfQueenAndKingCombinations()
         {
             var numberOfCombinations = 0;
             foreach (CardSuit cardSuit in Enum.GetValues(typeof(CardSuit)))
             {
                 var queen = false;
                 var king = false;
-                foreach (var card in cards)
+                foreach (var card in this.cards)
                 {
                     if (card.Suit == cardSuit)
                     {
@@ -109,9 +166,59 @@
             return numberOfCombinations;
         }
 
-        public static IList<Card> SortForAllTrump(IList<Card> cards)
+        public void Sort(ContractType contract)
         {
-            return cards.OrderByDescending(card =>
+            if (contract == ContractType.AllTrumps)
+            {
+                this.SortForAllTrump();
+            }
+
+            if (contract == ContractType.NoTrumps)
+            {
+                this.SortForNoTrump();
+            }
+
+            if (contract == ContractType.Spades)
+            {
+                this.SortForSuit(CardSuit.Spades);
+            }
+
+            if (contract == ContractType.Hearts)
+            {
+                this.SortForSuit(CardSuit.Hearts);
+            }
+
+            if (contract == ContractType.Diamonds)
+            {
+                this.SortForSuit(CardSuit.Diamonds);
+            }
+
+            if (contract == ContractType.Clubs)
+            {
+                this.SortForSuit(CardSuit.Clubs);
+            }
+        }
+
+        private static int CardSuitOrderValue(CardSuit suit)
+        {
+            switch (suit)
+            {
+                case CardSuit.Spades:
+                    return 40;
+                case CardSuit.Hearts:
+                    return 30;
+                case CardSuit.Diamonds:
+                    return 10;
+                case CardSuit.Clubs:
+                    return 20;
+                default:
+                    throw new ArgumentOutOfRangeException("suit");
+            }
+        }
+
+        private void SortForAllTrump()
+        {
+            this.cards = this.cards.OrderByDescending(card =>
             {
                 if (card.Type == CardType.Jack)
                 {
@@ -157,9 +264,9 @@
             }).ToList();
         }
 
-        public static IList<Card> SortForNoTrump(IList<Card> cards)
+        private void SortForNoTrump()
         {
-            return cards.OrderByDescending(card =>
+            this.cards = this.cards.OrderByDescending(card =>
             {
                 if (card.Type == CardType.Ace)
                 {
@@ -205,9 +312,9 @@
             }).ToList();
         }
 
-        public static IList<Card> SortForSuit(IList<Card> cards, CardSuit suit)
+        private void SortForSuit(CardSuit suit)
         {
-            return cards.OrderByDescending(card =>
+            this.cards = this.cards.OrderByDescending(card =>
             {
                 if (card.Suit == suit)
                 {
@@ -294,23 +401,6 @@
 
                 return 0;
             }).ToList();
-        }
-
-        private static int CardSuitOrderValue(CardSuit suit)
-        {
-            switch (suit)
-            {
-                case CardSuit.Spades:
-                    return 40;
-                case CardSuit.Hearts:
-                    return 30;
-                case CardSuit.Diamonds:
-                    return 10;
-                case CardSuit.Clubs:
-                    return 20;
-                default:
-                    throw new ArgumentOutOfRangeException("suit");
-            }
         }
     }
 }

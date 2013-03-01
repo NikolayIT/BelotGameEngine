@@ -14,21 +14,21 @@
 
         private readonly Queue<Card> cardDeck;
 
-        private readonly List<Card>[] playerCards; // We are keeping local information about cards to prevent cheating from players (e.g. playing card that they don't own)
+        private readonly CardsCollection[] playerCards; // We are keeping local information about cards to prevent cheating from players (e.g. playing card that they don't own)
 
-        private readonly List<Card> southNorthPlayersCardsTaken;
-        private readonly List<Card> eastWestPlayersCardsTaken;
+        private readonly CardsCollection southNorthPlayersCardsTaken;
+        private readonly CardsCollection eastWestPlayersCardsTaken;
 
         public DealManager(GameManager game)
         {
             this.game = game;
 
-            this.cardDeck = new Queue<Card>(CardsHelper.GetFullCardDeck());
+            this.cardDeck = new Queue<Card>(CardsCollection.GetFullCardDeck());
 
-            this.playerCards = new[] { new List<Card>(), new List<Card>(), new List<Card>(), new List<Card>() }; // 4 players
+            this.playerCards = new[] { new CardsCollection(), new CardsCollection(), new CardsCollection(), new CardsCollection() }; // 4 players
 
-            this.southNorthPlayersCardsTaken = new List<Card>();
-            this.eastWestPlayersCardsTaken = new List<Card>();
+            this.southNorthPlayersCardsTaken = new CardsCollection();
+            this.eastWestPlayersCardsTaken = new CardsCollection();
         }
 
         public DealResult PlayDeal()
@@ -103,7 +103,7 @@
                             currentContract = new Contract(this.game[currentPlayer], currentContract.Type, currentContract.PlayerPosition, true, false);
                             break;
                         case BidType.ReDouble:
-                            currentContract = new Contract(this.game[currentPlayer], currentContract.Type, currentContract.PlayerPosition, false, true);
+                            currentContract = new Contract(this.game[currentPlayer], currentContract.Type, currentContract.OriginalBidder, false, true);
                             break;
                     }
 

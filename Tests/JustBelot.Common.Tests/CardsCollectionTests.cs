@@ -3,13 +3,13 @@
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     [TestClass]
-    public class CardsHelperTests
+    public class CardsCollectionTests
     {
         [TestMethod]
         public void TheFullDeckOfCardsHasFourSuitedCombinationOfKingAndQueens()
         {
-            var cards = CardsHelper.GetFullCardDeck();
-            var combinations = CardsHelper.NumberOfQueenAndKingCombinations(cards);
+            var cards = CardsCollection.GetFullCardDeck();
+            var combinations = cards.NumberOfQueenAndKingCombinations();
             Assert.AreEqual(4, combinations);
         }
     }

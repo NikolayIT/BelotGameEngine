@@ -43,7 +43,6 @@
     <Compile Include="BidType.cs" />
     <Compile Include="Card.cs" />
     <Compile Include="CardSuit.cs" />
-    <Compile Include="CardsHelper.cs" />
     <Compile Include="CardType.cs" />
     <Compile Include="Contract.cs" />
     <Compile Include="ContractType.cs" />
@@ -55,7 +54,7 @@
     <Compile Include="Extensions\QueueExtensions.cs" />
     <Compile Include="GameInfo.cs" />
     <Compile Include="GameManager.cs" />
-    <Compile Include="Hand.cs" />
+    <Compile Include="CardsCollection.cs" />
     <Compile Include="InvalidPlayerActionException.cs" />
     <Compile Include="IPlayer.cs" />
     <Compile Include="Extensions\ListExtensions.cs" />

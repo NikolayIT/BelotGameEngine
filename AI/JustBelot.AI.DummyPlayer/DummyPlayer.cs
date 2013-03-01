@@ -7,7 +7,7 @@
 
     public class DummyPlayer : IPlayer
     {
-        private readonly Hand hand = new Hand();
+        private readonly CardsCollection hand = new CardsCollection();
 
         public DummyPlayer(string name)
         {
