@@ -32,6 +32,7 @@
             this.Position = position;
             this.Game = gameInfo;
             this.Game.PlayerBid += this.GameOnPlayerBid;
+            this.Game.CardPlayed += this.GameOnCardPlayed;
         }
 
         public void StartNewDeal(DealInfo dealInfo)
@@ -218,6 +219,36 @@
             }
 
             ConsoleHelper.WriteOnPosition(string.Format("{0} from {1} ({2} player)", bidEventArgs.Bid, this.Game[bidEventArgs.Position].Name, bidEventArgs.Position), 0, 18);
+            ConsoleHelper.WriteOnPosition("Press enter to continue...", 0, 19);
+            Console.ReadLine();
+        }
+
+        private void GameOnCardPlayed(CardPlayedEventArgs eventArgs)
+        {
+            this.Draw();
+
+            if (eventArgs.Position == this.Position)
+            {
+                // Current player bid event
+                return;
+            }
+
+            if (eventArgs.Position == PlayerPosition.East)
+            {
+                ConsoleHelper.DrawTextBoxTopRight(eventArgs.PlayAction.Card.ToString(), 80 - 2 - this.Game[PlayerPosition.East].Name.Length - 2, 8);
+            }
+
+            if (eventArgs.Position == PlayerPosition.North)
+            {
+                ConsoleHelper.DrawTextBoxTopLeft(eventArgs.PlayAction.Card.ToString(), 40 - (eventArgs.PlayAction.Card.ToString().Length / 2), 4);
+            }
+
+            if (eventArgs.Position == PlayerPosition.West)
+            {
+                ConsoleHelper.DrawTextBoxTopLeft(eventArgs.PlayAction.Card.ToString(), this.Game[PlayerPosition.West].Name.Length + 3, 8);
+            }
+
+            ConsoleHelper.WriteOnPosition(string.Format("Played {0} played {1}.", this.Game[eventArgs.Position].Name, eventArgs.PlayAction.Card), 0, 18);
             ConsoleHelper.WriteOnPosition("Press enter to continue...", 0, 19);
             Console.ReadLine();
         }

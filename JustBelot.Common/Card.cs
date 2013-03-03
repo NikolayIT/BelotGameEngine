@@ -16,6 +16,16 @@
 
         public CardSuit Suit { get; set; }
 
+        public static bool operator ==(Card firstCard, Card secondCard)
+        {
+            return firstCard.Equals(secondCard);
+        }
+
+        public static bool operator !=(Card firstCard, Card secondCard)
+        {
+            return !firstCard.Equals(secondCard);
+        }
+
         public static Card operator ++(Card card)
         {
             var newCard = new Card(card.Type, card.Suit);
@@ -200,6 +210,17 @@
             var type = TypeToString(this.Type);
             var color = SuitToString(this.Suit);
             return string.Format("{0}{1}", type, color);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Card)
+            {
+                var card = (Card)obj;
+                return this.Type == card.Type && this.Suit == card.Suit;
+            }
+
+            return false;
         }
     }
 }

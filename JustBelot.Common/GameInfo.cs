@@ -12,9 +12,13 @@
             this.gameManager = gameManager;
         }
 
-        public delegate void PlayerBidHandler(BidEventArgs e);
+        public delegate void PlayerBidHandler(BidEventArgs eventArgs);
+
+        public delegate void CardPlayedHandled(CardPlayedEventArgs eventArgs);
 
         public event PlayerBidHandler PlayerBid;
+
+        public event CardPlayedHandled CardPlayed;
 
         public int SouthNorthScore
         {
@@ -61,6 +65,14 @@
             if (this.PlayerBid != null)
             {
                 this.PlayerBid(eventArgs);
+            }
+        }
+
+        internal void InformForPlayedCard(CardPlayedEventArgs eventArgs)
+        {
+            if (this.CardPlayed != null)
+            {
+                this.CardPlayed(eventArgs);
             }
         }
     }

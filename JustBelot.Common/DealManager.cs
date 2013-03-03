@@ -151,9 +151,10 @@
                         var declarations = this.AskForDeclarations(currentPlayer);
                     }
 
-                    var playAction = this.PlayCard(currentPlayer);
+                    var playAction = this.PlayCard(currentPlayer, contract, currentTrickCards);
                     currentTrickCards.Add(playAction.Card);
 
+                    this.game.GameInfo.InformForPlayedCard(new CardPlayedEventArgs(this.game[currentPlayer], playAction));
                     currentPlayer = this.game.GetNextPlayer(currentPlayer);
                 }
 
@@ -169,9 +170,16 @@
             }
         }
 
-        private PlayAction PlayCard(IPlayer player)
+        private PlayAction PlayCard(IPlayer player, Contract contract, CardsCollection currentTrickCards)
         {
-            IEnumerable<Card> allowedCards = this.playerCards[(int)game[player]];
+            var playerCards = new CardsCollection();
+            foreach (var card in this.playerCards[(int)this.game[player]])
+            {
+                playerCards.Add(card);
+            }
+
+            IEnumerable<Card> allowedCards = playerCards.GetAllowedCards(contract, currentTrickCards);
+
             // TODO: Play cards and check announcements (belot)
             var playAction = player.PlayCard(allowedCards);
             // TODO: Check if the played card is valid
