@@ -16,6 +16,7 @@
             Console.BackgroundColor = backgroundColor;
             Console.Write(text);
         }
+
         public static void WriteOnPosition(
             char character,
             int left = 0,

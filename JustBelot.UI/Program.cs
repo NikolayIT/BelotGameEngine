@@ -14,7 +14,7 @@
         {
             // Initialize console properties
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-            ConsoleHelper.ResizeConsole(80, 20);
+            ConsoleHelper.ResizeConsole(80, Settings.ConsoleHeight);
             Console.OutputEncoding = Encoding.Unicode;
 
             Console.Title = Settings.ProgramName;

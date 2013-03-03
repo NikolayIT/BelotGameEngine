@@ -149,10 +149,12 @@
             {
                 if (this.Any(x => x.Suit == firstCard.Suit))
                 {
-                    if (this.Any(card => card.Suit == firstCard.Suit && card.Type.GetOrderForAllTrumps() > firstCard.Type.GetOrderForAllTrumps()))
+                    var bestCard = currentTrickCards.Where(card => card.Suit == firstCard.Suit).OrderBy(x => x.Type.GetOrderForAllTrumps()).First();
+
+                    if (this.Any(card => card.Suit == firstCard.Suit && card.Type.GetOrderForAllTrumps() > bestCard.Type.GetOrderForAllTrumps()))
                     {
                         // Has bigger card(s)
-                        return this.Where(card => card.Suit == firstCard.Suit && card.Type.GetOrderForAllTrumps() > firstCard.Type.GetOrderForAllTrumps());
+                        return this.Where(card => card.Suit == firstCard.Suit && card.Type.GetOrderForAllTrumps() > bestCard.Type.GetOrderForAllTrumps());
                     }
 
                     // Any other card from the same suit
@@ -271,24 +273,36 @@
             }
         }
 
-        public bool IsCombinationOfQueenAndKingAvailable(Card playedCard)
+        public bool IsBeloteAllowed(Contract contract, IEnumerable<Card> currentTrickCards, Card card)
         {
-            if (!this.Contains(playedCard))
+            var belote = false;
+            if (contract.Type != ContractType.NoTrumps && this.IsCombinationOfQueenAndKingAvailable(card))
             {
-                return false;
+                if (contract.Type == ContractType.AllTrumps)
+                {
+                    if (!currentTrickCards.Any())
+                    {
+                        // The player is first
+                        belote = true;
+                    }
+                    else if (currentTrickCards.First().Suit == card.Suit)
+                    {
+                        // Belote is allowed only when playing card from the same suit
+                        belote = true;
+                    }
+                }
+                else
+                {
+                    // Clubs, Diamonds, Hearts or Spades
+                    if (card.Suit == contract.Type.ToCardSuit())
+                    {
+                        // Only if belote is from the trump suit
+                        belote = true;
+                    }
+                }
             }
 
-            if (playedCard.Type == CardType.King)
-            {
-                return this.Any(x => x.Type == CardType.Queen && x.Suit == playedCard.Suit);
-            }
-
-            if (playedCard.Type == CardType.Queen)
-            {
-                return this.Any(x => x.Type == CardType.King && x.Suit == playedCard.Suit);
-            }
-
-            return false;
+            return belote;
         }
 
         /// <summary>
@@ -375,6 +389,26 @@
                 default:
                     throw new ArgumentOutOfRangeException("suit");
             }
+        }
+
+        private bool IsCombinationOfQueenAndKingAvailable(Card playedCard)
+        {
+            if (!this.Contains(playedCard))
+            {
+                return false;
+            }
+
+            if (playedCard.Type == CardType.King)
+            {
+                return this.Any(x => x.Type == CardType.Queen && x.Suit == playedCard.Suit);
+            }
+
+            if (playedCard.Type == CardType.Queen)
+            {
+                return this.Any(x => x.Type == CardType.King && x.Suit == playedCard.Suit);
+            }
+
+            return false;
         }
 
         private void SortForAllTrump()

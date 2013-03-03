@@ -192,36 +192,9 @@
                 throw new InvalidPlayerActionException(player, string.Format("Invalid card: {0}", playAction.Card));
             }
 
-            // Belote (combination of Queens and Kings)
-            var belote = false;
-            if (contract.Type != ContractType.NoTrumps && playAction.AnnounceBeloteIfAvailable && currentPlayerCards.IsCombinationOfQueenAndKingAvailable(playAction.Card))
-            {
-                if (contract.Type == ContractType.AllTrumps)
-                {
-                    if (currentTrickCards.Count == 0)
-                    {
-                        // The player is first
-                        belote = true;
-                    }
-                    else if (currentTrickCards[0].Suit == playAction.Card.Suit)
-                    {
-                        // Belote is allowed only when playing card from the same suit
-                        belote = true;
-                    }
-                }
-                else
-                {
-                    // Clubs, Diamonds, Hearts or Spades
-                    if (playAction.Card.Suit == contract.Type.ToCardSuit())
-                    {
-                        // Only if belote is from the trump suit
-                        belote = true;
-                    }
-                }
-            }
-
             // Save belote to team points
-            if (belote)
+            playAction.Belote = false;
+            if (playAction.AnnounceBeloteIfAvailable && currentPlayerCards.IsBeloteAllowed(contract, currentTrickCards, playAction.Card))
             {
                 switch (this.game[player])
                 {
@@ -238,6 +211,8 @@
                         this.eastWestBelotes++;
                         break;
                 }
+
+                playAction.Belote = true;
             }
             
             // Remove played card from the players cards

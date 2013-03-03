@@ -7,10 +7,13 @@
         {
             this.Card = card;
             this.AnnounceBeloteIfAvailable = announceBeloteIfAvailable;
+            this.Belote = false;
         }
 
         public Card Card { get; set; }
 
         public bool AnnounceBeloteIfAvailable { get; set; }
+
+        public bool Belote { get; internal set; }
     }
 }

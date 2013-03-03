@@ -2,12 +2,10 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Text;
 
     using JustBelot.Common;
-
-    using System.Linq;
-
     using JustBelot.Common.Extensions;
 
     public class ConsoleHumanPlayer : IPlayer
@@ -137,20 +135,39 @@
             // this.Draw();
             while (true)
             {
+                var action = new PlayAction();
                 ConsoleHelper.WriteOnPosition(new string(' ', 78), 0, Settings.ConsoleHeight - 3);
                 ConsoleHelper.WriteOnPosition(new string(' ', 78), 0, Settings.ConsoleHeight - 2);
                 ConsoleHelper.WriteOnPosition(sb.ToString().Trim(), 0, Settings.ConsoleHeight - 2);
                 ConsoleHelper.WriteOnPosition("It's your turn! Please select card to play: ", 0, Settings.ConsoleHeight - 3);
                 var cardIndexAsString = Console.ReadLine();
                 int cardIndex;
+
                 if (int.TryParse(cardIndexAsString, out cardIndex))
                 {
                     if (cardIndex > 0 && cardIndex <= allowedCardsList.Count)
                     {
-                        // TODO: Ask player if he wants to announce belote
                         var cardToPlay = allowedCardsList[cardIndex - 1];
+                        action.Card = cardToPlay;
+
+                        if (this.hand.IsBeloteAllowed(Contract, currentTrickCards, cardToPlay))
+                        {
+                            ConsoleHelper.WriteOnPosition(new string(' ', 78), 0, Settings.ConsoleHeight - 3);
+                            ConsoleHelper.WriteOnPosition(new string(' ', 78), 0, Settings.ConsoleHeight - 2);
+                            ConsoleHelper.WriteOnPosition("Y(es) / N(o)", 0, Settings.ConsoleHeight - 2);
+                            ConsoleHelper.WriteOnPosition("You have belote! Do you want to announce it? Y/N ", 0, Settings.ConsoleHeight - 3);
+                            var answer = Console.ReadLine();
+
+                            if (!string.IsNullOrWhiteSpace(answer) && answer[0] == 'N')
+                            {
+                                action.AnnounceBeloteIfAvailable = false;
+                            }
+
+                            Console.ReadLine();
+                        }
+
                         this.hand.Remove(cardToPlay);
-                        return new PlayAction(cardToPlay);
+                        return action;
                     }
                 }
             }
@@ -245,21 +262,37 @@
                 if (position == PlayerPosition.South)
                 {
                     ConsoleHelper.DrawTextBoxTopLeft(eventArgs.CurrentTrickCards.ToList()[i].ToString(), 40 - (eventArgs.CurrentTrickCards.ToList()[i].ToString().Length / 2), Settings.ConsoleHeight - 9);
+                    if (position == eventArgs.Position && eventArgs.PlayAction.Belote)
+                    {
+                        ConsoleHelper.DrawTextBoxTopLeft("Belote", 40 - ("Belote".Length / 2), Settings.ConsoleHeight - 10);
+                    }
                 }
 
                 if (position == PlayerPosition.East)
                 {
                     ConsoleHelper.DrawTextBoxTopRight(eventArgs.CurrentTrickCards.ToList()[i].ToString(), 80 - 2 - this.Game[PlayerPosition.East].Name.Length - 2, 8);
+                    if (position == eventArgs.Position && eventArgs.PlayAction.Belote)
+                    {
+                        ConsoleHelper.DrawTextBoxTopLeft("Belote", 80 - 2 - this.Game[PlayerPosition.East].Name.Length - 2 - eventArgs.CurrentTrickCards.ToList()[i].ToString().Length - 2, Settings.ConsoleHeight - 10);
+                    }
                 }
 
                 if (position == PlayerPosition.North)
                 {
                     ConsoleHelper.DrawTextBoxTopLeft(eventArgs.CurrentTrickCards.ToList()[i].ToString(), 40 - (eventArgs.CurrentTrickCards.ToList()[i].ToString().Length / 2), 4);
+                    if (position == eventArgs.Position && eventArgs.PlayAction.Belote)
+                    {
+                        ConsoleHelper.DrawTextBoxTopLeft("Belote", 40 - ("Belote".Length / 2), 7);
+                    }
                 }
 
                 if (position == PlayerPosition.West)
                 {
                     ConsoleHelper.DrawTextBoxTopLeft(eventArgs.CurrentTrickCards.ToList()[i].ToString(), this.Game[PlayerPosition.West].Name.Length + 3, 8);
+                    if (position == eventArgs.Position && eventArgs.PlayAction.Belote)
+                    {
+                        ConsoleHelper.DrawTextBoxTopLeft("Belote", this.Game[PlayerPosition.West].Name.Length + 3 + eventArgs.CurrentTrickCards.ToList()[i].ToString().Length + 2, Settings.ConsoleHeight - 10);
+                    }
                 }
 
                 position = position.PreviousPosition();
