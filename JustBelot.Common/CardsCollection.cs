@@ -183,10 +183,12 @@
                 // Trump card played
                 if (this.Any(x => x.Suit == firstCard.Suit))
                 {
-                    if (this.Any(card => card.Suit == firstCard.Suit && card.Type.GetOrderForAllTrumps() > firstCard.Type.GetOrderForAllTrumps()))
+                    var bestCard = currentTrickCards.Where(card => card.Suit == firstCard.Suit).OrderBy(x => x.Type.GetOrderForAllTrumps()).First();
+
+                    if (this.Any(card => card.Suit == firstCard.Suit && card.Type.GetOrderForAllTrumps() > bestCard.Type.GetOrderForAllTrumps()))
                     {
                         // Has bigger card(s)
-                        return this.Where(card => card.Suit == firstCard.Suit && card.Type.GetOrderForAllTrumps() > firstCard.Type.GetOrderForAllTrumps());
+                        return this.Where(card => card.Suit == firstCard.Suit && card.Type.GetOrderForAllTrumps() > bestCard.Type.GetOrderForAllTrumps());
                     }
 
                     // Any other card from the same suit
@@ -251,11 +253,9 @@
                                     // The player has bigger trump card(s) and should play one of them
                                     return this.Where(x => x.Suit == contract.Type.ToCardSuit() && x.Type.GetOrderForAllTrumps() > biggestTrumpCard.Type.GetOrderForAllTrumps());
                                 }
-                                else
-                                {
-                                    // The player hasn't any bigger trump card so he can play any card
-                                    return this;
-                                }
+
+                                // The player hasn't any bigger trump card so he can play any card
+                                return this;
                             }
                             else
                             {
@@ -264,11 +264,9 @@
                             }
                         }
                     }
-                    else
-                    {
-                        // The player has not any trump card or card from the played suit
-                        return this;
-                    }
+
+                    // The player has not any trump card or card from the played suit
+                    return this;
                 }
             }
         }

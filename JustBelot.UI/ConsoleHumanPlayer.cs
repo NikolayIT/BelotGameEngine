@@ -162,8 +162,6 @@
                             {
                                 action.AnnounceBeloteIfAvailable = false;
                             }
-
-                            Console.ReadLine();
                         }
 
                         this.hand.Remove(cardToPlay);
