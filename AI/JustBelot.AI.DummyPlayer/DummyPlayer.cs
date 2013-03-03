@@ -41,10 +41,10 @@
 
         public BidType AskForBid(Contract currentContract, IList<BidType> allowedBids, IList<BidType> previousBids)
         {
-            //return availableBids.RandomElement();
+            return allowedBids.RandomElement();
 
             // Dummy player always says pass
-            return BidType.Pass;
+            // return BidType.Pass;
         }
 
         public IEnumerable<Declaration> AskForDeclarations(IEnumerable<Declaration> allowedDeclarations)
@@ -53,7 +53,7 @@
             return new List<Declaration>();
         }
 
-        public PlayAction PlayCard(IEnumerable<Card> allowedCards)
+        public PlayAction PlayCard(IEnumerable<Card> allowedCards, IEnumerable<Card> currentTrickCards)
         {
             // Since this is a dummy player he will randomly return one of the allowed cards
             var cardToPlay = new List<Card>(allowedCards).RandomElement();

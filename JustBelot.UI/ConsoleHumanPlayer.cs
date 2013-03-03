@@ -6,6 +6,10 @@
 
     using JustBelot.Common;
 
+    using System.Linq;
+
+    using JustBelot.Common.Extensions;
+
     public class ConsoleHumanPlayer : IPlayer
     {
         private readonly CardsCollection hand;
@@ -62,8 +66,8 @@
 
                 var availableBidsAsString = AvailableBidsAsString(allowedBids);
 
-                ConsoleHelper.WriteOnPosition(availableBidsAsString, 0, 19);
-                ConsoleHelper.WriteOnPosition("It's your turn! Please enter your bid: ", 0, 18);
+                ConsoleHelper.WriteOnPosition(availableBidsAsString, 0, Settings.ConsoleHeight - 2);
+                ConsoleHelper.WriteOnPosition("It's your turn! Please enter your bid: ", 0, Settings.ConsoleHeight - 3);
 
                 BidType bid;
 
@@ -116,11 +120,11 @@
         public IEnumerable<Declaration> AskForDeclarations(IEnumerable<Declaration> allowedDeclarations)
         {
             // TODO: Find declarations and ask user for them
-            ConsoleHelper.WriteOnPosition("No declarations available.", 0, 18);
+            ConsoleHelper.WriteOnPosition("No declarations available.", 0, Settings.ConsoleHeight - 3);
             return new List<Declaration>();
         }
 
-        public PlayAction PlayCard(IEnumerable<Card> allowedCards)
+        public PlayAction PlayCard(IEnumerable<Card> allowedCards, IEnumerable<Card> currentTrickCards)
         {
             var sb = new StringBuilder();
             var allowedCardsList = new CardsCollection(allowedCards);
@@ -130,11 +134,13 @@
                 sb.AppendFormat("{0}({1}); ", i + 1, allowedCardsList[i]);
             }
 
+            // this.Draw();
             while (true)
             {
-                this.Draw();
-                ConsoleHelper.WriteOnPosition(sb.ToString().Trim(), 0, 19);
-                ConsoleHelper.WriteOnPosition("It's your turn! Please select card to play: ", 0, 18);
+                ConsoleHelper.WriteOnPosition(new string(' ', 78), 0, Settings.ConsoleHeight - 3);
+                ConsoleHelper.WriteOnPosition(new string(' ', 78), 0, Settings.ConsoleHeight - 2);
+                ConsoleHelper.WriteOnPosition(sb.ToString().Trim(), 0, Settings.ConsoleHeight - 2);
+                ConsoleHelper.WriteOnPosition("It's your turn! Please select card to play: ", 0, Settings.ConsoleHeight - 3);
                 var cardIndexAsString = Console.ReadLine();
                 int cardIndex;
                 if (int.TryParse(cardIndexAsString, out cardIndex))
@@ -218,8 +224,8 @@
                 ConsoleHelper.DrawTextBoxTopLeft(bidEventArgs.Bid.ToString(), this.Game[PlayerPosition.West].Name.Length + 3, 8);
             }
 
-            ConsoleHelper.WriteOnPosition(string.Format("{0} from {1} ({2} player)", bidEventArgs.Bid, this.Game[bidEventArgs.Position].Name, bidEventArgs.Position), 0, 18);
-            ConsoleHelper.WriteOnPosition("Press enter to continue...", 0, 19);
+            ConsoleHelper.WriteOnPosition(string.Format("{0} from {1} ({2} player)", bidEventArgs.Bid, this.Game[bidEventArgs.Position].Name, bidEventArgs.Position), 0, Settings.ConsoleHeight - 3);
+            ConsoleHelper.WriteOnPosition("Press enter to continue...", 0, Settings.ConsoleHeight - 2);
             Console.ReadLine();
         }
 
@@ -233,23 +239,34 @@
                 return;
             }
 
-            if (eventArgs.Position == PlayerPosition.East)
+            var position = eventArgs.Position;
+            for (int i = eventArgs.CurrentTrickCards.Count() - 1; i >= 0; i--)
             {
-                ConsoleHelper.DrawTextBoxTopRight(eventArgs.PlayAction.Card.ToString(), 80 - 2 - this.Game[PlayerPosition.East].Name.Length - 2, 8);
+                if (position == PlayerPosition.South)
+                {
+                    ConsoleHelper.DrawTextBoxTopLeft(eventArgs.CurrentTrickCards.ToList()[i].ToString(), 40 - (eventArgs.CurrentTrickCards.ToList()[i].ToString().Length / 2), Settings.ConsoleHeight - 9);
+                }
+
+                if (position == PlayerPosition.East)
+                {
+                    ConsoleHelper.DrawTextBoxTopRight(eventArgs.CurrentTrickCards.ToList()[i].ToString(), 80 - 2 - this.Game[PlayerPosition.East].Name.Length - 2, 8);
+                }
+
+                if (position == PlayerPosition.North)
+                {
+                    ConsoleHelper.DrawTextBoxTopLeft(eventArgs.CurrentTrickCards.ToList()[i].ToString(), 40 - (eventArgs.CurrentTrickCards.ToList()[i].ToString().Length / 2), 4);
+                }
+
+                if (position == PlayerPosition.West)
+                {
+                    ConsoleHelper.DrawTextBoxTopLeft(eventArgs.CurrentTrickCards.ToList()[i].ToString(), this.Game[PlayerPosition.West].Name.Length + 3, 8);
+                }
+
+                position = position.PreviousPosition();
             }
 
-            if (eventArgs.Position == PlayerPosition.North)
-            {
-                ConsoleHelper.DrawTextBoxTopLeft(eventArgs.PlayAction.Card.ToString(), 40 - (eventArgs.PlayAction.Card.ToString().Length / 2), 4);
-            }
-
-            if (eventArgs.Position == PlayerPosition.West)
-            {
-                ConsoleHelper.DrawTextBoxTopLeft(eventArgs.PlayAction.Card.ToString(), this.Game[PlayerPosition.West].Name.Length + 3, 8);
-            }
-
-            ConsoleHelper.WriteOnPosition(string.Format("Played {0} played {1}.", this.Game[eventArgs.Position].Name, eventArgs.PlayAction.Card), 0, 18);
-            ConsoleHelper.WriteOnPosition("Press enter to continue...", 0, 19);
+            ConsoleHelper.WriteOnPosition(string.Format("Played {0} played {1}.", this.Game[eventArgs.Position].Name, eventArgs.PlayAction.Card), 0, Settings.ConsoleHeight - 3);
+            ConsoleHelper.WriteOnPosition("Press enter to continue...", 0, Settings.ConsoleHeight - 2);
             Console.ReadLine();
         }
 
@@ -267,7 +284,7 @@
             ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.West].Name, 2, 9, ConsoleColor.Black, ConsoleColor.Gray);
             ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.East].Name, 80 - 2 - this.Game[PlayerPosition.East].Name.Length, 9, ConsoleColor.Black, ConsoleColor.Gray);
             ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.North].Name, 40 - (this.Game[PlayerPosition.North].Name.Length / 2), 3, ConsoleColor.Black, ConsoleColor.Gray);
-            ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.South].Name, 40 - (this.Game[PlayerPosition.South].Name.Length / 2), 16, ConsoleColor.Black, ConsoleColor.Gray);
+            ConsoleHelper.WriteOnPosition(this.Game[PlayerPosition.South].Name, 40 - (this.Game[PlayerPosition.South].Name.Length / 2), Settings.ConsoleHeight - 5, ConsoleColor.Black, ConsoleColor.Gray);
 
             int left = 40 - (this.hand.ToString().Replace(" ", string.Empty).Length / 2);
             this.hand.Sort(ContractType.AllTrumps);
@@ -284,7 +301,7 @@
                     color = ConsoleColor.Black;
                 }
 
-                ConsoleHelper.WriteOnPosition(cardAsString, left, 15, color, ConsoleColor.White);
+                ConsoleHelper.WriteOnPosition(cardAsString, left, Settings.ConsoleHeight - 6, color, ConsoleColor.White);
                 left += cardAsString.Length;
             }
         }

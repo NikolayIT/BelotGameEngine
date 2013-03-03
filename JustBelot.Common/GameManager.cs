@@ -44,7 +44,7 @@
 
         public int DealNumber { get; private set; }
 
-        internal GameInfo GameInfo { get; private set; }
+        public GameInfo GameInfo { get; private set; }
 
         internal PlayerPosition this[IPlayer player]
         {

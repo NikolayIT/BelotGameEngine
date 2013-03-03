@@ -26,6 +26,6 @@ namespace JustBelot.Common
 
         IEnumerable<Declaration> AskForDeclarations(IEnumerable<Declaration> allowedDeclarations);
 
-        PlayAction PlayCard(IEnumerable<Card> allowedCards);
+        PlayAction PlayCard(IEnumerable<Card> allowedCards, IEnumerable<Card> currentTrickCards);
     }
 }

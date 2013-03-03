@@ -1,10 +1,10 @@
 ﻿namespace JustBelot.Common
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
     using JustBelot.Common.Extensions;
-    using System;
 
     /// <summary>
     /// Responsible for one deal (one particular allocation of 32 cards to the four players including the bidding, the play of the cards and the scoring based on those cards. 
@@ -20,6 +20,9 @@
         private readonly CardsCollection southNorthPlayersCardsTaken;
         private readonly CardsCollection eastWestPlayersCardsTaken;
 
+        private int southNorthBelotes;
+        private int eastWestBelotes;
+
         public DealManager(GameManager game)
         {
             this.game = game;
@@ -30,6 +33,9 @@
 
             this.southNorthPlayersCardsTaken = new CardsCollection();
             this.eastWestPlayersCardsTaken = new CardsCollection();
+
+            this.southNorthBelotes = 0;
+            this.eastWestBelotes = 0;
         }
 
         public DealResult PlayDeal()
@@ -154,9 +160,10 @@
                     var playAction = this.PlayCard(currentPlayer, contract, currentTrickCards);
                     currentTrickCards.Add(playAction.Card);
 
-                    this.game.GameInfo.InformForPlayedCard(new CardPlayedEventArgs(this.game[currentPlayer], playAction));
+                    this.game.GameInfo.InformForPlayedCard(new CardPlayedEventArgs(this.game[currentPlayer], playAction, currentTrickCards.ToList()));
                     currentPlayer = this.game.GetNextPlayer(currentPlayer);
                 }
+
 
                 // Find who wins the trick
                 // currentPlayer = trickWinner
@@ -170,20 +177,70 @@
             }
         }
 
-        private PlayAction PlayCard(IPlayer player, Contract contract, CardsCollection currentTrickCards)
+        private PlayAction PlayCard(IPlayer player, Contract contract, IList<Card> currentTrickCards)
         {
-            var playerCards = new CardsCollection();
-            foreach (var card in this.playerCards[(int)this.game[player]])
+            // Prepare played cards and allowed cards
+            var currentPlayerCards = this.playerCards[(int)this.game[player]];
+            var allowedCards = new CardsCollection(currentPlayerCards.GetAllowedCards(contract, currentTrickCards));
+
+            // Play card
+            var playAction = player.PlayCard(allowedCards.ToList(), currentTrickCards.ToList());
+            
+            // Check for invalid card
+            if (!allowedCards.Contains(playAction.Card))
             {
-                playerCards.Add(card);
+                throw new InvalidPlayerActionException(player, string.Format("Invalid card: {0}", playAction.Card));
             }
 
-            IEnumerable<Card> allowedCards = playerCards.GetAllowedCards(contract, currentTrickCards);
+            // Belote (combination of Queens and Kings)
+            var belote = false;
+            if (contract.Type != ContractType.NoTrumps && playAction.AnnounceBeloteIfAvailable && currentPlayerCards.IsCombinationOfQueenAndKingAvailable(playAction.Card))
+            {
+                if (contract.Type == ContractType.AllTrumps)
+                {
+                    if (currentTrickCards.Count == 0)
+                    {
+                        // The player is first
+                        belote = true;
+                    }
+                    else if (currentTrickCards[0].Suit == playAction.Card.Suit)
+                    {
+                        // Belote is allowed only when playing card from the same suit
+                        belote = true;
+                    }
+                }
+                else
+                {
+                    // Clubs, Diamonds, Hearts or Spades
+                    if (playAction.Card.Suit == contract.Type.ToCardSuit())
+                    {
+                        // Only if belote is from the trump suit
+                        belote = true;
+                    }
+                }
+            }
 
-            // TODO: Play cards and check announcements (belot)
-            var playAction = player.PlayCard(allowedCards);
-            // TODO: Check if the played card is valid
-
+            // Save belote to team points
+            if (belote)
+            {
+                switch (this.game[player])
+                {
+                    case PlayerPosition.South:
+                        this.southNorthBelotes++;
+                        break;
+                    case PlayerPosition.East:
+                        this.eastWestBelotes++;
+                        break;
+                    case PlayerPosition.North:
+                        this.southNorthBelotes++;
+                        break;
+                    case PlayerPosition.West:
+                        this.eastWestBelotes++;
+                        break;
+                }
+            }
+            
+            // Remove played card from the players cards
             this.playerCards[(int)this.game[player]].Remove(playAction.Card);
             return playAction;
         }

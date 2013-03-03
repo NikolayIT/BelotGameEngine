@@ -271,6 +271,26 @@
             }
         }
 
+        public bool IsCombinationOfQueenAndKingAvailable(Card playedCard)
+        {
+            if (!this.Contains(playedCard))
+            {
+                return false;
+            }
+
+            if (playedCard.Type == CardType.King)
+            {
+                return this.Any(x => x.Type == CardType.Queen && x.Suit == playedCard.Suit);
+            }
+
+            if (playedCard.Type == CardType.Queen)
+            {
+                return this.Any(x => x.Type == CardType.King && x.Suit == playedCard.Suit);
+            }
+
+            return false;
+        }
+
         /// <summary>
         /// Returns the number of "belot" combinations (king + queen of the same suit)
         /// </summary>

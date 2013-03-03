@@ -2,15 +2,15 @@
 {
     public struct PlayAction
     {
-        public PlayAction(Card card, bool belote = false)
+        public PlayAction(Card card, bool announceBeloteIfAvailable = true)
             : this()
         {
             this.Card = card;
-            this.Belote = belote;
+            this.AnnounceBeloteIfAvailable = announceBeloteIfAvailable;
         }
 
         public Card Card { get; set; }
 
-        public bool Belote { get; set; }
+        public bool AnnounceBeloteIfAvailable { get; set; }
     }
 }
