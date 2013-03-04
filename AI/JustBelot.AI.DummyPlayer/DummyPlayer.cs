@@ -66,5 +66,9 @@
             var action = new PlayAction { Card = cardToPlay };
             return action;
         }
+
+        public void EndOfDeal(DealResult dealResult)
+        {
+        }
     }
 }

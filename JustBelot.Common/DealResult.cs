@@ -1,22 +1,25 @@
 ﻿namespace JustBelot.Common
 {
-    internal struct DealResult
+    public struct DealResult
     {
-        public DealResult(bool dealPlayed, Contract contract, int eastWestPoints = 0, int southNorthPoints = 0)
+        public DealResult(bool dealPlayed, Contract contract, int southNorthPoints = 0, int eastWestPoints = 0, bool noTricksForOneOfTheTeams = false)
             : this()
         {
             this.DealPlayed = dealPlayed;
             this.Contract = contract;
             this.EastWestPoints = eastWestPoints;
             this.SouthNorthPoints = southNorthPoints;
+            this.NoTricksForOneOfTheTeams = noTricksForOneOfTheTeams;
         }
 
         public bool DealPlayed { get; private set; }
 
-        public Contract Contract { get; set; }
+        public Contract Contract { get; private set; }
+
+        public int SouthNorthPoints { get; private set; }
 
         public int EastWestPoints { get; private set; }
 
-        public int SouthNorthPoints { get; private set; }
+        public bool NoTricksForOneOfTheTeams { get; private set; }
     }
 }

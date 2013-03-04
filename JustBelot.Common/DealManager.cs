@@ -181,6 +181,7 @@
 
                 if (trickNumber == 8)
                 {
+                    // Last hand
                     if (trickWinner == PlayerPosition.South || trickWinner == PlayerPosition.North)
                     {
                         this.southNorthTeamTakesLastHand = true;
@@ -248,16 +249,27 @@
 
         private DealResult PrepareDealResult(Contract contract)
         {
-            // TODO: Evaluate game result and don't forget the "last 10" rule and announcements
-            var result = new DealResult(true, contract);
+            var southNorthCardPointsSum = this.southNorthPlayersCardsTaken.Sum(card => card.GetValue(contract.Type));
+            var eastWestCardPointsSum = this.eastWestPlayersCardsTaken.Sum(card => card.GetValue(contract.Type));
+            var noTricksForOneOfTheTeams = this.southNorthPlayersCardsTaken.Count == 0 || this.eastWestPlayersCardsTaken.Count == 0;
+            
+            // "last 10" rule
+            if (this.southNorthTeamTakesLastHand == true)
+            {
+                southNorthCardPointsSum += 10;
+            }
+            else if (this.southNorthTeamTakesLastHand == false)
+            {
+                eastWestCardPointsSum += 10;
+            }
 
-            int southNorthCardPointsSum = this.southNorthPlayersCardsTaken.Sum(card => card.GetValue(contract.Type));
-            int eastWestCardPointsSum = this.eastWestPlayersCardsTaken.Sum(card => card.GetValue(contract.Type));
+            // Belotes
+            southNorthCardPointsSum += 20 * this.southNorthBelotes;
+            eastWestCardPointsSum += 20 * this.eastWestBelotes;
 
+            // TODO: Count announcements
 
-            //result.SouthNorthPoints = 0;
-            //result.EastWestPoints = 0;
-
+            var result = new DealResult(true, contract, southNorthCardPointsSum / 10, eastWestCardPointsSum / 10, noTricksForOneOfTheTeams);
             return result;
         }
     }

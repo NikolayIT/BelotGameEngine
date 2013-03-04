@@ -172,6 +172,10 @@
             }
         }
 
+        public void EndOfDeal(DealResult dealResult)
+        {
+        }
+
         private static string AvailableBidsAsString(IEnumerable<BidType> availableBids)
         {
             var availableBidsAsString = new StringBuilder();
@@ -306,7 +310,7 @@
         {
             // TODO: Refactor (extract constants, improve code)
             ConsoleHelper.ClearAndResetConsole();
-            ConsoleHelper.DrawTextBoxTopRight(string.Format("{0} - {1}", this.Game.SouthNorthScore, this.Game.EastWestScore), Console.WindowWidth - 1, 0, ConsoleColor.Black, ConsoleColor.DarkGray);
+            ConsoleHelper.DrawTextBoxTopRight(string.Format("(SN){0} - {1}(EW)", this.Game.SouthNorthScore, this.Game.EastWestScore), Console.WindowWidth - 1, 0, ConsoleColor.Black, ConsoleColor.DarkGray);
             var contractString = (this.Contract.IsAvailable ? this.Game[this.Contract.PlayerPosition].Name + ": " : string.Empty) + this.Contract.ToString();
             ConsoleHelper.DrawTextBoxTopLeft(contractString, 0, 0, ConsoleColor.Black, ConsoleColor.DarkGray);
             var dealNumberString = string.Format("Deal №{0}", this.Game.DealNumber);

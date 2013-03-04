@@ -30,13 +30,7 @@
             westPlayer.StartNewGame(this.GameInfo, PlayerPosition.West);
         }
 
-        public bool IsGameOver
-        {
-            get
-            {
-                return false; // (SouthNorthScore >= 151 || EastWestScore >= 151) && Last game is not "valat"
-            }
-        }
+        public bool IsGameOver { get; private set; }
 
         public int SouthNorthScore { get; private set; }
 
@@ -186,7 +180,24 @@
 
             var dealResult = this.dealManager.PlayDeal();
 
-            // TODO: "С капо (валат) не се излиза"
+            this.SouthNorthScore += dealResult.SouthNorthPoints;
+            this.EastWestScore += dealResult.EastWestPoints;
+
+            foreach (var player in this.players)
+            {
+                player.EndOfDeal(dealResult);
+            }
+
+            if (dealResult.NoTricksForOneOfTheTeams)
+            {
+                // The game should continue when one of the teams has no tricks
+                return;
+            }
+
+            if (this.SouthNorthScore >= 151 || this.EastWestScore >= 151)
+            {
+                this.IsGameOver = true;
+            }
         }
 
         // TODO: Give players access to previous contracts or inform them for the contracts
