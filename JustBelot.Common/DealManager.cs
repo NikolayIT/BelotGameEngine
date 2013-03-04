@@ -23,6 +23,8 @@
         private int southNorthBelotes;
         private int eastWestBelotes;
 
+        private bool? southNorthTeamTakesLastHand;
+
         public DealManager(GameManager game)
         {
             this.game = game;
@@ -36,6 +38,8 @@
 
             this.southNorthBelotes = 0;
             this.eastWestBelotes = 0;
+
+            this.southNorthTeamTakesLastHand = null;
         }
 
         public DealResult PlayDeal()
@@ -148,7 +152,7 @@
 
             for (int trickNumber = 1; trickNumber <= 8; trickNumber++)
             {
-                var currentTrickCards = new CardsCollection();
+                var currentTrick = new Trick(contract, this.game[currentPlayer]);
 
                 for (int i = 0; i < 4; i++)
                 {
@@ -157,23 +161,37 @@
                         var declarations = this.AskForDeclarations(currentPlayer);
                     }
 
-                    var playAction = this.PlayCard(currentPlayer, contract, currentTrickCards);
-                    currentTrickCards.Add(playAction.Card);
+                    var playAction = this.PlayCard(currentPlayer, contract, currentTrick);
+                    currentTrick.Add(playAction.Card);
 
-                    this.game.GameInfo.InformForPlayedCard(new CardPlayedEventArgs(this.game[currentPlayer], playAction, currentTrickCards.ToList()));
+                    this.game.GameInfo.InformForPlayedCard(new CardPlayedEventArgs(this.game[currentPlayer], playAction, currentTrick.ToList()));
                     currentPlayer = this.game.GetNextPlayer(currentPlayer);
                 }
 
+                var trickWinner = currentTrick.WinnerPlayer;
 
-                // Find who wins the trick
-                // currentPlayer = trickWinner
+                if (trickWinner == PlayerPosition.South || trickWinner == PlayerPosition.North)
+                {
+                    this.southNorthPlayersCardsTaken.Add(currentTrick);
+                }
+                else
+                {
+                    this.eastWestPlayersCardsTaken.Add(currentTrick);
+                }
 
                 if (trickNumber == 8)
                 {
-                    // TODO: Save who takes the last trick
+                    if (trickWinner == PlayerPosition.South || trickWinner == PlayerPosition.North)
+                    {
+                        this.southNorthTeamTakesLastHand = true;
+                    }
+                    else
+                    {
+                        this.southNorthTeamTakesLastHand = false;
+                    }
                 }
 
-                // southNorthPlayersCardsTaken.Add(); or eastWestPlayersCardsTaken.Add();
+                currentPlayer = this.game[trickWinner];
             }
         }
 

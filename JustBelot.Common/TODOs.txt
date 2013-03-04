@@ -1,6 +1,5 @@
 ﻿Important:
 - Announcements
-- Who wins the trick
 - Counting final result
 	- Double/redouble
 	- Hanging points

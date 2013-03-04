@@ -86,6 +86,14 @@
             this.cards.Add(item);
         }
 
+        public void Add(IEnumerable<Card> cardsCollection)
+        {
+            foreach (var card in cardsCollection)
+            {
+                this.cards.Add(card);
+            }
+        }
+
         public void RemoveAt(int index)
         {
             this.cards.RemoveAt(index);
