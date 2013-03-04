@@ -15,7 +15,7 @@
 
         private readonly Queue<Card> cardDeck;
 
-        private readonly CardsCollection[] playerCards; // We are keeping local information about cards to prevent cheating from players (e.g. playing card that they don't own)
+        private readonly Hand[] playerCards; // We are keeping local information about cards to prevent cheating from players (e.g. playing card that they don't own)
 
         private readonly CardsCollection southNorthPlayersCardsTaken;
         private readonly CardsCollection eastWestPlayersCardsTaken;
@@ -29,7 +29,7 @@
 
             this.cardDeck = new Queue<Card>(CardsCollection.GetFullCardDeck());
 
-            this.playerCards = new[] { new CardsCollection(), new CardsCollection(), new CardsCollection(), new CardsCollection() }; // 4 players
+            this.playerCards = new[] { new Hand(), new Hand(), new Hand(), new Hand() }; // 4 players
 
             this.southNorthPlayersCardsTaken = new CardsCollection();
             this.eastWestPlayersCardsTaken = new CardsCollection();

@@ -10,12 +10,12 @@
 
     public class ConsoleHumanPlayer : IPlayer
     {
-        private readonly CardsCollection hand;
+        private readonly Hand hand;
 
         public ConsoleHumanPlayer(string name)
         {
             this.Name = name;
-            this.hand = new CardsCollection();
+            this.hand = new Hand();
         }
 
         public string Name { get; private set; }
@@ -75,6 +75,7 @@
                     continue;
                 }
 
+                playerContract = playerContract.Trim();
                 switch (char.ToUpper(playerContract[0]))
                 {
                     case 'A':
@@ -158,7 +159,7 @@
                             ConsoleHelper.WriteOnPosition("You have belote! Do you want to announce it? Y/N ", 0, Settings.ConsoleHeight - 3);
                             var answer = Console.ReadLine();
 
-                            if (!string.IsNullOrWhiteSpace(answer) && answer[0] == 'N')
+                            if (!string.IsNullOrWhiteSpace(answer) && answer.Trim()[0] == 'N')
                             {
                                 action.AnnounceBeloteIfAvailable = false;
                             }

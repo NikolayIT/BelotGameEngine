@@ -7,7 +7,12 @@
 
     public class DummyPlayer : IPlayer
     {
-        private readonly CardsCollection hand = new CardsCollection();
+        private readonly Hand hand = new Hand();
+
+        public DummyPlayer()
+        {
+            this.Name = "Dummy player";
+        }
 
         public DummyPlayer(string name)
         {
