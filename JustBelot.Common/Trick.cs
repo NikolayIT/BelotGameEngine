@@ -16,6 +16,11 @@
         {
             get
             {
+                if (this.Count == 0)
+                {
+                    return this.FirstPlayer;
+                }
+
                 var firstCard = this[0];
                 var bestCard = firstCard;
                 var bestPlayer = this.FirstPlayer;
@@ -23,7 +28,7 @@
 
                 if (this.Contract.Type == ContractType.AllTrumps)
                 {
-                    for (int i = 1; i < 4; i++)
+                    for (int i = 1; i < this.Count; i++)
                     {
                         currentPlayer = currentPlayer.NextPosition();
                         if (this[i].Suit == firstCard.Suit && this[i].Type.GetOrderForAllTrumps() > bestCard.Type.GetOrderForAllTrumps())
@@ -35,7 +40,7 @@
                 }
                 else if (this.Contract.Type == ContractType.NoTrumps)
                 {
-                    for (int i = 1; i < 4; i++)
+                    for (int i = 1; i < this.Count; i++)
                     {
                         currentPlayer = currentPlayer.NextPosition();
                         if (this[i].Suit == firstCard.Suit && this[i].Type.GetOrderForNoTrumps() > bestCard.Type.GetOrderForNoTrumps())
@@ -50,7 +55,7 @@
                     if (this.Any(x => x.Suit == this.Contract.Type.ToCardSuit()))
                     {
                         // Trump in the trick cards
-                        for (int i = 1; i < 4; i++)
+                        for (int i = 1; i < this.Count; i++)
                         {
                             currentPlayer = currentPlayer.NextPosition();
                             if (this[i].Suit == this.Contract.Type.ToCardSuit() && this[i].Type.GetOrderForAllTrumps() > bestCard.Type.GetOrderForAllTrumps())
@@ -63,7 +68,7 @@
                     else
                     {
                         // No trick in the cards
-                        for (int i = 1; i < 4; i++)
+                        for (int i = 1; i < this.Count; i++)
                         {
                             currentPlayer = currentPlayer.NextPosition();
                             if (this[i].Suit == firstCard.Suit && this[i].Type.GetOrderForNoTrumps() > bestCard.Type.GetOrderForNoTrumps())

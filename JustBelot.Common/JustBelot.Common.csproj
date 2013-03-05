@@ -42,6 +42,7 @@
     <Compile Include="BidEventArgs.cs" />
     <Compile Include="BidType.cs" />
     <Compile Include="Card.cs" />
+    <Compile Include="CardComparer.cs" />
     <Compile Include="CardPlayedEventArgs.cs" />
     <Compile Include="CardSuit.cs" />
     <Compile Include="CardType.cs" />

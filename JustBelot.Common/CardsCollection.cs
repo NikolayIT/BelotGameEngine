@@ -176,156 +176,37 @@
             return numberOfCombinations;
         }
 
-        // TODO: Define comparators
         public void Sort(ContractType contract)
         {
             if (contract == ContractType.AllTrumps)
             {
-                this.SortForAllTrump();
+                this.cards = this.OrderBy(x => x, CardComparer.AllTrumps).ToList();
             }
 
             if (contract == ContractType.NoTrumps)
             {
-                this.SortForNoTrump();
+                this.cards = this.OrderBy(x => x, CardComparer.NoTrumps).ToList();
             }
 
             if (contract == ContractType.Spades)
             {
-                this.SortForSuit(CardSuit.Spades);
+                this.cards = this.OrderBy(x => x, CardComparer.Spades).ToList();
             }
 
             if (contract == ContractType.Hearts)
             {
-                this.SortForSuit(CardSuit.Hearts);
+                this.cards = this.OrderBy(x => x, CardComparer.Hearts).ToList();
             }
 
             if (contract == ContractType.Diamonds)
             {
-                this.SortForSuit(CardSuit.Diamonds);
+                this.cards = this.OrderBy(x => x, CardComparer.Diamonds).ToList();
             }
 
             if (contract == ContractType.Clubs)
             {
-                this.SortForSuit(CardSuit.Clubs);
+                this.cards = this.OrderBy(x => x, CardComparer.Clubs).ToList();
             }
-        }
-
-        private static int CardSuitOrderValue(CardSuit suit)
-        {
-            switch (suit)
-            {
-                case CardSuit.Spades:
-                    return 40;
-                case CardSuit.Hearts:
-                    return 30;
-                case CardSuit.Diamonds:
-                    return 10;
-                case CardSuit.Clubs:
-                    return 20;
-                default:
-                    throw new ArgumentOutOfRangeException("suit");
-            }
-        }
-
-        private void SortForAllTrump()
-        {
-            this.cards = this.cards.OrderByDescending(card => card.Type.GetOrderForAllTrumps() + CardSuitOrderValue(card.Suit)).ToList();
-        }
-
-        private void SortForNoTrump()
-        {
-            this.cards = this.cards.OrderByDescending(card => card.Type.GetOrderForNoTrumps() + CardSuitOrderValue(card.Suit)).ToList();
-        }
-
-        private void SortForSuit(CardSuit suit)
-        {
-            this.cards = this.cards.OrderByDescending(card =>
-            {
-                if (card.Suit == suit)
-                {
-                    if (card.Type == CardType.Jack)
-                    {
-                        return 108;
-                    }
-
-                    if (card.Type == CardType.Nine)
-                    {
-                        return 107;
-                    }
-
-                    if (card.Type == CardType.Ace)
-                    {
-                        return 106;
-                    }
-
-                    if (card.Type == CardType.Ten)
-                    {
-                        return 105;
-                    }
-
-                    if (card.Type == CardType.King)
-                    {
-                        return 104;
-                    }
-
-                    if (card.Type == CardType.Queen)
-                    {
-                        return 103;
-                    }
-
-                    if (card.Type == CardType.Eight)
-                    {
-                        return 102;
-                    }
-
-                    if (card.Type == CardType.Seven)
-                    {
-                        return 101;
-                    }
-                }
-
-                if (card.Type == CardType.Ace)
-                {
-                    return 8 + CardSuitOrderValue(card.Suit);
-                }
-
-                if (card.Type == CardType.Ten)
-                {
-                    return 7 + CardSuitOrderValue(card.Suit);
-                }
-
-                if (card.Type == CardType.King)
-                {
-                    return 6 + CardSuitOrderValue(card.Suit);
-                }
-
-                if (card.Type == CardType.Queen)
-                {
-                    return 5 + CardSuitOrderValue(card.Suit);
-                }
-
-                if (card.Type == CardType.Jack)
-                {
-                    return 4 + CardSuitOrderValue(card.Suit);
-                }
-
-                if (card.Type == CardType.Nine)
-                {
-                    return 3 + CardSuitOrderValue(card.Suit);
-                }
-
-                if (card.Type == CardType.Eight)
-                {
-                    return 2 + CardSuitOrderValue(card.Suit);
-                }
-
-                if (card.Type == CardType.Seven)
-                {
-                    return 1 + CardSuitOrderValue(card.Suit);
-                }
-
-                return 0;
-            }).ToList();
         }
     }
 }
