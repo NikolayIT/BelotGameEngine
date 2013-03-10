@@ -14,7 +14,7 @@
     {
         public static readonly CardsCollection FullDeckOfCards = null;
 
-        private IList<Card> cards;
+        protected IList<Card> cards;
 
         static CardsCollection()
         {

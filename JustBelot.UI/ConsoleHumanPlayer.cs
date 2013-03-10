@@ -173,7 +173,7 @@
             }
         }
 
-        public PlayAction PlayCard(IEnumerable<Card> allowedCards, IEnumerable<Card> currentTrickCards)
+        public PlayAction PlayCard(IList<Card> allowedCards, IList<Card> currentTrickCards)
         {
             var sb = new StringBuilder();
             var allowedCardsList = new CardsCollection(allowedCards);

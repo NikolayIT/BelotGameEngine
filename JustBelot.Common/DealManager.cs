@@ -154,7 +154,7 @@
             {
                 var currentTrick = new Trick(contract, this.game[currentPlayer]);
 
-                for (int i = 0; i < 4; i++)
+                for (int i = 4; i > 0; i--)
                 {
                     if (trickNumber == 1 && contract.Type != ContractType.NoTrumps)
                     {

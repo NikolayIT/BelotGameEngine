@@ -275,22 +275,25 @@
             }
         }
 
-        public bool IsBeloteAllowed(Contract contract, IEnumerable<Card> currentTrickCards, Card card)
+        public bool IsBeloteAllowed(Contract contract, IList<Card> currentTrickCards, Card card)
         {
             var belote = false;
-            if (contract.Type != ContractType.NoTrumps && this.IsCombinationOfQueenAndKingAvailable(card))
+            if (contract.Type != ContractType.NoTrumps)
             {
                 if (contract.Type == ContractType.AllTrumps)
                 {
-                    if (!currentTrickCards.Any())
+                    if (currentTrickCards.Count == 0)
                     {
                         // The player is first
                         belote = true;
                     }
-                    else if (currentTrickCards.First().Suit == card.Suit)
+                    else
                     {
-                        // Belote is allowed only when playing card from the same suit
-                        belote = true;
+                        if (currentTrickCards[0].Suit == card.Suit)
+                        {
+                            // Belote is allowed only when playing card from the same suit
+                            belote = true;
+                        }
                     }
                 }
                 else
@@ -304,7 +307,12 @@
                 }
             }
 
-            return belote;
+            if (belote)
+            {
+                return this.IsCombinationOfQueenAndKingAvailable(card);
+            }
+
+            return false;
         }
 
         private bool IsCombinationOfQueenAndKingAvailable(Card playedCard)

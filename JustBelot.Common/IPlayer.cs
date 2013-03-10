@@ -28,7 +28,7 @@
 
         IEnumerable<CardsCombination> AskForCardsCombinations(IEnumerable<CardsCombination> allowedCombinations);
 
-        PlayAction PlayCard(IEnumerable<Card> allowedCards, IEnumerable<Card> currentTrickCards);
+        PlayAction PlayCard(IList<Card> allowedCards, IList<Card> currentTrickCards);
 
         void EndOfDeal(DealResult dealResult);
     }

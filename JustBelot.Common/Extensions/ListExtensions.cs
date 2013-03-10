@@ -15,7 +15,7 @@
             for (var i = 0; i < n; i++)
             {
                 // Exchange a[i] with random element in a[i..n-1]
-                var r = i + RandomProvider.Next(0, n - i);
+                var r = i + RandomProvider.Instance.Next(0, n - i);
                 var temp = source[i];
                 source[i] = source[r];
                 source[r] = temp;
@@ -47,7 +47,7 @@
                 return default(T);
             }
 
-            return source[RandomProvider.Next(0, source.Count)];
+            return source[RandomProvider.Instance.Next(0, source.Count)];
         }
     }
 }

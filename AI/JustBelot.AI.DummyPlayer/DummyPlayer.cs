@@ -58,7 +58,7 @@
             return allowedCombinations;
         }
 
-        public PlayAction PlayCard(IEnumerable<Card> allowedCards, IEnumerable<Card> currentTrickCards)
+        public PlayAction PlayCard(IList<Card> allowedCards, IList<Card> currentTrickCards)
         {
             // Since this is a dummy player he will randomly return one of the allowed cards
             var cardToPlay = new List<Card>(allowedCards).RandomElement();

@@ -102,7 +102,7 @@
             this.SouthNorthScore = 0;
             this.EastWestScore = 0;
             this.DealNumber = 0;
-            this.firstPlayerForTheGame = RandomProvider.Next(0, 4);
+            this.firstPlayerForTheGame = RandomProvider.Instance.Next(0, 4);
 
             while (!this.IsGameOver)
             {

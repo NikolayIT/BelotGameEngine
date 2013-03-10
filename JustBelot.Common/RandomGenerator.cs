@@ -4,31 +4,12 @@
 
     public static class RandomProvider
     {
-        private static readonly Random RandomGenerator = new Random();
-        private static readonly object LockObject = new object();
+        [ThreadStatic]
+        public static readonly Random Instance;
 
-        public static int Next()
+        static RandomProvider()
         {
-            lock (LockObject)
-            {
-                return RandomGenerator.Next();
-            }
-        }
-
-        public static int Next(int max)
-        {
-            lock (LockObject)
-            {
-                return RandomGenerator.Next(max);
-            }
-        }
-
-        public static int Next(int min, int max)
-        {
-            lock (LockObject)
-            {
-                return RandomGenerator.Next(min, max);
-            }
+            Instance = new Random();
         }
     }
 }
