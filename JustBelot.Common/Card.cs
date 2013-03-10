@@ -1,9 +1,8 @@
 ﻿namespace JustBelot.Common
 {
     using System;
-    using System.ComponentModel;
 
-    public struct Card
+    public struct Card : IComparable<Card>
     {
         public Card(CardType type, CardSuit suit)
             : this()
@@ -81,6 +80,7 @@
                     cardTypeAsString = "7";
                     break;
             }
+
             return cardTypeAsString;
         }
 
@@ -102,6 +102,7 @@
                     cardSuitAsString = "\u2663";
                     break;
             }
+
             return cardSuitAsString;
         }
 
@@ -221,6 +222,90 @@
             }
 
             return false;
+        }
+
+        public int CompareTo(Card other)
+        {
+            if (this.Suit == other.Suit)
+            {
+                return this.Type.CompareTo(other.Type);
+            }
+            else
+            {
+                return this.Suit.CompareTo(other.Suit);
+            }
+        }
+
+        public Card Seven()
+        {
+            this.Type = CardType.Seven;
+            return this;
+        }
+
+        public Card Eight()
+        {
+            this.Type = CardType.Eight;
+            return this;
+        }
+
+        public Card Nine()
+        {
+            this.Type = CardType.Nine;
+            return this;
+        }
+
+        public Card Ten()
+        {
+            this.Type = CardType.Ten;
+            return this;
+        }
+
+        public Card Jack()
+        {
+            this.Type = CardType.Jack;
+            return this;
+        }
+
+        public Card Queen()
+        {
+            this.Type = CardType.Queen;
+            return this;
+        }
+
+        public Card King()
+        {
+            this.Type = CardType.King;
+            return this;
+        }
+
+        public Card Ace()
+        {
+            this.Type = CardType.Ace;
+            return this;
+        }
+
+        public Card OfClubs()
+        {
+            this.Suit = CardSuit.Clubs;
+            return this;
+        }
+
+        public Card OfDiamonds()
+        {
+            this.Suit = CardSuit.Diamonds;
+            return this;
+        }
+
+        public Card OfHearts()
+        {
+            this.Suit = CardSuit.Hearts;
+            return this;
+        }
+
+        public Card OfSpades()
+        {
+            this.Suit = CardSuit.Spades;
+            return this;
         }
     }
 }

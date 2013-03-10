@@ -241,10 +241,21 @@
 
         private IEnumerable<Declaration> AskForDeclarations(IPlayer player)
         {
-            // TODO: Check announcements (terca, 50, 100, 150, 200, belot, etc.)
-            var allowedDeclarations = new List<Declaration>(); // TODO: List of valid declarations
-            var playerDeclarations = player.AskForDeclarations(allowedDeclarations);
-            return playerDeclarations;
+            var currentPlayerHand = this.playerCards[(int)this.game[player]];
+            var allowedDeclarations = currentPlayerHand.FindAvailableDeclarations().ToList();
+            var playerDeclarations = player.AskForDeclarations(allowedDeclarations.ToList());
+
+            var finalDeclarations = new List<Declaration>();
+            foreach (var playerDeclaration in playerDeclarations)
+            {
+                if (allowedDeclarations.Contains(playerDeclaration))
+                {
+                    finalDeclarations.Add(playerDeclaration);
+                    allowedDeclarations.Remove(playerDeclaration);
+                }
+            }
+
+            return finalDeclarations;
         }
 
         private DealResult PrepareDealResult(Contract contract)

@@ -1,5 +1,6 @@
 ﻿namespace JustBelot.Common
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -10,6 +11,130 @@
         public Hand()
             : base()
         {
+        }
+
+        public IEnumerable<Declaration> FindAvailableDeclarations()
+        {
+            var cards = this.ToList();
+            var declarations = new List<Declaration>();
+
+            #region Four of a kind
+            var countOfCardTypes = new Dictionary<CardType, int>();
+            foreach (var card in cards)
+            {
+                if (!countOfCardTypes.ContainsKey(card.Type))
+                {
+                    countOfCardTypes.Add(card.Type, 0);
+                }
+
+                countOfCardTypes[card.Type]++;
+            }
+
+            foreach (var cardType in countOfCardTypes.Keys)
+            {
+                if (countOfCardTypes[cardType] == 4)
+                {
+                    switch (cardType)
+                    {
+                        case CardType.Jack:
+                            declarations.Add(new Declaration(DeclarationType.FourOfJacks, cardType));
+                            break;
+                        case CardType.Nine:
+                            declarations.Add(new Declaration(DeclarationType.FourOfNines, cardType));
+                            break;
+                        case CardType.Ace:
+                            declarations.Add(new Declaration(DeclarationType.FourOfAKind, cardType));
+                            break;
+                        case CardType.King:
+                            declarations.Add(new Declaration(DeclarationType.FourOfAKind, cardType));
+                            break;
+                        case CardType.Queen:
+                            declarations.Add(new Declaration(DeclarationType.FourOfAKind, cardType));
+                            break;
+                        case CardType.Ten:
+                            declarations.Add(new Declaration(DeclarationType.FourOfAKind, cardType));
+                            break;
+                    }
+
+                    if (cardType != CardType.Seven && cardType != CardType.Eight)
+                    {
+                        cards.RemoveAll(x => x.Type == cardType);
+                    }
+                }
+            }
+            #endregion
+
+            #region Sequential combinations
+            var cardsBySuit = new Dictionary<CardSuit, List<Card>>
+                                       {
+                                           { CardSuit.Clubs, new List<Card>() },
+                                           { CardSuit.Diamonds, new List<Card>() },
+                                           { CardSuit.Hearts, new List<Card>() },
+                                           { CardSuit.Spades, new List<Card>() }
+                                       };
+            foreach (var card in cards)
+            {
+                cardsBySuit[card.Suit].Add(card);
+            }
+
+            foreach (var cardsBySuitKeyValue in cardsBySuit)
+            {
+                var suitedCards = cardsBySuitKeyValue.Value;
+                if (suitedCards.Count == 0)
+                {
+                    continue;
+                }
+
+                suitedCards.Sort();
+                int previousCardValue = (int)suitedCards[0].Type;
+                int count = 1;
+                for (int i = 1; i < suitedCards.Count; i++)
+                {
+                    if ((int)suitedCards[i].Type == previousCardValue + 1)
+                    {
+                        count++;
+                    }
+                    else
+                    {
+                        if (count == 3)
+                        {
+                            declarations.Add(new Declaration(DeclarationType.Tierce, (CardType)previousCardValue, cardsBySuitKeyValue.Key));
+                        }
+
+                        if (count == 4)
+                        {
+                            declarations.Add(new Declaration(DeclarationType.Quart, (CardType)previousCardValue, cardsBySuitKeyValue.Key));
+                        }
+
+                        if (count >= 5)
+                        {
+                            declarations.Add(new Declaration(DeclarationType.Quint, (CardType)previousCardValue, cardsBySuitKeyValue.Key));
+                        }
+
+                        count = 1;
+                    }
+
+                    previousCardValue = (int)suitedCards[i].Type;
+                }
+
+                if (count == 3)
+                {
+                    declarations.Add(new Declaration(DeclarationType.Tierce, suitedCards[suitedCards.Count - 1].Type, cardsBySuitKeyValue.Key));
+                }
+
+                if (count == 4)
+                {
+                    declarations.Add(new Declaration(DeclarationType.Quart, suitedCards[suitedCards.Count - 1].Type, cardsBySuitKeyValue.Key));
+                }
+
+                if (count >= 5)
+                {
+                    declarations.Add(new Declaration(DeclarationType.Quint, suitedCards[suitedCards.Count - 1].Type, cardsBySuitKeyValue.Key));
+                }
+            }
+            #endregion
+
+            return declarations;
         }
 
         public IEnumerable<Card> GetAllowedCards(Contract contract, IList<Card> currentTrickCards)

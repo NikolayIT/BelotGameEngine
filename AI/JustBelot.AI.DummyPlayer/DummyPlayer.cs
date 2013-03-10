@@ -54,8 +54,8 @@
 
         public IEnumerable<Declaration> AskForDeclarations(IEnumerable<Declaration> allowedDeclarations)
         {
-            // Dummy player never announce his declarations
-            return new List<Declaration>();
+            // Dummy player announces all allowed declarations
+            return allowedDeclarations;
         }
 
         public PlayAction PlayCard(IEnumerable<Card> allowedCards, IEnumerable<Card> currentTrickCards)
@@ -63,8 +63,7 @@
             // Since this is a dummy player he will randomly return one of the allowed cards
             var cardToPlay = new List<Card>(allowedCards).RandomElement();
             this.hand.Remove(cardToPlay);
-            var action = new PlayAction { Card = cardToPlay };
-            return action;
+            return new PlayAction { Card = cardToPlay, AnnounceBeloteIfAvailable = true };
         }
 
         public void EndOfDeal(DealResult dealResult)
