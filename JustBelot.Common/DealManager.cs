@@ -29,7 +29,7 @@
         {
             this.game = game;
 
-            this.cardDeck = new Queue<Card>(CardsCollection.GetFullCardDeck());
+            this.cardDeck = new Queue<Card>(CardsCollection.FullDeckOfCards);
 
             this.playerCards = new[] { new Hand(), new Hand(), new Hand(), new Hand() }; // 4 players
 

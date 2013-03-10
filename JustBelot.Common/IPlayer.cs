@@ -12,6 +12,7 @@
     /// 4. AskForBid is called for each player until a contract is agreed
     /// 5. If the contract is not "no trumps", before the first card is played, the player is asked for card combinations (e.g. four of a kind and a tierce, etc.)
     /// 6. PlayCard is called 8 times until all cards are played
+    /// 7. EndOfDeal is called when the deal is over
     /// </summary>
     public interface IPlayer
     {

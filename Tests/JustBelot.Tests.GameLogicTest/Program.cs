@@ -17,21 +17,22 @@
             game.GameInfo.PlayerBid += GameInfoOnPlayerBid;
             game.GameInfo.CardPlayed += GameInfoOnCardPlayed;
 
-            for (int i = 0; i < 50; i++)
+            for (int i = 0; i < 5000; i++)
             {
                 game.StartNewGame();
+                //Console.WriteLine("{0} - {1}", game.SouthNorthScore, game.EastWestScore);
             }
         }
 
         private static void GameInfoOnPlayerBid(BidEventArgs eventArgs)
         {
-            Console.WriteLine("{1} from {0}", eventArgs.Position, eventArgs.Bid);
+            //Console.WriteLine("{1} from {0}", eventArgs.Position, eventArgs.Bid);
             //// Console.ReadKey();
         }
 
         private static void GameInfoOnCardPlayed(CardPlayedEventArgs eventArgs)
         {
-            Console.WriteLine("{0} played {1}", eventArgs.Position, eventArgs.PlayAction.Card);
+            //Console.WriteLine("{0} played {1}", eventArgs.Position, eventArgs.PlayAction.Card);
             //// Console.ReadKey();
         }
     }

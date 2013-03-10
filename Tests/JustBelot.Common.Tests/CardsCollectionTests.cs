@@ -8,7 +8,7 @@
         [TestMethod]
         public void TheFullDeckOfCardsHasFourSuitedCombinationOfKingAndQueens()
         {
-            var cards = CardsCollection.GetFullCardDeck();
+            var cards = CardsCollection.FullDeckOfCards;
             var combinations = cards.NumberOfQueenAndKingCombinations();
             Assert.AreEqual(4, combinations);
         }

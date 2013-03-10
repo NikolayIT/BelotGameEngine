@@ -12,7 +12,48 @@
     /// </summary>
     public class CardsCollection : IList<Card>
     {
+        public static readonly CardsCollection FullDeckOfCards = null;
+
         private IList<Card> cards;
+
+        static CardsCollection()
+        {
+            FullDeckOfCards = new CardsCollection
+                            {
+                                new Card(CardType.Seven, CardSuit.Clubs),
+                                new Card(CardType.Seven, CardSuit.Diamonds),
+                                new Card(CardType.Seven, CardSuit.Hearts),
+                                new Card(CardType.Seven, CardSuit.Spades),
+                                new Card(CardType.Eight, CardSuit.Clubs),
+                                new Card(CardType.Eight, CardSuit.Diamonds),
+                                new Card(CardType.Eight, CardSuit.Hearts),
+                                new Card(CardType.Eight, CardSuit.Spades),
+                                new Card(CardType.Nine, CardSuit.Clubs),
+                                new Card(CardType.Nine, CardSuit.Diamonds),
+                                new Card(CardType.Nine, CardSuit.Hearts),
+                                new Card(CardType.Nine, CardSuit.Spades),
+                                new Card(CardType.Ten, CardSuit.Clubs),
+                                new Card(CardType.Ten, CardSuit.Diamonds),
+                                new Card(CardType.Ten, CardSuit.Hearts),
+                                new Card(CardType.Ten, CardSuit.Spades),
+                                new Card(CardType.Jack, CardSuit.Clubs),
+                                new Card(CardType.Jack, CardSuit.Diamonds),
+                                new Card(CardType.Jack, CardSuit.Hearts),
+                                new Card(CardType.Jack, CardSuit.Spades),
+                                new Card(CardType.Queen, CardSuit.Clubs),
+                                new Card(CardType.Queen, CardSuit.Diamonds),
+                                new Card(CardType.Queen, CardSuit.Hearts),
+                                new Card(CardType.Queen, CardSuit.Spades),
+                                new Card(CardType.King, CardSuit.Clubs),
+                                new Card(CardType.King, CardSuit.Diamonds),
+                                new Card(CardType.King, CardSuit.Hearts),
+                                new Card(CardType.King, CardSuit.Spades),
+                                new Card(CardType.Ace, CardSuit.Clubs),
+                                new Card(CardType.Ace, CardSuit.Diamonds),
+                                new Card(CardType.Ace, CardSuit.Hearts),
+                                new Card(CardType.Ace, CardSuit.Spades)
+                            };
+        }
  
         public CardsCollection()
         {
@@ -55,20 +96,6 @@
             {
                 this.cards[index] = value;
             }
-        }
-
-        public static CardsCollection GetFullCardDeck()
-        {
-            var cards = new CardsCollection();
-            foreach (CardSuit cardSuit in Enum.GetValues(typeof(CardSuit)))
-            {
-                foreach (CardType cardType in Enum.GetValues(typeof(CardType)))
-                {
-                    cards.Add(new Card(cardType, cardSuit));
-                }
-            }
-
-            return cards;
         }
 
         public int IndexOf(Card item)

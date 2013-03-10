@@ -98,6 +98,7 @@
 
         public void StartNewGame()
         {
+            this.IsGameOver = false;
             this.SouthNorthScore = 0;
             this.EastWestScore = 0;
             this.DealNumber = 0;
