@@ -116,11 +116,61 @@
             }
         }
 
-        public IEnumerable<Declaration> AskForDeclarations(IEnumerable<Declaration> allowedDeclarations)
+        public IEnumerable<CardsCombination> AskForCardsCombinations(IEnumerable<CardsCombination> allowedCombinations)
         {
-            // TODO: Find declarations and ask user for them
-            ConsoleHelper.WriteOnPosition("No declarations available.", 0, Settings.ConsoleHeight - 3);
-            return new List<Declaration>();
+            var allowedCombinationsList = allowedCombinations.ToList();
+
+            if (!allowedCombinationsList.Any())
+            {
+                ConsoleHelper.WriteOnPosition("No card combinations available.", 0, Settings.ConsoleHeight - 3);
+                return allowedCombinationsList;
+            }
+            else
+            {
+                string availableCombinationsAsString;
+                if (allowedCombinationsList.Count() == 1)
+                {
+                    availableCombinationsAsString =
+                        string.Format(
+                            "You have {0}. Press [enter] to announce it or press 0 and enter to skip it.",
+                            allowedCombinationsList[0].CombinationType);
+                }
+                else
+                {
+                    availableCombinationsAsString =
+                        string.Format("Press 0 to skip, 1 for {0} of {1} or 2 for {2} of {3}",
+                        allowedCombinationsList[0].CombinationType, allowedCombinationsList[0].ToCardType,
+                        allowedCombinationsList[1].CombinationType, allowedCombinationsList[1].ToCardType);
+                }
+
+                ConsoleHelper.WriteOnPosition(availableCombinationsAsString, 0, Settings.ConsoleHeight - 2);
+                ConsoleHelper.WriteOnPosition("Choose which combinations you want to announce ([enter] for all): ", 0, Settings.ConsoleHeight - 3);
+                
+                var line = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    return allowedCombinationsList;
+                }
+                else if (line.Trim() == "0")
+                {
+                    return new List<CardsCombination>();
+                }
+                else if (line.Trim() == "1" && allowedCombinationsList.Count >= 1)
+                {
+                    var list = new List<CardsCombination> { allowedCombinationsList[0] };
+                    return list;
+
+                }
+                else if (line.Trim() == "2" && allowedCombinationsList.Count >= 2)
+                {
+                    var list = new List<CardsCombination> { allowedCombinationsList[1] };
+                    return list;
+                }
+                else
+                {
+                    return allowedCombinationsList;
+                }
+            }
         }
 
         public PlayAction PlayCard(IEnumerable<Card> allowedCards, IEnumerable<Card> currentTrickCards)
@@ -155,6 +205,7 @@
                         {
                             ConsoleHelper.WriteOnPosition(new string(' ', 78), 0, Settings.ConsoleHeight - 3);
                             ConsoleHelper.WriteOnPosition(new string(' ', 78), 0, Settings.ConsoleHeight - 2);
+                            ConsoleHelper.WriteOnPosition(new string(' ', 78), 0, Settings.ConsoleHeight - 1);
                             ConsoleHelper.WriteOnPosition("Y(es) / N(o)", 0, Settings.ConsoleHeight - 2);
                             ConsoleHelper.WriteOnPosition("You have belote! Do you want to announce it? Y/N ", 0, Settings.ConsoleHeight - 3);
                             var answer = Console.ReadLine();
@@ -276,7 +327,7 @@
                     ConsoleHelper.DrawTextBoxTopRight(eventArgs.CurrentTrickCards.ToList()[i].ToString(), 80 - 2 - this.Game[PlayerPosition.East].Name.Length - 2, 8);
                     if (position == eventArgs.Position && eventArgs.PlayAction.Belote)
                     {
-                        ConsoleHelper.DrawTextBoxTopLeft("Belote", 80 - 2 - this.Game[PlayerPosition.East].Name.Length - 2 - eventArgs.CurrentTrickCards.ToList()[i].ToString().Length - 2, Settings.ConsoleHeight - 10);
+                        ConsoleHelper.DrawTextBoxTopLeft("Belote", 80 - 2 - this.Game[PlayerPosition.East].Name.Length - 2 - eventArgs.CurrentTrickCards.ToList()[i].ToString().Length - 2, 8);
                     }
                 }
 
@@ -294,7 +345,7 @@
                     ConsoleHelper.DrawTextBoxTopLeft(eventArgs.CurrentTrickCards.ToList()[i].ToString(), this.Game[PlayerPosition.West].Name.Length + 3, 8);
                     if (position == eventArgs.Position && eventArgs.PlayAction.Belote)
                     {
-                        ConsoleHelper.DrawTextBoxTopLeft("Belote", this.Game[PlayerPosition.West].Name.Length + 3 + eventArgs.CurrentTrickCards.ToList()[i].ToString().Length + 2, Settings.ConsoleHeight - 10);
+                        ConsoleHelper.DrawTextBoxTopLeft("Belote", this.Game[PlayerPosition.West].Name.Length + 3 + eventArgs.CurrentTrickCards.ToList()[i].ToString().Length + 2, 8);
                     }
                 }
 

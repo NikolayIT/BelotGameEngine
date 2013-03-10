@@ -158,7 +158,8 @@
                 {
                     if (trickNumber == 1 && contract.Type != ContractType.NoTrumps)
                     {
-                        var declarations = this.AskForDeclarations(currentPlayer);
+                        var combinations = this.AskForCardCombinations(currentPlayer);
+                        this.game.GameInfo.InformForCardCombinationsAnnounced(new CardCombinationsAnnouncedEventArgs(this.game[currentPlayer], combinations.Select(x => x.CombinationType)));
                     }
 
                     var playAction = this.PlayCard(currentPlayer, contract, currentTrick);
@@ -239,23 +240,23 @@
             return playAction;
         }
 
-        private IEnumerable<Declaration> AskForDeclarations(IPlayer player)
+        private IEnumerable<CardsCombination> AskForCardCombinations(IPlayer player)
         {
             var currentPlayerHand = this.playerCards[(int)this.game[player]];
-            var allowedDeclarations = currentPlayerHand.FindAvailableDeclarations().ToList();
-            var playerDeclarations = player.AskForDeclarations(allowedDeclarations.ToList());
+            var allowedCombinations = currentPlayerHand.FindAvailableCardsCombinations().ToList();
+            var playerCombinaions = player.AskForCardsCombinations(allowedCombinations.ToList());
 
-            var finalDeclarations = new List<Declaration>();
-            foreach (var playerDeclaration in playerDeclarations)
+            var finalCombinations = new List<CardsCombination>();
+            foreach (var cardCombination in playerCombinaions)
             {
-                if (allowedDeclarations.Contains(playerDeclaration))
+                if (allowedCombinations.Contains(cardCombination))
                 {
-                    finalDeclarations.Add(playerDeclaration);
-                    allowedDeclarations.Remove(playerDeclaration);
+                    finalCombinations.Add(cardCombination);
+                    allowedCombinations.Remove(cardCombination);
                 }
             }
 
-            return finalDeclarations;
+            return finalCombinations;
         }
 
         private DealResult PrepareDealResult(Contract contract)

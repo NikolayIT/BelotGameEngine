@@ -1,7 +1,7 @@
 ﻿namespace JustBelot.Common
 {
-    // TODO: Rename to CombinationType
-    public enum DeclarationType
+    // TODO: Rename to CardsCombinationType
+    public enum CardsCombinationType
     {
         Tierce = 20, // A sequence of three (sequences are in the "A K Q J 10 9 8 7" order of the same suit) — is worth 20 points
         Quart = 50, // A sequence of four — is worth 50 points.

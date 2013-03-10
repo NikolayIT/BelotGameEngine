@@ -1,10 +1,10 @@
 ﻿Important:
-- Announcements
 - Counting final result
 	- Double/redouble
 	- Hanging points
 - Inline todos
 - Bug fixing
+- Use trace software to find code bottle-necks and improve performance
 
 Other:
 - AI

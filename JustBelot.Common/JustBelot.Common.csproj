@@ -42,6 +42,7 @@
     <Compile Include="BidEventArgs.cs" />
     <Compile Include="BidType.cs" />
     <Compile Include="Card.cs" />
+    <Compile Include="CardCombinationsAnnouncedEventArgs.cs" />
     <Compile Include="CardComparer.cs" />
     <Compile Include="CardPlayedEventArgs.cs" />
     <Compile Include="CardSuit.cs" />
@@ -51,8 +52,8 @@
     <Compile Include="DealInfo.cs" />
     <Compile Include="DealManager.cs" />
     <Compile Include="DealResult.cs" />
-    <Compile Include="Declaration.cs" />
-    <Compile Include="DeclarationType.cs" />
+    <Compile Include="CardsCombination.cs" />
+    <Compile Include="CardsCombinationType.cs" />
     <Compile Include="Extensions\CardTypeExtensions.cs" />
     <Compile Include="Extensions\ContractTypeExtensions.cs" />
     <Compile Include="Extensions\PlayerPositionExtensions.cs" />

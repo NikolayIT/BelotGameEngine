@@ -10,7 +10,6 @@
 
     public class Program
     {
-        // TODO: Use trace software to find code bottle-necks and improve performance
         public static void Main()
         {
             // Initialize console properties

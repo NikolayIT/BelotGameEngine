@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
-namespace JustBelot.Common
+﻿namespace JustBelot.Common
 {
+    using System.Collections.Generic;
+
     /// <summary>
     /// Interface that must be implemented by every player (human or AI)
     /// Method calls:
@@ -9,7 +10,7 @@ namespace JustBelot.Common
     /// 2. StartNewDeal is called for each card deal
     /// 3. AddCards is called 2 times (5+3) for each card deal. Cards are passed as an argument.
     /// 4. AskForBid is called for each player until a contract is agreed
-    /// 5. If the contract is not "no trumps", before the first card is played, the player is asked for declarations (e.g. four of a kind and a tierce, etc.)
+    /// 5. If the contract is not "no trumps", before the first card is played, the player is asked for card combinations (e.g. four of a kind and a tierce, etc.)
     /// 6. PlayCard is called 8 times until all cards are played
     /// </summary>
     public interface IPlayer
@@ -24,7 +25,7 @@ namespace JustBelot.Common
 
         BidType AskForBid(Contract currentContract, IList<BidType> allowedBids, IList<BidType> previousBids);
 
-        IEnumerable<Declaration> AskForDeclarations(IEnumerable<Declaration> allowedDeclarations);
+        IEnumerable<CardsCombination> AskForCardsCombinations(IEnumerable<CardsCombination> allowedCombinations);
 
         PlayAction PlayCard(IEnumerable<Card> allowedCards, IEnumerable<Card> currentTrickCards);
 

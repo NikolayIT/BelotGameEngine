@@ -7,7 +7,7 @@
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     [TestClass]
-    public class HandTests_Declarations
+    public class HandTests_FindAvailableCardsCombinations
     {
         [TestMethod]
         public void FourJacks()
@@ -25,10 +25,10 @@
                                new Card().Eight().OfSpades(),
                            };
 
-            var combinations = hand.FindAvailableDeclarations().ToList();
+            var combinations = hand.FindAvailableCardsCombinations().ToList();
 
             Assert.AreEqual(1, combinations.Count);
-            Assert.IsTrue(combinations.Contains(new Declaration(DeclarationType.FourOfJacks, CardType.Jack)));
+            Assert.IsTrue(combinations.Contains(new CardsCombination(CardsCombinationType.FourOfJacks, CardType.Jack)));
         }
 
         [TestMethod]
@@ -47,10 +47,10 @@
                                new Card().Eight().OfSpades(),
                            };
 
-            var combinations = hand.FindAvailableDeclarations().ToList();
+            var combinations = hand.FindAvailableCardsCombinations().ToList();
 
             Assert.AreEqual(1, combinations.Count);
-            Assert.IsTrue(combinations.Contains(new Declaration(DeclarationType.FourOfNines, CardType.Nine)));
+            Assert.IsTrue(combinations.Contains(new CardsCombination(CardsCombinationType.FourOfNines, CardType.Nine)));
         }
 
         [TestMethod]
@@ -69,10 +69,10 @@
                                new Card().Eight().OfSpades(),
                            };
 
-            var combinations = hand.FindAvailableDeclarations().ToList();
+            var combinations = hand.FindAvailableCardsCombinations().ToList();
 
             Assert.AreEqual(1, combinations.Count);
-            Assert.IsTrue(combinations.Contains(new Declaration(DeclarationType.FourOfAKind, CardType.Ace)));
+            Assert.IsTrue(combinations.Contains(new CardsCombination(CardsCombinationType.FourOfAKind, CardType.Ace)));
         }
 
         [TestMethod]
@@ -91,10 +91,10 @@
                                new Card().Eight().OfSpades(),
                            };
 
-            var combinations = hand.FindAvailableDeclarations().ToList();
+            var combinations = hand.FindAvailableCardsCombinations().ToList();
 
             Assert.AreEqual(0, combinations.Count);
-            Assert.IsFalse(combinations.Contains(new Declaration(DeclarationType.FourOfAKind, CardType.Seven)));
+            Assert.IsFalse(combinations.Contains(new CardsCombination(CardsCombinationType.FourOfAKind, CardType.Seven)));
         }
 
         [TestMethod]
@@ -113,10 +113,10 @@
                                new Card().Seven().OfSpades(),
                            };
 
-            var combinations = hand.FindAvailableDeclarations().ToList();
+            var combinations = hand.FindAvailableCardsCombinations().ToList();
 
             Assert.AreEqual(0, combinations.Count);
-            Assert.IsFalse(combinations.Contains(new Declaration(DeclarationType.FourOfAKind, CardType.Eight)));
+            Assert.IsFalse(combinations.Contains(new CardsCombination(CardsCombinationType.FourOfAKind, CardType.Eight)));
         }
 
         [TestMethod]
@@ -135,10 +135,10 @@
                                new Card().Seven().OfSpades(),
                            };
 
-            var combinations = hand.FindAvailableDeclarations().ToList();
+            var combinations = hand.FindAvailableCardsCombinations().ToList();
 
             Assert.AreEqual(1, combinations.Count);
-            Assert.IsTrue(combinations.Contains(new Declaration(DeclarationType.Tierce, CardType.Nine, CardSuit.Clubs)));
+            Assert.IsTrue(combinations.Contains(new CardsCombination(CardsCombinationType.Tierce, CardType.Nine, CardSuit.Clubs)));
         }
 
         [TestMethod]
@@ -157,10 +157,10 @@
                                new Card().King().OfDiamonds(),
                            };
 
-            var combinations = hand.FindAvailableDeclarations().ToList();
+            var combinations = hand.FindAvailableCardsCombinations().ToList();
 
             Assert.AreEqual(1, combinations.Count);
-            Assert.IsTrue(combinations.Contains(new Declaration(DeclarationType.Quart, CardType.Ace, CardSuit.Diamonds)));
+            Assert.IsTrue(combinations.Contains(new CardsCombination(CardsCombinationType.Quart, CardType.Ace, CardSuit.Diamonds)));
         }
 
         [TestMethod]
@@ -178,10 +178,10 @@
                                new Card().Queen().OfHearts(),
                            };
 
-            var combinations = hand.FindAvailableDeclarations().ToList();
+            var combinations = hand.FindAvailableCardsCombinations().ToList();
 
             Assert.AreEqual(1, combinations.Count);
-            Assert.IsTrue(combinations.Contains(new Declaration(DeclarationType.Quint, CardType.King, CardSuit.Hearts)));
+            Assert.IsTrue(combinations.Contains(new CardsCombination(CardsCombinationType.Quint, CardType.King, CardSuit.Hearts)));
         }
 
         [TestMethod]
@@ -199,10 +199,10 @@
                                new Card().Nine().OfSpades(),
                            };
 
-            var combinations = hand.FindAvailableDeclarations().ToList();
+            var combinations = hand.FindAvailableCardsCombinations().ToList();
 
             Assert.AreEqual(1, combinations.Count);
-            Assert.IsTrue(combinations.Contains(new Declaration(DeclarationType.Quint, CardType.Ace, CardSuit.Spades)));
+            Assert.IsTrue(combinations.Contains(new CardsCombination(CardsCombinationType.Quint, CardType.Ace, CardSuit.Spades)));
         }
 
         [TestMethod]
@@ -220,11 +220,11 @@
                                new Card().Ace().OfSpades(),
                            };
 
-            var combinations = hand.FindAvailableDeclarations().ToList();
+            var combinations = hand.FindAvailableCardsCombinations().ToList();
 
             Assert.AreEqual(2, combinations.Count);
-            Assert.IsTrue(combinations.Contains(new Declaration(DeclarationType.Tierce, CardType.Ace, CardSuit.Spades)));
-            Assert.IsTrue(combinations.Contains(new Declaration(DeclarationType.Tierce, CardType.Ten, CardSuit.Spades)));
+            Assert.IsTrue(combinations.Contains(new CardsCombination(CardsCombinationType.Tierce, CardType.Ace, CardSuit.Spades)));
+            Assert.IsTrue(combinations.Contains(new CardsCombination(CardsCombinationType.Tierce, CardType.Ten, CardSuit.Spades)));
         }
 
         [TestMethod]
@@ -242,11 +242,11 @@
                                new Card().Jack().OfSpades(),
                            };
 
-            var combinations = hand.FindAvailableDeclarations().ToList();
+            var combinations = hand.FindAvailableCardsCombinations().ToList();
 
             Assert.AreEqual(2, combinations.Count);
-            Assert.IsTrue(combinations.Contains(new Declaration(DeclarationType.Quart, CardType.Ten, CardSuit.Clubs)));
-            Assert.IsTrue(combinations.Contains(new Declaration(DeclarationType.Quart, CardType.Jack, CardSuit.Spades)));
+            Assert.IsTrue(combinations.Contains(new CardsCombination(CardsCombinationType.Quart, CardType.Ten, CardSuit.Clubs)));
+            Assert.IsTrue(combinations.Contains(new CardsCombination(CardsCombinationType.Quart, CardType.Jack, CardSuit.Spades)));
         }
 
         [TestMethod]
@@ -264,7 +264,7 @@
                                new Card().Ace().OfClubs(),
                            };
 
-            var combinations = hand.FindAvailableDeclarations().ToList();
+            var combinations = hand.FindAvailableCardsCombinations().ToList();
 
             Assert.AreEqual(0, combinations.Count);
         }
@@ -284,11 +284,11 @@
                                new Card().King().OfSpades(),
                            };
 
-            var combinations = hand.FindAvailableDeclarations().ToList();
+            var combinations = hand.FindAvailableCardsCombinations().ToList();
 
             Assert.AreEqual(2, combinations.Count);
-            Assert.IsTrue(combinations.Contains(new Declaration(DeclarationType.FourOfAKind, CardType.King)));
-            Assert.IsTrue(combinations.Contains(new Declaration(DeclarationType.Quart, CardType.Queen, CardSuit.Diamonds)));
+            Assert.IsTrue(combinations.Contains(new CardsCombination(CardsCombinationType.FourOfAKind, CardType.King)));
+            Assert.IsTrue(combinations.Contains(new CardsCombination(CardsCombinationType.Quart, CardType.Queen, CardSuit.Diamonds)));
         }
     }
 }

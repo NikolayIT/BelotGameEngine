@@ -52,10 +52,10 @@
             // return BidType.Pass;
         }
 
-        public IEnumerable<Declaration> AskForDeclarations(IEnumerable<Declaration> allowedDeclarations)
+        public IEnumerable<CardsCombination> AskForCardsCombinations(IEnumerable<CardsCombination> allowedCombinations)
         {
-            // Dummy player announces all allowed declarations
-            return allowedDeclarations;
+            // Dummy player announces all allowed combinations
+            return allowedCombinations;
         }
 
         public PlayAction PlayCard(IEnumerable<Card> allowedCards, IEnumerable<Card> currentTrickCards)

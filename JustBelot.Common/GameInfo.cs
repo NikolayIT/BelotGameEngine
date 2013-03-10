@@ -16,9 +16,13 @@
 
         public delegate void CardPlayedHandled(CardPlayedEventArgs eventArgs);
 
+        public delegate void CardCombinationsAnnouncedHandler(CardCombinationsAnnouncedEventArgs eventArgs);
+
         public event PlayerBidHandler PlayerBid;
 
         public event CardPlayedHandled CardPlayed;
+
+        public event CardCombinationsAnnouncedHandler CardCombinationsAnnounced;
 
         public int SouthNorthScore
         {
@@ -73,6 +77,14 @@
             if (this.CardPlayed != null)
             {
                 this.CardPlayed(eventArgs);
+            }
+        }
+
+        internal void InformForCardCombinationsAnnounced(CardCombinationsAnnouncedEventArgs eventArgs)
+        {
+            if (this.CardCombinationsAnnounced != null)
+            {
+                this.CardCombinationsAnnounced(eventArgs);
             }
         }
     }

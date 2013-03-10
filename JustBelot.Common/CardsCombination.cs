@@ -2,43 +2,42 @@
 {
     using System;
 
-    // TODO: Rename to Combination
-    public struct Declaration : IComparable, IComparable<Declaration>
+    public struct CardsCombination : IComparable, IComparable<CardsCombination>
     {
-        public Declaration(DeclarationType declarationType, CardType toCardType)
+        public CardsCombination(CardsCombinationType combinationType, CardType toCardType)
             : this()
         {
-            this.DeclarationType = declarationType;
+            this.CombinationType = combinationType;
             this.ToCardType = toCardType;
         }
 
-        public Declaration(DeclarationType declarationType, CardType toCardType, CardSuit cardSuit)
+        public CardsCombination(CardsCombinationType combinationType, CardType toCardType, CardSuit cardSuit)
             : this()
         {
-            this.DeclarationType = declarationType;
+            this.CombinationType = combinationType;
             this.ToCardType = toCardType;
             this.CardSuit = cardSuit;
         }
 
-        public DeclarationType DeclarationType { get; set; }
+        public CardsCombinationType CombinationType { get; set; }
 
         public CardType ToCardType { get; set; }
 
         public CardSuit CardSuit { get; set; }
 
-        public static bool operator ==(Declaration left, Declaration right)
+        public static bool operator ==(CardsCombination left, CardsCombination right)
         {
             return left.Equals(right);
         }
 
-        public static bool operator !=(Declaration left, Declaration right)
+        public static bool operator !=(CardsCombination left, CardsCombination right)
         {
             return !left.Equals(right);
         }
 
-        public bool Equals(Declaration other)
+        public bool Equals(CardsCombination other)
         {
-            return this.ToCardType == other.ToCardType && this.CardSuit == other.CardSuit && this.DeclarationType == other.DeclarationType;
+            return this.ToCardType == other.ToCardType && this.CardSuit == other.CardSuit && this.CombinationType == other.CombinationType;
         }
 
         public override int GetHashCode()
@@ -47,7 +46,7 @@
             {
                 var hashCode = (int)this.ToCardType;
                 hashCode = (hashCode * 397) ^ (int)this.CardSuit;
-                hashCode = (hashCode * 397) ^ (int)this.DeclarationType;
+                hashCode = (hashCode * 397) ^ (int)this.CombinationType;
                 return hashCode;
             }
         }
@@ -59,17 +58,17 @@
                 return false;
             }
 
-            return obj is Declaration && this.Equals((Declaration)obj);
+            return obj is CardsCombination && this.Equals((CardsCombination)obj);
         }
 
-        public int CompareTo(Declaration other)
+        public int CompareTo(CardsCombination other)
         {
             if (this.Equals(other))
             {
                 return 0;
             }
 
-            return this.DeclarationType.CompareTo(other.DeclarationType);
+            return this.CombinationType.CompareTo(other.CombinationType);
         }
 
         public int CompareTo(object obj)
@@ -79,12 +78,12 @@
                 return -1;
             }
 
-            if (!(obj is Declaration))
+            if (!(obj is CardsCombination))
             {
                 return -1;
             }
 
-            return this.CompareTo((Declaration)obj);
+            return this.CompareTo((CardsCombination)obj);
         }
     }
 }

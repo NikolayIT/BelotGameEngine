@@ -13,10 +13,10 @@
         {
         }
 
-        public IEnumerable<Declaration> FindAvailableDeclarations()
+        public IEnumerable<CardsCombination> FindAvailableCardsCombinations()
         {
             var cards = this.ToList();
-            var declarations = new List<Declaration>();
+            var combinations = new List<CardsCombination>();
 
             #region Four of a kind
             var countOfCardTypes = new Dictionary<CardType, int>();
@@ -37,22 +37,22 @@
                     switch (cardType)
                     {
                         case CardType.Jack:
-                            declarations.Add(new Declaration(DeclarationType.FourOfJacks, cardType));
+                            combinations.Add(new CardsCombination(CardsCombinationType.FourOfJacks, cardType));
                             break;
                         case CardType.Nine:
-                            declarations.Add(new Declaration(DeclarationType.FourOfNines, cardType));
+                            combinations.Add(new CardsCombination(CardsCombinationType.FourOfNines, cardType));
                             break;
                         case CardType.Ace:
-                            declarations.Add(new Declaration(DeclarationType.FourOfAKind, cardType));
+                            combinations.Add(new CardsCombination(CardsCombinationType.FourOfAKind, cardType));
                             break;
                         case CardType.King:
-                            declarations.Add(new Declaration(DeclarationType.FourOfAKind, cardType));
+                            combinations.Add(new CardsCombination(CardsCombinationType.FourOfAKind, cardType));
                             break;
                         case CardType.Queen:
-                            declarations.Add(new Declaration(DeclarationType.FourOfAKind, cardType));
+                            combinations.Add(new CardsCombination(CardsCombinationType.FourOfAKind, cardType));
                             break;
                         case CardType.Ten:
-                            declarations.Add(new Declaration(DeclarationType.FourOfAKind, cardType));
+                            combinations.Add(new CardsCombination(CardsCombinationType.FourOfAKind, cardType));
                             break;
                     }
 
@@ -98,17 +98,17 @@
                     {
                         if (count == 3)
                         {
-                            declarations.Add(new Declaration(DeclarationType.Tierce, (CardType)previousCardValue, cardsBySuitKeyValue.Key));
+                            combinations.Add(new CardsCombination(CardsCombinationType.Tierce, (CardType)previousCardValue, cardsBySuitKeyValue.Key));
                         }
 
                         if (count == 4)
                         {
-                            declarations.Add(new Declaration(DeclarationType.Quart, (CardType)previousCardValue, cardsBySuitKeyValue.Key));
+                            combinations.Add(new CardsCombination(CardsCombinationType.Quart, (CardType)previousCardValue, cardsBySuitKeyValue.Key));
                         }
 
                         if (count >= 5)
                         {
-                            declarations.Add(new Declaration(DeclarationType.Quint, (CardType)previousCardValue, cardsBySuitKeyValue.Key));
+                            combinations.Add(new CardsCombination(CardsCombinationType.Quint, (CardType)previousCardValue, cardsBySuitKeyValue.Key));
                         }
 
                         count = 1;
@@ -119,22 +119,22 @@
 
                 if (count == 3)
                 {
-                    declarations.Add(new Declaration(DeclarationType.Tierce, suitedCards[suitedCards.Count - 1].Type, cardsBySuitKeyValue.Key));
+                    combinations.Add(new CardsCombination(CardsCombinationType.Tierce, suitedCards[suitedCards.Count - 1].Type, cardsBySuitKeyValue.Key));
                 }
 
                 if (count == 4)
                 {
-                    declarations.Add(new Declaration(DeclarationType.Quart, suitedCards[suitedCards.Count - 1].Type, cardsBySuitKeyValue.Key));
+                    combinations.Add(new CardsCombination(CardsCombinationType.Quart, suitedCards[suitedCards.Count - 1].Type, cardsBySuitKeyValue.Key));
                 }
 
                 if (count >= 5)
                 {
-                    declarations.Add(new Declaration(DeclarationType.Quint, suitedCards[suitedCards.Count - 1].Type, cardsBySuitKeyValue.Key));
+                    combinations.Add(new CardsCombination(CardsCombinationType.Quint, suitedCards[suitedCards.Count - 1].Type, cardsBySuitKeyValue.Key));
                 }
             }
             #endregion
 
-            return declarations;
+            return combinations;
         }
 
         public IEnumerable<Card> GetAllowedCards(Contract contract, IList<Card> currentTrickCards)
