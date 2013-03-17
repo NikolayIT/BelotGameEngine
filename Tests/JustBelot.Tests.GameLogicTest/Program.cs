@@ -7,7 +7,8 @@
     {
         private static void Main()
         {
-            IPlayer southPlayer = new DummyPlayer("South dummy"); // new DebugDummyPlayer("South debug dummy");
+            //IPlayer southPlayer = new DummyPlayer("South dummy");
+            IPlayer southPlayer = new DebugDummyPlayer("South debug dummy");
             IPlayer eastPlayer = new DummyPlayer("East dummy");
             IPlayer northPlayer = new DummyPlayer("North dummy", alwaysPass: false);
             IPlayer westPlayer = new DummyPlayer("West dummy", alwaysPass: false);

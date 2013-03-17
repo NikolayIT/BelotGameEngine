@@ -1,7 +1,6 @@
 ﻿Important:
 - Counting final result
 	- Card combinations
-	- Double/redouble
 	- Hanging points
 - Inline todos
 - Bug fixing

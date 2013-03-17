@@ -53,10 +53,10 @@
             {
                 return BidType.Pass;
             }
-            else
-            {
-                return allowedBids.RandomElement();
-            }
+
+            allowedBids.Remove(BidType.Double);
+            allowedBids.Remove(BidType.ReDouble);
+            return allowedBids.RandomElement();
         }
 
         public IEnumerable<CardsCombination> AskForCardsCombinations(IEnumerable<CardsCombination> allowedCombinations)

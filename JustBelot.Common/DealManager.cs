@@ -11,6 +11,12 @@
     /// </summary>
     internal class DealManager
     {
+        // Контрата отпада при капо?
+        private const bool DoublesDoNotCountWhenNoTricks = true;
+
+        // Валата (капото) на без коз удвоява ли се?
+        private const int NoTrumpNoTricksValue = 90; // 180
+
         private readonly GameManager game;
 
         private readonly Queue<Card> cardDeck;
@@ -290,11 +296,25 @@
             var noTricksForOneOfTheTeams = this.southNorthPlayersCardsTaken.Count == 0 || this.eastWestPlayersCardsTaken.Count == 0;
             if (this.southNorthPlayersCardsTaken.Count == 0)
             {
-                eastWestPoints += 90;
+                if (contract.Type == ContractType.NoTrumps)
+                {
+                    eastWestPoints += NoTrumpNoTricksValue;
+                }
+                else
+                {
+                    eastWestPoints += 90;
+                }
             }
             else if (this.eastWestPlayersCardsTaken.Count == 0)
             {
-                southNorthPoints += 90;
+                if (contract.Type == ContractType.NoTrumps)
+                {
+                    southNorthPoints += NoTrumpNoTricksValue;
+                }
+                else
+                {
+                    southNorthPoints += 90;
+                }
             }
 
             // Card combinations
@@ -342,15 +362,32 @@
             hangingPoints = contract.RoundPoints(hangingPoints, false);
 
             // Double and re-double
-            if (contract.IsReDoubled)
+            bool isGameDoubled = contract.IsReDoubled || contract.IsDoubled;
+            if (DoublesDoNotCountWhenNoTricks && noTricksForOneOfTheTeams)
             {
-                southNorthPoints *= 4;
-                eastWestPoints *= 4;
+                isGameDoubled = false;
             }
-            else if (contract.IsDoubled)
+
+            if (isGameDoubled)
             {
-                southNorthPoints *= 2;
-                eastWestPoints *= 2;
+                var weight = contract.IsReDoubled ? 4 : 2;
+                if (southNorthPoints > eastWestPoints)
+                {
+                    southNorthPoints = weight * (southNorthPoints + eastWestPoints);
+                    eastWestPoints = 0;
+                }
+                else if (eastWestPoints > southNorthPoints)
+                {
+                    southNorthPoints = 0;
+                    eastWestPoints = weight * (southNorthPoints + eastWestPoints);
+                }
+                else
+                {
+                    hangingPoints = southNorthPoints + eastWestPoints + hangingPoints;
+                    hangingPoints *= weight;
+                    southNorthPoints = 0;
+                    eastWestPoints = 0;
+                }
             }
 
             // Final result
