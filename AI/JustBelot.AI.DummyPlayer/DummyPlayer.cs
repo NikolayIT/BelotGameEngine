@@ -14,12 +14,15 @@
             this.Name = "Dummy player";
         }
 
-        public DummyPlayer(string name)
+        public DummyPlayer(string name, bool alwaysPass = true)
         {
             this.Name = name;
+            this.AlwaysPass = alwaysPass;
         }
 
         public string Name { get; private set; }
+
+        public bool AlwaysPass { get; set; }
 
         private GameInfo Game { get; set; }
 
@@ -46,10 +49,14 @@
 
         public BidType AskForBid(Contract currentContract, IList<BidType> allowedBids, IList<BidType> previousBids)
         {
-            return allowedBids.RandomElement();
-
-            // Dummy player always says pass
-            // return BidType.Pass;
+            if (this.AlwaysPass)
+            {
+                return BidType.Pass;
+            }
+            else
+            {
+                return allowedBids.RandomElement();
+            }
         }
 
         public IEnumerable<CardsCombination> AskForCardsCombinations(IEnumerable<CardsCombination> allowedCombinations)
@@ -66,7 +73,7 @@
             return new PlayAction { Card = cardToPlay, AnnounceBeloteIfAvailable = true };
         }
 
-        public void EndOfDeal(DealResult dealResult)
+        public virtual void EndOfDeal(DealResult dealResult)
         {
         }
     }

@@ -44,8 +44,7 @@
 
         public DealResult PlayDeal()
         {
-            // 1. Shuffle the card deck two times
-            this.cardDeck.Shuffle();
+            // 1. Shuffle the card deck
             this.cardDeck.Shuffle();
 
             // 2. Deal 5 cards to each player
@@ -65,7 +64,8 @@
             this.PlayCards(contract);
 
             // 6. Count the result
-            return this.PrepareDealResult(contract);
+            var dealResult = this.PrepareDealResult(contract);
+            return dealResult;
         }
 
         private Contract Bidding()
@@ -132,7 +132,7 @@
 
         private void DealCardsToAllPlayers(int cardsCount)
         {
-            foreach (int playerId in Enum.GetValues(typeof(PlayerPosition)))
+            for (int playerId = 0; playerId < 4; playerId++)
             {
                 var cards = new List<Card>();
                 for (int i = 0; i < cardsCount; i++)
@@ -261,27 +261,100 @@
 
         private DealResult PrepareDealResult(Contract contract)
         {
-            var southNorthCardPointsSum = this.southNorthPlayersCardsTaken.Sum(card => card.GetValue(contract.Type));
-            var eastWestCardPointsSum = this.eastWestPlayersCardsTaken.Sum(card => card.GetValue(contract.Type));
-            var noTricksForOneOfTheTeams = this.southNorthPlayersCardsTaken.Count == 0 || this.eastWestPlayersCardsTaken.Count == 0;
+            // Count card values
+            var southNorthPoints = this.southNorthPlayersCardsTaken.Sum(card => card.GetValue(contract.Type));
+            var eastWestPoints = this.eastWestPlayersCardsTaken.Sum(card => card.GetValue(contract.Type));
             
             // "last 10" rule
             if (this.southNorthTeamTakesLastHand == true)
             {
-                southNorthCardPointsSum += 10;
+                southNorthPoints += 10;
             }
             else if (this.southNorthTeamTakesLastHand == false)
             {
-                eastWestCardPointsSum += 10;
+                eastWestPoints += 10;
             }
 
             // Belotes
-            southNorthCardPointsSum += 20 * this.southNorthBelotes;
-            eastWestCardPointsSum += 20 * this.eastWestBelotes;
+            southNorthPoints += 20 * this.southNorthBelotes;
+            eastWestPoints += 20 * this.eastWestBelotes;
 
-            // TODO: Count announcements
+            // No trump
+            if (contract.Type == ContractType.NoTrumps)
+            {
+                southNorthPoints *= 2;
+                eastWestPoints *= 2;
+            }
 
-            var result = new DealResult(true, contract, southNorthCardPointsSum / 10, eastWestCardPointsSum / 10, noTricksForOneOfTheTeams);
+            // No tricks for one of the teams?
+            var noTricksForOneOfTheTeams = this.southNorthPlayersCardsTaken.Count == 0 || this.eastWestPlayersCardsTaken.Count == 0;
+            if (this.southNorthPlayersCardsTaken.Count == 0)
+            {
+                eastWestPoints += 90;
+            }
+            else if (this.eastWestPlayersCardsTaken.Count == 0)
+            {
+                southNorthPoints += 90;
+            }
+
+            // Card combinations
+            // TODO: Count points from card combinations
+
+            // Check if contract is kept and for hanging points
+            var hangingPoints = 0;
+            var contractNotKept = false;
+            if (contract.PlayerPosition == PlayerPosition.South || contract.PlayerPosition == PlayerPosition.North)
+            {
+                if (southNorthPoints < eastWestPoints)
+                {
+                    // Contract not kept
+                    contractNotKept = true;
+                    eastWestPoints += southNorthPoints;
+                    southNorthPoints = 0;
+                }
+                else if (southNorthPoints == eastWestPoints)
+                {
+                    // "Hanging" points
+                    hangingPoints = southNorthPoints;
+                    southNorthPoints = 0;
+                }
+            }
+            else
+            {
+                if (eastWestPoints < southNorthPoints)
+                {
+                    // Contract not kept
+                    contractNotKept = true;
+                    southNorthPoints += eastWestPoints;
+                    eastWestPoints = 0;
+                }
+                else if (southNorthPoints == eastWestPoints)
+                {
+                    // "Hanging" points
+                    hangingPoints = eastWestPoints;
+                    eastWestPoints = 0;
+                }
+            }
+
+            // Round points
+            southNorthPoints = contract.RoundPoints(southNorthPoints, southNorthPoints > eastWestPoints);
+            eastWestPoints = contract.RoundPoints(eastWestPoints, eastWestPoints > southNorthPoints);
+            hangingPoints = contract.RoundPoints(hangingPoints, false);
+
+            // Double and re-double
+            if (contract.IsReDoubled)
+            {
+                southNorthPoints *= 4;
+                eastWestPoints *= 4;
+            }
+            else if (contract.IsDoubled)
+            {
+                southNorthPoints *= 2;
+                eastWestPoints *= 2;
+            }
+
+            // Final result
+            var result = new DealResult(true, contract, southNorthPoints, eastWestPoints, hangingPoints, contractNotKept, noTricksForOneOfTheTeams);
             return result;
         }
     }

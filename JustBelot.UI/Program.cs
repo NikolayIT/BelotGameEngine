@@ -23,8 +23,8 @@
             Console.Clear();
 
             IPlayer southPlayer = new ConsoleHumanPlayer(playerName);
-            IPlayer eastPlayer = new DummyPlayer("East dummy");
-            IPlayer northPlayer = new DummyPlayer("North dummy");
+            IPlayer eastPlayer = new DummyPlayer("East dummy", alwaysPass: false);
+            IPlayer northPlayer = new DummyPlayer("North dummy", alwaysPass: false);
             IPlayer westPlayer = new DummyPlayer("West dummy");
 
             var game = new GameManager(southPlayer, eastPlayer, northPlayer, westPlayer);

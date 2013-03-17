@@ -181,6 +181,7 @@
 
             var dealResult = this.dealManager.PlayDeal();
 
+            // TODO: Hanging points from previous hand
             this.SouthNorthScore += dealResult.SouthNorthPoints;
             this.EastWestScore += dealResult.EastWestPoints;
 
@@ -201,9 +202,7 @@
             }
         }
 
-        // TODO: Give players access to previous contracts or inform them for the contracts
-        // TODO: Give players access to the cards that are already played or inform them
         // TODO: Give players access to settings file?? AI players may use self-learning techniques and may need a place to store their variables
-        // TODO: SECURITY: Never expose other players cards (the AI players may use this security hole for cheating)
+        // TODO: SECURITY: Never expose other players cards or any unneeded information (the AI players may use this security hole for cheating)
     }
 }

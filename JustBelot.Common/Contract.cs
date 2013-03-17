@@ -1,5 +1,6 @@
 ﻿namespace JustBelot.Common
 {
+    using System;
     using System.Collections.Generic;
     using System.Text;
 
@@ -80,6 +81,54 @@
             }
 
             return sb.ToString();
+        }
+
+        public int RoundPoints(int points, bool winner)
+        {
+            switch (this.Type)
+            {
+                case ContractType.AllTrumps:
+                    if (points % 10 > 4)
+                    {
+                        return (points / 10) + 1;
+                    }
+
+                    if (points % 10 == 4)
+                    {
+                        if (winner)
+                        {
+                            return points / 10;
+                        }
+
+                        return (points / 10) + 1;
+                    }
+
+                    return points / 10;
+                case ContractType.NoTrumps:
+                    return (int)Math.Round(points / 10M);
+                case ContractType.Clubs:
+                case ContractType.Diamonds:
+                case ContractType.Hearts:
+                case ContractType.Spades:
+                    if (points % 10 > 6)
+                    {
+                        return (points / 10) + 1;
+                    }
+
+                    if (points % 10 == 6)
+                    {
+                        if (winner)
+                        {
+                            return points / 10;
+                        }
+
+                        return (points / 10) + 1;
+                    }
+
+                    return points / 10;
+            }
+
+            return points / 10;
         }
 
         internal IList<BidType> GetAvailableBidsAfterThisContract(PlayerPosition teamMatePosition)
