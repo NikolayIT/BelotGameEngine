@@ -6,6 +6,10 @@
 
     public struct Contract
     {
+        public const int NoTrumpMaxPoints = 260;
+        public const int AllTrumpMaxPoints = 258;
+        public const int TrumpMaxPoints = 162;
+
         public Contract(PlayerPosition playerPosition, ContractType type, bool isDoubled = false, bool isReDoubled = false)
             : this()
         {
