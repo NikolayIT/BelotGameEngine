@@ -1,0 +1,268 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{87A0CE42-D179-4B25-A1E6-DDAEEFCC6CDB}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SharpBelot</RootNamespace>
+    <AssemblyName>SharpBelot</AssemblyName>
+    <ApplicationIcon>Resources\App.ico</ApplicationIcon>
+    <StartupObject>SharpBelot.Program</StartupObject>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AboutForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AboutForm.Designer.cs">
+      <DependentUpon>AboutForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="AnnounceForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AnnounceForm.Designer.cs">
+      <DependentUpon>AnnounceForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="BelotGUIForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="BelotGUIForm.Designer.cs">
+      <DependentUpon>BelotGUIForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CardAnimator.cs" />
+    <Compile Include="CardGUIProvider.cs" />
+    <Compile Include="CardPictureBox.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="CardPictureBox.Designer.cs">
+      <DependentUpon>CardPictureBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CardsPanel.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="CardsPanel.Designer.cs">
+      <DependentUpon>CardsPanel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CombinationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CombinationForm.Designer.cs">
+      <DependentUpon>CombinationForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DealResultForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DealResultForm.Designer.cs">
+      <DependentUpon>DealResultForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DisabledDataGridTexboxColumn.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="HumanPlayer.cs" />
+    <Compile Include="PassedAnnouncesForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PassedAnnouncesForm.Designer.cs">
+      <DependentUpon>PassedAnnouncesForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="AboutForm.bg.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>AboutForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="AboutForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>AboutForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="AnnounceForm.bg.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>AnnounceForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="AnnounceForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>AnnounceForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="BelotGUIForm.bg.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>BelotGUIForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="BelotGUIForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>BelotGUIForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CombinationForm.bg.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>CombinationForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CombinationForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>CombinationForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DealResultForm.bg.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>DealResultForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DealResultForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>DealResultForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PassedAnnouncesForm.bg.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>PassedAnnouncesForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PassedAnnouncesForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>PassedAnnouncesForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ResultForm.bg.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>ResultForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ResultForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>ResultForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SettingsForm.bg.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SettingsForm.resx">
+      <SubType>Designer</SubType>
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="StringResources.bg.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="StringResources.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>StringResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <Compile Include="ResultForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ResultForm.Designer.cs">
+      <DependentUpon>ResultForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Settings.cs" />
+    <Compile Include="SettingsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SettingsForm.Designer.cs">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="StringResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>StringResources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="TransparentPanel.cs">
+      <SubType>Component</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AIPlayers\AIPlayers.csproj">
+      <Project>{3793CCDC-7778-4FCE-825E-545FEAAB66CF}</Project>
+      <Name>AIPlayers</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\BelotEngine\BelotEngine.csproj">
+      <Project>{C0CA7BF3-317C-4230-9DE7-18D9C8148D5D}</Project>
+      <Name>BelotEngine</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\App.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\AllPos.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\BackGround.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\EastPos.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\KH.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\no.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\NorthPos.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\QH.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\roundtable.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\SouthPos.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\WestPos.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="Resources\CURLZ.TTF" />
+    <None Include="Resources\MISTRAL.TTF" />
+    <None Include="Resources\yes.gif" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

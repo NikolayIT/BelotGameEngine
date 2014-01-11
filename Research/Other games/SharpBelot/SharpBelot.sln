@@ -1,0 +1,60 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpBelot", "SharpBelot\SharpBelot.csproj", "{87A0CE42-D179-4B25-A1E6-DDAEEFCC6CDB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A6529809-05CB-437B-9C45-D03FE82551D9} = {A6529809-05CB-437B-9C45-D03FE82551D9}
+		{C7FA415C-4B55-4916-ADD0-23E8DBE7F444} = {C7FA415C-4B55-4916-ADD0-23E8DBE7F444}
+		{7F6369DA-52B2-418F-8DF9-FB3020417ECD} = {7F6369DA-52B2-418F-8DF9-FB3020417ECD}
+		{3793CCDC-7778-4FCE-825E-545FEAAB66CF} = {3793CCDC-7778-4FCE-825E-545FEAAB66CF}
+		{C0CA7BF3-317C-4230-9DE7-18D9C8148D5D} = {C0CA7BF3-317C-4230-9DE7-18D9C8148D5D}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BelotEngine", "BelotEngine\BelotEngine.csproj", "{C0CA7BF3-317C-4230-9DE7-18D9C8148D5D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AIPlayers", "AIPlayers\AIPlayers.csproj", "{3793CCDC-7778-4FCE-825E-545FEAAB66CF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C0CA7BF3-317C-4230-9DE7-18D9C8148D5D} = {C0CA7BF3-317C-4230-9DE7-18D9C8148D5D}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardsRes", "CardsRes\CardsRes.csproj", "{7F6369DA-52B2-418F-8DF9-FB3020417ECD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardRes2", "CardRes2\CardRes2.csproj", "{C7FA415C-4B55-4916-ADD0-23E8DBE7F444}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardRes3", "CardRes3\CardRes3.csproj", "{A6529809-05CB-437B-9C45-D03FE82551D9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{87A0CE42-D179-4B25-A1E6-DDAEEFCC6CDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87A0CE42-D179-4B25-A1E6-DDAEEFCC6CDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87A0CE42-D179-4B25-A1E6-DDAEEFCC6CDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87A0CE42-D179-4B25-A1E6-DDAEEFCC6CDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0CA7BF3-317C-4230-9DE7-18D9C8148D5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0CA7BF3-317C-4230-9DE7-18D9C8148D5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0CA7BF3-317C-4230-9DE7-18D9C8148D5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0CA7BF3-317C-4230-9DE7-18D9C8148D5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3793CCDC-7778-4FCE-825E-545FEAAB66CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3793CCDC-7778-4FCE-825E-545FEAAB66CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3793CCDC-7778-4FCE-825E-545FEAAB66CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3793CCDC-7778-4FCE-825E-545FEAAB66CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F6369DA-52B2-418F-8DF9-FB3020417ECD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F6369DA-52B2-418F-8DF9-FB3020417ECD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F6369DA-52B2-418F-8DF9-FB3020417ECD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F6369DA-52B2-418F-8DF9-FB3020417ECD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7FA415C-4B55-4916-ADD0-23E8DBE7F444}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7FA415C-4B55-4916-ADD0-23E8DBE7F444}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7FA415C-4B55-4916-ADD0-23E8DBE7F444}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7FA415C-4B55-4916-ADD0-23E8DBE7F444}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6529809-05CB-437B-9C45-D03FE82551D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6529809-05CB-437B-9C45-D03FE82551D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6529809-05CB-437B-9C45-D03FE82551D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6529809-05CB-437B-9C45-D03FE82551D9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <assembly alias="mscorlib" name="mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="_buttonOK.TabIndex" type="System.Int32, mscorlib">
+    <value>7</value>
+  </data>
+  <data name="&gt;&gt;_labelWEPoints.Parent" xml:space="preserve">
+    <value>_groupBoxWE</value>
+  </data>
+  <data name="_groupBoxSN.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="_labelSNPointsReal.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleCenter</value>
+  </data>
+  <data name="_labelWEPointsReal.Size" type="System.Drawing.Size, System.Drawing">
+    <value>40, 16</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="_labelSNPoints.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="_panelWECombinations.Location" type="System.Drawing.Point, System.Drawing">
+    <value>424, 32</value>
+  </data>
+  <data name="&gt;&gt;_labelWEHands.Parent" xml:space="preserve">
+    <value>_groupBoxWE</value>
+  </data>
+  <data name="&gt;&gt;_panelWEHands.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;_labelSNCombinations.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;_panelSNHands.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="&gt;&gt;_labelWECombinations.Parent" xml:space="preserve">
+    <value>_groupBoxWE</value>
+  </data>
+  <data name="&gt;&gt;$this.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Form, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="_labelSNPoints.Text" xml:space="preserve">
+    <value>Points </value>
+  </data>
+  <data name="&gt;&gt;_panelSNHands.Name" xml:space="preserve">
+    <value>_panelSNHands</value>
+  </data>
+  <data name="&gt;&gt;_labelWEPointsReal.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="_labelWEHands.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="_labelWEPoints.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="&gt;&gt;_labelWECombinations.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="_labelSNPointsReal.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="_panelWEHands.AutoScrollMargin" type="System.Drawing.Size, System.Drawing">
+    <value>0, 15</value>
+  </data>
+  <data name="&gt;&gt;_panelWECombinations.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;_buttonOK.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="_panelSNHands.AutoScroll" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="_labelWEPointsReal.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="&gt;&gt;_labelSNPoints.Name" xml:space="preserve">
+    <value>_labelSNPoints</value>
+  </data>
+  <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
+    <value>704, 466</value>
+  </data>
+  <data name="&gt;&gt;_labelSNHands.Parent" xml:space="preserve">
+    <value>_groupBoxSN</value>
+  </data>
+  <data name="_labelSNHands.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="_groupBoxWE.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="_labelWECombinations.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="_labelWEPointsReal.TabIndex" type="System.Int32, mscorlib">
+    <value>6</value>
+  </data>
+  <data name="&gt;&gt;_groupBoxWE.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="_labelWEPoints.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="&gt;&gt;_panelWECombinations.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;_panelWECombinations.Name" xml:space="preserve">
+    <value>_panelWECombinations</value>
+  </data>
+  <data name="_panelWECombinations.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="_labelSNPoints.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="_panelSNCombinations.Size" type="System.Drawing.Size, System.Drawing">
+    <value>248, 136</value>
+  </data>
+  <data name="&gt;&gt;_buttonOK.Name" xml:space="preserve">
+    <value>_buttonOK</value>
+  </data>
+  <data name="_labelWEHands.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;_labelSNHands.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;_groupBoxSN.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="_panelSNCombinations.Location" type="System.Drawing.Point, System.Drawing">
+    <value>424, 32</value>
+  </data>
+  <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
+    <value>6, 13</value>
+  </data>
+  <data name="&gt;&gt;_groupBoxWE.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;_labelSNCombinations.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;_labelWEHands.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;_groupBoxWE.Type" xml:space="preserve">
+    <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="_buttonOK.FlatStyle" type="System.Windows.Forms.FlatStyle, System.Windows.Forms">
+    <value>System</value>
+  </data>
+  <data name="_buttonOK.Location" type="System.Drawing.Point, System.Drawing">
+    <value>312, 438</value>
+  </data>
+  <data name="$this.Text" xml:space="preserve">
+    <value>Deal Results</value>
+  </data>
+  <data name="&gt;&gt;_labelWEPoints.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="_groupBoxWE.Text" xml:space="preserve">
+    <value>East - West</value>
+  </data>
+  <data name="_labelSNCombinations.TabIndex" type="System.Int32, mscorlib">
+    <value>3</value>
+  </data>
+  <data name="_labelWECombinations.Size" type="System.Drawing.Size, System.Drawing">
+    <value>136, 16</value>
+  </data>
+  <data name="_groupBoxSN.Location" type="System.Drawing.Point, System.Drawing">
+    <value>8, 6</value>
+  </data>
+  <data name="&gt;&gt;_labelWEPoints.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="_labelWEPoints.Location" type="System.Drawing.Point, System.Drawing">
+    <value>256, 176</value>
+  </data>
+  <data name="_labelWEPoints.Text" xml:space="preserve">
+    <value>Points </value>
+  </data>
+  <data name="_panelWEHands.Size" type="System.Drawing.Size, System.Drawing">
+    <value>404, 136</value>
+  </data>
+  <data name="&gt;&gt;_panelSNHands.Parent" xml:space="preserve">
+    <value>_groupBoxSN</value>
+  </data>
+  <data name="&gt;&gt;_labelWEPoints.Name" xml:space="preserve">
+    <value>_labelWEPoints</value>
+  </data>
+  <data name="_labelSNPointsReal.TabIndex" type="System.Int32, mscorlib">
+    <value>5</value>
+  </data>
+  <data name="&gt;&gt;_labelSNCombinations.Parent" xml:space="preserve">
+    <value>_groupBoxSN</value>
+  </data>
+  <data name="&gt;&gt;_panelWECombinations.Parent" xml:space="preserve">
+    <value>_groupBoxWE</value>
+  </data>
+  <data name="_labelSNHands.Text" xml:space="preserve">
+    <value>Taken hands</value>
+  </data>
+  <data name="_groupBoxSN.Text" xml:space="preserve">
+    <value>North - South</value>
+  </data>
+  <data name="&gt;&gt;$this.Name" xml:space="preserve">
+    <value>DealResultForm</value>
+  </data>
+  <data name="&gt;&gt;_labelSNPoints.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="_labelWEHands.Text" xml:space="preserve">
+    <value>Taken hands</value>
+  </data>
+  <data name="_labelSNPoints.Size" type="System.Drawing.Size, System.Drawing">
+    <value>40, 16</value>
+  </data>
+  <data name="&gt;&gt;_panelWEHands.Parent" xml:space="preserve">
+    <value>_groupBoxWE</value>
+  </data>
+  <data name="&gt;&gt;_labelWECombinations.Name" xml:space="preserve">
+    <value>_labelWECombinations</value>
+  </data>
+  <data name="_panelWECombinations.Size" type="System.Drawing.Size, System.Drawing">
+    <value>248, 136</value>
+  </data>
+  <data name="_labelSNPointsReal.Location" type="System.Drawing.Point, System.Drawing">
+    <value>304, 176</value>
+  </data>
+  <data name="_panelSNHands.Size" type="System.Drawing.Size, System.Drawing">
+    <value>404, 136</value>
+  </data>
+  <data name="&gt;&gt;_labelWEPointsReal.Name" xml:space="preserve">
+    <value>_labelWEPointsReal</value>
+  </data>
+  <data name="&gt;&gt;_panelSNCombinations.Parent" xml:space="preserve">
+    <value>_groupBoxSN</value>
+  </data>
+  <data name="&gt;&gt;_panelWEHands.Name" xml:space="preserve">
+    <value>_panelWEHands</value>
+  </data>
+  <data name="_labelSNCombinations.Text" xml:space="preserve">
+    <value>Announced combinations</value>
+  </data>
+  <data name="_labelWEPointsReal.TextAlign" type="System.Drawing.ContentAlignment, System.Drawing">
+    <value>MiddleCenter</value>
+  </data>
+  <data name="_panelSNHands.TabIndex" type="System.Int32, mscorlib">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;_labelSNPointsReal.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;_labelSNHands.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="_labelWEHands.Location" type="System.Drawing.Point, System.Drawing">
+    <value>160, 16</value>
+  </data>
+  <data name="&gt;&gt;_panelWEHands.ZOrder" xml:space="preserve">
+    <value>5</value>
+  </data>
+  <data name="_labelSNHands.Size" type="System.Drawing.Size, System.Drawing">
+    <value>80, 16</value>
+  </data>
+  <data name="&gt;&gt;_labelSNPoints.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="_groupBoxWE.Size" type="System.Drawing.Size, System.Drawing">
+    <value>688, 200</value>
+  </data>
+  <data name="_panelWEHands.Location" type="System.Drawing.Point, System.Drawing">
+    <value>8, 32</value>
+  </data>
+  <data name="_panelWEHands.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="&gt;&gt;_labelSNHands.Name" xml:space="preserve">
+    <value>_labelSNHands</value>
+  </data>
+  <data name="_buttonOK.Size" type="System.Drawing.Size, System.Drawing">
+    <value>75, 23</value>
+  </data>
+  <data name="_labelSNCombinations.Location" type="System.Drawing.Point, System.Drawing">
+    <value>440, 16</value>
+  </data>
+  <data name="&gt;&gt;_groupBoxSN.Name" xml:space="preserve">
+    <value>_groupBoxSN</value>
+  </data>
+  <data name="_buttonOK.Text" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="_labelWECombinations.Text" xml:space="preserve">
+    <value>Announced combinations</value>
+  </data>
+  <data name="_panelSNHands.AutoScrollMargin" type="System.Drawing.Size, System.Drawing">
+    <value>0, 15</value>
+  </data>
+  <data name="_panelSNHands.Location" type="System.Drawing.Point, System.Drawing">
+    <value>8, 32</value>
+  </data>
+  <data name="_labelWECombinations.TabIndex" type="System.Int32, mscorlib">
+    <value>4</value>
+  </data>
+  <data name="_labelWECombinations.Location" type="System.Drawing.Point, System.Drawing">
+    <value>440, 16</value>
+  </data>
+  <data name="&gt;&gt;_groupBoxWE.Name" xml:space="preserve">
+    <value>_groupBoxWE</value>
+  </data>
+  <data name="_panelWEHands.AutoScroll" type="System.Boolean, mscorlib">
+    <value>True</value>
+  </data>
+  <data name="_labelSNHands.Location" type="System.Drawing.Point, System.Drawing">
+    <value>160, 16</value>
+  </data>
+  <data name="_labelSNPointsReal.Size" type="System.Drawing.Size, System.Drawing">
+    <value>40, 16</value>
+  </data>
+  <data name="&gt;&gt;_labelWECombinations.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;_panelSNHands.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="_labelWEPointsReal.Location" type="System.Drawing.Point, System.Drawing">
+    <value>304, 176</value>
+  </data>
+  <data name="&gt;&gt;_buttonOK.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="&gt;&gt;_groupBoxSN.Type" xml:space="preserve">
+    <value>System.Windows.Forms.GroupBox, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;_panelSNCombinations.Name" xml:space="preserve">
+    <value>_panelSNCombinations</value>
+  </data>
+  <data name="_labelWEPoints.Size" type="System.Drawing.Size, System.Drawing">
+    <value>40, 16</value>
+  </data>
+  <data name="_groupBoxWE.Location" type="System.Drawing.Point, System.Drawing">
+    <value>8, 230</value>
+  </data>
+  <data name="&gt;&gt;_labelSNPointsReal.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;_labelWEPointsReal.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Label, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;_labelSNPointsReal.Name" xml:space="preserve">
+    <value>_labelSNPointsReal</value>
+  </data>
+  <data name="&gt;&gt;_labelSNPointsReal.Parent" xml:space="preserve">
+    <value>_groupBoxSN</value>
+  </data>
+  <data name="&gt;&gt;_labelSNCombinations.Name" xml:space="preserve">
+    <value>_labelSNCombinations</value>
+  </data>
+  <data name="&gt;&gt;_labelWEHands.ZOrder" xml:space="preserve">
+    <value>4</value>
+  </data>
+  <data name="&gt;&gt;_groupBoxSN.ZOrder" xml:space="preserve">
+    <value>2</value>
+  </data>
+  <data name="&gt;&gt;_panelSNCombinations.ZOrder" xml:space="preserve">
+    <value>3</value>
+  </data>
+  <data name="&gt;&gt;_panelSNCombinations.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Panel, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="_labelSNCombinations.Size" type="System.Drawing.Size, System.Drawing">
+    <value>136, 16</value>
+  </data>
+  <data name="&gt;&gt;_labelWEPointsReal.Parent" xml:space="preserve">
+    <value>_groupBoxWE</value>
+  </data>
+  <data name="_labelSNCombinations.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="_groupBoxSN.Size" type="System.Drawing.Size, System.Drawing">
+    <value>688, 200</value>
+  </data>
+  <data name="_labelWEHands.Size" type="System.Drawing.Size, System.Drawing">
+    <value>80, 16</value>
+  </data>
+  <data name="_labelSNPoints.Location" type="System.Drawing.Point, System.Drawing">
+    <value>256, 176</value>
+  </data>
+  <data name="_buttonOK.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="$this.StartPosition" type="System.Windows.Forms.FormStartPosition, System.Windows.Forms">
+    <value>CenterScreen</value>
+  </data>
+  <data name="&gt;&gt;_labelWEHands.Name" xml:space="preserve">
+    <value>_labelWEHands</value>
+  </data>
+  <data name="&gt;&gt;_buttonOK.Type" xml:space="preserve">
+    <value>System.Windows.Forms.Button, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;_labelSNPoints.Parent" xml:space="preserve">
+    <value>_groupBoxSN</value>
+  </data>
+  <data name="_labelSNHands.TabIndex" type="System.Int32, mscorlib">
+    <value>1</value>
+  </data>
+  <data name="_panelSNCombinations.TabIndex" type="System.Int32, mscorlib">
+    <value>2</value>
+  </data>
+  <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <metadata name="$this.Language" type="System.Globalization.CultureInfo, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>Bulgarian</value>
+  </metadata>
+</root>

@@ -1,0 +1,158 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{C7FA415C-4B55-4916-ADD0-23E8DBE7F444}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>CardRes</RootNamespace>
+    <AssemblyName>CardRes2</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\SharpBelot\bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\SharpBelot\bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <SubType>Designer</SubType>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ac.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ts.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ad.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ah.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\as.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\back.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ec.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ed.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\eh.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\es.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\jc.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\jd.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\jh.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\js.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\kc.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\kd.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\kh.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ks.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\nc.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\nd.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\nh.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ns.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\qc.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\qd.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\qh.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\qs.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\sc.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\sd.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\sh.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ss.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\tc.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\td.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\th.bmp" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

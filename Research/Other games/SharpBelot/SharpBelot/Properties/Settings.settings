@@ -1,0 +1,48 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="SharpBelot.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="CardsDll" Type="System.String" Scope="User">
+      <Value Profile="(Default)">CardsRes.dll</Value>
+    </Setting>
+    <Setting Name="SouthName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Коцето</Value>
+    </Setting>
+    <Setting Name="NorthName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Пламка</Value>
+    </Setting>
+    <Setting Name="EastName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Хасан</Value>
+    </Setting>
+    <Setting Name="WestName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Айше</Value>
+    </Setting>
+    <Setting Name="CapotRemovesDouble" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="ExtraPointsAreDoubled" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="NorthDll" Type="System.String" Scope="User">
+      <Value Profile="(Default)">AIPlayers.dll</Value>
+    </Setting>
+    <Setting Name="EastDll" Type="System.String" Scope="User">
+      <Value Profile="(Default)">AIPlayers.dll</Value>
+    </Setting>
+    <Setting Name="WestDll" Type="System.String" Scope="User">
+      <Value Profile="(Default)">AIPlayers.dll</Value>
+    </Setting>
+    <Setting Name="MistralFontFile" Type="System.String" Scope="User">
+      <Value Profile="(Default)">MISTRAL.TTF</Value>
+    </Setting>
+    <Setting Name="CurlzFontFile" Type="System.String" Scope="User">
+      <Value Profile="(Default)">CURLZ.TTF</Value>
+    </Setting>
+    <Setting Name="Speed" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">10</Value>
+    </Setting>
+    <Setting Name="Culture" Type="System.String" Scope="User">
+      <Value Profile="(Default)">bg-BG</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
