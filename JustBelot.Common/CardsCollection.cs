@@ -53,10 +53,15 @@
                                 new Card(CardType.Ace, CardSuit.Spades)
                             };
         }
- 
+
         public CardsCollection()
         {
             this.cards = new List<Card>();
+        }
+
+        public CardsCollection(int capacity)
+        {
+            this.cards = new List<Card>(capacity);
         }
 
         public CardsCollection(IEnumerable<Card> cardsList)

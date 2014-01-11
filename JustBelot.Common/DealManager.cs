@@ -37,7 +37,7 @@
 
             this.cardDeck = new Queue<Card>(CardsCollection.FullDeckOfCards);
 
-            this.playerCards = new[] { new Hand(), new Hand(), new Hand(), new Hand() }; // 4 players
+            this.playerCards = new[] { new Hand(8), new Hand(8), new Hand(8), new Hand(8) }; // 4 players
 
             this.southNorthPlayersCardsTaken = new CardsCollection();
             this.eastWestPlayersCardsTaken = new CardsCollection();

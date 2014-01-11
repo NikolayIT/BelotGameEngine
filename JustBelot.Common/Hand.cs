@@ -13,6 +13,11 @@
         {
         }
 
+        public Hand(int capacity)
+            : base(capacity)
+        {
+        }
+
         public IEnumerable<CardsCombination> FindAvailableCardsCombinations()
         {
             var cards = this.ToList();
