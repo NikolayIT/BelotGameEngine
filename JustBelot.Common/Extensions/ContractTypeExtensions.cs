@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace JustBelot.Common.Extensions
+﻿namespace JustBelot.Common.Extensions
 {
+    using System;
+
     public static class ContractTypeExtensions
     {
         public static CardSuit ToCardSuit(this ContractType contractType)

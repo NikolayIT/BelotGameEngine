@@ -250,28 +250,24 @@
                             // The player is not obligatory to play any trump
                             return this;
                         }
-                        else
-                        {
-                            // The current trick winner is the rivals of the current player
-                            if (currentTrickCards.Any(x => x.Suit == contract.Type.ToCardSuit()))
-                            {
-                                // Someone of the rivals has played trump card and is winning the trick
-                                var biggestTrumpCard = currentTrickCards.OrderByDescending(x => x.Type.GetOrderForAllTrumps()).First();
-                                if (this.Any(x => x.Suit == contract.Type.ToCardSuit() && x.Type.GetOrderForAllTrumps() > biggestTrumpCard.Type.GetOrderForAllTrumps()))
-                                {
-                                    // The player has bigger trump card(s) and should play one of them
-                                    return this.Where(x => x.Suit == contract.Type.ToCardSuit() && x.Type.GetOrderForAllTrumps() > biggestTrumpCard.Type.GetOrderForAllTrumps());
-                                }
 
-                                // The player hasn't any bigger trump card so he can play any card
-                                return this;
-                            }
-                            else
+                        // The current trick winner is the rivals of the current player
+                        if (currentTrickCards.Any(x => x.Suit == contract.Type.ToCardSuit()))
+                        {
+                            // Someone of the rivals has played trump card and is winning the trick
+                            var biggestTrumpCard = currentTrickCards.OrderByDescending(x => x.Type.GetOrderForAllTrumps()).First();
+                            if (this.Any(x => x.Suit == contract.Type.ToCardSuit() && x.Type.GetOrderForAllTrumps() > biggestTrumpCard.Type.GetOrderForAllTrumps()))
                             {
-                                // No one played trump card, but the player should play one of them
-                                return this.Where(x => x.Suit == contract.Type.ToCardSuit());
+                                // The player has bigger trump card(s) and should play one of them
+                                return this.Where(x => x.Suit == contract.Type.ToCardSuit() && x.Type.GetOrderForAllTrumps() > biggestTrumpCard.Type.GetOrderForAllTrumps());
                             }
+
+                            // The player hasn't any bigger trump card so he can play any card
+                            return this;
                         }
+
+                        // No one played trump card, but the player should play one of them
+                        return this.Where(x => x.Suit == contract.Type.ToCardSuit());
                     }
 
                     // The player has not any trump card or card from the played suit

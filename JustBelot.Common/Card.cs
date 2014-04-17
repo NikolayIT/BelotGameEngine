@@ -230,10 +230,8 @@
             {
                 return this.Type.CompareTo(other.Type);
             }
-            else
-            {
-                return this.Suit.CompareTo(other.Suit);
-            }
+            
+            return this.Suit.CompareTo(other.Suit);
         }
 
         public Card Seven()

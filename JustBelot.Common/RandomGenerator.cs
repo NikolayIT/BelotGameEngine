@@ -4,12 +4,26 @@
 
     public static class RandomProvider
     {
-        [ThreadStatic]
-        public static readonly Random Instance;
+        private static object syncRoot = new object();
+        private static volatile Random instance;
 
-        static RandomProvider()
+        public static Random Instance
         {
-            Instance = new Random();
+            get
+            {
+                if (instance == null)
+                {
+                    lock (syncRoot)
+                    {
+                        if (instance == null)
+                        {
+                            instance = new Random();
+                        }
+                    }
+                }
+
+                return instance;
+            }
         }
     }
 }

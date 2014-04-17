@@ -138,9 +138,12 @@
                 else
                 {
                     availableCombinationsAsString =
-                        string.Format("Press 0 to skip, 1 for {0} of {1} or 2 for {2} of {3}",
-                        allowedCombinationsList[0].CombinationType, allowedCombinationsList[0].ToCardType,
-                        allowedCombinationsList[1].CombinationType, allowedCombinationsList[1].ToCardType);
+                        string.Format(
+                            "Press 0 to skip, 1 for {0} of {1} or 2 for {2} of {3}",
+                            allowedCombinationsList[0].CombinationType,
+                            allowedCombinationsList[0].ToCardType,
+                            allowedCombinationsList[1].CombinationType,
+                            allowedCombinationsList[1].ToCardType);
                 }
 
                 ConsoleHelper.WriteOnPosition(availableCombinationsAsString, 0, Settings.ConsoleHeight - 2);
@@ -159,7 +162,6 @@
                 {
                     var list = new List<CardsCombination> { allowedCombinationsList[0] };
                     return list;
-
                 }
                 else if (line.Trim() == "2" && allowedCombinationsList.Count >= 2)
                 {

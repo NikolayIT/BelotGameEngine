@@ -33,7 +33,7 @@
                         currentPlayer = currentPlayer.NextPosition();
                         if (cards[i].Suit == firstCard.Suit && cards[i].Type.GetOrderForAllTrumps() > bestCard.Type.GetOrderForAllTrumps())
                         {
-                            bestCard = cards[i];
+                            bestCard = this.cards[i];
                             bestPlayer = currentPlayer;
                         }
                     }
