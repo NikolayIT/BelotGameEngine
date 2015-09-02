@@ -1,12 +1,19 @@
 # Official rules for "Belot"
 
-Belot is a game for 4 people (two teams of two). There are variations for 2 and 3 players but those are not popular at all. The game is played with 32 standard playing cards. From a standard deck of cards you remove the 2's 3's 4's 5's and 6s.
+Belot is a game for 4 people (two teams of two). There are variations for 2 and 3 players but those are not popular at all.
+
+The game is played with 32 standard playing cards. From a standard deck of cards you remove the 2's 3's 4's 5's and 6's.
 
 ## Rules of the game
 
 The players sit so that team-mates face each other.
 
 There are 4 stages to the game
+
+1. [Dealing](#1-dealing)
+2. [Bidding](#2-bidding)
+3. [Playing](#3-playing-the-game)
+4. [Scoring](#4-scoring)
 
 ## 1. Dealing
 
@@ -37,15 +44,17 @@ The game begins with the player on the right of the dealer. He/she places one of
 
 ### 3.1 Specific Trump game.
 
-The basics of the game is in the compulsory following of the "wanted suit". If that suit is a trump then it is compulsory to play a higher trump (if you have one).If a player doesn't hold a card of the "wanted" suit he/she Ã?Â is obliged to play a trump Ã?Â card (trumping) only if the hand is being won by an opponent so far. If the opponent has already (trumped) and you cannot follow suit you must play a higher trump if you can (otherwise you can play any card). Ã?Â
+The basics of the game is in the compulsory following of the "wanted suit". If that suit is a trump then it is compulsory to play a higher trump (if you have one).If a player doesn't hold a card of the "wanted" suit he/she is obliged to play a trump card (trumping) only if the hand is being won by an opponent so far. If the opponent has already (trumped) and you cannot follow suit you must play a higher trump if you can (otherwise you can play any card).
 
 ### 3.2 "No Trumps game"
 
 Same as the specific trump game but there is no trump and the only rule in play is the following of suit.
 
-### 3.3 "All Trumps game". Here all suits are trumps so as well as following suit you must give a higher trump if you can regardless of who is winning the hand.
+### 3.3 "All Trumps game"
 
-## 4.Scoring
+Here all suits are trumps so as well as following suit you must give a higher trump if you can regardless of who is winning the hand.
+
+## 4. Scoring
 
 At the end of the game each teams counts their points from the hands they have won. The table below outlines how much points each card carries:
 
