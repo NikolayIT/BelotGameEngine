@@ -1,60 +1,64 @@
-Official rules for "Belot"
+# Official rules for "Belot"
 
 Belot is a game for 4 people (two teams of two). There are variations for 2 and 3 players but those are not popular at all. The game is played with 32 standard playing cards. From a standard deck of cards you remove the 2's 3's 4's 5's and 6s.
 
-Rules of the game
+## Rules of the game
 
 The players sit so that team-mates face each other.
 
 There are 4 stages to the game
 
-1. 1.DealingÃ?Â
+## 1. Dealing
 
 The dealer, if he/she so wishes shuffles the deck and hands the deck to the player on his/her left, who then cuts the deck. Anti-clockwise every player is dealt 3 cards and subsequently 2 cards. Now every player has 5 cards.
 
-1. 2.BiddingÃ?Â
+## 2. Bidding
 
 The point of the dealing is to determine which game is going to be played out. Here are the possible games:
 
-1.
-  1. 2.1Specific trump game.Ã?Â
+### 2.1 Specific trump game.
 
 With a trump game one of the suits is decided as a trump suit, the rest are equal in strength. The strength of the cards of the trump suit are as follows ( descending order). J,9,A,10,K,Q,8,7. With the rest of the suits the strength of the cards is as follows: A, 10, K, Q, J, 9 ,8 ,7 A trump card is stronger than any card from any other suit.
 
-2.2 No Trump game.
+### 2.2 No Trump game.
 
 There is no trump in this game and the strengths of all the suits are as follows: A, 10, K, Q, J, 9 ,8 ,7.
 
-2.3 All Trumps
+### 2.3 All Trumps
 
 Here all the suits are trump suits i.e. the strengths of the cards is as follows: J,9,A,10,K,Q,8,7
 
 Bidding proceeds as follows: The first bidder is the player to the right of the dealer. He proposes one of the variants of the game (i.e. chooses a trump suit or
 "no trump" or "all trumps". If he does not wish to propose a game he will bid "pass". The next player can suggest a higher game or pass. The lowest game is Clubs followed by diamonds then hearts then spades then "no trump" then "all trumps". When a valid bid is made an opponent may declare that he/she wishes to double. This means that the opponent intends on winning the proposed game. If that does happen then the score for the game is doubled. In reply the original bidding team may declare a redouble. In that event the score is quadrupled. Bidding ends when three players consecutively bid a pass. Then the dealer deals 3 extra cards. If no valid game was bid (everyone said pass) the cards are gathered together and the next person deals.
 
-1. 3.Playing the gameÃ?Â
+## 3. Playing the game
 
 The game begins with the player on the right of the dealer. He/she places one of their cards on the table ( that card determines the "wanted" suit). All other players place one of their cards from the same suit. The hand is won by the player who placed the highest card (or trump). The person who won the hand gathers the cards of that hand and places them face down in front of him. The person who won the hand starts off the next hand and so on.
 
-1.
-  1. 3.1Specific Trump game. The basics of the game is in the compulsory following of the "wanted suit". If that suit is a trump then it is compulsory to play a higher trump (if you have one).If a player doesn't hold a card of the "wanted" suit he/she Ã?Â is obliged to play a trump Ã?Â card (trumping) only if the hand is being won by an opponent so far. If the opponent has already (trumped) and you cannot follow suit you must play a higher trump if you can (otherwise you can play any card). Ã?Â
-  2. 3.2"No Trumps game" Same as the specific trump game but there is no trump and the only rule in play is the following of suit.Ã?Â
-  3. 3.3"All Trumps game". Here all suits are trumps so as well as following suit you must give a higher trump if you can regardless of who is winning the hand.Ã?Â
+### 3.1 Specific Trump game.
 
-4.Scoring
+The basics of the game is in the compulsory following of the "wanted suit". If that suit is a trump then it is compulsory to play a higher trump (if you have one).If a player doesn't hold a card of the "wanted" suit he/she Ã?Â is obliged to play a trump Ã?Â card (trumping) only if the hand is being won by an opponent so far. If the opponent has already (trumped) and you cannot follow suit you must play a higher trump if you can (otherwise you can play any card). Ã?Â
+
+### 3.2 "No Trumps game"
+
+Same as the specific trump game but there is no trump and the only rule in play is the following of suit.
+
+### 3.3 "All Trumps game". Here all suits are trumps so as well as following suit you must give a higher trump if you can regardless of who is winning the hand.
+
+## 4.Scoring
 
 At the end of the game each teams counts their points from the hands they have won. The table below outlines how much points each card carries:
 
 | Card | Trump | Not a Trump |
 | --- | --- | --- |
-| 7 | 0 | 0 |
-| 8 | 0 | 0 |
-| 9 | 14 | 0 |
-| 10 | 10 | 10 |
-| J | 20 | 2 |
-| Q | 3 | 3 |
-| K | 4 | 4 |
-| A | 11 | 11 |
+| 7   | 0   | 0   |
+| 8   | 0   | 0   |
+| 9   | 14  | 0   |
+| 10  | 10  | 10  |
+| J   | 20  | 2   |
+| Q   | 3   | 3   |
+| K   | 4   | 4   |
+| A   | 11  | 11  |
 
 To the total team score is added points scored from bonuses (see below). When the No Trumps game is played the points scored are doubled (except for the bonus of getting all the hands). If the team that bid the game scores more points then the opponent then the game is won by the bidders. If the points are equal then the game is declared hanging. If the bidding team does not score more points then the opponent then the game is forfeited by the bidding team.
 
@@ -74,7 +78,7 @@ The game ends when one team records 151 points or more. If both teams both score
 
 There is an exception which states that you cannot win the whole game by collecting all hands in one game. In that event the barrier for winning the game is lifted to the current score of the leaders +1.
 
-**Bonuses**
+### Bonuses
 
 If a player holds the following combinations of cards and declares so when playing his/her first card of that game wins for his/her team the respective points:
 
@@ -101,18 +105,18 @@ The actual sequences is revealed at the end of each individual game.
 
 The "Belot" bonus. If a player has a K and Q from a trump suit (any suit in the "all trumps" game) and declares it during the play of the game scores for his/her team 20 points. The declaration of "Belot" happens when the first of the two cards (K and Q) is played and one of the following must also be true:
 
-1. 1.The card is played as the first card of that handÃ?Â
-2. 2.The player is following suitÃ?Â
-3. 3.The player is trumping.Ã?Â
+1. The card is played as the first card of that hand
+2. The player is following suit
+3. The player is trumping.
 
 A bonus of 10 points is given to the team who won the last hand (final 10). If all hands are won by the same team then that team wins a bonus of 90 points (all hands bonus).
 
-Rounding
+### Rounding
 
 The total score with the final 10 bonus is 258 (26) in a "All Trumps" game, 260 (26 after doubling) in the "No Trumps" game and 162 (16) in the specific trump game.
 
-- Ã¯Â?Â·.In the "All Trumps" game difficulties with rounding arise when the score ends with a 4. e.g. 34-224,164-194 ( if the game has a 100 point bonus) and so on. In that event the team with less points rounds up e.g. 4-22 and 17-19.Ã?Â
-- Ã¯Â?Â·.In "No Trumps" there can be no rounding problemsÃ?Â
-- Ã¯Â?Â·.In "Specific Trumps" game rounding difficulties arise when the score ends in 6. Again the team with less points rounds up. Example with 56-106 you score 6-10 and 6-156 the teams score 1-15 and so on.Ã?Â
+* In the "All Trumps" game difficulties with rounding arise when the score ends with a 4. e.g. 34-224,164-194 ( if the game has a 100 point bonus) and so on. In that event the team with less points rounds up e.g. 4-22 and 17-19.
+* In "No Trumps" there can be no rounding problems
+* In "Specific Trumps" game rounding difficulties arise when the score ends in 6. Again the team with less points rounds up. Example with 56-106 you score 6-10 and 6-156 the teams score 1-15 and so on.
 
 A special case is when the game is Specific trumps or "All trumps" and one of the teams has a bonus of 50 or 150. this enables the score of 154-154 in "All trumps" and 106-106 in Specific trumps. In that event the points that are hanging are rounded up. In the first example the team that didn't bid wins 15 points and 16 points hand and in the second example the non-bidding team wins 10 points and 11 points are left hanging.
