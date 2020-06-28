@@ -1,8 +1,7 @@
-JustBelot
-=========
+# Belot Game Engine
 
-JustBelot game engine
+Belot game engine
 
 ## Build status
 
-[![Build status](https://ci.appveyor.com/api/projects/status/aqoh9hy18tf6y0uf?svg=true)](https://ci.appveyor.com/project/NikolayIT/belotgameengine)
+[![Build Status](https://nikolayit.visualstudio.com/BelotGameEngine/_apis/build/status/NikolayIT.BelotGameEngine?branchName=master)](https://nikolayit.visualstudio.com/BelotGameEngine/_build/latest?definitionId=17&branchName=master)

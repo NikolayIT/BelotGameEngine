@@ -1,4 +1,0 @@
-version: 1.0.{build}
-build:
-  project: Source/JustBelot.sln
-  verbosity: minimal
