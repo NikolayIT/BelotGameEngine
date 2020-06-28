@@ -1,6 +1,8 @@
 ﻿namespace Belot.UI.Console
 {
     using System;
+    using System.IO;
+    using System.Runtime.Serialization.Formatters.Binary;
     using System.Text;
 
     using Belot.Engine.Cards;
@@ -22,16 +24,23 @@
             Console.WriteLine();
             Console.WriteLine(new string('-', 60));
 
-            for (int i = 0; i < 30; i++)
+            for (var i = 0; i < 30; i++)
             {
                 var deck = new Deck();
-                for (int j = 0; j < 32; j++)
+                for (var j = 0; j < 32; j++)
                 {
                     Console.Write(deck.GetNextCard() + " ");
                 }
 
                 Console.WriteLine();
             }
+        }
+
+        private static long GetSize(this object obj)
+        {
+            using Stream stream = new MemoryStream();
+            new BinaryFormatter().Serialize(stream, obj);
+            return stream.Length;
         }
     }
 }

@@ -39,5 +39,10 @@
 
             return array;
         }
+
+        public static T RandomElement<T>(this IList<T> source)
+        {
+            return source[Random.Value.Next(0, source.Count)];
+        }
     }
 }

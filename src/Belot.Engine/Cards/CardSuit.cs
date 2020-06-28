@@ -1,6 +1,6 @@
 ﻿namespace Belot.Engine.Cards
 {
-    public enum CardSuit
+    public enum CardSuit : byte
     {
         /// <summary>
         /// ♣ - Clubs

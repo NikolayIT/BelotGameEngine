@@ -1,11 +1,15 @@
 ﻿namespace Belot.Engine.Players
 {
+    using System.Collections.Generic;
+
+    using Belot.Engine.Game;
+
     public interface IPlayer
     {
-        void Move(PlayerMoveGameContext gameContext);
-    }
+        BidType GetBid(PlayerGetBidContext context);
 
-    public struct PlayerMoveGameContext
-    {
+        IEnumerable<AnnounceType> GetAnnounces(PlayerGetAnnouncesContext context);
+
+        PlayCardAction PlayCard(PlayerPlayCardContext context);
     }
 }

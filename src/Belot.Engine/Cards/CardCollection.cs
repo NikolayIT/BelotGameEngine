@@ -8,17 +8,13 @@
     /// <summary>
     /// Low memory (only 8 bytes per instance) fast implementation of card collection.
     /// </summary>
-    public class CardCollection : ICollection<Card>
+    public class CardCollection : ICollection<Card>, ICloneable
     {
         public const long AllBelotCardsBitMask = 8939021211303810;
 
         private const int MaxCards = 52;
 
         private long cards; // 64 bits for 52 possible cards
-
-        public CardCollection()
-        {
-        }
 
         public CardCollection(long bitMask)
         {
@@ -96,7 +92,7 @@
             return false;
         }
 
-        public CardCollection DeepClone()
+        public object Clone()
         {
             return new CardCollection(this.cards);
         }

@@ -1,6 +1,6 @@
 ﻿namespace Belot.Engine.Cards
 {
-    public enum CardType
+    public enum CardType : byte
     {
         /// <summary>
         /// Seven
