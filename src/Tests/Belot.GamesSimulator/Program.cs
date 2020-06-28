@@ -1,12 +1,12 @@
-﻿using System;
-
-namespace Belot.GamesSimulator
+﻿namespace Belot.GamesSimulator
 {
-    class Program
+    using System;
+
+    public static class Program
     {
-        static void Main(string[] args)
+        public static void Main()
         {
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("Belot Games Simulator");
         }
     }
 }

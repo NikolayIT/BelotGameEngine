@@ -1,12 +1,16 @@
-﻿using System;
-
-namespace Belot.UI.Console
+﻿namespace Belot.UI.Console
 {
-    class Program
+    using System;
+    using System.Text;
+
+    public static class Program
     {
-        static void Main(string[] args)
+        public static void Main()
         {
-            Console.WriteLine("Hello World!");
+            Console.OutputEncoding = Encoding.UTF8;
+            Console.BufferHeight = Console.WindowHeight = 17;
+            Console.BufferWidth = Console.WindowWidth = 50;
+            Console.WriteLine("Belot Console 1.0");
         }
     }
 }
