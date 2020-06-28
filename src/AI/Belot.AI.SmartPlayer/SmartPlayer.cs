@@ -1,6 +1,5 @@
 ﻿namespace Belot.AI.SmartPlayer
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
 

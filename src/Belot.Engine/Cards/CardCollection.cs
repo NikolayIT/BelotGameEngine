@@ -16,7 +16,7 @@
 
         private long cards; // 64 bits for 52 possible cards
 
-        public CardCollection(long bitMask)
+        public CardCollection(long bitMask = 0)
         {
             this.cards = bitMask;
         }

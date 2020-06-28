@@ -13,7 +13,7 @@
         East = 1 << 1,
         North = 1 << 2,
         West = 1 << 3,
-        FirstTeam = South | North,
-        SecondTeam = East | West,
+        SouthNorthTeam = South | North,
+        EastWestTeam = East | West,
     }
 }

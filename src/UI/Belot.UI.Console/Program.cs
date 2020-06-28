@@ -1,11 +1,12 @@
 ﻿namespace Belot.UI.Console
 {
     using System;
-    using System.IO;
-    using System.Runtime.Serialization.Formatters.Binary;
     using System.Text;
 
-    using Belot.Engine.Cards;
+    using Belot.AI.DummyPlayer;
+    using Belot.AI.SmartPlayer;
+    using Belot.Engine.GameMechanics;
+    using Belot.Engine.Players;
 
     public static class Program
     {
@@ -16,31 +17,20 @@
             //// Console.BufferWidth = Console.WindowWidth = 50;
             Console.WriteLine("Belot Console 1.0");
 
-            foreach (var card in new CardCollection(CardCollection.AllBelotCardsBitMask))
+            var game = new BelotGame(new SmartPlayer(), new DummyPlayer(), new SmartPlayer(), new DummyPlayer());
+            for (var i = 1; i <= 100; i++)
             {
-                Console.Write(card + " ");
+                var firstToPlay = ((i - 1) % 4) switch
+                    {
+                        0 => PlayerPosition.South,
+                        1 => PlayerPosition.East,
+                        2 => PlayerPosition.North,
+                        3 => PlayerPosition.West,
+                        _ => PlayerPosition.South,
+                    };
+                var result = game.PlayGame(firstToPlay);
+                Console.WriteLine($"Game #{i}: Winner: {result.Winners}; Result(SN-EW): {result.SouthNorthTeamPoints} - {result.EastWestTeamPoints}");
             }
-
-            Console.WriteLine();
-            Console.WriteLine(new string('-', 60));
-
-            for (var i = 0; i < 30; i++)
-            {
-                var deck = new Deck();
-                for (var j = 0; j < 32; j++)
-                {
-                    Console.Write(deck.GetNextCard() + " ");
-                }
-
-                Console.WriteLine();
-            }
-        }
-
-        private static long GetSize(this object obj)
-        {
-            using Stream stream = new MemoryStream();
-            new BinaryFormatter().Serialize(stream, obj);
-            return stream.Length;
         }
     }
 }
