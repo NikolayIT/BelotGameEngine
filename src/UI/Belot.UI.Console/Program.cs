@@ -6,6 +6,7 @@
 
     using Belot.AI.DummyPlayer;
     using Belot.AI.SmartPlayer;
+    using Belot.Engine;
     using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
@@ -25,7 +26,7 @@
             ////     new LoggingPlayerDecorator(new SmartPlayer()),
             ////     new LoggingPlayerDecorator(new DummyPlayer()));
             var game = new BelotGame(new DummyPlayer(), new DummyPlayer(), new DummyPlayer(), new DummyPlayer());
-            for (var i = 1; i <= 100000; i++)
+            for (var i = 1; i <= 1000; i++)
             {
                 var firstToPlay = ((i - 1) % 4) switch
                     {
@@ -36,7 +37,7 @@
                         _ => PlayerPosition.South,
                     };
                 var result = game.PlayGame(firstToPlay);
-                //// Console.WriteLine($"Game #{i}: Winner: {result.Winner}; Result(SN-EW): {result.SouthNorthTeamPoints} - {result.EastWestTeamPoints}"););
+                //// Console.WriteLine($"Game #{i}: Winner: {result.Winner}; Result(SN-EW): {result.SouthNorthPoints} - {result.EastWestPoints}"););
             }
 
             Console.WriteLine(stopwatch.Elapsed);

@@ -15,7 +15,7 @@
             this.players = new List<IPlayer>(4) { southPlayer, eastPlayer, northPlayer, westPlayer };
         }
 
-        public BidType GetContract(
+        public Bid GetContract(
             int roundNumber,
             PlayerPosition firstToPlay,
             int southNorthTeamPoints,
@@ -26,8 +26,7 @@
             bids = new List<Bid>();
             var consecutivePasses = 0;
             var currentPlayerPosition = firstToPlay;
-            var contract = BidType.Pass;
-            var contractByPlayer = currentPlayerPosition;
+            var contract = new Bid(currentPlayerPosition, BidType.Pass);
             var bidContext = new PlayerGetBidContext
             {
                 RoundNumber = roundNumber,
@@ -38,7 +37,7 @@
             };
             while (true)
             {
-                var availableBids = this.GetAvailableBids(contract, contractByPlayer, currentPlayerPosition);
+                var availableBids = this.GetAvailableBids(contract, currentPlayerPosition);
 
                 BidType bid;
                 if (availableBids == BidType.Pass)
@@ -65,26 +64,26 @@
 
                     if (bid == BidType.Double || bid == BidType.ReDouble)
                     {
-                        contract &= ~BidType.Double;
-                        contract |= bid;
-                        contractByPlayer = currentPlayerPosition;
+                        contract.Type = contract.CleanBidType;
+                        contract.Type |= bid;
+                        contract.Player = currentPlayerPosition;
                     }
                     else if (bid != BidType.Pass)
                     {
-                        contract = bid;
-                        contractByPlayer = currentPlayerPosition;
+                        contract.Type = bid;
+                        contract.Player = currentPlayerPosition;
                     }
                 }
 
                 bids.Add(new Bid(currentPlayerPosition, bid));
 
                 consecutivePasses = (bid == BidType.Pass) ? consecutivePasses + 1 : 0;
-                if (contract == BidType.Pass && consecutivePasses == 4)
+                if (contract.Type == BidType.Pass && consecutivePasses == 4)
                 {
                     break;
                 }
 
-                if (contract != BidType.Pass && consecutivePasses == 3)
+                if (contract.Type != BidType.Pass && consecutivePasses == 3)
                 {
                     break;
                 }
@@ -96,14 +95,10 @@
         }
 
         private BidType GetAvailableBids(
-            BidType currentContract,
-            PlayerPosition contractByPlayer,
+            Bid currentContract,
             PlayerPosition currentPlayer)
         {
-            var cleanContract = currentContract;
-            cleanContract &= ~BidType.Double;
-            cleanContract &= ~BidType.ReDouble;
-
+            var cleanContract = currentContract.CleanBidType;
             var availableBids = BidType.Pass;
             if (cleanContract < BidType.Clubs)
             {
@@ -135,13 +130,13 @@
                 availableBids |= BidType.AllTrumps;
             }
 
-            if (!currentPlayer.IsInSameTeamWith(contractByPlayer) && currentContract != BidType.Pass)
+            if (!currentPlayer.IsInSameTeamWith(currentContract.Player) && currentContract.Type != BidType.Pass)
             {
-                if (currentContract.HasFlag(BidType.Double))
+                if (currentContract.Type.HasFlag(BidType.Double))
                 {
                     availableBids |= BidType.ReDouble;
                 }
-                else if (currentContract.HasFlag(BidType.ReDouble))
+                else if (currentContract.Type.HasFlag(BidType.ReDouble))
                 {
                 }
                 else

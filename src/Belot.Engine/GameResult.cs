@@ -1,4 +1,4 @@
-﻿namespace Belot.Engine.GameMechanics
+﻿namespace Belot.Engine
 {
     using Belot.Engine.Players;
 

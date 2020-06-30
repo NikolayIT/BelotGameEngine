@@ -2,11 +2,12 @@
 {
     public enum AnnounceType : byte
     {
-        Tierce, // 20
-        Quarte, // 50
-        Quinte, // 100
-        FourOfAKind, // 100
-        FourNines, // 150
-        FourJacks, // 200
+        Belot = 0,
+        Tierce = 1, // 20
+        Quarte = 2, // 50
+        Quinte = 3, // 100
+        FourOfAKind = 4, // 100
+        FourNines = 5, // 150
+        FourJacks = 6, // 200
     }
 }

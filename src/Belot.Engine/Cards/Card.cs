@@ -2,6 +2,8 @@
 {
     using System;
 
+    using Belot.Engine.Game;
+
     public sealed class Card
     {
         private static readonly Card[] Cards = new Card[53];
@@ -30,6 +32,34 @@
 
         public CardType Type { get; }
 
+        public int TrumpOrder =>
+            this.Type switch
+                {
+                    CardType.Seven => 1,
+                    CardType.Eight => 2,
+                    CardType.Queen => 3,
+                    CardType.King => 4,
+                    CardType.Ten => 5,
+                    CardType.Ace => 6,
+                    CardType.Nine => 7,
+                    CardType.Jack => 8,
+                    _ => 0,
+                };
+
+        public int NoTrumpOrder =>
+            this.Type switch
+                {
+                    CardType.Seven => 1,
+                    CardType.Eight => 2,
+                    CardType.Nine => 3,
+                    CardType.Jack => 4,
+                    CardType.Queen => 5,
+                    CardType.King => 6,
+                    CardType.Ten => 7,
+                    CardType.Ace => 8,
+                    _ => 0,
+                };
+
         public static bool operator ==(Card left, Card right)
         {
             return left?.Suit == right?.Suit && left?.Type == right?.Type;
@@ -49,6 +79,43 @@
             }
 
             return Cards[code];
+        }
+
+        public int GetValue(BidType contract)
+        {
+            if (contract == BidType.Pass)
+            {
+                return 0;
+            }
+
+            if (contract.HasFlag(BidType.NoTrumps))
+            {
+                return this.Type switch
+                    {
+                        CardType.Seven => 0,
+                        CardType.Eight => 0,
+                        CardType.Nine => 0,
+                        CardType.Ten => 10,
+                        CardType.Jack => 2,
+                        CardType.Queen => 3,
+                        CardType.King => 4,
+                        CardType.Ace => 11,
+                        _ => 0,
+                    };
+            }
+
+            return this.Type switch
+                {
+                    CardType.Seven => 0,
+                    CardType.Eight => 0,
+                    CardType.Nine => 14,
+                    CardType.Ten => 10,
+                    CardType.Jack => 20,
+                    CardType.Queen => 3,
+                    CardType.King => 4,
+                    CardType.Ace => 11,
+                    _ => 0,
+                };
         }
 
         public override bool Equals(object obj)

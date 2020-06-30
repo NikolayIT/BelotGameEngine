@@ -21,6 +21,6 @@
 
         public IEnumerable<Bid> Bids { get; set; }
 
-        public BidType CurrentContract { get; set; }
+        public Bid CurrentContract { get; set; }
     }
 }

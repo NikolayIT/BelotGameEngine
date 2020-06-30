@@ -1,5 +1,7 @@
-﻿namespace Belot.Engine.GameMechanics
+﻿namespace Belot.Engine
 {
+    using Belot.Engine.Game;
+    using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
     /*  N
@@ -21,6 +23,7 @@
             var eastWestTeamPoints = 0;
             var firstInRound = firstToPlay;
             var roundNumber = 1;
+            var hangingPoints = 0;
 
             while (true)
             {
@@ -28,15 +31,18 @@
                     roundNumber,
                     firstInRound,
                     southNorthTeamPoints,
-                    eastWestTeamPoints);
+                    eastWestTeamPoints,
+                    hangingPoints);
 
-                southNorthTeamPoints += roundResult.SouthNorthTeamPoints;
-                eastWestTeamPoints += roundResult.EastWestTeamPoints;
+                southNorthTeamPoints += roundResult.SouthNorthPoints;
+                eastWestTeamPoints += roundResult.EastWestPoints;
+                hangingPoints = roundResult.HangingPoints;
 
+                // TODO: Inside?
                 if ((southNorthTeamPoints >= 151 || eastWestTeamPoints >= 151)
                     && southNorthTeamPoints != eastWestTeamPoints
                     && !roundResult.NoTricksForOneOfTheTeams
-                    && !roundResult.PassOnlyRound)
+                    && roundResult.Contract.Type != BidType.Pass)
                 {
                     // Game over
                     break;

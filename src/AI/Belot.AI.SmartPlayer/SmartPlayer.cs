@@ -31,7 +31,7 @@
             return this.allBids.Where(x => context.AvailableBids.HasFlag(x)).ToList().RandomElement();
         }
 
-        public IEnumerable<AnnounceType> GetAnnounces(PlayerGetAnnouncesContext context)
+        public IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
         {
             return context.AvailableAnnounces;
         }

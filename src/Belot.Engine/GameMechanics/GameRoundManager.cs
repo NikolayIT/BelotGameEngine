@@ -1,6 +1,5 @@
 ﻿namespace Belot.Engine.GameMechanics
 {
-    using System;
     using System.Collections.Generic;
 
     using Belot.Engine.Cards;
@@ -15,17 +14,28 @@
 
         private readonly TricksManager tricksManager;
 
+        private readonly ScoreManager scoreManager;
+
+        private readonly Deck deck;
+
         public GameRoundManager(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
         {
             this.players = new List<IPlayer>(4) { southPlayer, eastPlayer, northPlayer, westPlayer };
             this.contractManager = new ContractManager(southPlayer, eastPlayer, northPlayer, westPlayer);
             this.tricksManager = new TricksManager(southPlayer, eastPlayer, northPlayer, westPlayer);
+            this.scoreManager = new ScoreManager();
+            this.deck = new Deck();
         }
 
-        public RoundResult PlayRound(int roundNumber, PlayerPosition firstToPlay, int southNorthTeamPoints, int eastWestTeamPoints)
+        public RoundResult PlayRound(
+            int roundNumber,
+            PlayerPosition firstToPlay,
+            int southNorthTeamPoints,
+            int eastWestTeamPoints,
+            int hangingPoints)
         {
-            // Initialize deck
-            var deck = new Deck();
+            // Initialize the cards
+            this.deck.Shuffle();
             var playerCards = new List<CardCollection>(this.players.Count);
             for (var playerIndex = 0; playerIndex < this.players.Count; playerIndex++)
             {
@@ -33,7 +43,7 @@
             }
 
             // Deal 5 cards to each player
-            this.DealCards(playerCards, deck, 5);
+            this.DealCards(playerCards, 5);
 
             // Bidding phase
             var contract = this.contractManager.GetContract(
@@ -45,18 +55,13 @@
                 out var bids);
 
             // All pass
-            if (contract == BidType.Pass)
+            if (contract.Type == BidType.Pass)
             {
-                return new RoundResult
-                {
-                    NoTricksForOneOfTheTeams = false,
-                    EastWestTeamPoints = 0,
-                    SouthNorthTeamPoints = 0,
-                };
+                return new RoundResult(contract);
             }
 
             // Deal 3 more cards to each player
-            this.DealCards(playerCards, deck, 3);
+            this.DealCards(playerCards, 3);
 
             // Play 8 tricks
             this.tricksManager.PlayTricks(
@@ -66,25 +71,28 @@
                 eastWestTeamPoints,
                 playerCards,
                 bids,
-                contract);
+                contract,
+                out var announces,
+                out var southNorthTricks,
+                out var eastWestTricks);
 
-            //// TODO: Score points
-
-            return new RoundResult
-            {
-                NoTricksForOneOfTheTeams = false,
-                EastWestTeamPoints = EnumerableExtensions.Random.Value.Next(0, 13),
-                SouthNorthTeamPoints = EnumerableExtensions.Random.Value.Next(0, 13),
-            };
+            // Score points
+            var result = this.scoreManager.GetScore(
+                contract,
+                southNorthTricks,
+                eastWestTricks,
+                announces,
+                hangingPoints);
+            return result;
         }
 
-        private void DealCards(IList<CardCollection> playerCards, Deck deck, int cardsPerPlayer)
+        private void DealCards(IList<CardCollection> playerCards, int cardsPerPlayer)
         {
             for (var playerIndex = 0; playerIndex < this.players.Count; playerIndex++)
             {
                 for (var i = 0; i < cardsPerPlayer; i++)
                 {
-                    playerCards[playerIndex].Add(deck.GetNextCard());
+                    playerCards[playerIndex].Add(this.deck.GetNextCard());
                 }
             }
         }

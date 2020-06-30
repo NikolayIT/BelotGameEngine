@@ -1,13 +1,26 @@
 ﻿namespace Belot.Engine.GameMechanics
 {
+    using Belot.Engine.Game;
+
     public class RoundResult
     {
-        public int SouthNorthTeamPoints { get; set; }
+        public RoundResult(Bid contract)
+        {
+            this.Contract = contract;
+        }
 
-        public int EastWestTeamPoints { get; set; }
+        public Bid Contract { get; set; }
+
+        public int SouthNorthPoints { get; set; }
+
+        public int SouthNorthTotalInRoundPoints { get; set; }
+
+        public int EastWestPoints { get; set; }
+
+        public int EastWestTotalInRoundPoints { get; set; }
 
         public bool NoTricksForOneOfTheTeams { get; set; }
 
-        public bool PassOnlyRound => this.EastWestTeamPoints == 0 && this.SouthNorthTeamPoints == 0;
+        public int HangingPoints { get; set; }
     }
 }

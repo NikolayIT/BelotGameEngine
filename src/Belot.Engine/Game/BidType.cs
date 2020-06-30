@@ -14,6 +14,5 @@
         AllTrumps = 1 << 5,
         Double = 1 << 6,
         ReDouble = 1 << 7,
-        All = 0b11111111,
     }
 }

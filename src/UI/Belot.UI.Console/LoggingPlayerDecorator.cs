@@ -22,7 +22,7 @@
             return bid;
         }
 
-        public IEnumerable<AnnounceType> GetAnnounces(PlayerGetAnnouncesContext context)
+        public IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
         {
             return this.player.GetAnnounces(context);
         }

@@ -10,6 +10,6 @@
 
         public IEnumerable<PlayCardAction> PreviousActions { get; set; }
 
-        public IReadOnlyList<AnnounceType> AvailableAnnounces { get; set; }
+        public IReadOnlyList<Announce> AvailableAnnounces { get; set; }
     }
 }
