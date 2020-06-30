@@ -7,10 +7,10 @@
 
     public class PlayerPlayCardContext : BasePlayerContext
     {
-        public BidType Contract { get; set; }
+        public IEnumerable<Announce> Announces { get; set; }
 
-        public IList<Announce> Announces { get; set; }
+        public IEnumerable<PlayCardAction> PreviousActions { get; set; }
 
-        public IList<Card> AvailableCardsToPlay { get; set; }
+        public CardCollection AvailableCardsToPlay { get; set; }
     }
 }

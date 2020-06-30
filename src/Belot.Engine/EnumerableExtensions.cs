@@ -8,7 +8,7 @@
     public static class EnumerableExtensions
     {
         // https://stackoverflow.com/questions/19270507/correct-way-to-use-random-in-multithread-application
-        private static readonly ThreadLocal<Random> Random =
+        public static readonly ThreadLocal<Random> Random =
             new ThreadLocal<Random>(() => new Random(Interlocked.Increment(ref seed)));
 
         private static int seed = Environment.TickCount;

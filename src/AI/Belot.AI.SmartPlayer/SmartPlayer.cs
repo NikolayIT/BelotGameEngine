@@ -1,5 +1,6 @@
 ﻿namespace Belot.AI.SmartPlayer
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -9,10 +10,25 @@
 
     public class SmartPlayer : IPlayer
     {
+        private readonly IList<BidType> allBids = new List<BidType>
+                                                      {
+                                                          BidType.Pass,
+                                                          BidType.Pass,
+                                                          BidType.Pass,
+                                                          BidType.Pass,
+                                                          BidType.Pass,
+                                                          BidType.Pass,
+                                                          BidType.Clubs,
+                                                          BidType.Diamonds,
+                                                          BidType.Hearts,
+                                                          BidType.Spades,
+                                                          BidType.NoTrumps,
+                                                          BidType.AllTrumps,
+                                                      };
+
         public BidType GetBid(PlayerGetBidContext context)
         {
-            return context.AvailableBids.Where(x => x != BidType.Double && x != BidType.ReDouble).ToList()
-                .RandomElement();
+            return this.allBids.Where(x => context.AvailableBids.HasFlag(x)).ToList().RandomElement();
         }
 
         public IEnumerable<AnnounceType> GetAnnounces(PlayerGetAnnouncesContext context)
@@ -22,7 +38,7 @@
 
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
         {
-            return new PlayCardAction(context.AvailableCardsToPlay.RandomElement());
+            return new PlayCardAction(context.AvailableCardsToPlay.ToList().RandomElement());
         }
     }
 }

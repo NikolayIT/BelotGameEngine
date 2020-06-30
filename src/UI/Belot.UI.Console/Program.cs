@@ -1,6 +1,7 @@
 ﻿namespace Belot.UI.Console
 {
     using System;
+    using System.Diagnostics;
     using System.Text;
 
     using Belot.AI.DummyPlayer;
@@ -17,8 +18,14 @@
             //// Console.BufferWidth = Console.WindowWidth = 50;
             Console.WriteLine("Belot Console 1.0");
 
-            var game = new BelotGame(new SmartPlayer(), new DummyPlayer(), new SmartPlayer(), new DummyPlayer());
-            for (var i = 1; i <= 100; i++)
+            var stopwatch = Stopwatch.StartNew();
+            //// var game = new BelotGame(
+            ////     new LoggingPlayerDecorator(new SmartPlayer()),
+            ////     new LoggingPlayerDecorator(new DummyPlayer()),
+            ////     new LoggingPlayerDecorator(new SmartPlayer()),
+            ////     new LoggingPlayerDecorator(new DummyPlayer()));
+            var game = new BelotGame(new DummyPlayer(), new DummyPlayer(), new DummyPlayer(), new DummyPlayer());
+            for (var i = 1; i <= 100000; i++)
             {
                 var firstToPlay = ((i - 1) % 4) switch
                     {
@@ -29,8 +36,10 @@
                         _ => PlayerPosition.South,
                     };
                 var result = game.PlayGame(firstToPlay);
-                Console.WriteLine($"Game #{i}: Winner: {result.Winners}; Result(SN-EW): {result.SouthNorthTeamPoints} - {result.EastWestTeamPoints}");
+                //// Console.WriteLine($"Game #{i}: Winner: {result.Winner}; Result(SN-EW): {result.SouthNorthTeamPoints} - {result.EastWestTeamPoints}"););
             }
+
+            Console.WriteLine(stopwatch.Elapsed);
         }
     }
 }

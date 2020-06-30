@@ -6,13 +6,14 @@
     public enum BidType : byte
     {
         Pass = 0,
-        Clubs = 1, // ♣
-        Diamonds = 2, // ♦
-        Hearts = 3, // ♥
-        Spades = 4, // ♠
-        NoTrumps = 5,
-        AllTrumps = 6,
-        Double = 64,
-        ReDouble = 128,
+        Clubs = 1 << 0, // ♣
+        Diamonds = 1 << 1, // ♦
+        Hearts = 1 << 2, // ♥
+        Spades = 1 << 3, // ♠
+        NoTrumps = 1 << 4,
+        AllTrumps = 1 << 5,
+        Double = 1 << 6,
+        ReDouble = 1 << 7,
+        All = 0b11111111,
     }
 }

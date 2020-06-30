@@ -6,6 +6,10 @@
 
     public class PlayerGetAnnouncesContext : BasePlayerContext
     {
-        public IList<AnnounceType> AvailableAnnounces { get; set; }
+        public IEnumerable<Announce> Announces { get; set; }
+
+        public IEnumerable<PlayCardAction> PreviousActions { get; set; }
+
+        public IReadOnlyList<AnnounceType> AvailableAnnounces { get; set; }
     }
 }

@@ -7,5 +7,7 @@
         public int EastWestTeamPoints { get; set; }
 
         public bool NoTricksForOneOfTheTeams { get; set; }
+
+        public bool PassOnlyRound => this.EastWestTeamPoints == 0 && this.SouthNorthTeamPoints == 0;
     }
 }

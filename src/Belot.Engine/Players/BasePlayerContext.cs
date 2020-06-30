@@ -7,7 +7,9 @@
 
     public class BasePlayerContext
     {
-        public PlayerPosition FirstToPlay { get; set; }
+        public int RoundNumber { get; set; }
+
+        public PlayerPosition FirstToPlayInTheRound { get; set; }
 
         public PlayerPosition MyPosition { get; set; }
 
@@ -15,8 +17,10 @@
 
         public int EastWestTeamPoints { get; set; }
 
-        public CardCollection MyCards { get; }
+        public CardCollection MyCards { get; set; }
 
-        public IList<Bid> Bids { get; set; }
+        public IEnumerable<Bid> Bids { get; set; }
+
+        public BidType CurrentContract { get; set; }
     }
 }

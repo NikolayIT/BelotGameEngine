@@ -13,5 +13,9 @@
         public Card Card { get; }
 
         public bool Belote { get; }
+
+        public PlayerPosition Player { get; internal set; }
+
+        public byte TrickNumber { get; internal set; }
     }
 }

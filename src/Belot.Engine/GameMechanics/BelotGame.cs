@@ -8,22 +8,10 @@
      */
     public class BelotGame : IBelotGame
     {
-        private readonly IPlayer southPlayer;
-
-        private readonly IPlayer eastPlayer;
-
-        private readonly IPlayer northPlayer;
-
-        private readonly IPlayer westPlayer;
-
         private readonly GameRoundManager gameRoundManager;
 
         public BelotGame(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
         {
-            this.southPlayer = southPlayer;
-            this.eastPlayer = eastPlayer;
-            this.northPlayer = northPlayer;
-            this.westPlayer = westPlayer;
             this.gameRoundManager = new GameRoundManager(southPlayer, eastPlayer, northPlayer, westPlayer);
         }
 
@@ -31,27 +19,36 @@
         {
             var southNorthTeamPoints = 0;
             var eastWestTeamPoints = 0;
+            var firstInRound = firstToPlay;
+            var roundNumber = 1;
+
             while (true)
             {
-                var roundResult = this.gameRoundManager.PlayRound(southNorthTeamPoints, eastWestTeamPoints);
+                var roundResult = this.gameRoundManager.PlayRound(
+                    roundNumber,
+                    firstInRound,
+                    southNorthTeamPoints,
+                    eastWestTeamPoints);
+
                 southNorthTeamPoints += roundResult.SouthNorthTeamPoints;
                 eastWestTeamPoints += roundResult.EastWestTeamPoints;
 
                 if ((southNorthTeamPoints >= 151 || eastWestTeamPoints >= 151)
-                                                && southNorthTeamPoints != eastWestTeamPoints
-                                                && !roundResult.NoTricksForOneOfTheTeams)
+                    && southNorthTeamPoints != eastWestTeamPoints
+                    && !roundResult.NoTricksForOneOfTheTeams
+                    && !roundResult.PassOnlyRound)
                 {
                     // Game over
                     break;
                 }
+
+                roundNumber++;
+                firstInRound = firstInRound.Next();
             }
 
-            var winner = southNorthTeamPoints > eastWestTeamPoints
-                             ? PlayerPosition.SouthNorthTeam
-                             : PlayerPosition.EastWestTeam;
             return new GameResult
             {
-                Winners = winner,
+                RoundsPlayed = roundNumber,
                 SouthNorthTeamPoints = southNorthTeamPoints,
                 EastWestTeamPoints = eastWestTeamPoints,
             };

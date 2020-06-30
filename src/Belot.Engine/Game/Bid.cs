@@ -4,8 +4,14 @@
 
     public class Bid
     {
-        public PlayerPosition PlayerPosition { get; set; }
+        public Bid(PlayerPosition playerPosition, BidType bidType)
+        {
+            this.PlayerPosition = playerPosition;
+            this.BidType = bidType;
+        }
 
-        public BidType BidType { get; set; }
+        public PlayerPosition PlayerPosition { get; }
+
+        public BidType BidType { get; }
     }
 }
