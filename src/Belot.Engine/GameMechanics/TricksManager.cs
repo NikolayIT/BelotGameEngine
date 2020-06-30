@@ -105,6 +105,21 @@
 
                 // The player that wins the trick plays first
                 var winner = this.trickWinnerService.GetWinner(currentContract.Type, trickActions);
+                if (winner == PlayerPosition.South || winner == PlayerPosition.North)
+                {
+                    foreach (var trickAction in trickActions)
+                    {
+                        southNorthTricks.Add(trickAction.Card);
+                    }
+                }
+                else if (winner == PlayerPosition.East || winner == PlayerPosition.West)
+                {
+                    foreach (var trickAction in trickActions)
+                    {
+                        eastWestTricks.Add(trickAction.Card);
+                    }
+                }
+
                 currentPlayer = winner;
             }
         }

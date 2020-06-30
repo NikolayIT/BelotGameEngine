@@ -38,7 +38,9 @@
 
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
         {
-            return new PlayCardAction(context.AvailableCardsToPlay.ToList().RandomElement());
+            return new PlayCardAction(
+                context.AvailableCardsToPlay.ToList().OrderByDescending(x => x.GetValue(context.CurrentContract.Type))
+                    .FirstOrDefault());
         }
     }
 }

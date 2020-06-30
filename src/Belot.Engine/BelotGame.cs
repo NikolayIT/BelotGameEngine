@@ -38,13 +38,23 @@
                 eastWestTeamPoints += roundResult.EastWestPoints;
                 hangingPoints = roundResult.HangingPoints;
 
-                // TODO: Inside?
-                if ((southNorthTeamPoints >= 151 || eastWestTeamPoints >= 151)
-                    && southNorthTeamPoints != eastWestTeamPoints
+                if (southNorthTeamPoints >= 151
+                    && southNorthTeamPoints > eastWestTeamPoints
+                    && roundResult.SouthNorthPoints > 0
                     && !roundResult.NoTricksForOneOfTheTeams
                     && roundResult.Contract.Type != BidType.Pass)
                 {
-                    // Game over
+                    // Game over - south-north team wins
+                    break;
+                }
+
+                if (eastWestTeamPoints >= 151
+                    && eastWestTeamPoints > southNorthTeamPoints
+                    && roundResult.EastWestPoints > 0
+                    && !roundResult.NoTricksForOneOfTheTeams
+                    && roundResult.Contract.Type != BidType.Pass)
+                {
+                    // Game over - east-west team wins
                     break;
                 }
 
@@ -55,8 +65,8 @@
             return new GameResult
             {
                 RoundsPlayed = roundNumber,
-                SouthNorthTeamPoints = southNorthTeamPoints,
-                EastWestTeamPoints = eastWestTeamPoints,
+                SouthNorthPoints = southNorthTeamPoints,
+                EastWestPoints = eastWestTeamPoints,
             };
         }
     }

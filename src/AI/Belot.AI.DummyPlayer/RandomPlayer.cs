@@ -8,7 +8,7 @@
     using Belot.Engine.Game;
     using Belot.Engine.Players;
 
-    public class DummyPlayer : IPlayer
+    public class RandomPlayer : IPlayer
     {
         private readonly IList<BidType> allBids = new List<BidType>
                                                       {

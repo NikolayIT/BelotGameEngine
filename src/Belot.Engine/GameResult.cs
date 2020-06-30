@@ -5,14 +5,14 @@
     public class GameResult
     {
         public PlayerPosition Winner =>
-            this.SouthNorthTeamPoints > this.EastWestTeamPoints
+            this.SouthNorthPoints > this.EastWestPoints
                 ? PlayerPosition.SouthNorthTeam
                 : PlayerPosition.EastWestTeam;
 
         public int RoundsPlayed { get; set; }
 
-        public int SouthNorthTeamPoints { get; set; }
+        public int SouthNorthPoints { get; set; }
 
-        public int EastWestTeamPoints { get; set; }
+        public int EastWestPoints { get; set; }
     }
 }

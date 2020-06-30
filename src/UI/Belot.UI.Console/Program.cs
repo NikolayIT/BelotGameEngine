@@ -22,11 +22,15 @@
             var stopwatch = Stopwatch.StartNew();
             //// var game = new BelotGame(
             ////     new LoggingPlayerDecorator(new SmartPlayer()),
-            ////     new LoggingPlayerDecorator(new DummyPlayer()),
+            ////     new LoggingPlayerDecorator(new RandomPlayer()),
             ////     new LoggingPlayerDecorator(new SmartPlayer()),
-            ////     new LoggingPlayerDecorator(new DummyPlayer()));
-            var game = new BelotGame(new DummyPlayer(), new DummyPlayer(), new DummyPlayer(), new DummyPlayer());
-            for (var i = 1; i <= 1000; i++)
+            ////     new LoggingPlayerDecorator(new RandomPlayer()));
+            var game = new BelotGame(new SmartPlayer(), new RandomPlayer(), new SmartPlayer(), new RandomPlayer());
+
+            int southNorthWins = 0;
+            int eastWestWins = 0;
+
+            for (var i = 1; i <= 100000; i++)
             {
                 var firstToPlay = ((i - 1) % 4) switch
                     {
@@ -37,10 +41,21 @@
                         _ => PlayerPosition.South,
                     };
                 var result = game.PlayGame(firstToPlay);
-                //// Console.WriteLine($"Game #{i}: Winner: {result.Winner}; Result(SN-EW): {result.SouthNorthPoints} - {result.EastWestPoints}"););
+                if (result.Winner == PlayerPosition.SouthNorthTeam)
+                {
+                    southNorthWins++;
+                }
+                else if (result.Winner == PlayerPosition.EastWestTeam)
+                {
+                    eastWestWins++;
+                }
+
+                //// Console.WriteLine(
+                ////     $"Game #{i}: Winner: {result.Winner}; Result(SN-EW): {result.SouthNorthPoints} - {result.EastWestPoints} (Rounds: {result.RoundsPlayed})");
             }
 
             Console.WriteLine(stopwatch.Elapsed);
+            Console.WriteLine($"Result: (SN-EW): {southNorthWins}-{eastWestWins}");
         }
     }
 }
