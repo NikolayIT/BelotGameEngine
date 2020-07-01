@@ -5,41 +5,41 @@
         /// <summary>
         /// Seven
         /// </summary>
-        Seven = 7,
+        Seven = 0,
 
         /// <summary>
         /// Eight
         /// </summary>
-        Eight = 8,
+        Eight = 1,
 
         /// <summary>
         /// Nine
         /// </summary>
-        Nine = 9,
+        Nine = 2,
 
         /// <summary>
         /// Ten
         /// </summary>
-        Ten = 10,
+        Ten = 3,
 
         /// <summary>
         /// Jack
         /// </summary>
-        Jack = 11,
+        Jack = 4,
 
         /// <summary>
         /// Queen
         /// </summary>
-        Queen = 12,
+        Queen = 5,
 
         /// <summary>
         /// King
         /// </summary>
-        King = 13,
+        King = 6,
 
         /// <summary>
         /// Ace
         /// </summary>
-        Ace = 1,
+        Ace = 7,
     }
 }

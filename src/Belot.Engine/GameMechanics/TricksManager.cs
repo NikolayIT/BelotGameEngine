@@ -49,7 +49,7 @@
 
             var trickActions = new List<PlayCardAction>(4);
             var currentPlayer = firstToPlay;
-            for (byte trickNumber = 1; trickNumber <= 8; trickNumber++)
+            for (var trickNumber = 1; trickNumber <= 8; trickNumber++)
             {
                 trickActions.Clear();
                 for (var i = 0; i < 4; i++)

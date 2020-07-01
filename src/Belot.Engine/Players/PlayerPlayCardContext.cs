@@ -11,6 +11,6 @@
 
         public IEnumerable<PlayCardAction> PreviousActions { get; set; }
 
-        public CardCollection AvailableCardsToPlay { get; set; }
+        public IEnumerable<Card> AvailableCardsToPlay { get; set; }
     }
 }

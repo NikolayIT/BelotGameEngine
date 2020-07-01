@@ -39,7 +39,7 @@
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
         {
             return new PlayCardAction(
-                context.AvailableCardsToPlay.ToList().OrderByDescending(x => x.GetValue(context.CurrentContract.Type))
+                context.AvailableCardsToPlay.OrderByDescending(x => x.GetValue(context.CurrentContract.Type))
                     .FirstOrDefault());
         }
     }

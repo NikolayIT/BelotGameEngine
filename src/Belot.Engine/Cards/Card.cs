@@ -6,7 +6,7 @@
 
     public sealed class Card
     {
-        private static readonly Card[] Cards = new Card[53];
+        public static readonly Card[] AllCards = new Card[32];
         private readonly int hashCode;
 
         static Card()
@@ -16,7 +16,7 @@
                 foreach (CardType type in Enum.GetValues(typeof(CardType)))
                 {
                     var card = new Card(suit, type);
-                    Cards[card.hashCode] = card;
+                    AllCards[card.hashCode] = card;
                 }
             }
         }
@@ -25,7 +25,7 @@
         {
             this.Suit = suit;
             this.Type = type;
-            this.hashCode = ((int)this.Suit * 13) + (int)this.Type;
+            this.hashCode = ((int)this.Suit * 8) + (int)this.Type;
         }
 
         public CardSuit Suit { get; }
@@ -72,13 +72,7 @@
 
         public static Card GetCard(CardSuit suit, CardType type)
         {
-            var code = ((int)suit * 13) + (int)type;
-            if (code < 0 || code > 52)
-            {
-                throw new IndexOutOfRangeException("Invalid suit and type given.");
-            }
-
-            return Cards[code];
+            return AllCards[((int)suit * 8) + (int)type];
         }
 
         public int GetValue(BidType contract)
@@ -90,32 +84,24 @@
 
             if (contract.HasFlag(BidType.NoTrumps))
             {
-                return this.Type switch
-                    {
-                        CardType.Seven => 0,
-                        CardType.Eight => 0,
-                        CardType.Nine => 0,
-                        CardType.Ten => 10,
-                        CardType.Jack => 2,
-                        CardType.Queen => 3,
-                        CardType.King => 4,
-                        CardType.Ace => 11,
-                        _ => 0,
-                    };
+                return this.Type == CardType.Seven ? 0 :
+                       this.Type == CardType.Eight ? 0 :
+                       this.Type == CardType.Nine ? 0 :
+                       this.Type == CardType.Ten ? 10 :
+                       this.Type == CardType.Jack ? 2 :
+                       this.Type == CardType.Queen ? 3 :
+                       this.Type == CardType.King ? 4 :
+                       this.Type == CardType.Ace ? 11 : 0;
             }
 
-            return this.Type switch
-                {
-                    CardType.Seven => 0,
-                    CardType.Eight => 0,
-                    CardType.Nine => 14,
-                    CardType.Ten => 10,
-                    CardType.Jack => 20,
-                    CardType.Queen => 3,
-                    CardType.King => 4,
-                    CardType.Ace => 11,
-                    _ => 0,
-                };
+            return this.Type == CardType.Seven ? 0 :
+                this.Type == CardType.Eight ? 0 :
+                this.Type == CardType.Nine ? 14 :
+                this.Type == CardType.Ten ? 10 :
+                this.Type == CardType.Jack ? 20 :
+                this.Type == CardType.Queen ? 3 :
+                this.Type == CardType.King ? 4 :
+                this.Type == CardType.Ace ? 11 : 0;
         }
 
         public override bool Equals(object obj)
@@ -123,14 +109,8 @@
             return obj is Card anotherCard && this.Suit == anotherCard.Suit && this.Type == anotherCard.Type;
         }
 
-        public override int GetHashCode()
-        {
-            return this.hashCode;
-        }
+        public override int GetHashCode() => this.hashCode;
 
-        public override string ToString()
-        {
-            return $"{this.Type.ToFriendlyString()}{this.Suit.ToFriendlyString()}";
-        }
+        public override string ToString() => $"{this.Type.ToFriendlyString()}{this.Suit.ToFriendlyString()}";
     }
 }

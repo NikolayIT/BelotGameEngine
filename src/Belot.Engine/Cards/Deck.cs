@@ -11,7 +11,8 @@
 
         public Deck()
         {
-            this.listOfCards = new CardCollection(CardCollection.AllBelotCardsBitMask).ToList();
+            this.listOfCards = Card.AllCards.ToList();
+            this.currentCardIndex = this.listOfCards.Count - 1;
         }
 
         public void Shuffle()

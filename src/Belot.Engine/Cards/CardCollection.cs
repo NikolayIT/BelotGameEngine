@@ -6,17 +6,16 @@
 
     /// <inheritdoc cref="ICollection" />
     /// <summary>
-    /// Low memory (only 8 bytes per instance) fast implementation of card collection.
+    /// Low memory (only 1 integer per instance) fast implementation of card collection.
     /// </summary>
     public class CardCollection : ICollection<Card>, ICloneable
     {
-        public const long AllBelotCardsBitMask = 8939021211303810;
+        private const int MaxCards = 32;
+        private const int MaxCardsMinusOne = 31;
 
-        private const int MaxCards = 52;
+        private uint cards; // 32 bits for 32 possible cards
 
-        private long cards; // 64 bits for 52 possible cards
-
-        public CardCollection(long bitMask = 0)
+        public CardCollection(uint bitMask = 0)
         {
             this.cards = bitMask;
         }
@@ -27,14 +26,10 @@
             {
                 var bits = this.cards;
                 var cardsCount = 0;
-                while (bits > 0)
+                while (bits != 0)
                 {
-                    if ((bits & 1) == 1)
-                    {
-                        cardsCount++;
-                    }
-
-                    bits = bits >> 1;
+                    cardsCount++;
+                    bits &= bits - 1;
                 }
 
                 return cardsCount;
@@ -57,7 +52,7 @@
         {
             if (!this.Contains(item))
             {
-                this.cards |= 1L << item.GetHashCode();
+                this.cards |= 1U << item.GetHashCode();
             }
         }
 
@@ -73,10 +68,12 @@
 
         public void CopyTo(Card[] array, int arrayIndex)
         {
-            foreach (var card in this)
+            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
             {
-                array[arrayIndex] = card;
-                arrayIndex++;
+                if (((this.cards >> currentHashCode) & 1) == 1)
+                {
+                    array[arrayIndex++] = Card.AllCards[currentHashCode];
+                }
             }
         }
 
@@ -84,7 +81,7 @@
         {
             if (this.Contains(item))
             {
-                this.cards &= ~(1L << item.GetHashCode());
+                this.cards &= ~(1U << item.GetHashCode());
                 return true;
             }
 
@@ -98,34 +95,17 @@
 
         private class CardCollectionEnumerator : IEnumerator<Card>
         {
-            private static readonly Card[] AllCards;
-
-            private readonly long cards;
+            private readonly uint cards;
 
             private int currentHashCode;
 
-            static CardCollectionEnumerator()
-            {
-                AllCards = new Card[MaxCards + 1];
-
-                foreach (CardSuit cardSuitValue in Enum.GetValues(typeof(CardSuit)))
-                {
-                    foreach (CardType cardTypeValue in Enum.GetValues(typeof(CardType)))
-                    {
-                        var card = Card.GetCard(cardSuitValue, cardTypeValue);
-                        var hashCode = card.GetHashCode();
-                        AllCards[hashCode] = card;
-                    }
-                }
-            }
-
-            public CardCollectionEnumerator(long cards)
+            public CardCollectionEnumerator(uint cards)
             {
                 this.cards = cards;
                 this.currentHashCode = -1;
             }
 
-            public Card Current => AllCards[this.currentHashCode];
+            public Card Current => Card.AllCards[this.currentHashCode];
 
             object IEnumerator.Current => this.Current;
 
@@ -135,15 +115,11 @@
 
             public bool MoveNext()
             {
-                while (this.currentHashCode <= MaxCards)
+                while (this.currentHashCode < MaxCardsMinusOne)
                 {
-                    unchecked
+                    if (((this.cards >> ++this.currentHashCode) & 1) == 1)
                     {
-                        this.currentHashCode++;
-                        if (((this.cards >> this.currentHashCode) & 1) == 1)
-                        {
-                            return true;
-                        }
+                        return true;
                     }
                 }
 

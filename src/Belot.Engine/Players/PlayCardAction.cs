@@ -16,6 +16,6 @@
 
         public PlayerPosition Player { get; internal set; }
 
-        public byte TrickNumber { get; internal set; }
+        public int TrickNumber { get; internal set; }
     }
 }

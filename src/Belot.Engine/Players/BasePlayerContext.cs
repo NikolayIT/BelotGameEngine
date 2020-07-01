@@ -17,7 +17,7 @@
 
         public int EastWestTeamPoints { get; set; }
 
-        public CardCollection MyCards { get; set; }
+        public IEnumerable<Card> MyCards { get; set; }
 
         public IEnumerable<Bid> Bids { get; set; }
 
