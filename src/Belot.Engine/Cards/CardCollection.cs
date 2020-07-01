@@ -29,8 +29,7 @@
                 var cardsCount = 0;
                 while (bits > 0)
                 {
-                    var bit = bits & 1;
-                    if (bit == 1)
+                    if ((bits & 1) == 1)
                     {
                         cardsCount++;
                     }
@@ -76,8 +75,8 @@
         {
             foreach (var card in this)
             {
-                array.SetValue(card, arrayIndex);
-                arrayIndex = arrayIndex + 1;
+                array[arrayIndex] = card;
+                arrayIndex++;
             }
         }
 

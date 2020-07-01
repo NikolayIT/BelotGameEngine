@@ -1,33 +1,23 @@
 ﻿namespace Belot.Engine.Players
 {
-    using System;
     using System.Runtime.CompilerServices;
 
     public static class PlayerPositionExtensions
     {
-        // TODO: Test [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static PlayerPosition Next(this PlayerPosition playerPosition)
         {
-            return playerPosition switch
-                {
-                    PlayerPosition.South => PlayerPosition.East,
-                    PlayerPosition.East => PlayerPosition.North,
-                    PlayerPosition.North => PlayerPosition.West,
-                    PlayerPosition.West => PlayerPosition.South,
-                    _ => throw new ArgumentException("Invalid playerPosition.", nameof(playerPosition)),
-                };
+            return playerPosition == PlayerPosition.South ? PlayerPosition.East :
+                   playerPosition == PlayerPosition.East ? PlayerPosition.North :
+                   playerPosition == PlayerPosition.North ? PlayerPosition.West : PlayerPosition.South;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int Index(this PlayerPosition playerPosition)
         {
-            return playerPosition switch
-                {
-                    PlayerPosition.South => 0,
-                    PlayerPosition.East => 1,
-                    PlayerPosition.North => 2,
-                    PlayerPosition.West => 3,
-                    _ => throw new ArgumentException("Invalid playerPosition.", nameof(playerPosition)),
-                };
+            return playerPosition == PlayerPosition.East ? 1 :
+                   playerPosition == PlayerPosition.North ? 2 :
+                   playerPosition == PlayerPosition.West ? 3 : 0;
         }
 
         public static bool IsInSameTeamWith(this PlayerPosition position, PlayerPosition otherPlayerPosition)
