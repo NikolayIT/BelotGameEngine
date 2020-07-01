@@ -47,11 +47,16 @@
                 }
                 else
                 {
+                    // Prepare context
                     bidContext.AvailableBids = availableBids;
                     bidContext.MyCards = playerCards[currentPlayerPosition.Index()];
                     bidContext.MyPosition = currentPlayerPosition;
                     bidContext.CurrentContract = contract;
+
+                    // Execute GetBid()
                     bid = this.players[currentPlayerPosition.Index()].GetBid(bidContext);
+
+                    // Validate
                     if (bid != BidType.Pass && (bid & (bid - 1)) != 0)
                     {
                         throw new BelotGameException($"Invalid bid from {currentPlayerPosition} player. More than 1 flags returned.");

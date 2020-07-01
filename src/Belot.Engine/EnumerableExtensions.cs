@@ -1,48 +1,48 @@
 ﻿namespace Belot.Engine
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Threading;
 
     public static class EnumerableExtensions
     {
-        // https://stackoverflow.com/questions/19270507/correct-way-to-use-random-in-multithread-application
-        public static readonly ThreadLocal<Random> Random =
-            new ThreadLocal<Random>(() => new Random(Interlocked.Increment(ref seed)));
-
-        private static int seed = Environment.TickCount;
-
         /// <summary>
-        /// Shuffle algorithm as seen on page 32 in the book "Algorithms" (4th edition) by Robert Sedgewick.
+        /// Fisher-Yates algorithm AKA the Knuth Shuffle.
+        /// It runs in O(n) time.
+        /// https://stackoverflow.com/a/110570/1862812.
         /// </summary>
-        /// <param name="source">Collection to shuffle.</param>
+        /// <param name="array">An array to shuffle.</param>
         /// <typeparam name="T">The generic type parameter of the collection.</typeparam>
-        /// <returns>The shuffled collection as IEnumerable.</returns>
-        public static IList<T> Shuffle<T>(this IEnumerable<T> source)
+        public static void Shuffle<T>(this T[] array)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
-
-            var array = source.ToArray();
             var n = array.Length;
-            for (var i = 0; i < n; i++)
+            while (n > 1)
             {
-                // Exchange a[i] with random element in a[i..n-1]
-                var r = i + Random.Value.Next(0, n - i);
-                var temp = array[i];
-                array[i] = array[r];
-                array[r] = temp;
+                var k = ThreadSafeRandom.Next(0, n--);
+                var temp = array[n];
+                array[n] = array[k];
+                array[k] = temp;
             }
-
-            return array;
         }
 
-        public static T RandomElement<T>(this IList<T> source)
+        // This method is optimized for small collections.
+        // More info: https://nickstips.wordpress.com/2010/08/28/c-optimized-extension-method-get-a-random-element-from-a-collection/
+        public static T RandomElement<T>(this IEnumerable<T> source)
         {
-            return source[Random.Value.Next(0, source.Count)];
+            // Get a random index
+            var index = ThreadSafeRandom.Next(0, source.Count());
+
+            // Get the random element by traversing the collection one element at a time.
+            var enumerator = source.GetEnumerator();
+
+            // Move down the collection one element at a time.
+            // When index is -1 we are at the random element location
+            while (index >= 0 && enumerator.MoveNext())
+            {
+                index--;
+            }
+
+            // Return the current element
+            return enumerator.Current;
         }
     }
 }

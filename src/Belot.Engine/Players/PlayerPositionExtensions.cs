@@ -20,18 +20,13 @@
                    playerPosition == PlayerPosition.West ? 3 : 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsInSameTeamWith(this PlayerPosition position, PlayerPosition otherPlayerPosition)
         {
-            switch (position)
-            {
-                case PlayerPosition.South when otherPlayerPosition == PlayerPosition.North:
-                case PlayerPosition.North when otherPlayerPosition == PlayerPosition.South:
-                case PlayerPosition.East when otherPlayerPosition == PlayerPosition.West:
-                case PlayerPosition.West when otherPlayerPosition == PlayerPosition.East:
-                    return true;
-                default:
-                    return false;
-            }
+            return (position == PlayerPosition.South && otherPlayerPosition == PlayerPosition.North)
+                   || (position == PlayerPosition.North && otherPlayerPosition == PlayerPosition.South)
+                   || (position == PlayerPosition.East && otherPlayerPosition == PlayerPosition.West)
+                   || (position == PlayerPosition.West && otherPlayerPosition == PlayerPosition.East);
         }
     }
 }

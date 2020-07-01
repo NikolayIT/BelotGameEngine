@@ -8,11 +8,16 @@
 
     public class TrickWinnerService
     {
-        public PlayerPosition GetWinner(BidType contract, IList<PlayCardAction> trickActions)
+        public PlayerPosition GetWinner(Bid contract, IList<PlayCardAction> trickActions)
         {
+            if (trickActions.Count == 0)
+            {
+                return PlayerPosition.Unknown;
+            }
+
             var firstCard = trickActions[0].Card;
             var bestAction = trickActions[0];
-            if (contract.HasFlag(BidType.AllTrumps))
+            if (contract.Type.HasFlag(BidType.AllTrumps))
             {
                 for (var i = 1; i < trickActions.Count; i++)
                 {
@@ -23,7 +28,7 @@
                     }
                 }
             }
-            else if (contract.HasFlag(BidType.NoTrumps))
+            else if (contract.Type.HasFlag(BidType.NoTrumps))
             {
                 for (var i = 1; i < trickActions.Count; i++)
                 {
@@ -36,7 +41,7 @@
             }
             else
             {
-                var trumpSuit = contract.ToCardSuit();
+                var trumpSuit = contract.Type.ToCardSuit();
                 if (trickActions.Any(x => x.Card.Suit == trumpSuit))
                 {
                     // Trump in the trick cards

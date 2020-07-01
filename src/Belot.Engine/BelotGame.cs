@@ -10,11 +10,11 @@
      */
     public class BelotGame : IBelotGame
     {
-        private readonly GameRoundManager gameRoundManager;
+        private readonly RoundManager roundManager;
 
         public BelotGame(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
         {
-            this.gameRoundManager = new GameRoundManager(southPlayer, eastPlayer, northPlayer, westPlayer);
+            this.roundManager = new RoundManager(southPlayer, eastPlayer, northPlayer, westPlayer);
         }
 
         public GameResult PlayGame(PlayerPosition firstToPlay)
@@ -27,7 +27,7 @@
 
             while (true)
             {
-                var roundResult = this.gameRoundManager.PlayRound(
+                var roundResult = this.roundManager.PlayRound(
                     roundNumber,
                     firstInRound,
                     southNorthTeamPoints,

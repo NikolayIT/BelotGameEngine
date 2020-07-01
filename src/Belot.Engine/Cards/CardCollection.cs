@@ -20,6 +20,18 @@
             this.cards = bitMask;
         }
 
+        public CardCollection(CardCollection cardCollection, Func<Card, bool> predicate)
+        {
+            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
+            {
+                if (((cardCollection.cards >> currentHashCode) & 1) == 1
+                    && predicate(Card.AllCards[currentHashCode]))
+                {
+                    this.cards |= 1U << currentHashCode;
+                }
+            }
+        }
+
         public int Count
         {
             get

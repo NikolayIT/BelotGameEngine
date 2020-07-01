@@ -9,6 +9,7 @@
     [Flags]
     public enum PlayerPosition : byte
     {
+        Unknown = 0,
         South = 1 << 0,
         East = 1 << 1,
         North = 1 << 2,

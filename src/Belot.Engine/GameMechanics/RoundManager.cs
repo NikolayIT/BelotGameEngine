@@ -6,7 +6,7 @@
     using Belot.Engine.Game;
     using Belot.Engine.Players;
 
-    public class GameRoundManager
+    public class RoundManager
     {
         private readonly IList<IPlayer> players;
 
@@ -18,7 +18,7 @@
 
         private readonly Deck deck;
 
-        public GameRoundManager(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
+        public RoundManager(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
         {
             this.players = new List<IPlayer>(4) { southPlayer, eastPlayer, northPlayer, westPlayer };
             this.contractManager = new ContractManager(southPlayer, eastPlayer, northPlayer, westPlayer);

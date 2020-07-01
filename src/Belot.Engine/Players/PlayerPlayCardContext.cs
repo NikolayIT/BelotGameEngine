@@ -9,7 +9,9 @@
     {
         public IEnumerable<Announce> Announces { get; set; }
 
-        public IEnumerable<PlayCardAction> PreviousActions { get; set; }
+        public IEnumerable<PlayCardAction> RoundActions { get; set; }
+
+        public IEnumerable<PlayCardAction> CurrentTrickActions { get; set; }
 
         public IEnumerable<Card> AvailableCardsToPlay { get; set; }
     }

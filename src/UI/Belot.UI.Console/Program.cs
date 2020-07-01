@@ -8,6 +8,7 @@
     using Belot.AI.DummyPlayer;
     using Belot.AI.SmartPlayer;
     using Belot.Engine;
+    using Belot.Engine.Cards;
     using Belot.Engine.Players;
 
     public static class Program
@@ -20,17 +21,14 @@
             //// Console.BufferWidth = Console.WindowWidth = 50;
             Console.WriteLine("Belot Console 1.0");
 
+            //// RandomCards();
+
             var stopwatch = Stopwatch.StartNew();
-            //// var game = new BelotGame(
-            ////     new LoggingPlayerDecorator(new SmartPlayer()),
-            ////     new LoggingPlayerDecorator(new RandomPlayer()),
-            ////     new LoggingPlayerDecorator(new SmartPlayer()),
-            ////     new LoggingPlayerDecorator(new RandomPlayer()));
+            var logGame = new BelotGame(new LoggingPlayerDecorator(new SmartPlayer()), new RandomPlayer(), new SmartPlayer(), new RandomPlayer());
             var game = new BelotGame(new SmartPlayer(), new RandomPlayer(), new SmartPlayer(), new RandomPlayer());
 
-            int southNorthWins = 0;
-            int eastWestWins = 0;
-
+            var southNorthWins = 0;
+            var eastWestWins = 0;
             for (var i = 1; i <= 100_000; i++)
             {
                 var firstToPlay = ((i - 1) % 4) switch
@@ -57,6 +55,21 @@
 
             Console.WriteLine(stopwatch.Elapsed);
             Console.WriteLine($"Result: (SN-EW): {southNorthWins}-{eastWestWins}");
+        }
+
+        private static void RandomCards()
+        {
+            for (var i = 0; i < 100; i++)
+            {
+                var deck = new Deck();
+                deck.Shuffle();
+                for (var j = 0; j < 32; j++)
+                {
+                    Console.Write(deck.GetNextCard() + " ");
+                }
+
+                Console.WriteLine();
+            }
         }
     }
 }

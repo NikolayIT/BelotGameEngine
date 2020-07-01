@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     using Belot.Engine.Game;
     using Belot.Engine.Players;
@@ -18,7 +19,9 @@
         public BidType GetBid(PlayerGetBidContext context)
         {
             var bid = this.player.GetBid(context);
-            Console.WriteLine($"[#{context.RoundNumber}][{context.MyPosition}]: ({context.CurrentContract}) Available bids: {context.AvailableBids} => {bid}");
+            Console.WriteLine(
+                $"[#{context.RoundNumber}][{context.MyPosition}]: ({context.CurrentContract.Type}) "
+                + $"Available bids: {context.AvailableBids} => {bid}");
             return bid;
         }
 
@@ -29,7 +32,14 @@
 
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
         {
-            return this.player.PlayCard(context);
+            var cardAction = this.player.PlayCard(context);
+            Console.WriteLine(
+                $"[#{context.RoundNumber}][{context.MyPosition}]: ({context.CurrentContract.Type}) "
+                + $"Available: {string.Join(" ", context.AvailableCardsToPlay)} __ "
+                + $"My: {string.Join(" ", context.MyCards)} __ "
+                + $"Actions: {string.Join(" ", context.CurrentTrickActions.Select(x => x.Card))} __ "
+                + $"=> {cardAction.Card}");
+            return cardAction;
         }
     }
 }

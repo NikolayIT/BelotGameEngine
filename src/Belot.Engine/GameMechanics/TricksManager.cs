@@ -12,10 +12,13 @@
 
         private readonly TrickWinnerService trickWinnerService;
 
+        private readonly ValidCardsService validCardsService;
+
         public TricksManager(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
         {
             this.players = new List<IPlayer>(4) { southPlayer, eastPlayer, northPlayer, westPlayer };
             this.trickWinnerService = new TrickWinnerService();
+            this.validCardsService = new ValidCardsService();
         }
 
         public void PlayTricks(
@@ -34,6 +37,7 @@
             southNorthTricks = new CardCollection();
             eastWestTricks = new CardCollection();
             var actions = new List<PlayCardAction>(8 * 4);
+            var trickActions = new List<PlayCardAction>(4);
 
             var playContext = new PlayerPlayCardContext
             {
@@ -44,10 +48,10 @@
                 CurrentContract = currentContract,
                 Bids = bids,
                 Announces = announces,
-                PreviousActions = actions,
+                RoundActions = actions,
+                CurrentTrickActions = trickActions,
             };
 
-            var trickActions = new List<PlayCardAction>(4);
             var currentPlayer = firstToPlay;
             for (var trickNumber = 1; trickNumber <= 8; trickNumber++)
             {
@@ -69,7 +73,7 @@
                                 FirstToPlayInTheRound = firstToPlay,
                                 Bids = bids,
                                 CurrentContract = currentContract,
-                                PreviousActions = actions,
+                                CurrentTrickActions = trickActions,
                                 Announces = announces,
                                 AvailableAnnounces = availableAnnounces,
                             });
@@ -82,14 +86,24 @@
                         }
                     }
 
-                    //// TODO: Play cards
+                    // Prepare PlayCard context
+                    var availableCards = this.validCardsService.GetValidCards(
+                        playerCards[currentPlayer.Index()],
+                        currentContract.CleanBidType,
+                        trickActions);
                     playContext.MyPosition = currentPlayer;
                     playContext.MyCards = playerCards[currentPlayer.Index()];
-                    playContext.AvailableCardsToPlay = playerCards[currentPlayer.Index()];
+                    playContext.AvailableCardsToPlay = availableCards;
 
+                    // Execute PlayCard
                     var action = this.players[currentPlayer.Index()].PlayCard(playContext);
-                    action.Player = currentPlayer;
-                    action.TrickNumber = trickNumber;
+
+                    // Validate
+                    if (!availableCards.Contains(action.Card))
+                    {
+                        throw new BelotGameException($"Invalid card played from {currentPlayer} player.");
+                    }
+
                     if (action.Belote)
                     {
                         // TODO: Validate if belot is real
@@ -97,14 +111,18 @@
                             new Announce(AnnounceType.Belot, action.Card) { PlayerPosition = currentPlayer });
                     }
 
+                    // Update information after the action
+                    playerCards[currentPlayer.Index()].Remove(action.Card);
+                    action.Player = currentPlayer;
                     actions.Add(action);
                     trickActions.Add(action);
 
+                    // Next player
                     currentPlayer = currentPlayer.Next();
                 }
 
                 // The player that wins the trick plays first
-                var winner = this.trickWinnerService.GetWinner(currentContract.Type, trickActions);
+                var winner = this.trickWinnerService.GetWinner(currentContract, trickActions);
                 if (winner == PlayerPosition.South || winner == PlayerPosition.North)
                 {
                     foreach (var trickAction in trickActions)

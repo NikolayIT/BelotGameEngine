@@ -15,7 +15,5 @@
         public bool Belote { get; }
 
         public PlayerPosition Player { get; internal set; }
-
-        public int TrickNumber { get; internal set; }
     }
 }

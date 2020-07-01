@@ -10,25 +10,22 @@
 
     public class RandomPlayer : IPlayer
     {
-        private readonly IList<BidType> allBids = new List<BidType>
-                                                      {
-                                                          BidType.Pass,
-                                                          BidType.Pass,
-                                                          BidType.Pass,
-                                                          BidType.Pass,
-                                                          BidType.Pass,
-                                                          BidType.Pass,
-                                                          BidType.Clubs,
-                                                          BidType.Diamonds,
-                                                          BidType.Hearts,
-                                                          BidType.Spades,
-                                                          BidType.NoTrumps,
-                                                          BidType.AllTrumps,
-                                                      };
+        private readonly List<BidType> allBids = new List<BidType>
+                                                     {
+                                                         BidType.Pass,
+                                                         BidType.Clubs,
+                                                         BidType.Diamonds,
+                                                         BidType.Hearts,
+                                                         BidType.Spades,
+                                                         BidType.NoTrumps,
+                                                         BidType.AllTrumps,
+                                                     };
 
         public BidType GetBid(PlayerGetBidContext context)
         {
-            return this.allBids.Where(x => context.AvailableBids.HasFlag(x)).ToList().RandomElement();
+            return ThreadSafeRandom.Next(0, 2) == 0
+                       ? BidType.Pass // In 50% of the cases announce Pass
+                       : this.allBids.Where(x => context.AvailableBids.HasFlag(x)).RandomElement();
         }
 
         public IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
@@ -38,7 +35,7 @@
 
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
         {
-            return new PlayCardAction(context.AvailableCardsToPlay.ToList().RandomElement());
+            return new PlayCardAction(context.AvailableCardsToPlay.RandomElement());
         }
     }
 }

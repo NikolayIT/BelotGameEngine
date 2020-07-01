@@ -1,5 +1,7 @@
 ﻿namespace Belot.Engine.Tests.Cards
 {
+    using System;
+
     using Belot.Engine.Cards;
 
     using Xunit;
@@ -25,7 +27,7 @@
                 deck.GetNextCard();
             }
 
-            Assert.Throws<BelotGameException>(() => deck.GetNextCard());
+            Assert.Throws<IndexOutOfRangeException>(() => deck.GetNextCard());
         }
 
         [Fact]
@@ -38,7 +40,7 @@
                 deck.GetNextCard();
             }
 
-            Assert.Throws<BelotGameException>(() => deck.GetNextCard());
+            Assert.Throws<IndexOutOfRangeException>(() => deck.GetNextCard());
         }
     }
 }

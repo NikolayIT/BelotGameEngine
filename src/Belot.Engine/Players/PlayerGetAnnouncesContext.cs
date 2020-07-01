@@ -8,7 +8,7 @@
     {
         public IEnumerable<Announce> Announces { get; set; }
 
-        public IEnumerable<PlayCardAction> PreviousActions { get; set; }
+        public IEnumerable<PlayCardAction> CurrentTrickActions { get; set; }
 
         public IReadOnlyList<Announce> AvailableAnnounces { get; set; }
     }
