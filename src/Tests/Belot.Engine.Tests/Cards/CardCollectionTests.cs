@@ -57,6 +57,61 @@
         }
 
         [Fact]
+        public void AnyShouldReturnCorrectValueAfterFewCardAdds()
+        {
+            var collection = new CardCollection
+                                 {
+                                     Card.GetCard(CardSuit.Club, CardType.Ace),
+                                     Card.GetCard(CardSuit.Heart, CardType.Ten),
+                                     Card.GetCard(CardSuit.Heart, CardType.King),
+                                     Card.GetCard(CardSuit.Diamond, CardType.Queen),
+                                     Card.GetCard(CardSuit.Spade, CardType.Jack),
+                                     Card.GetCard(CardSuit.Spade, CardType.Nine),
+                                 };
+
+            Assert.True(collection.Any(x => x.Suit == CardSuit.Club && x.Type == CardType.Ace));
+            Assert.True(collection.Any(x => x.Suit == CardSuit.Heart && x.Type == CardType.Ten));
+            Assert.True(collection.Any(x => x.Suit == CardSuit.Heart && x.Type == CardType.King));
+            Assert.True(collection.Any(x => x.Suit == CardSuit.Diamond && x.Type == CardType.Queen));
+            Assert.True(collection.Any(x => x.Suit == CardSuit.Spade && x.Type == CardType.Jack));
+            Assert.True(collection.Any(x => x.Suit == CardSuit.Spade && x.Type == CardType.Nine));
+            Assert.False(collection.Any(x => x.Suit == CardSuit.Club && x.Type == CardType.Nine));
+            Assert.False(collection.Any(x => x.Suit == CardSuit.Heart && x.Type == CardType.Queen));
+            Assert.False(collection.Any(x => x.Suit == CardSuit.Diamond && x.Type == CardType.King));
+            Assert.False(collection.Any(x => x.Suit == CardSuit.Spade && x.Type == CardType.Ace));
+        }
+
+        [Fact]
+        public void HasAnyOfSuitShouldReturnCorrectValueAfterFewCardAdds()
+        {
+            var collection = new CardCollection(uint.MaxValue);
+            var suits = new List<CardSuit> { CardSuit.Club, CardSuit.Diamond, CardSuit.Heart, CardSuit.Spade };
+            foreach (var cardSuit in suits)
+            {
+                Assert.True(collection.HasAnyOfSuit(cardSuit));
+            }
+
+            foreach (var cardSuit in suits)
+            {
+                foreach (var card in collection)
+                {
+                    if (card.Suit == cardSuit)
+                    {
+                        collection.Remove(card);
+                    }
+                }
+
+                Assert.False(collection.HasAnyOfSuit(cardSuit));
+            }
+
+            foreach (var cardSuit in suits)
+            {
+                collection.Add(Card.GetCard(cardSuit, CardType.Ace));
+                Assert.True(collection.HasAnyOfSuit(cardSuit));
+            }
+        }
+
+        [Fact]
         public void CountShouldReturnCorrectValueAfterAddingAllCards()
         {
             var collection = new CardCollection();

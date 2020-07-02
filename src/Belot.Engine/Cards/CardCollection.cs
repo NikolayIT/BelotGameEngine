@@ -10,10 +10,11 @@
     /// </summary>
     public class CardCollection : ICollection<Card>, ICloneable
     {
+        // TODO: Add method for fast checking "is any of suit"
         private const int MaxCards = 32;
         private const int MaxCardsMinusOne = 31;
 
-        private uint cards; // 32 bits for 32 possible cards
+        public uint cards; // 32 bits for 32 possible cards
 
         public CardCollection(uint bitMask = 0)
         {
@@ -30,6 +31,45 @@
                     this.cards |= 1U << currentHashCode;
                 }
             }
+        }
+
+        public bool Any(Func<Card, bool> predicate)
+        {
+            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
+            {
+                if (((this.cards >> currentHashCode) & 1) == 1
+                    && predicate(Card.AllCards[currentHashCode]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public bool HasAnyOfSuit(CardSuit suit)
+        {
+            if (suit == CardSuit.Club)
+            {
+                return (this.cards & 0b00000000000000000000000011111111u) != 0;
+            }
+
+            if (suit == CardSuit.Diamond)
+            {
+                return (this.cards & 0b00000000000000001111111100000000u) != 0;
+            }
+
+            if (suit == CardSuit.Heart)
+            {
+                return (this.cards & 0b00000000111111110000000000000000u) != 0;
+            }
+
+            if (suit == CardSuit.Spade)
+            {
+                return (this.cards & 0b11111111000000000000000000000000u) != 0;
+            }
+
+            return false;
         }
 
         public int Count

@@ -56,7 +56,7 @@
             IList<PlayCardAction> currentTrickActions,
             CardSuit firstCardSuit)
         {
-            if (playerCards.Any(x => x.Suit == firstCardSuit))
+            if (playerCards.HasAnyOfSuit(firstCardSuit))
             {
                 var bestCard = currentTrickActions.Where(action => action.Card.Suit == firstCardSuit)
                     .OrderByDescending(x => x.Card.TrumpOrder).First().Card;
@@ -77,16 +77,12 @@
             return playerCards;
         }
 
-        // For no trumps the player should play card from the same suit if available.
+        // For no trumps the player should play card from the same suit if available, else any card is allowed.
         private static CardCollection GetValidCardsForNoTrumps(CardCollection playerCards, CardSuit firstCardSuit)
         {
-            if (playerCards.Any(x => x.Suit == firstCardSuit))
-            {
-                return new CardCollection(playerCards, x => x.Suit == firstCardSuit);
-            }
-
-            // No card of the same suit is available
-            return playerCards;
+            return playerCards.HasAnyOfSuit(firstCardSuit)
+                       ? new CardCollection(playerCards, x => x.Suit == firstCardSuit)
+                       : playerCards;
         }
 
         private static CardCollection GetValidCardsForTrumpWhenTrumpIsPlayedFirst(
@@ -94,7 +90,7 @@
             IList<PlayCardAction> currentTrickActions,
             CardSuit firstCardSuit)
         {
-            if (playerCards.Any(x => x.Suit == firstCardSuit))
+            if (playerCards.HasAnyOfSuit(firstCardSuit))
             {
                 var bestCard = currentTrickActions.Where(action => action.Card.Suit == firstCardSuit)
                     .OrderByDescending(x => x.Card.TrumpOrder).First().Card;
@@ -120,14 +116,14 @@
             IList<PlayCardAction> currentTrickActions,
             CardSuit firstCardSuit)
         {
-            if (playerCards.Any(x => x.Suit == firstCardSuit))
+            if (playerCards.HasAnyOfSuit(firstCardSuit))
             {
                 // If the player has the same card suit, he should play a card from the suit
                 return new CardCollection(playerCards, x => x.Suit == firstCardSuit);
             }
 
-            // The player has not a card with the same suit
-            if (playerCards.Any(x => x.Suit == trumpSuit))
+            // The player doesn't have card with the same suit
+            if (playerCards.HasAnyOfSuit(trumpSuit))
             {
                 var currentPlayerTeamIsCurrentTrickWinner = false;
                 if (currentTrickActions.Count > 1)
