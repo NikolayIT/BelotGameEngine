@@ -14,11 +14,14 @@
 
         private readonly ValidCardsService validCardsService;
 
+        private readonly ValidAnnouncesService validAnnouncesService;
+
         public TricksManager(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
         {
             this.players = new List<IPlayer>(4) { southPlayer, eastPlayer, northPlayer, westPlayer };
             this.trickWinnerService = new TrickWinnerService();
             this.validCardsService = new ValidCardsService();
+            this.validAnnouncesService = new ValidAnnouncesService();
         }
 
         public void PlayTricks(
@@ -39,6 +42,17 @@
             var actions = new List<PlayCardAction>(8 * 4);
             var trickActions = new List<PlayCardAction>(4);
 
+            var announceContext = new PlayerGetAnnouncesContext
+            {
+                RoundNumber = roundNumber,
+                EastWestTeamPoints = eastWestTeamPoints,
+                SouthNorthTeamPoints = southNorthTeamPoints,
+                FirstToPlayInTheRound = firstToPlay,
+                Bids = bids,
+                CurrentContract = currentContract,
+                CurrentTrickActions = trickActions,
+                Announces = announces,
+            };
             var playContext = new PlayerPlayCardContext
             {
                 RoundNumber = roundNumber,
@@ -61,22 +75,11 @@
                     // Announces
                     if (trickNumber == 1)
                     {
-                        var availableAnnounces = new List<Announce>(); // TODO: Implement
-                        var playerAnnounces = this.players[currentPlayer.Index()].GetAnnounces(
-                            new PlayerGetAnnouncesContext
-                            {
-                                RoundNumber = roundNumber,
-                                EastWestTeamPoints = eastWestTeamPoints,
-                                SouthNorthTeamPoints = southNorthTeamPoints,
-                                MyPosition = currentPlayer,
-                                MyCards = playerCards[currentPlayer.Index()],
-                                FirstToPlayInTheRound = firstToPlay,
-                                Bids = bids,
-                                CurrentContract = currentContract,
-                                CurrentTrickActions = trickActions,
-                                Announces = announces,
-                                AvailableAnnounces = availableAnnounces,
-                            });
+                        var availableAnnounces = new List<Announce>();
+                        announceContext.MyPosition = currentPlayer;
+                        announceContext.MyCards = playerCards[currentPlayer.Index()];
+                        announceContext.AvailableAnnounces = availableAnnounces;
+                        var playerAnnounces = this.players[currentPlayer.Index()].GetAnnounces(announceContext);
 
                         //// TODO: Validate
                         foreach (var playerAnnounce in playerAnnounces)
@@ -104,11 +107,22 @@
                         throw new BelotGameException($"Invalid card played from {currentPlayer} player.");
                     }
 
+                    // Belote
                     if (action.Belote)
                     {
-                        // TODO: Validate if belot is real
-                        announces.Add(
-                            new Announce(AnnounceType.Belot, action.Card) { PlayerPosition = currentPlayer });
+                        if (this.validAnnouncesService.IsBeloteAllowed(
+                            playerCards[currentPlayer.Index()],
+                            currentContract.Type,
+                            trickActions,
+                            action.Card))
+                        {
+                            announces.Add(
+                                new Announce(AnnounceType.Belot, action.Card) { PlayerPosition = currentPlayer });
+                        }
+                        else
+                        {
+                            action.Belote = false;
+                        }
                     }
 
                     // Update information after the action

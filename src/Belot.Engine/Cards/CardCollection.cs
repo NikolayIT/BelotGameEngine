@@ -10,11 +10,10 @@
     /// </summary>
     public class CardCollection : ICollection<Card>, ICloneable
     {
-        // TODO: Add method for fast checking "is any of suit"
         private const int MaxCards = 32;
         private const int MaxCardsMinusOne = 31;
 
-        public uint cards; // 32 bits for 32 possible cards
+        private uint cards; // 32 bits for 32 possible cards
 
         public CardCollection(uint bitMask = 0)
         {
@@ -32,6 +31,24 @@
                 }
             }
         }
+
+        public int Count
+        {
+            get
+            {
+                var bits = this.cards;
+                var cardsCount = 0;
+                while (bits != 0)
+                {
+                    cardsCount++;
+                    bits &= bits - 1;
+                }
+
+                return cardsCount;
+            }
+        }
+
+        public bool IsReadOnly => false;
 
         public bool Any(Func<Card, bool> predicate)
         {
@@ -71,24 +88,6 @@
 
             return false;
         }
-
-        public int Count
-        {
-            get
-            {
-                var bits = this.cards;
-                var cardsCount = 0;
-                while (bits != 0)
-                {
-                    cardsCount++;
-                    bits &= bits - 1;
-                }
-
-                return cardsCount;
-            }
-        }
-
-        public bool IsReadOnly => false;
 
         public IEnumerator<Card> GetEnumerator()
         {

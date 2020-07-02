@@ -13,6 +13,6 @@
 
         public IEnumerable<PlayCardAction> CurrentTrickActions { get; set; }
 
-        public IEnumerable<Card> AvailableCardsToPlay { get; set; }
+        public CardCollection AvailableCardsToPlay { get; set; }
     }
 }
