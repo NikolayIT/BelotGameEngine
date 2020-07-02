@@ -35,8 +35,8 @@
                 $"[#{context.RoundNumber,-2}][{context.MyPosition}]: {context.CurrentContract.Type,-9} | "
                 + $"{string.Join(" ", context.MyCards),-27} "
                 + $"Actions: {string.Join(" ", context.CurrentTrickActions.Select(x => x.Card)),-11} "
-                + $"Available announces: {string.Join(" ", string.Join(",", context.AvailableAnnounces.Select(x => $"{x.AnnounceType}({x.Card})")))} "
-                + $"=> {string.Join(",", context.AvailableAnnounces.Select(x => $"{x.AnnounceType}({x.Card})"))}");
+                + $"Available announces: {string.Join(" ", string.Join(",", context.AvailableAnnounces))} "
+                + $"=> {string.Join(",", context.AvailableAnnounces)}");
             Console.ResetColor();
             return announces;
         }

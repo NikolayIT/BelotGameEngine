@@ -74,7 +74,8 @@
                 contract,
                 out var announces,
                 out var southNorthTricks,
-                out var eastWestTricks);
+                out var eastWestTricks,
+                out var lastTrickWinner);
 
             // Score points
             var result = this.scoreManager.GetScore(
@@ -82,7 +83,8 @@
                 southNorthTricks,
                 eastWestTricks,
                 announces,
-                hangingPoints);
+                hangingPoints,
+                lastTrickWinner);
             return result;
         }
 

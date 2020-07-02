@@ -29,9 +29,9 @@
 
         private Card(CardSuit suit, CardType type)
         {
+            this.hashCode = ((int)suit * 8) + (int)type;
             this.Suit = suit;
             this.Type = type;
-            this.hashCode = ((int)this.Suit * 8) + (int)this.Type;
             this.TrumpOrder = TrumpOrders[(int)this.Type];
             this.NoTrumpOrder = NoTrumpOrders[(int)this.Type];
         }
@@ -44,32 +44,22 @@
 
         public int NoTrumpOrder { get; }
 
-        public static bool operator ==(Card left, Card right)
-        {
-            return left?.Suit == right?.Suit && left?.Type == right?.Type;
-        }
+        public static bool operator ==(Card left, Card right) => left?.hashCode == right?.hashCode;
 
-        public static bool operator !=(Card left, Card right)
-        {
-            return !(left == right);
-        }
+        public static bool operator !=(Card left, Card right) => !(left == right);
 
-        public static Card GetCard(CardSuit suit, CardType type)
-        {
-            return AllCards[((int)suit * 8) + (int)type];
-        }
+        public static Card GetCard(CardSuit suit, CardType type) => AllCards[((int)suit * 8) + (int)type];
 
-        public int GetValue(BidType contract) =>
-            contract == BidType.Pass ? 0 :
-            contract.HasFlag(BidType.NoTrumps) ? NoTrumpValues[(int)this.Type] : TrumpValues[(int)this.Type];
-
-        public override bool Equals(object obj)
-        {
-            return obj is Card anotherCard && this.Suit == anotherCard.Suit && this.Type == anotherCard.Type;
-        }
+        public override bool Equals(object obj) => obj is Card anotherCard && this.hashCode == anotherCard.hashCode;
 
         public override int GetHashCode() => this.hashCode;
 
         public override string ToString() => $"{this.Type.ToFriendlyString()}{this.Suit.ToFriendlyString()}";
+
+        public int GetValue(BidType contract) =>
+            contract == BidType.Pass ? 0 :
+            contract.HasFlag(BidType.AllTrumps) ? TrumpValues[(int)this.Type] :
+            contract.HasFlag(BidType.NoTrumps) ? NoTrumpValues[(int)this.Type] :
+            contract.ToCardSuit() == this.Suit ? TrumpValues[(int)this.Type] : NoTrumpValues[(int)this.Type];
     }
 }

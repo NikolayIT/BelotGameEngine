@@ -8,22 +8,22 @@
         /// <summary>
         /// Initializes a new announce.
         /// </summary>
-        /// <param name="announceType">The type of the announce.</param>
+        /// <param name="type">The type of the announce.</param>
         /// <param name="card">One of the cards from the announce. For Tierce, Quarte, Quinte the biggest card.</param>
-        public Announce(AnnounceType announceType, Card card)
+        public Announce(AnnounceType type, Card card)
         {
-            this.AnnounceType = announceType;
+            this.Type = type;
             this.Card = card;
         }
 
-        public AnnounceType AnnounceType { get; }
+        public AnnounceType Type { get; }
 
         public Card Card { get; }
 
         public PlayerPosition PlayerPosition { get; internal set; }
 
         public int Value =>
-            this.AnnounceType switch
+            this.Type switch
                 {
                     AnnounceType.Belot => 20,
                     AnnounceType.Tierce => 20,
@@ -36,7 +36,7 @@
                 };
 
         public override string ToString() =>
-            this.AnnounceType switch
+            this.Type switch
                 {
                     AnnounceType.Belot => $"Belot {this.Card.Suit}",
                     AnnounceType.FourJacks => "4 Jacks",

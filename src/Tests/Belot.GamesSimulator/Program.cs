@@ -32,9 +32,9 @@
             Console.WriteLine();
             Console.WriteLine(new string('=', 75));
 
-            // SimulateGames(SmartVsPreviousVersionGames, 1_000_000, 12);
-            // SimulateGames(SmartVsRandomGames, 1_000_000, 12);
-            SimulateGames(SmartVsSmartGamesWithLogging, 10, 1, true);
+            //// SimulateGames(SmartVsPreviousVersionGames, 1_000_000, 12);
+            SimulateGames(SmartVsRandomGames, 1_000_000, 12);
+            //// SimulateGames(SmartVsSmartGamesWithLogging, 10, 1, true);
         }
 
         private static void SimulateGames(Func<BelotGame> simulation, int games, int parallelism, bool detailedLog = false)

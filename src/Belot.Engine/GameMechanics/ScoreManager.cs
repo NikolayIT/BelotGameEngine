@@ -15,7 +15,8 @@
             CardCollection southNorthTricks,
             CardCollection eastWestTricks,
             IList<Announce> announces,
-            int hangingPoints)
+            int hangingPoints,
+            PlayerPosition lastTrickWinner)
         {
             var result = new RoundResult(contract);
 
@@ -24,12 +25,22 @@
                 .Where(x => x.PlayerPosition == PlayerPosition.South || x.PlayerPosition == PlayerPosition.North)
                 .Sum(x => x.Value);
             result.SouthNorthTotalInRoundPoints += southNorthTricks.Sum(x => x.GetValue(contract.Type));
+            if (lastTrickWinner == PlayerPosition.South || lastTrickWinner == PlayerPosition.North)
+            {
+                // Last 10
+                result.SouthNorthTotalInRoundPoints += 10;
+            }
 
             // Sum all east-west points
             result.EastWestTotalInRoundPoints = announces
                 .Where(x => x.PlayerPosition == PlayerPosition.East || x.PlayerPosition == PlayerPosition.West)
                 .Sum(x => x.Value);
             result.EastWestTotalInRoundPoints += eastWestTricks.Sum(x => x.GetValue(contract.Type));
+            if (lastTrickWinner == PlayerPosition.East || lastTrickWinner == PlayerPosition.West)
+            {
+                // Last 10
+                result.EastWestTotalInRoundPoints += 10;
+            }
 
             // Double no trump points
             if (contract.Type.HasFlag(BidType.NoTrumps))

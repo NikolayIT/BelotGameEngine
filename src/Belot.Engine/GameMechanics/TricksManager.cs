@@ -35,11 +35,13 @@
             Bid currentContract,
             out List<Announce> announces,
             out CardCollection southNorthTricks,
-            out CardCollection eastWestTricks)
+            out CardCollection eastWestTricks,
+            out PlayerPosition lastTrickWinner)
         {
             announces = new List<Announce>(12);
             southNorthTricks = new CardCollection();
             eastWestTricks = new CardCollection();
+            lastTrickWinner = firstToPlay;
             var actions = new List<PlayCardAction>(8 * 4);
             var trickActions = new List<PlayCardAction>(4);
 
@@ -94,7 +96,7 @@
                             foreach (var playerAnnounce in playerAnnounces)
                             {
                                 var availableAnnounce = availableAnnounces.FirstOrDefault(
-                                    x => x.AnnounceType == playerAnnounce.AnnounceType
+                                    x => x.Type == playerAnnounce.Type
                                          && x.Card == playerAnnounce.Card);
                                 if (availableAnnounce == null)
                                 {
@@ -171,6 +173,11 @@
                     {
                         eastWestTricks.Add(trickAction.Card);
                     }
+                }
+
+                if (trickNumber == 8)
+                {
+                    lastTrickWinner = winner;
                 }
 
                 currentPlayer = winner;
