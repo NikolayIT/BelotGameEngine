@@ -1,6 +1,7 @@
 ﻿namespace Belot.Engine.GameMechanics
 {
     using System.Collections.Generic;
+    using System.Linq;
 
     using Belot.Engine.Cards;
     using Belot.Engine.Game;
@@ -75,15 +76,31 @@
                     // Announces
                     if (trickNumber == 1)
                     {
-                        var availableAnnounces = new List<Announce>();
+                        // Prepare GetAnnounces context
+                        var availableAnnounces =
+                            this.validAnnouncesService.GetAvailableAnnounces(
+                                playerCards[currentPlayer.Index()]);
                         announceContext.MyPosition = currentPlayer;
                         announceContext.MyCards = playerCards[currentPlayer.Index()];
                         announceContext.AvailableAnnounces = availableAnnounces;
-                        var playerAnnounces = this.players[currentPlayer.Index()].GetAnnounces(announceContext);
 
-                        //// TODO: Validate
+                        // Execute GetAnnounces
+                        var playerAnnounces =
+                            this.players[currentPlayer.Index()].GetAnnounces(announceContext).ToList();
+
+                        // Validate
                         foreach (var playerAnnounce in playerAnnounces)
                         {
+                            var availableAnnounce = availableAnnounces.FirstOrDefault(
+                                x => x.AnnounceType == playerAnnounce.AnnounceType && x.Card == playerAnnounce.Card);
+                            if (availableAnnounce == null)
+                            {
+                                // Invalid announce
+                                continue;
+                            }
+
+                            availableAnnounces.Remove(availableAnnounce);
+
                             playerAnnounce.PlayerPosition = currentPlayer;
                             announces.Add(playerAnnounce);
                         }

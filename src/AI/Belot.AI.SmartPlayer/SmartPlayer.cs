@@ -5,6 +5,7 @@
     using System.Linq;
 
     using Belot.Engine;
+    using Belot.Engine.Cards;
     using Belot.Engine.Game;
     using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
@@ -31,6 +32,28 @@
 
         public BidType GetBid(PlayerGetBidContext context)
         {
+            /*if (context.AvailableBids.HasFlag(BidType.AllTrumps))
+            {
+                var allTrumpPoints = 0;
+                foreach (var card in context.MyCards)
+                {
+                    if (card.Type == CardType.Jack)
+                    {
+                        allTrumpPoints += 3;
+                    }
+
+                    if (card.Type == CardType.Nine)
+                    {
+                        allTrumpPoints++;
+                    }
+                }
+
+                if (allTrumpPoints >= 8)
+                {
+                    return BidType.AllTrumps;
+                }
+            }*/
+
             return ThreadSafeRandom.Next(0, 2) == 0
                        ? BidType.Pass // In 50% of the cases announce Pass
                        : this.allBids.Where(x => context.AvailableBids.HasFlag(x)).RandomElement();

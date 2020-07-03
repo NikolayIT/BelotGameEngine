@@ -29,6 +29,7 @@
 
             var southNorthWins = 0;
             var eastWestWins = 0;
+            var rounds = 0;
             for (var i = 1; i <= 100_000; i++)
             {
                 var firstToPlay = ((i - 1) % 4) switch
@@ -49,12 +50,14 @@
                     eastWestWins++;
                 }
 
+                rounds += result.RoundsPlayed;
+
                 //// Console.WriteLine(
                 ////     $"Game #{i}: Winner: {result.Winner}; Result(SN-EW): {result.SouthNorthPoints} - {result.EastWestPoints} (Rounds: {result.RoundsPlayed})");
             }
 
             Console.WriteLine(stopwatch.Elapsed);
-            Console.WriteLine($"Result: (SN-EW): {southNorthWins}-{eastWestWins}");
+            Console.WriteLine($"Result: (SN-EW): {southNorthWins}-{eastWestWins} (Rounds: {rounds})");
         }
 
         private static void RandomCards()

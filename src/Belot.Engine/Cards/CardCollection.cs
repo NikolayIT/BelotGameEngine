@@ -20,6 +20,11 @@
             this.cards = bitMask;
         }
 
+        public CardCollection(CardCollection cardCollection)
+        {
+            this.cards = cardCollection.cards;
+        }
+
         public CardCollection(CardCollection cardCollection, Func<Card, bool> predicate)
         {
             for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
