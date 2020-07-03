@@ -1,4 +1,4 @@
-﻿namespace Belot.UI.Console
+﻿namespace Belot.GamesSimulator
 {
     using System;
     using System.Collections.Generic;
