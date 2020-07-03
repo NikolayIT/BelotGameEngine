@@ -1,30 +1,19 @@
 ﻿namespace Belot.Engine
 {
     using System;
+    using System.Threading;
 
-    // https://stackoverflow.com/a/11109361/1862812
+    // https://stackoverflow.com/a/9310486/1862812
     public static class ThreadSafeRandom
     {
-        private static readonly Random GlobalRandom = new Random();
-
-        [ThreadStatic]
-        private static Random localRandom;
-
-        public static int Next(int min, int max)
-        {
-            if (localRandom == null)
+        private static readonly ThreadLocal<Random> LocalRandom = new ThreadLocal<Random>(() =>
             {
-                lock (GlobalRandom)
-                {
-                    if (localRandom == null)
-                    {
-                        var seed = GlobalRandom.Next();
-                        localRandom = new Random(seed);
-                    }
-                }
-            }
+                var seed = Interlocked.Increment(ref staticSeed) & 0x7FFFFFFF;
+                return new Random(seed);
+            });
 
-            return localRandom.Next(min, max);
-        }
+        private static int staticSeed = Environment.TickCount;
+
+        public static int Next(int min, int max) => LocalRandom.Value.Next(min, max);
     }
 }

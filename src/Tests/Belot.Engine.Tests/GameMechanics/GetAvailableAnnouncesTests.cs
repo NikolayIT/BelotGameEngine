@@ -1,7 +1,5 @@
 ﻿namespace Belot.Engine.Tests.GameMechanics
 {
-    using System.Linq;
-
     using Belot.Engine.Cards;
     using Belot.Engine.Game;
     using Belot.Engine.GameMechanics;

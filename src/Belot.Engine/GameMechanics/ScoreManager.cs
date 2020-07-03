@@ -147,12 +147,7 @@
             return result;
         }
 
-        private static int RoundPoints(int points)
-        {
-            return (int)Math.Round(points / 10.0);
-        }
-
-        private static int RoundPoints(BidType bidType, int points, bool winner)
+        internal static int RoundPoints(BidType bidType, int points, bool winner)
         {
             if (bidType.HasFlag(BidType.AllTrumps))
             {
@@ -201,6 +196,11 @@
             }
 
             return points / 10;
+        }
+
+        private static int RoundPoints(int points)
+        {
+            return (int)Math.Round(points / 10.0);
         }
     }
 }

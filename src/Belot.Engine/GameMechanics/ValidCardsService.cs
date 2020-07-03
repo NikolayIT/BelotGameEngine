@@ -36,7 +36,7 @@
             if (firstCardSuit == trumpSuit)
             {
                 // Trump card played first
-                return GetValidCardsForTrumpWhenTrumpIsPlayedFirst(playerCards, currentTrickActions, firstCardSuit);
+                return GetValidCardsForAllTrumps(playerCards, currentTrickActions, firstCardSuit);
             }
             else
             {
@@ -58,15 +58,13 @@
         {
             if (playerCards.HasAnyOfSuit(firstCardSuit))
             {
-                var bestCard = currentTrickActions.Where(action => action.Card.Suit == firstCardSuit)
-                    .OrderByDescending(x => x.Card.TrumpOrder).First().Card;
-
-                if (playerCards.Any(card => card.Suit == firstCardSuit && card.TrumpOrder > bestCard.TrumpOrder))
+                var biggestCard = BiggestTrumpCard(currentTrickActions, firstCardSuit);
+                if (playerCards.Any(card => card.Suit == firstCardSuit && card.TrumpOrder > biggestCard.TrumpOrder))
                 {
                     // Has bigger card(s)
                     return new CardCollection(
                         playerCards,
-                        card => card.Suit == firstCardSuit && card.TrumpOrder > bestCard.TrumpOrder);
+                        card => card.Suit == firstCardSuit && card.TrumpOrder > biggestCard.TrumpOrder);
                 }
 
                 // Any other card from the same suit
@@ -85,31 +83,6 @@
                        : playerCards;
         }
 
-        private static CardCollection GetValidCardsForTrumpWhenTrumpIsPlayedFirst(
-            CardCollection playerCards,
-            IList<PlayCardAction> currentTrickActions,
-            CardSuit firstCardSuit)
-        {
-            if (playerCards.HasAnyOfSuit(firstCardSuit))
-            {
-                var bestCard = currentTrickActions.Where(action => action.Card.Suit == firstCardSuit)
-                    .OrderByDescending(x => x.Card.TrumpOrder).First().Card;
-
-                if (playerCards.Any(card => card.Suit == firstCardSuit && card.TrumpOrder > bestCard.TrumpOrder))
-                {
-                    // Has bigger card(s)
-                    return new CardCollection(
-                        playerCards, card => card.Suit == firstCardSuit && card.TrumpOrder > bestCard.TrumpOrder);
-                }
-
-                // Any other card from the same suit
-                return new CardCollection(playerCards, card => card.Suit == firstCardSuit);
-            }
-
-            // No card of the same suit available
-            return playerCards;
-        }
-
         private static CardCollection GetValidCardsForTrumpWhenNonTrumpIsPlayedFirst(
             CardCollection playerCards,
             CardSuit trumpSuit,
@@ -122,65 +95,72 @@
                 return new CardCollection(playerCards, x => x.Suit == firstCardSuit);
             }
 
-            // The player doesn't have card with the same suit
-            if (playerCards.HasAnyOfSuit(trumpSuit))
+            if (!playerCards.HasAnyOfSuit(trumpSuit))
             {
-                var currentPlayerTeamIsCurrentTrickWinner = false;
-                if (currentTrickActions.Count > 1)
-                {
-                    // The teammate played card
-                    Card bestCard;
-                    if (currentTrickActions.Any(x => x.Card.Suit == trumpSuit))
-                    {
-                        // Someone played trump
-                        bestCard = currentTrickActions.Where(x => x.Card.Suit == trumpSuit)
-                            .OrderByDescending(x => x.Card.TrumpOrder).First().Card;
-                    }
-                    else
-                    {
-                        // No one played trump
-                        bestCard = currentTrickActions.OrderByDescending(x => x.Card.NoTrumpOrder).First().Card;
-                    }
-
-                    if (currentTrickActions[currentTrickActions.Count - 2].Card == bestCard)
-                    {
-                        // The teammate has the best card in current trick
-                        currentPlayerTeamIsCurrentTrickWinner = true;
-                    }
-                }
-
-                // The player has trump card
-                if (currentPlayerTeamIsCurrentTrickWinner)
-                {
-                    // The current trick winner is the player or his teammate.
-                    // The player is not obligatory to play any trump
-                    return playerCards;
-                }
-
-                // The current trick winner is the rivals of the current player
-                if (currentTrickActions.Any(x => x.Card.Suit == trumpSuit))
-                {
-                    // Someone of the rivals has played trump card and is winning the trick
-                    var biggestTrumpCard = currentTrickActions.OrderByDescending(x => x.Card.TrumpOrder).First();
-                    if (playerCards.Any(
-                        x => x.Suit == trumpSuit && x.TrumpOrder > biggestTrumpCard.Card.TrumpOrder))
-                    {
-                        // The player has bigger trump card(s) and should play one of them
-                        return new CardCollection(
-                            playerCards,
-                            x => x.Suit == trumpSuit && x.TrumpOrder > biggestTrumpCard.Card.TrumpOrder);
-                    }
-
-                    // The player hasn't any bigger trump card so he can play any card
-                    return playerCards;
-                }
-
-                // No one played trump card, but the player should play one of them
-                return new CardCollection(playerCards, x => x.Suit == trumpSuit);
+                // The player doesn't have any trump card or card from the played suit
+                return playerCards;
             }
 
-            // The player has not any trump card or card from the played suit
-            return playerCards;
+            var currentPlayerTeamIsCurrentTrickWinner = false;
+            if (currentTrickActions.Count > 1)
+            {
+                // The teammate played card
+                var biggestCard = currentTrickActions.Any(x => x.Card.Suit == trumpSuit)
+                                      ? BiggestTrumpCard(currentTrickActions, trumpSuit)
+                                      : currentTrickActions.OrderByDescending(x => x.Card.NoTrumpOrder).First().Card;
+                if (currentTrickActions[currentTrickActions.Count - 2].Card == biggestCard)
+                {
+                    // The teammate has the best card in current trick
+                    currentPlayerTeamIsCurrentTrickWinner = true;
+                }
+            }
+
+            // The player has trump card
+            if (currentPlayerTeamIsCurrentTrickWinner)
+            {
+                // The current trick winner is the player or his teammate.
+                // The player is not obligatory to play any trump
+                return playerCards;
+            }
+
+            // The current trick winner is the rivals of the current player
+            if (currentTrickActions.Any(x => x.Card.Suit == trumpSuit))
+            {
+                // Someone of the rivals has played trump card and is winning the trick
+                var biggestTrumpCard = BiggestTrumpCard(currentTrickActions, trumpSuit);
+                if (playerCards.Any(
+                    x => x.Suit == trumpSuit && x.TrumpOrder > biggestTrumpCard.TrumpOrder))
+                {
+                    // The player has bigger trump card(s) and should play one of them
+                    return new CardCollection(
+                        playerCards,
+                        x => x.Suit == trumpSuit && x.TrumpOrder > biggestTrumpCard.TrumpOrder);
+                }
+
+                // The player hasn't any bigger trump card so he can play any card
+                return playerCards;
+            }
+
+            // No one played trump card, but the player should play one of them
+            return new CardCollection(playerCards, x => x.Suit == trumpSuit);
+        }
+
+        private static Card BiggestTrumpCard(IList<PlayCardAction> currentTrickActions, CardSuit firstCardSuit)
+        {
+            var bestCard = currentTrickActions[0].Card;
+            if (currentTrickActions.Count > 1 && currentTrickActions[1].Card.Suit == firstCardSuit
+                                              && currentTrickActions[1].Card.TrumpOrder > bestCard.TrumpOrder)
+            {
+                bestCard = currentTrickActions[1].Card;
+            }
+
+            if (currentTrickActions.Count > 2 && currentTrickActions[2].Card.Suit == firstCardSuit
+                                              && currentTrickActions[2].Card.TrumpOrder > bestCard.TrumpOrder)
+            {
+                bestCard = currentTrickActions[2].Card;
+            }
+
+            return bestCard;
         }
     }
 }
