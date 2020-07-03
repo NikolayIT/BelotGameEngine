@@ -7,6 +7,12 @@
     public sealed class Card
     {
         public static readonly Card[] AllCards = new Card[32];
+
+        private static readonly int[] TrumpOrders = { 1, 2, 7, 5, 8, 3, 4, 6 };
+        private static readonly int[] NoTrumpOrders = { 1, 2, 3, 7, 4, 5, 6, 8 };
+        private static readonly int[] NoTrumpValues = { 0, 0, 0, 10, 2, 3, 4, 11 };
+        private static readonly int[] TrumpValues = { 0, 0, 14, 10, 20, 3, 4, 11 };
+
         private readonly int hashCode;
 
         static Card()
@@ -26,39 +32,17 @@
             this.Suit = suit;
             this.Type = type;
             this.hashCode = ((int)this.Suit * 8) + (int)this.Type;
+            this.TrumpOrder = TrumpOrders[(int)this.Type];
+            this.NoTrumpOrder = NoTrumpOrders[(int)this.Type];
         }
 
         public CardSuit Suit { get; }
 
         public CardType Type { get; }
 
-        public int TrumpOrder =>
-            this.Type switch
-                {
-                    CardType.Seven => 1,
-                    CardType.Eight => 2,
-                    CardType.Queen => 3,
-                    CardType.King => 4,
-                    CardType.Ten => 5,
-                    CardType.Ace => 6,
-                    CardType.Nine => 7,
-                    CardType.Jack => 8,
-                    _ => 0,
-                };
+        public int TrumpOrder { get; }
 
-        public int NoTrumpOrder =>
-            this.Type switch
-                {
-                    CardType.Seven => 1,
-                    CardType.Eight => 2,
-                    CardType.Nine => 3,
-                    CardType.Jack => 4,
-                    CardType.Queen => 5,
-                    CardType.King => 6,
-                    CardType.Ten => 7,
-                    CardType.Ace => 8,
-                    _ => 0,
-                };
+        public int NoTrumpOrder { get; }
 
         public static bool operator ==(Card left, Card right)
         {
@@ -75,34 +59,9 @@
             return AllCards[((int)suit * 8) + (int)type];
         }
 
-        public int GetValue(BidType contract)
-        {
-            if (contract == BidType.Pass)
-            {
-                return 0;
-            }
-
-            if (contract.HasFlag(BidType.NoTrumps))
-            {
-                return this.Type == CardType.Seven ? 0 :
-                       this.Type == CardType.Eight ? 0 :
-                       this.Type == CardType.Nine ? 0 :
-                       this.Type == CardType.Ten ? 10 :
-                       this.Type == CardType.Jack ? 2 :
-                       this.Type == CardType.Queen ? 3 :
-                       this.Type == CardType.King ? 4 :
-                       this.Type == CardType.Ace ? 11 : 0;
-            }
-
-            return this.Type == CardType.Seven ? 0 :
-                this.Type == CardType.Eight ? 0 :
-                this.Type == CardType.Nine ? 14 :
-                this.Type == CardType.Ten ? 10 :
-                this.Type == CardType.Jack ? 20 :
-                this.Type == CardType.Queen ? 3 :
-                this.Type == CardType.King ? 4 :
-                this.Type == CardType.Ace ? 11 : 0;
-        }
+        public int GetValue(BidType contract) =>
+            contract == BidType.Pass ? 0 :
+            contract.HasFlag(BidType.NoTrumps) ? NoTrumpValues[(int)this.Type] : TrumpValues[(int)this.Type];
 
         public override bool Equals(object obj)
         {

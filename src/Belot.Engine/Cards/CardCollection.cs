@@ -6,7 +6,7 @@
 
     /// <inheritdoc cref="ICollection" />
     /// <summary>
-    /// Low memory (only 1 integer per instance) fast implementation of card collection.
+    /// Low memory (only 2 integers per instance) fast implementation of card collection.
     /// </summary>
     public class CardCollection : ICollection<Card>, ICloneable
     {
@@ -15,43 +15,36 @@
 
         private uint cards; // 32 bits for 32 possible cards
 
-        public CardCollection(uint bitMask = 0)
+        public CardCollection()
+        {
+        }
+
+        public CardCollection(uint bitMask)
         {
             this.cards = bitMask;
+            this.UpdateCount();
         }
 
         public CardCollection(CardCollection cardCollection)
+            : this(cardCollection.cards)
         {
-            this.cards = cardCollection.cards;
         }
 
         public CardCollection(CardCollection cardCollection, Func<Card, bool> predicate)
         {
+            this.Count = 0;
             for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
             {
                 if (((cardCollection.cards >> currentHashCode) & 1) == 1
                     && predicate(Card.AllCards[currentHashCode]))
                 {
                     this.cards |= 1U << currentHashCode;
+                    this.Count++;
                 }
             }
         }
 
-        public int Count
-        {
-            get
-            {
-                var bits = this.cards;
-                var cardsCount = 0;
-                while (bits != 0)
-                {
-                    cardsCount++;
-                    bits &= bits - 1;
-                }
-
-                return cardsCount;
-            }
-        }
+        public int Count { get; private set; }
 
         public bool IsReadOnly => false;
 
@@ -110,11 +103,14 @@
             {
                 this.cards |= 1U << item.GetHashCode();
             }
+
+            this.Count++;
         }
 
         public void Clear()
         {
             this.cards = 0;
+            this.Count = 0;
         }
 
         public bool Contains(Card item)
@@ -138,6 +134,7 @@
             if (this.Contains(item))
             {
                 this.cards &= ~(1U << item.GetHashCode());
+                this.Count--;
                 return true;
             }
 
@@ -147,6 +144,17 @@
         public object Clone()
         {
             return new CardCollection(this.cards);
+        }
+
+        private void UpdateCount()
+        {
+            this.Count = 0;
+            var bits = this.cards;
+            while (bits != 0)
+            {
+                this.Count++;
+                bits &= bits - 1;
+            }
         }
 
         private class CardCollectionEnumerator : IEnumerator<Card>

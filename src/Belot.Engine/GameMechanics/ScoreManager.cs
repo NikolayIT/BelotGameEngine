@@ -82,11 +82,11 @@
                      && result.SouthNorthTotalInRoundPoints == result.EastWestTotalInRoundPoints)
             {
                 // The other team gets its half of the points
-                result.EastWestPoints += RoundPoints(contract.CleanBidType, result.EastWestTotalInRoundPoints, false);
+                result.EastWestPoints += RoundPoints(contract.Type, result.EastWestTotalInRoundPoints, false);
 
                 // "Hanging" points are added to current hanging points
                 result.HangingPoints = hangingPoints + RoundPoints(
-                                           contract.CleanBidType,
+                                           contract.Type,
                                            result.SouthNorthTotalInRoundPoints,
                                            true);
             }
@@ -102,11 +102,11 @@
                      && result.SouthNorthTotalInRoundPoints == result.EastWestTotalInRoundPoints)
             {
                 // The other team gets its half of the points
-                result.SouthNorthPoints += RoundPoints(contract.CleanBidType, result.SouthNorthTotalInRoundPoints, false);
+                result.SouthNorthPoints += RoundPoints(contract.Type, result.SouthNorthTotalInRoundPoints, false);
 
                 // "Hanging" points are added to current hanging points
                 result.HangingPoints = hangingPoints + RoundPoints(
-                                           contract.CleanBidType,
+                                           contract.Type,
                                            result.EastWestTotalInRoundPoints,
                                            true);
             }
@@ -114,12 +114,12 @@
             {
                 // Normal game
                 result.SouthNorthPoints = RoundPoints(
-                    contract.CleanBidType,
+                    contract.Type,
                     result.SouthNorthTotalInRoundPoints,
                     result.SouthNorthTotalInRoundPoints > result.EastWestTotalInRoundPoints);
 
                 result.EastWestPoints = RoundPoints(
-                    contract.CleanBidType,
+                    contract.Type,
                     result.EastWestTotalInRoundPoints,
                     result.EastWestTotalInRoundPoints > result.SouthNorthTotalInRoundPoints);
 
@@ -143,47 +143,50 @@
 
         private static int RoundPoints(BidType bidType, int points, bool winner)
         {
-            switch (bidType)
+            if (bidType.HasFlag(BidType.AllTrumps))
             {
-                case BidType.AllTrumps:
-                    if (points % 10 > 4)
+                if (points % 10 > 4)
+                {
+                    return (points / 10) + 1;
+                }
+
+                if (points % 10 == 4)
+                {
+                    if (winner)
                     {
-                        return (points / 10) + 1;
+                        return points / 10;
                     }
 
-                    if (points % 10 == 4)
-                    {
-                        if (winner)
-                        {
-                            return points / 10;
-                        }
+                    return (points / 10) + 1;
+                }
 
-                        return (points / 10) + 1;
+                return points / 10;
+            }
+
+            if (bidType.HasFlag(BidType.NoTrumps))
+            {
+                return (int)Math.Round(points / 10M);
+            }
+
+            if (bidType.HasFlag(BidType.Clubs) || bidType.HasFlag(BidType.Diamonds) || bidType.HasFlag(BidType.Hearts)
+                || bidType.HasFlag(BidType.Spades))
+            {
+                if (points % 10 > 6)
+                {
+                    return (points / 10) + 1;
+                }
+
+                if (points % 10 == 6)
+                {
+                    if (winner)
+                    {
+                        return points / 10;
                     }
 
-                    return points / 10;
-                case BidType.NoTrumps:
-                    return (int)Math.Round(points / 10M);
-                case BidType.Clubs:
-                case BidType.Diamonds:
-                case BidType.Hearts:
-                case BidType.Spades:
-                    if (points % 10 > 6)
-                    {
-                        return (points / 10) + 1;
-                    }
+                    return (points / 10) + 1;
+                }
 
-                    if (points % 10 == 6)
-                    {
-                        if (winner)
-                        {
-                            return points / 10;
-                        }
-
-                        return (points / 10) + 1;
-                    }
-
-                    return points / 10;
+                return points / 10;
             }
 
             return points / 10;

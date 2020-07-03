@@ -74,7 +74,7 @@
                 for (var i = 0; i < 4; i++)
                 {
                     // Announces
-                    if (trickNumber == 1)
+                    if (trickNumber == 1 && !currentContract.Type.HasFlag(BidType.NoTrumps))
                     {
                         // Prepare GetAnnounces context
                         var availableAnnounces =
@@ -109,7 +109,7 @@
                     // Prepare PlayCard context
                     var availableCards = this.validCardsService.GetValidCards(
                         playerCards[currentPlayer.Index()],
-                        currentContract.CleanBidType,
+                        currentContract.Type,
                         trickActions);
                     playContext.MyPosition = currentPlayer;
                     playContext.MyCards = playerCards[currentPlayer.Index()];

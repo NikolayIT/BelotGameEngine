@@ -63,96 +63,74 @@
 
         private static void FindFourOfAKindAnnounces(CardCollection cards, ICollection<Announce> combinations)
         {
-            var countOfCardTypes = new Dictionary<CardType, int>();
+            // Group by type
+            var countOfCardTypes = new int[8];
             foreach (var card in cards)
             {
-                if (!countOfCardTypes.ContainsKey(card.Type))
-                {
-                    countOfCardTypes.Add(card.Type, 0);
-                }
-
-                countOfCardTypes[card.Type]++;
+                countOfCardTypes[(int)card.Type]++;
             }
 
-            foreach (var cardType in countOfCardTypes.Keys)
+            // Check each type
+            for (var i = 0; i < 8; i++)
             {
-                if (countOfCardTypes[cardType] == 4)
+                var cardType = (CardType)i;
+                if (countOfCardTypes[i] != 4 || cardType == CardType.Seven || cardType == CardType.Eight)
                 {
-                    switch (cardType)
-                    {
-                        case CardType.Jack:
-                            combinations.Add(
-                                new Announce(AnnounceType.FourJacks, Card.GetCard(CardSuit.Spade, cardType)));
-                            break;
-                        case CardType.Nine:
-                            combinations.Add(
-                                new Announce(AnnounceType.FourNines, Card.GetCard(CardSuit.Spade, cardType)));
-                            break;
-                        case CardType.Ace:
-                            combinations.Add(
-                                new Announce(AnnounceType.FourOfAKind, Card.GetCard(CardSuit.Spade, cardType)));
-                            break;
-                        case CardType.King:
-                            combinations.Add(
-                                new Announce(AnnounceType.FourOfAKind, Card.GetCard(CardSuit.Spade, cardType)));
-                            break;
-                        case CardType.Queen:
-                            combinations.Add(
-                                new Announce(AnnounceType.FourOfAKind, Card.GetCard(CardSuit.Spade, cardType)));
-                            break;
-                        case CardType.Ten:
-                            combinations.Add(
-                                new Announce(AnnounceType.FourOfAKind, Card.GetCard(CardSuit.Spade, cardType)));
-                            break;
-                        case CardType.Seven:
-                            continue;
-                        case CardType.Eight:
-                            continue;
-                    }
+                    continue;
+                }
 
-                    var newCards = new CardCollection();
-                    if (cardType != CardType.Seven && cardType != CardType.Eight)
-                    {
-                        foreach (var card in cards)
-                        {
-                            if (card.Type != cardType)
-                            {
-                                newCards.Add(card);
-                            }
-                        }
-                    }
+                switch (cardType)
+                {
+                    case CardType.Jack:
+                        combinations.Add(
+                            new Announce(AnnounceType.FourJacks, Card.GetCard(CardSuit.Spade, cardType)));
+                        break;
+                    case CardType.Nine:
+                        combinations.Add(
+                            new Announce(AnnounceType.FourNines, Card.GetCard(CardSuit.Spade, cardType)));
+                        break;
+                    case CardType.Ace:
+                    case CardType.King:
+                    case CardType.Queen:
+                    case CardType.Ten:
+                        combinations.Add(
+                            new Announce(AnnounceType.FourOfAKind, Card.GetCard(CardSuit.Spade, cardType)));
+                        break;
+                }
 
-                    cards = newCards;
+                // Remove these cards from the available combination cards
+                foreach (var card in cards)
+                {
+                    if (card.Type == cardType)
+                    {
+                        cards.Remove(card);
+                    }
                 }
             }
         }
 
         private static void FindSequentialAnnounces(CardCollection cards, ICollection<Announce> combinations)
         {
-            var cardsBySuit = new Dictionary<CardSuit, List<Card>>
-                                  {
-                                      { CardSuit.Club, new List<Card>() },
-                                      { CardSuit.Diamond, new List<Card>() },
-                                      { CardSuit.Heart, new List<Card>() },
-                                      { CardSuit.Spade, new List<Card>() },
-                                  };
+            // Group by suit
+            var cardsBySuit = new[] { new List<Card>(), new List<Card>(), new List<Card>(), new List<Card>() };
             foreach (var card in cards)
             {
-                cardsBySuit[card.Suit].Add(card);
+                cardsBySuit[(int)card.Suit].Add(card);
             }
 
-            foreach (var cardsBySuitKeyValue in cardsBySuit)
+            // Check each suit
+            for (var suitIndex = 0; suitIndex < 4; suitIndex++)
             {
-                var suitedCards = cardsBySuitKeyValue.Value;
-                if (suitedCards.Count == 0)
+                var suitedCards = cardsBySuit[suitIndex];
+                if (suitedCards.Count < 3)
                 {
                     continue;
                 }
 
                 suitedCards.Sort((card, card1) => card.Type.CompareTo(card1.Type));
-                int previousCardValue = (int)suitedCards[0].Type;
-                int count = 1;
-                for (int i = 1; i < suitedCards.Count; i++)
+                var previousCardValue = (int)suitedCards[0].Type;
+                var count = 1;
+                for (var i = 1; i < suitedCards.Count; i++)
                 {
                     if ((int)suitedCards[i].Type == previousCardValue + 1)
                     {
