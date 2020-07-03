@@ -28,8 +28,8 @@
         public void PlayTricks(
             int roundNumber,
             PlayerPosition firstToPlay,
-            int southNorthTeamPoints,
-            int eastWestTeamPoints,
+            int southNorthPoints,
+            int eastWestPoints,
             IReadOnlyList<CardCollection> playerCards,
             IList<Bid> bids,
             Bid currentContract,
@@ -46,8 +46,8 @@
             var announceContext = new PlayerGetAnnouncesContext
             {
                 RoundNumber = roundNumber,
-                EastWestTeamPoints = eastWestTeamPoints,
-                SouthNorthTeamPoints = southNorthTeamPoints,
+                EastWestPoints = eastWestPoints,
+                SouthNorthPoints = southNorthPoints,
                 FirstToPlayInTheRound = firstToPlay,
                 Bids = bids,
                 CurrentContract = currentContract,
@@ -57,8 +57,8 @@
             var playContext = new PlayerPlayCardContext
             {
                 RoundNumber = roundNumber,
-                EastWestTeamPoints = eastWestTeamPoints,
-                SouthNorthTeamPoints = southNorthTeamPoints,
+                EastWestPoints = eastWestPoints,
+                SouthNorthPoints = southNorthPoints,
                 FirstToPlayInTheRound = firstToPlay,
                 CurrentContract = currentContract,
                 Bids = bids,
@@ -80,29 +80,33 @@
                         var availableAnnounces =
                             this.validAnnouncesService.GetAvailableAnnounces(
                                 playerCards[currentPlayer.Index()]);
-                        announceContext.MyPosition = currentPlayer;
-                        announceContext.MyCards = playerCards[currentPlayer.Index()];
-                        announceContext.AvailableAnnounces = availableAnnounces;
-
-                        // Execute GetAnnounces
-                        var playerAnnounces =
-                            this.players[currentPlayer.Index()].GetAnnounces(announceContext).ToList();
-
-                        // Validate
-                        foreach (var playerAnnounce in playerAnnounces)
+                        if (availableAnnounces.Count > 0)
                         {
-                            var availableAnnounce = availableAnnounces.FirstOrDefault(
-                                x => x.AnnounceType == playerAnnounce.AnnounceType && x.Card == playerAnnounce.Card);
-                            if (availableAnnounce == null)
+                            announceContext.MyPosition = currentPlayer;
+                            announceContext.MyCards = playerCards[currentPlayer.Index()];
+                            announceContext.AvailableAnnounces = availableAnnounces;
+
+                            // Execute GetAnnounces
+                            var playerAnnounces = this.players[currentPlayer.Index()].GetAnnounces(announceContext)
+                                .ToList();
+
+                            // Validate
+                            foreach (var playerAnnounce in playerAnnounces)
                             {
-                                // Invalid announce
-                                continue;
+                                var availableAnnounce = availableAnnounces.FirstOrDefault(
+                                    x => x.AnnounceType == playerAnnounce.AnnounceType
+                                         && x.Card == playerAnnounce.Card);
+                                if (availableAnnounce == null)
+                                {
+                                    // Invalid announce
+                                    continue;
+                                }
+
+                                availableAnnounces.Remove(availableAnnounce);
+
+                                playerAnnounce.PlayerPosition = currentPlayer;
+                                announces.Add(playerAnnounce);
                             }
-
-                            availableAnnounces.Remove(availableAnnounce);
-
-                            playerAnnounce.PlayerPosition = currentPlayer;
-                            announces.Add(playerAnnounce);
                         }
                     }
 

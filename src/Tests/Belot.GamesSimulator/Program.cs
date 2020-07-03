@@ -27,15 +27,17 @@
 #elif RELEASE
             Console.Write(", Mode=Release");
 #endif
-            Console.Write($", CPUs={Environment.ProcessorCount}, OS={Environment.OSVersion}, .NET={Environment.Version}");
+            Console.Write(
+                $", CPUs={Environment.ProcessorCount}, OS={Environment.OSVersion}, .NET={Environment.Version}");
             Console.WriteLine();
             Console.WriteLine(new string('=', 75));
 
-            SimulateGames(SmartVsSmartGame, 200_000, 12);
-            SimulateGames(SmartVsRandomGame, 200_000, 12);
+            // SimulateGames(SmartVsPreviousVersionGames, 1_000_000, 12);
+            // SimulateGames(SmartVsRandomGames, 1_000_000, 12);
+            SimulateGames(SmartVsSmartGamesWithLogging, 10, 1, true);
         }
 
-        private static void SimulateGames(Func<BelotGame> simulation, int games, int parallelism)
+        private static void SimulateGames(Func<BelotGame> simulation, int games, int parallelism, bool detailedLog = false)
         {
             Console.WriteLine($"Running {simulation.Method.Name}...");
             var game = new ThreadLocal<BelotGame>(simulation);
@@ -43,7 +45,6 @@
             var eastWestWins = 0;
             var rounds = 0;
             var lockObject = new object();
-
             var stopwatch = Stopwatch.StartNew();
             Parallel.For(
                 1,
@@ -59,7 +60,7 @@
                             {
                                 southNorthWins++;
                             }
-                            else if (result.Winner == PlayerPosition.EastWestTeam)
+                            else
                             {
                                 eastWestWins++;
                             }
@@ -67,8 +68,12 @@
                             rounds += result.RoundsPlayed;
                         }
 
-                        //// Console.WriteLine(
-                        ////     $"Game #{i + 1}: Winner: {result.Winner}; Result(SN-EW): {result.SouthNorthPoints} - {result.EastWestPoints} (Rounds: {result.RoundsPlayed})");
+                        if (detailedLog)
+                        {
+                            Console.WriteLine(
+                                $"Game #{i + 1}: Winner: {result.Winner}; Result(SN-EW): {result.SouthNorthPoints} - {result.EastWestPoints} (Rounds: {result.RoundsPlayed})");
+                            Console.WriteLine(new string('-', 75));
+                        }
                     });
 
             Console.WriteLine(stopwatch.Elapsed);
@@ -77,13 +82,9 @@
             Console.WriteLine(new string('=', 75));
         }
 
-        private static BelotGame SmartVsSmartGame()
+        private static BelotGame SmartVsSmartGames()
         {
-            return new BelotGame(
-                new SmartPlayer(),
-                new SmartPlayer(),
-                new SmartPlayer(),
-                new SmartPlayer());
+            return new BelotGame(new SmartPlayer(), new SmartPlayer(), new SmartPlayer(), new SmartPlayer());
         }
 
         private static BelotGame SmartVsPreviousVersionGames()
@@ -95,12 +96,12 @@
                 new SmartPlayerPreviousVersion());
         }
 
-        private static BelotGame SmartVsRandomGame()
+        private static BelotGame SmartVsRandomGames()
         {
             return new BelotGame(new SmartPlayer(), new RandomPlayer(), new SmartPlayer(), new RandomPlayer());
         }
 
-        private static BelotGame SmartVsSmartGameWithLogging()
+        private static BelotGame SmartVsSmartGamesWithLogging()
         {
             return new BelotGame(
                 new LoggingPlayerDecorator(new SmartPlayer()),

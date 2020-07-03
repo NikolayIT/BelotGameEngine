@@ -18,12 +18,12 @@
         public Bid GetContract(
             int roundNumber,
             PlayerPosition firstToPlay,
-            int southNorthTeamPoints,
-            int eastWestTeamPoints,
+            int southNorthPoints,
+            int eastWestPoints,
             IReadOnlyList<CardCollection> playerCards,
             out IList<Bid> bids)
         {
-            bids = new List<Bid>();
+            bids = new List<Bid>(8);
             var consecutivePasses = 0;
             var currentPlayerPosition = firstToPlay;
             var contract = new Bid(currentPlayerPosition, BidType.Pass);
@@ -31,8 +31,8 @@
             {
                 RoundNumber = roundNumber,
                 FirstToPlayInTheRound = firstToPlay,
-                EastWestTeamPoints = eastWestTeamPoints,
-                SouthNorthTeamPoints = southNorthTeamPoints,
+                EastWestPoints = eastWestPoints,
+                SouthNorthPoints = southNorthPoints,
                 Bids = bids,
             };
             while (true)

@@ -30,8 +30,8 @@
         public RoundResult PlayRound(
             int roundNumber,
             PlayerPosition firstToPlay,
-            int southNorthTeamPoints,
-            int eastWestTeamPoints,
+            int southNorthPoints,
+            int eastWestPoints,
             int hangingPoints)
         {
             // Initialize the cards
@@ -49,8 +49,8 @@
             var contract = this.contractManager.GetContract(
                 roundNumber,
                 firstToPlay,
-                southNorthTeamPoints,
-                eastWestTeamPoints,
+                southNorthPoints,
+                eastWestPoints,
                 playerCards,
                 out var bids);
 
@@ -67,8 +67,8 @@
             this.tricksManager.PlayTricks(
                 roundNumber,
                 firstToPlay,
-                southNorthTeamPoints,
-                eastWestTeamPoints,
+                southNorthPoints,
+                eastWestPoints,
                 playerCards,
                 bids,
                 contract,

@@ -13,9 +13,9 @@
 
         public PlayerPosition MyPosition { get; set; }
 
-        public int SouthNorthTeamPoints { get; set; }
+        public int SouthNorthPoints { get; set; }
 
-        public int EastWestTeamPoints { get; set; }
+        public int EastWestPoints { get; set; }
 
         public CardCollection MyCards { get; set; }
 

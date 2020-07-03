@@ -55,7 +55,7 @@
         {
             var cards = new CardCollection(playerCards);
 
-            var combinations = new List<Announce>();
+            var combinations = new List<Announce>(2);
             FindFourOfAKindAnnounces(cards, combinations);
             FindSequentialAnnounces(cards, combinations);
             return combinations;
@@ -112,7 +112,7 @@
         private static void FindSequentialAnnounces(CardCollection cards, ICollection<Announce> combinations)
         {
             // Group by suit
-            var cardsBySuit = new[] { new List<Card>(), new List<Card>(), new List<Card>(), new List<Card>() };
+            var cardsBySuit = new[] { new List<Card>(8), new List<Card>(8), new List<Card>(8), new List<Card>(8) };
             foreach (var card in cards)
             {
                 cardsBySuit[(int)card.Suit].Add(card);

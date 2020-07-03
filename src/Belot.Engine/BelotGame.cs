@@ -19,8 +19,8 @@
 
         public GameResult PlayGame(PlayerPosition firstToPlay)
         {
-            var southNorthTeamPoints = 0;
-            var eastWestTeamPoints = 0;
+            var southNorthPoints = 0;
+            var eastWestPoints = 0;
             var firstInRound = firstToPlay;
             var roundNumber = 1;
             var hangingPoints = 0;
@@ -30,16 +30,16 @@
                 var roundResult = this.roundManager.PlayRound(
                     roundNumber,
                     firstInRound,
-                    southNorthTeamPoints,
-                    eastWestTeamPoints,
+                    southNorthPoints,
+                    eastWestPoints,
                     hangingPoints);
 
-                southNorthTeamPoints += roundResult.SouthNorthPoints;
-                eastWestTeamPoints += roundResult.EastWestPoints;
+                southNorthPoints += roundResult.SouthNorthPoints;
+                eastWestPoints += roundResult.EastWestPoints;
                 hangingPoints = roundResult.HangingPoints;
 
-                if (southNorthTeamPoints >= 151
-                    && southNorthTeamPoints > eastWestTeamPoints
+                if (southNorthPoints >= 151
+                    && southNorthPoints > eastWestPoints
                     && roundResult.SouthNorthPoints > 0
                     && !roundResult.NoTricksForOneOfTheTeams
                     && roundResult.Contract.Type != BidType.Pass)
@@ -48,8 +48,8 @@
                     break;
                 }
 
-                if (eastWestTeamPoints >= 151
-                    && eastWestTeamPoints > southNorthTeamPoints
+                if (eastWestPoints >= 151
+                    && eastWestPoints > southNorthPoints
                     && roundResult.EastWestPoints > 0
                     && !roundResult.NoTricksForOneOfTheTeams
                     && roundResult.Contract.Type != BidType.Pass)
@@ -65,8 +65,8 @@
             return new GameResult
             {
                 RoundsPlayed = roundNumber,
-                SouthNorthPoints = southNorthTeamPoints,
-                EastWestPoints = eastWestTeamPoints,
+                SouthNorthPoints = southNorthPoints,
+                EastWestPoints = eastWestPoints,
             };
         }
     }
