@@ -21,6 +21,7 @@
             var result = new RoundResult(contract);
 
             // Sum all south-north points
+            // TODO: Don't count all announces. Check which announces are bigger.
             result.SouthNorthTotalInRoundPoints = announces
                 .Where(x => x.PlayerPosition == PlayerPosition.South || x.PlayerPosition == PlayerPosition.North)
                 .Sum(x => x.Value);
@@ -32,6 +33,7 @@
             }
 
             // Sum all east-west points
+            // TODO: Don't count all announces. Check which announces are bigger.
             result.EastWestTotalInRoundPoints = announces
                 .Where(x => x.PlayerPosition == PlayerPosition.East || x.PlayerPosition == PlayerPosition.West)
                 .Sum(x => x.Value);
@@ -63,10 +65,15 @@
             }
 
             // Check if game is inside or hanging
-            if ((contract.Type.HasFlag(BidType.Double) || contract.Type.HasFlag(BidType.ReDouble))
-                && !result.NoTricksForOneOfTheTeams) //// When no tricks - double and re-double doesn't take place
+            if (contract.Type.HasFlag(BidType.Double) || contract.Type.HasFlag(BidType.ReDouble))
             {
                 var coefficient = contract.Type.HasFlag(BidType.ReDouble) ? 4 : 2;
+                if (result.NoTricksForOneOfTheTeams)
+                {
+                    // When no tricks - double and re-double doesn't take place
+                    coefficient = 1;
+                }
+
                 var allPoints = result.SouthNorthTotalInRoundPoints + result.EastWestTotalInRoundPoints;
                 if (result.SouthNorthTotalInRoundPoints > result.EastWestTotalInRoundPoints)
                 {
@@ -93,13 +100,13 @@
                      && result.SouthNorthTotalInRoundPoints == result.EastWestTotalInRoundPoints)
             {
                 // The other team gets its half of the points
-                result.EastWestPoints += RoundPoints(contract.Type, result.EastWestTotalInRoundPoints, false);
+                result.EastWestPoints += RoundPoints(contract.Type, result.EastWestTotalInRoundPoints, true);
 
                 // "Hanging" points are added to current hanging points
                 result.HangingPoints = hangingPoints + RoundPoints(
                                            contract.Type,
                                            result.SouthNorthTotalInRoundPoints,
-                                           true);
+                                           false);
             }
             else if ((contract.Player == PlayerPosition.East || contract.Player == PlayerPosition.West)
                 && result.EastWestTotalInRoundPoints < result.SouthNorthTotalInRoundPoints)
@@ -113,13 +120,13 @@
                      && result.SouthNorthTotalInRoundPoints == result.EastWestTotalInRoundPoints)
             {
                 // The other team gets its half of the points
-                result.SouthNorthPoints += RoundPoints(contract.Type, result.SouthNorthTotalInRoundPoints, false);
+                result.SouthNorthPoints += RoundPoints(contract.Type, result.SouthNorthTotalInRoundPoints, true);
 
                 // "Hanging" points are added to current hanging points
                 result.HangingPoints = hangingPoints + RoundPoints(
                                            contract.Type,
                                            result.EastWestTotalInRoundPoints,
-                                           true);
+                                           false);
             }
             else
             {
