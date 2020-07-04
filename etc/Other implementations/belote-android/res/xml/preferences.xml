@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <PreferenceCategory android:title="@string/GENERAL">
+        <CheckBoxPreference android:title="@string/PREF_STORE_GAME" android:key="@string/prefStoreGame" android:summary="@string/PREF_STORE_GAME_SUMM"/>
+        <CheckBoxPreference android:key="@string/prefAlertOnQuit" android:title="@string/PREF_ALERT_ON_QUIT" android:summary="@string/PREF_ALERT_ON_QUIT_SUMM" android:defaultValue="true"/>
+        <CheckBoxPreference android:title="@string/PREF_SHOW_BTNS" android:key="@string/prefShowBtns" android:summary="@string/PREF_SHOW_BTNS_SUMM" android:defaultValue="true"/>
+        <CheckBoxPreference android:summary="@string/PREF_CARDS_RB_ORDER_SUMM" android:key="@string/prefBlackRedOrder" android:title="@string/PREF_CARDS_RB_ORDER"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="prefStoreGame">storeGame</string>
+    <string name="prefAlertOnQuit">alertOnQuitGame</string>
+    <string name="prefShowBtns">showBtns</string>
+    <string name="prefBlackRedOrder">blackRedOrder</string>
+</resources>

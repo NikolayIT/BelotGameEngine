@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="BeloteTheme" parent="android:Theme">
+        <item name="android:windowTitleSize">44dip</item>
+    </style>
+
+    <style name="BeloteNoTitleTheme" parent="@style/BeloteTheme">
+        <item name="android:windowNoTitle">true</item>
+    </style>
+    
+    <style name="BeloteDialogNoTitleTheme" parent="android:Theme.Dialog">
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
+</resources>
