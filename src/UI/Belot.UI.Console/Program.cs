@@ -5,7 +5,10 @@
     using System.Text;
     using System.Threading;
 
+    using Belot.AI.SmartPlayer;
+    using Belot.Engine;
     using Belot.Engine.Cards;
+    using Belot.Engine.Players;
 
     public static class Program
     {
@@ -13,11 +16,18 @@
         {
             Console.OutputEncoding = Encoding.Unicode;
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-            Console.BufferHeight = Console.WindowHeight = 17;
-            Console.BufferWidth = Console.WindowWidth = 50;
-            Console.WriteLine("Belot Console 1.0");
+            ConsoleHelper.ResizeConsole(80, 20);
+            Console.Title = "Console Belot 1.0";
 
-            RandomCards();
+            IPlayer southPlayer = new ConsoleHumanPlayer();
+            IPlayer eastPlayer = new SmartPlayer();
+            IPlayer northPlayer = new SmartPlayer();
+            IPlayer westPlayer = new SmartPlayer();
+            var game = new BelotGame(southPlayer, eastPlayer, northPlayer, westPlayer);
+            var result = game.PlayGame(PlayerPosition.South);
+            Console.WriteLine("Winner: " + result.Winner);
+
+            //// RandomCards();
         }
 
         private static void RandomCards()

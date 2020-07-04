@@ -151,6 +151,7 @@
                     // Update information after the action
                     playerCards[currentPlayer.Index()].Remove(action.Card);
                     action.Player = currentPlayer;
+                    action.TrickNumber = trickNumber;
                     actions.Add(action);
                     trickActions.Add(action);
 
