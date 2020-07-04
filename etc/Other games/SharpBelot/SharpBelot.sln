@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30225.117
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpBelot", "SharpBelot\SharpBelot.csproj", "{87A0CE42-D179-4B25-A1E6-DDAEEFCC6CDB}"
 	ProjectSection(ProjectDependencies) = postProject
 		{A6529809-05CB-437B-9C45-D03FE82551D9} = {A6529809-05CB-437B-9C45-D03FE82551D9}
@@ -56,5 +58,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EFC32823-73DC-4E05-BCB6-4D9ABFDF541C}
 	EndGlobalSection
 EndGlobal
