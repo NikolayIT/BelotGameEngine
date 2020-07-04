@@ -9,17 +9,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{230EF0C4
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UI", "UI", "{32CA08E0-3F3F-429F-A2DD-26EDE55D6CA5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Belot.Engine", "Belot.Engine\Belot.Engine.csproj", "{14C1E443-DE55-4FA0-8F24-CF9F9CD25D39}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Belot.Engine", "Belot.Engine\Belot.Engine.csproj", "{14C1E443-DE55-4FA0-8F24-CF9F9CD25D39}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Belot.AI.DummyPlayer", "AI\Belot.AI.DummyPlayer\Belot.AI.DummyPlayer.csproj", "{05D97F03-92FD-4F08-9DFA-025F7A5B8F4E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Belot.AI.DummyPlayer", "AI\Belot.AI.DummyPlayer\Belot.AI.DummyPlayer.csproj", "{05D97F03-92FD-4F08-9DFA-025F7A5B8F4E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Belot.AI.SmartPlayer", "AI\Belot.AI.SmartPlayer\Belot.AI.SmartPlayer.csproj", "{EEEBF4E1-AC4F-42A9-A518-D209DCEFE19C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Belot.AI.SmartPlayer", "AI\Belot.AI.SmartPlayer\Belot.AI.SmartPlayer.csproj", "{EEEBF4E1-AC4F-42A9-A518-D209DCEFE19C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Belot.Engine.Tests", "Tests\Belot.Engine.Tests\Belot.Engine.Tests.csproj", "{E644F8DF-3121-45E5-AC36-EC8ED68BEABB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Belot.Engine.Tests", "Tests\Belot.Engine.Tests\Belot.Engine.Tests.csproj", "{E644F8DF-3121-45E5-AC36-EC8ED68BEABB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Belot.GamesSimulator", "Tests\Belot.GamesSimulator\Belot.GamesSimulator.csproj", "{3BFE3569-BBAF-402E-8D0E-0326F594D56B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Belot.GamesSimulator", "Tests\Belot.GamesSimulator\Belot.GamesSimulator.csproj", "{3BFE3569-BBAF-402E-8D0E-0326F594D56B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Belot.UI.Console", "UI\Belot.UI.Console\Belot.UI.Console.csproj", "{1087964C-AAC5-4D18-9218-12EAE21782C4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Belot.UI.Console", "UI\Belot.UI.Console\Belot.UI.Console.csproj", "{1087964C-AAC5-4D18-9218-12EAE21782C4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Belot.UI.BlazorApp", "UI\Belot.UI.BlazorApp\Belot.UI.BlazorApp.csproj", "{4CE4FABA-774F-4244-B1F5-D579A3FE0A55}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{1087964C-AAC5-4D18-9218-12EAE21782C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1087964C-AAC5-4D18-9218-12EAE21782C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1087964C-AAC5-4D18-9218-12EAE21782C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CE4FABA-774F-4244-B1F5-D579A3FE0A55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CE4FABA-774F-4244-B1F5-D579A3FE0A55}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CE4FABA-774F-4244-B1F5-D579A3FE0A55}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CE4FABA-774F-4244-B1F5-D579A3FE0A55}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -61,6 +67,7 @@ Global
 		{E644F8DF-3121-45E5-AC36-EC8ED68BEABB} = {230EF0C4-1DC2-49AA-8843-3043D45BB712}
 		{3BFE3569-BBAF-402E-8D0E-0326F594D56B} = {230EF0C4-1DC2-49AA-8843-3043D45BB712}
 		{1087964C-AAC5-4D18-9218-12EAE21782C4} = {32CA08E0-3F3F-429F-A2DD-26EDE55D6CA5}
+		{4CE4FABA-774F-4244-B1F5-D579A3FE0A55} = {32CA08E0-3F3F-429F-A2DD-26EDE55D6CA5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C3D0359F-2942-4525-A5D1-CCE74B124200}
