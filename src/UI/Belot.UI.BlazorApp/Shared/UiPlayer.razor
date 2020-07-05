@@ -1,0 +1,22 @@
+﻿@using Belot.Engine.Players
+@using Belot.Engine.Game
+@using Belot.Engine
+@code {
+    public class UiPlayerImplementation : IPlayer
+    {
+        public BidType GetBid(PlayerGetBidContext context)
+        {
+            return BidType.Pass;
+        }
+
+        public IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
+        {
+            return context.AvailableAnnounces;
+        }
+
+        public PlayCardAction PlayCard(PlayerPlayCardContext context)
+        {
+            return new PlayCardAction(context.AvailableCardsToPlay.RandomElement(), true);
+        }
+    }
+}

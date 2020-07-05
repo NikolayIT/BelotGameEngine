@@ -1,14 +1,53 @@
 ﻿@page "/"
 @using Belot.Engine
+@using Belot.Engine.Cards
 @using Belot.Engine.Players
 @using Belot.AI.SmartPlayer
 @using Belot.AI.DummyPlayer
 
-<h1>Blazor Belot</h1>
+<h1 class="text-center">Blazor Belot 1.0</h1>
 
-Coming soon...
-
-<hr />
+<div class="row">
+    <div class="col-3 text-center">
+    </div>
+    <div class="col-6 text-center">
+        @for (int i = 0; i < 8; i++)
+        {
+            <CardImage></CardImage>
+        }
+    </div>
+    <div class="col-3 text-center">
+    </div>
+</div>
+<div class="row">
+    <div class="col-3 text-center">
+        @for (int i = 0; i < 8; i++)
+        {
+            <CardImage></CardImage>
+        }
+    </div>
+    <div class="col-6 text-center">
+        Play field
+    </div>
+    <div class="col-3 text-center">
+        @for (int i = 0; i < 8; i++)
+        {
+            <CardImage></CardImage>
+        }
+    </div>
+</div>
+<div class="row">
+    <div class="col-3 text-center">
+    </div>
+    <div class="col-6 text-center">
+        @foreach (var card in Enumerable.Range(0, 8).Select(x => deck.GetNextCard()))
+        {
+            <CardImage Card="card"></CardImage>
+        }
+    </div>
+    <div class="col-3 text-center">
+    </div>
+</div>
 
 <button class="btn btn-primary" @onclick="() => RunGames(100)">Simulate 100 games (smart vs random)</button>
 
@@ -16,7 +55,13 @@ Coming soon...
 
 @code
 {
+    Deck deck = new Deck();
     string simulationResult;
+
+    protected override void OnInitialized()
+    {
+        deck.Shuffle();
+    }
 
     void RunGames(int count)
     {

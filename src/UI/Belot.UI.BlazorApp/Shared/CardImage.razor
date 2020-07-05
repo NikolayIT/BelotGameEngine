@@ -1,0 +1,13 @@
+﻿@using Belot.Engine.Cards
+
+<span class="@ImageClass" OnClick="OnClick"></span>
+
+@code {
+    [Parameter]
+    public Card Card { get; set; } = null;
+
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    public string ImageClass => "sprite " + (this.Card != null ? $"sprite-{this.Card.Type.ToString().ToLower()}{this.Card.Suit.ToString().ToLower()}" : "sprite-card_back_small");
+}
