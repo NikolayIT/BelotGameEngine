@@ -14,21 +14,30 @@
         {
             this.Type = type;
             this.Card = card;
+            if (type == AnnounceType.Belot)
+            {
+                this.ToBeScored = true;
+            }
         }
 
         public AnnounceType Type { get; }
 
         public Card Card { get; }
 
-        public PlayerPosition PlayerPosition { get; internal set; }
+        public PlayerPosition Player { get; internal set; }
+
+        public bool? ToBeScored { get; set; }
 
         public int Value =>
             this.Type switch
                 {
                     AnnounceType.Belot => 20,
-                    AnnounceType.Tierce => 20,
-                    AnnounceType.Quarte => 50,
-                    AnnounceType.Quinte => 100,
+                    AnnounceType.SequenceOf3 => 20,
+                    AnnounceType.SequenceOf4 => 50,
+                    AnnounceType.SequenceOf5 => 100,
+                    AnnounceType.SequenceOf6 => 100,
+                    AnnounceType.SequenceOf7 => 100,
+                    AnnounceType.SequenceOf8 => 100,
                     AnnounceType.FourOfAKind => 100,
                     AnnounceType.FourNines => 150,
                     AnnounceType.FourJacks => 200,
@@ -42,9 +51,12 @@
                     AnnounceType.FourJacks => "4 Jacks",
                     AnnounceType.FourNines => "4 Nines",
                     AnnounceType.FourOfAKind => $"4 of a kind {this.Card.Type}",
-                    AnnounceType.Quinte => $"Quinte to {this.Card}",
-                    AnnounceType.Quarte => $"Tierce to {this.Card}",
-                    AnnounceType.Tierce => $"Tierce to {this.Card}",
+                    AnnounceType.SequenceOf8 => $"Quinte(8) to {this.Card}",
+                    AnnounceType.SequenceOf7 => $"Quinte(7) to {this.Card}",
+                    AnnounceType.SequenceOf6 => $"Quinte(6) to {this.Card}",
+                    AnnounceType.SequenceOf5 => $"Quinte to {this.Card}",
+                    AnnounceType.SequenceOf4 => $"Quarte to {this.Card}",
+                    AnnounceType.SequenceOf3 => $"Tierce to {this.Card}",
                     _ => string.Empty,
                 };
     }

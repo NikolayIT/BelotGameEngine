@@ -61,6 +61,15 @@
             return combinations;
         }
 
+        // TODO: Implement
+        public void UpdateAnnouncesToBeScored(ICollection<Announce> announces)
+        {
+            foreach (var announce in announces)
+            {
+                announce.ToBeScored = true;
+            }
+        }
+
         private static void FindFourOfAKindAnnounces(CardCollection cards, ICollection<Announce> combinations)
         {
             // Group by type
@@ -140,17 +149,33 @@
                     {
                         if (count == 3)
                         {
-                            combinations.Add(new Announce(AnnounceType.Tierce, suitedCards[i - 1]));
+                            combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[i - 1]));
                         }
 
                         if (count == 4)
                         {
-                            combinations.Add(new Announce(AnnounceType.Quarte, suitedCards[i - 1]));
+                            combinations.Add(new Announce(AnnounceType.SequenceOf4, suitedCards[i - 1]));
                         }
 
-                        if (count >= 5)
+                        if (count == 5)
                         {
-                            combinations.Add(new Announce(AnnounceType.Quinte, suitedCards[i - 1]));
+                            combinations.Add(new Announce(AnnounceType.SequenceOf5, suitedCards[i - 1]));
+                        }
+
+                        if (count == 6)
+                        {
+                            combinations.Add(new Announce(AnnounceType.SequenceOf6, suitedCards[i - 1]));
+                        }
+
+                        if (count == 7)
+                        {
+                            combinations.Add(new Announce(AnnounceType.SequenceOf7, suitedCards[i - 1]));
+                        }
+
+                        if (count == 8)
+                        {
+                            combinations.Add(new Announce(AnnounceType.SequenceOf8, suitedCards[i - 1]));
+                            combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[i - 1]));
                         }
 
                         count = 1;
@@ -161,17 +186,33 @@
 
                 if (count == 3)
                 {
-                    combinations.Add(new Announce(AnnounceType.Tierce, suitedCards[suitedCards.Count - 1]));
+                    combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[suitedCards.Count - 1]));
                 }
 
                 if (count == 4)
                 {
-                    combinations.Add(new Announce(AnnounceType.Quarte, suitedCards[suitedCards.Count - 1]));
+                    combinations.Add(new Announce(AnnounceType.SequenceOf4, suitedCards[suitedCards.Count - 1]));
                 }
 
-                if (count >= 5)
+                if (count == 5)
                 {
-                    combinations.Add(new Announce(AnnounceType.Quinte, suitedCards[suitedCards.Count - 1]));
+                    combinations.Add(new Announce(AnnounceType.SequenceOf5, suitedCards[suitedCards.Count - 1]));
+                }
+
+                if (count == 6)
+                {
+                    combinations.Add(new Announce(AnnounceType.SequenceOf6, suitedCards[suitedCards.Count - 1]));
+                }
+
+                if (count == 7)
+                {
+                    combinations.Add(new Announce(AnnounceType.SequenceOf7, suitedCards[suitedCards.Count - 1]));
+                }
+
+                if (count == 8)
+                {
+                    combinations.Add(new Announce(AnnounceType.SequenceOf8, suitedCards[suitedCards.Count - 1]));
+                    combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[suitedCards.Count - 1]));
                 }
             }
         }

@@ -73,6 +73,11 @@
             for (var trickNumber = 1; trickNumber <= 8; trickNumber++)
             {
                 trickActions.Clear();
+                if (trickNumber == 2)
+                {
+                    this.validAnnouncesService.UpdateAnnouncesToBeScored(announces);
+                }
+
                 for (var i = 0; i < 4; i++)
                 {
                     // Announces
@@ -106,7 +111,7 @@
 
                                 availableAnnounces.Remove(availableAnnounce);
 
-                                playerAnnounce.PlayerPosition = currentPlayer;
+                                playerAnnounce.Player = currentPlayer;
                                 announces.Add(playerAnnounce);
                             }
                         }
@@ -139,8 +144,7 @@
                             trickActions,
                             action.Card))
                         {
-                            announces.Add(
-                                new Announce(AnnounceType.Belot, action.Card) { PlayerPosition = currentPlayer });
+                            announces.Add(new Announce(AnnounceType.Belot, action.Card) { Player = currentPlayer });
                         }
                         else
                         {
