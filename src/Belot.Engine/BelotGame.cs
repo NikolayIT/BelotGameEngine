@@ -17,7 +17,7 @@
             this.roundManager = new RoundManager(southPlayer, eastPlayer, northPlayer, westPlayer);
         }
 
-        public GameResult PlayGame(PlayerPosition firstToPlay)
+        public GameResult PlayGame(PlayerPosition firstToPlay = PlayerPosition.South)
         {
             var southNorthPoints = 0;
             var eastWestPoints = 0;

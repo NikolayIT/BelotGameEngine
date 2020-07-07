@@ -63,32 +63,28 @@
     BelotGame game;
     int cardsPerPlayer = 0;
 
-    protected override void OnInitialized() => StartGameAsync();
-
-    private async void StartGameAsync()
+    protected override void OnInitialized()
     {
         this.uiPlayer = new UiPlayerImplementation();
-        uiPlayer.MyCardsChanged += UiPlayer_OnMyCardsChanged;;
+        uiPlayer.MyCardsChanged += (sender, collection) =>
+        {
+            cardsPerPlayer = collection.Count;
+            this.StateHasChanged();
+        };
         this.game = new BelotGame(uiPlayer, new SmartPlayer(), new SmartPlayer(), new SmartPlayer());
-        game.PlayGame(PlayerPosition.South);
-    }
-
-    private async void UiPlayer_OnMyCardsChanged(object sender, CardCollection collection)
-    {
-        cardsPerPlayer = collection.Count;
-        Console.WriteLine("MyCardsChanged");
-        this.StateHasChanged();
-        await Task.Delay(1000);
+        Task.Run(() => game.PlayGame());
     }
 
     private void ButtonClick()
     {
-        this.StateHasChanged();
+        this.uiPlayer.Loop = false;
     }
 
     public class UiPlayerImplementation : IPlayer
     {
         public event EventHandler<CardCollection> MyCardsChanged;
+
+        public bool Loop { get; set; } = true;
 
         public BidType GetBid(PlayerGetBidContext context)
         {
@@ -108,6 +104,11 @@
         {
             Console.WriteLine("PlayCard");
             this.MyCardsChanged?.Invoke(this, context.MyCards);
+            while (this.Loop)
+            {
+                Task.Delay(100).GetAwaiter().GetResult();
+            }
+
             return new PlayCardAction(context.AvailableCardsToPlay.RandomElement(), true);
         }
     }
