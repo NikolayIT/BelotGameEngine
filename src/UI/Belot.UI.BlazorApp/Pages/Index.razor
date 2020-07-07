@@ -1,4 +1,6 @@
 ﻿@page "/"
+@implements IPlayer
+@inject IJSRuntime JSRuntime
 @using Belot.Engine
 @using Belot.Engine.Cards
 @using Belot.Engine.Players
@@ -6,7 +8,6 @@
 @using Belot.AI.DummyPlayer
 @using Belot.Engine.Game
 @using System.Threading
-@using Timer = System.Timers.Timer
 
 <h1>
     <span class="float-left">Blazor Belot 1.0</span>
@@ -56,60 +57,50 @@
     <div class="col-3 text-center">
     </div>
 </div>
-
 @code
 {
-    UiPlayerImplementation uiPlayer;
     BelotGame game;
     int cardsPerPlayer = 0;
 
+    bool clicked = false;
+
     protected override void OnInitialized()
     {
-        this.uiPlayer = new UiPlayerImplementation();
-        uiPlayer.MyCardsChanged += (sender, collection) =>
-        {
-            cardsPerPlayer = collection.Count;
-            this.StateHasChanged();
-        };
-        this.game = new BelotGame(uiPlayer, new SmartPlayer(), new SmartPlayer(), new SmartPlayer());
-        Task.Run(() => game.PlayGame());
+        this.game = new BelotGame(this, new SmartPlayer(), new SmartPlayer(), new SmartPlayer());
+        new Thread(() => game.PlayGame()).Start();
+        // Task.Run(() => game.PlayGame());
     }
 
     private void ButtonClick()
     {
-        this.uiPlayer.Loop = false;
+        this.clicked = true;
     }
 
-    public class UiPlayerImplementation : IPlayer
+    public BidType GetBid(PlayerGetBidContext context)
     {
-        public event EventHandler<CardCollection> MyCardsChanged;
+        Console.WriteLine("GetBid");
+        Thread.Sleep(1000);
+        UpdateUi(context);
+        return BidType.Pass;
+    }
 
-        public bool Loop { get; set; } = true;
+    public IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
+    {
+        Console.WriteLine("GetAnnounces");
+        UpdateUi(context);
+        return context.AvailableAnnounces;
+    }
 
-        public BidType GetBid(PlayerGetBidContext context)
-        {
-            Console.WriteLine("GetBid");
-            this.MyCardsChanged?.Invoke(this, context.MyCards);
-            return BidType.Pass;
-        }
+    public PlayCardAction PlayCard(PlayerPlayCardContext context)
+    {
+        Console.WriteLine("PlayCard");
+        UpdateUi(context);
+        return new PlayCardAction(context.AvailableCardsToPlay.RandomElement(), true);
+    }
 
-        public IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
-        {
-            Console.WriteLine("GetAnnounces");
-            this.MyCardsChanged?.Invoke(this, context.MyCards);
-            return context.AvailableAnnounces;
-        }
-
-        public PlayCardAction PlayCard(PlayerPlayCardContext context)
-        {
-            Console.WriteLine("PlayCard");
-            this.MyCardsChanged?.Invoke(this, context.MyCards);
-            while (this.Loop)
-            {
-                Task.Delay(100).GetAwaiter().GetResult();
-            }
-
-            return new PlayCardAction(context.AvailableCardsToPlay.RandomElement(), true);
-        }
+    private void UpdateUi(BasePlayerContext context)
+    {
+        this.cardsPerPlayer = context.MyCards.Count;
+        this.StateHasChanged();
     }
 }
