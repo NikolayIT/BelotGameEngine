@@ -20,7 +20,7 @@
             Console.OutputEncoding = Encoding.Unicode;
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             Console.WriteLine("Belot Games Simulator 1.0");
-            Console.WriteLine(new string('=', 75));
+            Console.WriteLine(new string('=', 80));
             Console.Write(DateTime.Now.ToShortDateString());
 #if DEBUG
             Console.Write(", Mode=Debug");
@@ -30,10 +30,10 @@
             Console.Write(
                 $", CPUs={Environment.ProcessorCount}, OS={Environment.OSVersion}, .NET={Environment.Version}");
             Console.WriteLine();
-            Console.WriteLine(new string('=', 75));
+            Console.WriteLine(new string('=', 80));
 
-            //// SimulateGames(SmartVsPreviousVersionGames, 1_000_000, 12);
-            SimulateGames(SmartVsRandomGames, 1_000_000, 12);
+            SimulateGames(SmartVsPreviousVersionGames, 200_000, 12);
+            SimulateGames(SmartVsRandomGames, 200_000, 12);
             //// SimulateGames(SmartVsSmartGamesWithLogging, 10, 1, true);
         }
 
@@ -72,14 +72,14 @@
                         {
                             Console.WriteLine(
                                 $"Game #{i + 1}: Winner: {result.Winner}; Result(SN-EW): {result.SouthNorthPoints} - {result.EastWestPoints} (Rounds: {result.RoundsPlayed})");
-                            Console.WriteLine(new string('-', 75));
+                            Console.WriteLine(new string('-', 80));
                         }
                     });
 
             Console.WriteLine(stopwatch.Elapsed);
             Console.WriteLine(
-                $"Games: (SN-EW): {southNorthWins}-{eastWestWins} (Total: {southNorthWins + eastWestWins}) (Rounds: {rounds})");
-            Console.WriteLine(new string('=', 75));
+                $"Games: (SN-EW): {southNorthWins}-{eastWestWins} (Total: {southNorthWins + eastWestWins}, Diff: {southNorthWins - eastWestWins}) (Rounds: {rounds})");
+            Console.WriteLine(new string('=', 80));
         }
 
         private static BelotGame SmartVsSmartGames()

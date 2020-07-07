@@ -1,9 +1,11 @@
 ﻿namespace Belot.Engine.Game
 {
+    using System;
+
     using Belot.Engine.Cards;
     using Belot.Engine.Players;
 
-    public class Announce
+    public class Announce : IComparable<Announce>
     {
         /// <summary>
         /// Initializes a new announce.
@@ -14,19 +16,11 @@
         {
             this.Type = type;
             this.Card = card;
-            if (type == AnnounceType.Belot)
-            {
-                this.ToBeScored = true;
-            }
         }
 
         public AnnounceType Type { get; }
 
-        public Card Card { get; }
-
         public PlayerPosition Player { get; internal set; }
-
-        public bool? ToBeScored { get; set; }
 
         public int Value =>
             this.Type switch
@@ -44,6 +38,10 @@
                     _ => 0,
                 };
 
+        internal Card Card { get; }
+
+        internal bool? ToBeScored { get; set; }
+
         public override string ToString() =>
             this.Type switch
                 {
@@ -59,5 +57,40 @@
                     AnnounceType.SequenceOf3 => $"Tierce to {this.Card}",
                     _ => string.Empty,
                 };
+
+        public int CompareTo(Announce other)
+        {
+            if (ReferenceEquals(this, other))
+            {
+                return 0;
+            }
+
+            if (other is null)
+            {
+                return 1;
+            }
+
+            if (this.Value > other.Value)
+            {
+                return 1;
+            }
+
+            if (other.Value > this.Value)
+            {
+                return -1;
+            }
+
+            if (this.Type > other.Type)
+            {
+                return 1;
+            }
+
+            if (other.Type > this.Type)
+            {
+                return -1;
+            }
+
+            return this.Card.Type.CompareTo(other.Card.Type);
+        }
     }
 }

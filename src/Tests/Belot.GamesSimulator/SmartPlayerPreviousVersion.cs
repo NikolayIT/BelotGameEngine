@@ -17,7 +17,7 @@
     {
         private static readonly string[] UrlsForSourceCode =
             {
-                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/RewriteTheEngine/src/AI/Belot.AI.SmartPlayer/SmartPlayer.cs",
+                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/SmartPlayer.cs",
             };
 
         private static readonly Type CompiledPlayerType;
@@ -51,9 +51,7 @@
             metadataReferences.Add(MetadataReference.CreateFromFile(Assembly.Load(new AssemblyName("mscorlib")).Location));
             metadataReferences.Add(MetadataReference.CreateFromFile(typeof(IPlayer).Assembly.Location));
 
-            // TODO: Delete assemblyName file
-            var assemblyName = Path.GetRandomFileName();
-            var compilation = CSharpCompilation.Create(assemblyName)
+            var compilation = CSharpCompilation.Create("PreviousVersionSmartPlayer")
                 .WithOptions(new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
                 .AddSyntaxTrees(syntaxTrees).AddReferences(metadataReferences);
 

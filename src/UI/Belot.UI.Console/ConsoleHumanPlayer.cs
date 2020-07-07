@@ -16,8 +16,8 @@
 
         private readonly List<Bid> visualizedBids = new List<Bid>();
         private readonly List<PlayCardAction> visualizedActions = new List<PlayCardAction>();
-        private int lastRoundNumber = 0;
-        private int lastTrickNumber = 0;
+        private int lastRoundNumber;
+        private int lastTrickNumber;
 
         public ConsoleHumanPlayer()
         {
@@ -228,7 +228,6 @@
 
         private void Draw(BasePlayerContext context, bool drawPlayerCards = true)
         {
-            // TODO: Refactor (extract constants, improve code)
             ConsoleHelper.ClearAndResetConsole();
             ConsoleHelper.DrawTextBoxTopRight(
                 $"(SN){context.SouthNorthPoints} - {context.EastWestPoints}(EW)",
