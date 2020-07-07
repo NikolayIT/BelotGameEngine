@@ -4,14 +4,21 @@
 @using Belot.Engine.Players
 @using Belot.AI.SmartPlayer
 @using Belot.AI.DummyPlayer
+@using Belot.Engine.Game
+@using System.Threading
+@using Timer = System.Timers.Timer
 
-<h1 class="text-center">Blazor Belot 1.0</h1>
+<h1>
+    <span class="float-left">Blazor Belot 1.0</span>
+    <span class="float-right">Result 0-0</span>
+</h1>
+<div class="clearfix"></div>
 
 <div class="row">
     <div class="col-3 text-center">
     </div>
     <div class="col-6 text-center">
-        @for (int i = 0; i < 8; i++)
+        @for (var i = 0; i < cardsPerPlayer; i++)
         {
             <CardImage></CardImage>
         }
@@ -19,18 +26,19 @@
     <div class="col-3 text-center">
     </div>
 </div>
-<div class="row">
+<div class="row" style="height: 100%">
     <div class="col-3 text-center">
-        @for (int i = 0; i < 8; i++)
+        @for (var i = 0; i < cardsPerPlayer; i++)
         {
             <CardImage></CardImage>
         }
     </div>
     <div class="col-6 text-center">
-        Play field
+        @*Play field*@
+        <button class="btn btn-secondary" @onclick="ButtonClick">State has changed</button>
     </div>
     <div class="col-3 text-center">
-        @for (int i = 0; i < 8; i++)
+        @for (var i = 0; i < cardsPerPlayer; i++)
         {
             <CardImage></CardImage>
         }
@@ -40,48 +48,67 @@
     <div class="col-3 text-center">
     </div>
     <div class="col-6 text-center">
-        @foreach (var card in Enumerable.Range(0, 8).Select(x => deck.GetNextCard()))
+        @for (var i = 0; i < cardsPerPlayer; i++)
         {
-            <CardImage Card="card"></CardImage>
+            <CardImage></CardImage>
         }
     </div>
     <div class="col-3 text-center">
     </div>
 </div>
-
-<button class="btn btn-primary" @onclick="() => RunGames(100)">Simulate 100 games (smart vs random)</button>
-
-<div>@simulationResult</div>
 
 @code
 {
-    Deck deck = new Deck();
-    string simulationResult;
+    UiPlayerImplementation uiPlayer;
+    BelotGame game;
+    int cardsPerPlayer = 0;
 
-    protected override void OnInitialized()
+    protected override void OnInitialized() => StartGameAsync();
+
+    private async void StartGameAsync()
     {
-        deck.Shuffle();
+        this.uiPlayer = new UiPlayerImplementation();
+        uiPlayer.MyCardsChanged += UiPlayer_OnMyCardsChanged;;
+        this.game = new BelotGame(uiPlayer, new SmartPlayer(), new SmartPlayer(), new SmartPlayer());
+        game.PlayGame(PlayerPosition.South);
     }
 
-    void RunGames(int count)
+    private async void UiPlayer_OnMyCardsChanged(object sender, CardCollection collection)
     {
-        var game = new BelotGame(new SmartPlayer(), new RandomPlayer(), new SmartPlayer(), new RandomPlayer());
-        var southNorthWins = 0;
-        var eastWestWins = 0;
-        for (var i = 0; i < count; i++)
+        cardsPerPlayer = collection.Count;
+        Console.WriteLine("MyCardsChanged");
+        this.StateHasChanged();
+        await Task.Delay(1000);
+    }
+
+    private void ButtonClick()
+    {
+        this.StateHasChanged();
+    }
+
+    public class UiPlayerImplementation : IPlayer
+    {
+        public event EventHandler<CardCollection> MyCardsChanged;
+
+        public BidType GetBid(PlayerGetBidContext context)
         {
-            var firstToPlay = (PlayerPosition)(1 << (i % 4));
-            var result = game.PlayGame(firstToPlay);
-            if (result.Winner == PlayerPosition.SouthNorthTeam)
-            {
-                southNorthWins++;
-            }
-            else
-            {
-                eastWestWins++;
-            }
+            Console.WriteLine("GetBid");
+            this.MyCardsChanged?.Invoke(this, context.MyCards);
+            return BidType.Pass;
         }
 
-        simulationResult = $"Result: {southNorthWins}-{eastWestWins} (Total: {southNorthWins + eastWestWins} games)";
+        public IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
+        {
+            Console.WriteLine("GetAnnounces");
+            this.MyCardsChanged?.Invoke(this, context.MyCards);
+            return context.AvailableAnnounces;
+        }
+
+        public PlayCardAction PlayCard(PlayerPlayCardContext context)
+        {
+            Console.WriteLine("PlayCard");
+            this.MyCardsChanged?.Invoke(this, context.MyCards);
+            return new PlayCardAction(context.AvailableCardsToPlay.RandomElement(), true);
+        }
     }
 }
