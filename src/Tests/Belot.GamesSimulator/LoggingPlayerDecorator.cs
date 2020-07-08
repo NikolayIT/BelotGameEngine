@@ -63,12 +63,12 @@
 
         public void EndOfRound(RoundResult roundResult)
         {
-            Console.WriteLine(new string('-', 80));
+            Console.WriteLine(new string('-', Program.LineLength));
         }
 
         public void EndOfGame(GameResult gameResult)
         {
-            Console.WriteLine(new string('=', 80));
+            Console.WriteLine(new string('=', Program.LineLength));
         }
     }
 }

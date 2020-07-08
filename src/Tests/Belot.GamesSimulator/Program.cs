@@ -14,13 +14,15 @@
 
     public static class Program
     {
+        public const int LineLength = 70;
+
         public static void Main()
         {
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
             Console.OutputEncoding = Encoding.Unicode;
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-            Console.WriteLine("Belot Games Simulator 1.0");
-            Console.WriteLine(new string('=', 80));
+            Console.WriteLine(new string('=', LineLength));
+            Console.WriteLine("Belot Games Simulator");
             Console.Write(DateTime.Now.ToShortDateString());
 #if DEBUG
             Console.Write(", Mode=Debug");
@@ -30,12 +32,15 @@
             Console.Write(
                 $", CPUs={Environment.ProcessorCount}, OS={Environment.OSVersion}, .NET={Environment.Version}");
             Console.WriteLine();
-            Console.WriteLine(new string('=', 80));
+            Console.WriteLine(new string('=', LineLength));
 
+            var totalStopwatch = Stopwatch.StartNew();
             SimulateGames(SmartVsPreviousVersionGames, 200_000, 12);
+            SimulateGames(SmartVsDummyGames, 200_000, 12);
             SimulateGames(SmartVsRandomGames, 200_000, 12);
             //// SimulateGames(SmartVsSmartGames, 200_000, 12);
             //// SimulateGames(SmartVsSmartGamesWithLogging, 10, 1, true);
+            Console.WriteLine($"Total tests time: {totalStopwatch.Elapsed}");
         }
 
         private static void SimulateGames(Func<BelotGame> simulation, int games, int parallelism, bool detailedLog = false)
@@ -78,36 +83,38 @@
 
             Console.WriteLine(stopwatch.Elapsed);
             Console.WriteLine(
-                $"Games: (SN-EW): {southNorthWins}-{eastWestWins} (Total: {southNorthWins + eastWestWins}, Diff: {southNorthWins - eastWestWins}) (Rounds: {rounds})");
-            Console.WriteLine(new string('=', 80));
+                $"Games: (SN-EW): {southNorthWins}-{eastWestWins} (Total: {southNorthWins + eastWestWins}, Diff: {southNorthWins - eastWestWins}) (Rounds: {rounds}) ELO: {CalculateElo(southNorthWins, eastWestWins):0.00}");
+            Console.WriteLine(new string('=', LineLength));
         }
 
-        private static BelotGame SmartVsSmartGames()
-        {
-            return new BelotGame(new SmartPlayer(), new SmartPlayer(), new SmartPlayer(), new SmartPlayer());
-        }
+        private static BelotGame SmartVsSmartGames() =>
+            new BelotGame(new SmartPlayer(), new SmartPlayer(), new SmartPlayer(), new SmartPlayer());
 
-        private static BelotGame SmartVsPreviousVersionGames()
-        {
-            return new BelotGame(
+        private static BelotGame SmartVsPreviousVersionGames() =>
+            new BelotGame(
                 new SmartPlayer(),
                 new SmartPlayerPreviousVersion(),
                 new SmartPlayer(),
                 new SmartPlayerPreviousVersion());
-        }
 
-        private static BelotGame SmartVsRandomGames()
-        {
-            return new BelotGame(new SmartPlayer(), new RandomPlayer(), new SmartPlayer(), new RandomPlayer());
-        }
+        private static BelotGame SmartVsDummyGames() =>
+            new BelotGame(new SmartPlayer(), new DummyPlayer(), new SmartPlayer(), new DummyPlayer());
 
-        private static BelotGame SmartVsSmartGamesWithLogging()
-        {
-            return new BelotGame(
+        private static BelotGame SmartVsRandomGames() =>
+            new BelotGame(new SmartPlayer(), new RandomPlayer(), new SmartPlayer(), new RandomPlayer());
+
+        private static BelotGame SmartVsSmartGamesWithLogging() =>
+            new BelotGame(
                 new LoggingPlayerDecorator(new SmartPlayer()),
                 new SmartPlayer(),
                 new SmartPlayer(),
                 new SmartPlayer());
+
+        private static double CalculateElo(int wins, int loses)
+        {
+            var percentage = (double)wins / (wins + loses);
+            var eloDifference = -400 * Math.Log((1 / percentage) - 1) / 2.302585092994046;
+            return eloDifference;
         }
     }
 }

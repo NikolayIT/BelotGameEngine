@@ -1,6 +1,9 @@
 ﻿namespace Belot.Engine.Cards
 {
     using System;
+    using System.Runtime.CompilerServices;
+
+    using Belot.Engine.Game;
 
     public static class CardExtensions
     {
@@ -20,6 +23,12 @@
                     throw new ArgumentException("cardSuit");
             }
         }
+
+        public static BidType ToBidType(this CardSuit cardSuit) =>
+            cardSuit == CardSuit.Club ? BidType.Clubs :
+            cardSuit == CardSuit.Diamond ? BidType.Diamonds :
+            cardSuit == CardSuit.Heart ? BidType.Hearts :
+            cardSuit == CardSuit.Spade ? BidType.Spades : BidType.Pass;
 
         public static string ToFriendlyString(this CardType cardType)
         {
