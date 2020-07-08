@@ -120,47 +120,7 @@
                         this.TotalResult.Text =
                             $"{basePlayerContext.SouthNorthPoints} - {basePlayerContext.EastWestPoints}";
 
-                        // East player cards
-                        this.EastCardsPanel.Children.Clear();
-                        for (var i = 0; i < this.eastPlayer.Cards.ToList().Count; i++)
-                        {
-                            var cardControl = new CardControl { Margin = new Thickness(0, i == 0 ? 0 : -80, 0, 0), Width = 100 };
-                            if (this.OpenCardsCheckBox.IsChecked == true)
-                            {
-                                var card = this.eastPlayer.Cards.ToList()[i];
-                                cardControl.SetCard(card);
-                            }
-
-                            this.EastCardsPanel.Children.Add(cardControl);
-                        }
-
-                        // North player cards
-                        this.NorthCardsPanel.Children.Clear();
-                        for (var i = 0; i < this.northPlayer.Cards.ToList().Count; i++)
-                        {
-                            var cardControl = new CardControl { Margin = new Thickness(i == 0 ? 0 : -50, 0, 0, 0), Width = 100 };
-                            if (this.OpenCardsCheckBox.IsChecked == true)
-                            {
-                                var card = this.northPlayer.Cards.ToList()[i];
-                                cardControl.SetCard(card);
-                            }
-
-                            this.NorthCardsPanel.Children.Add(cardControl);
-                        }
-
-                        // West player cards
-                        this.WestCardPanel.Children.Clear();
-                        for (var i = 0; i < this.westPlayer.Cards.ToList().Count; i++)
-                        {
-                            var cardControl = new CardControl { Margin = new Thickness(0, i == 0 ? 0 : -80, 0, 0), Width = 100 };
-                            if (this.OpenCardsCheckBox.IsChecked == true)
-                            {
-                                var card = this.westPlayer.Cards.ToList()[i];
-                                cardControl.SetCard(card);
-                            }
-
-                            this.WestCardPanel.Children.Add(cardControl);
-                        }
+                        this.UpdateOtherPlayerCards();
 
                         // South player cards
                         this.SouthCardsPanel.Children.Clear();
@@ -184,6 +144,51 @@
                     });
         }
 
+        private void UpdateOtherPlayerCards()
+        {
+            // East player cards
+            this.EastCardsPanel.Children.Clear();
+            for (var i = 0; i < this.eastPlayer.Cards.ToList().Count; i++)
+            {
+                var cardControl = new CardControl { Margin = new Thickness(0, i == 0 ? 0 : -80, 0, 0), Width = 100 };
+                if (this.OpenCardsCheckBox.IsChecked == true)
+                {
+                    var card = this.eastPlayer.Cards.ToList()[i];
+                    cardControl.SetCard(card);
+                }
+
+                this.EastCardsPanel.Children.Add(cardControl);
+            }
+
+            // North player cards
+            this.NorthCardsPanel.Children.Clear();
+            for (var i = 0; i < this.northPlayer.Cards.ToList().Count; i++)
+            {
+                var cardControl = new CardControl { Margin = new Thickness(i == 0 ? 0 : -50, 0, 0, 0), Width = 100 };
+                if (this.OpenCardsCheckBox.IsChecked == true)
+                {
+                    var card = this.northPlayer.Cards.ToList()[i];
+                    cardControl.SetCard(card);
+                }
+
+                this.NorthCardsPanel.Children.Add(cardControl);
+            }
+
+            // West player cards
+            this.WestCardPanel.Children.Clear();
+            for (var i = 0; i < this.westPlayer.Cards.ToList().Count; i++)
+            {
+                var cardControl = new CardControl { Margin = new Thickness(0, i == 0 ? 0 : -80, 0, 0), Width = 100 };
+                if (this.OpenCardsCheckBox.IsChecked == true)
+                {
+                    var card = this.westPlayer.Cards.ToList()[i];
+                    cardControl.SetCard(card);
+                }
+
+                this.WestCardPanel.Children.Add(cardControl);
+            }
+        }
+
         private void PlayerCardTapped(object sender, TappedRoutedEventArgs eventArgs)
         {
             // TODO: Ask for belot - var dialog = new MessageDialog(content, title);
@@ -192,9 +197,13 @@
 
         private void BidTapped(object sender, TappedRoutedEventArgs eventArgs)
         {
-            // TODO: Ask for belot - var dialog = new MessageDialog(content, title);
             this.BidsPanel.Visibility = Visibility.Collapsed;
             this.uiPlayer.GetBidAction = ((sender as Button)?.Tag as BidType?) ?? BidType.Pass;
+        }
+
+        private async void OpenCardsCheckBoxTapped(object sender, TappedRoutedEventArgs e)
+        {
+            await this.Dispatcher.RunAsync(CoreDispatcherPriority.High, this.UpdateOtherPlayerCards);
         }
     }
 }

@@ -50,7 +50,7 @@
         </StackPanel>
         <TextBlock x:Name="ProgramVersion" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Stretch" TextWrapping="Wrap" Text="Belot" VerticalAlignment="Top" FontSize="18" Foreground="Azure" FontWeight="Bold"/>
         <TextBlock x:Name="TotalResult" Grid.Row="0" Grid.Column="4" HorizontalAlignment="Right" TextWrapping="Wrap" Text="0-0" VerticalAlignment="Top" FontSize="22" Foreground="WhiteSmoke" FontWeight="ExtraBold"/>
-        <CheckBox Content="Open cards" Margin="61,0,0,0" Grid.Row="5" Grid.Column="0" x:Name="OpenCardsCheckBox" />
+        <CheckBox Content="Open cards" Margin="61,0,0,0" Grid.Row="5" Grid.Column="0" x:Name="OpenCardsCheckBox" Tapped="OpenCardsCheckBoxTapped" />
         <local:CardControl x:Name="southCardPlayed" Grid.Row="3" Grid.Column="2" Width="100" />
         <local:CardControl x:Name="eastCardPlayed" Grid.Row="2" Grid.Column="3" Width="100" />
         <local:CardControl x:Name="northCardPlayed" Grid.Row="1" Grid.Column="2" Width="100" />
