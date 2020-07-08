@@ -7,6 +7,7 @@
 
     public class PlayerPlayCardContext : BasePlayerContext
     {
+        // TODO: Don't disclose the exact type of announce
         public IEnumerable<Announce> Announces { get; set; }
 
         public IEnumerable<PlayCardAction> CurrentTrickActions { get; set; }

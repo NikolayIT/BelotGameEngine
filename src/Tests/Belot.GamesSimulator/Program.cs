@@ -34,6 +34,7 @@
 
             SimulateGames(SmartVsPreviousVersionGames, 200_000, 12);
             SimulateGames(SmartVsRandomGames, 200_000, 12);
+            //// SimulateGames(SmartVsSmartGames, 200_000, 12);
             //// SimulateGames(SmartVsSmartGamesWithLogging, 10, 1, true);
         }
 

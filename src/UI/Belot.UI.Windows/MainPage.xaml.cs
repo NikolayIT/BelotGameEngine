@@ -19,8 +19,10 @@
 
     public sealed partial class MainPage : Page
     {
-        private readonly UiPlayer uiPlayer;
-
+        private readonly UiPlayer uiPlayer = new UiPlayer();
+        private readonly OpenCardsPlayerDecorator eastPlayer = new OpenCardsPlayerDecorator(new SmartPlayer());
+        private readonly OpenCardsPlayerDecorator northPlayer = new OpenCardsPlayerDecorator(new SmartPlayer());
+        private readonly OpenCardsPlayerDecorator westPlayer = new OpenCardsPlayerDecorator(new SmartPlayer());
         private readonly BelotGame game;
 
         private readonly ValidAnnouncesService validAnnouncesService;
@@ -28,12 +30,11 @@
         public MainPage()
         {
             this.InitializeComponent();
-            this.uiPlayer = new UiPlayer();
+            this.game = new BelotGame(this.uiPlayer, this.eastPlayer, this.northPlayer, this.westPlayer);
             this.uiPlayer.InfoChangedInGetBid += this.UiPlayerOnInfoChangedInGetBid;
             this.uiPlayer.InfoChangedInGetAnnounces += this.UiPlayerOnInfoChangedInGetAnnounces;
             this.uiPlayer.InfoChangedInPlayCard += this.UiPlayerOnInfoChangedInPlayCard;
-            this.game = new BelotGame(this.uiPlayer, new SmartPlayer(), new SmartPlayer(), new SmartPlayer());
-            Task.Run(() => this.game.PlayGame());
+            Task.Run(() => this.game.PlayGame(PlayerPosition.East));
             this.ProgramVersion.Text = "Belot v1.0";
         }
 
@@ -119,27 +120,49 @@
                         this.TotalResult.Text =
                             $"{basePlayerContext.SouthNorthPoints} - {basePlayerContext.EastWestPoints}";
 
+                        // East player cards
                         this.EastCardsPanel.Children.Clear();
-                        for (var i = 0; i < basePlayerContext.MyCards.Count; i++)
+                        for (var i = 0; i < this.eastPlayer.Cards.ToList().Count; i++)
                         {
-                            this.EastCardsPanel.Children.Add(
-                                new CardControl { Margin = new Thickness(0, i == 0 ? 0 : -80, 0, 0), Width = 100 });
+                            var cardControl = new CardControl { Margin = new Thickness(0, i == 0 ? 0 : -80, 0, 0), Width = 100 };
+                            if (this.OpenCardsCheckBox.IsChecked == true)
+                            {
+                                var card = this.eastPlayer.Cards.ToList()[i];
+                                cardControl.SetCard(card);
+                            }
+
+                            this.EastCardsPanel.Children.Add(cardControl);
                         }
 
-                        this.WestCardPanel.Children.Clear();
-                        for (var i = 0; i < basePlayerContext.MyCards.Count; i++)
-                        {
-                            this.WestCardPanel.Children.Add(
-                                new CardControl { Margin = new Thickness(0, i == 0 ? 0 : -80, 0, 0), Width = 100 });
-                        }
-
+                        // North player cards
                         this.NorthCardsPanel.Children.Clear();
-                        for (var i = 0; i < basePlayerContext.MyCards.Count; i++)
+                        for (var i = 0; i < this.northPlayer.Cards.ToList().Count; i++)
                         {
-                            this.NorthCardsPanel.Children.Add(
-                                new CardControl { Margin = new Thickness(i == 0 ? 0 : -50, 0, 0, 0), Width = 100 });
+                            var cardControl = new CardControl { Margin = new Thickness(i == 0 ? 0 : -50, 0, 0, 0), Width = 100 };
+                            if (this.OpenCardsCheckBox.IsChecked == true)
+                            {
+                                var card = this.northPlayer.Cards.ToList()[i];
+                                cardControl.SetCard(card);
+                            }
+
+                            this.NorthCardsPanel.Children.Add(cardControl);
                         }
 
+                        // West player cards
+                        this.WestCardPanel.Children.Clear();
+                        for (var i = 0; i < this.westPlayer.Cards.ToList().Count; i++)
+                        {
+                            var cardControl = new CardControl { Margin = new Thickness(0, i == 0 ? 0 : -80, 0, 0), Width = 100 };
+                            if (this.OpenCardsCheckBox.IsChecked == true)
+                            {
+                                var card = this.westPlayer.Cards.ToList()[i];
+                                cardControl.SetCard(card);
+                            }
+
+                            this.WestCardPanel.Children.Add(cardControl);
+                        }
+
+                        // South player cards
                         this.SouthCardsPanel.Children.Clear();
                         var playerCards = basePlayerContext.MyCards.ToList();
                         for (var i = 0; i < playerCards.Count; i++)
