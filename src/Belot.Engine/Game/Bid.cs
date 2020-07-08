@@ -24,5 +24,7 @@
                 return cleanContract;
             }
         }
+
+        public override string ToString() => $"{this.Type} ({this.Player})";
     }
 }

@@ -67,8 +67,7 @@
     protected override void OnInitialized()
     {
         this.game = new BelotGame(this, new SmartPlayer(), new SmartPlayer(), new SmartPlayer());
-        new Thread(() => game.PlayGame()).Start();
-        // Task.Run(() => game.PlayGame());
+        Task.Run(() => game.PlayGame());
     }
 
     private void ButtonClick()
@@ -79,7 +78,7 @@
     public BidType GetBid(PlayerGetBidContext context)
     {
         Console.WriteLine("GetBid");
-        Thread.Sleep(1000);
+        Thread.Sleep(100);
         UpdateUi(context);
         return BidType.Pass;
     }
