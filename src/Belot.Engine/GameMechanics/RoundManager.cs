@@ -85,6 +85,12 @@
                 announces,
                 hangingPoints,
                 lastTrickWinner);
+
+            foreach (var player in this.players)
+            {
+                player.EndOfRound(result);
+            }
+
             return result;
         }
 

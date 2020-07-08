@@ -4,7 +4,9 @@
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
+    using Belot.Engine;
     using Belot.Engine.Game;
+    using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
     public class UiPlayer : IPlayer
@@ -61,6 +63,18 @@
             var returnAction = this.PlayCardAction;
             this.PlayCardAction = null;
             return returnAction;
+        }
+
+        public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)
+        {
+        }
+
+        public void EndOfRound(RoundResult roundResult)
+        {
+        }
+
+        public void EndOfGame(GameResult gameResult)
+        {
         }
     }
 }

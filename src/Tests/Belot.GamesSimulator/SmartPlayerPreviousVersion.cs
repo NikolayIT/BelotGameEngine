@@ -7,7 +7,9 @@
     using System.Net.Http;
     using System.Reflection;
 
+    using Belot.Engine;
     using Belot.Engine.Game;
+    using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
     using Microsoft.CodeAnalysis;
@@ -94,6 +96,12 @@
         public IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context) => this.compiledPlayer.GetAnnounces(context);
 
         public PlayCardAction PlayCard(PlayerPlayCardContext context) => this.compiledPlayer.PlayCard(context);
+
+        public void EndOfTrick(IEnumerable<PlayCardAction> trickActions) => this.compiledPlayer.EndOfTrick(trickActions);
+
+        public void EndOfRound(RoundResult roundResult) => this.compiledPlayer.EndOfRound(roundResult);
+
+        public void EndOfGame(GameResult gameResult) => this.compiledPlayer.EndOfGame(gameResult);
 
         private static IList<Assembly> CollectAssemblies(Assembly assembly)
         {

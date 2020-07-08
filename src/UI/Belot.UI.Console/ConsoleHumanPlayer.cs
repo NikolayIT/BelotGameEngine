@@ -5,6 +5,7 @@
     using System.Linq;
     using System.Text;
 
+    using Belot.Engine;
     using Belot.Engine.Cards;
     using Belot.Engine.Game;
     using Belot.Engine.GameMechanics;
@@ -212,6 +213,18 @@
                     }
                 }
             }
+        }
+
+        public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)
+        {
+        }
+
+        public void EndOfRound(RoundResult roundResult)
+        {
+        }
+
+        public void EndOfGame(GameResult gameResult)
+        {
         }
 
         private void NewRoundCheck(BasePlayerContext context)

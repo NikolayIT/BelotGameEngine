@@ -72,7 +72,6 @@
                         {
                             Console.WriteLine(
                                 $"Game #{i + 1}: Winner: {result.Winner}; Result(SN-EW): {result.SouthNorthPoints} - {result.EastWestPoints} (Rounds: {result.RoundsPlayed})");
-                            Console.WriteLine(new string('-', 80));
                         }
                     });
 

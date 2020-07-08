@@ -85,8 +85,7 @@
                     {
                         // Prepare GetAnnounces context
                         var availableAnnounces =
-                            this.validAnnouncesService.GetAvailableAnnounces(
-                                playerCards[currentPlayer.Index()]);
+                            this.validAnnouncesService.GetAvailableAnnounces(playerCards[currentPlayer.Index()]);
                         if (availableAnnounces.Count > 0)
                         {
                             announceContext.MyPosition = currentPlayer;
@@ -101,8 +100,7 @@
                             foreach (var playerAnnounce in playerAnnounces)
                             {
                                 var availableAnnounce = availableAnnounces.FirstOrDefault(
-                                    x => x.Type == playerAnnounce.Type
-                                         && x.Card == playerAnnounce.Card);
+                                    x => x.Type == playerAnnounce.Type && x.Card == playerAnnounce.Card);
                                 if (availableAnnounce == null)
                                 {
                                     // Invalid announce
@@ -186,6 +184,11 @@
                 }
 
                 currentPlayer = winner;
+
+                foreach (var player in this.players)
+                {
+                    player.EndOfTrick(trickActions);
+                }
             }
         }
     }

@@ -4,7 +4,9 @@
     using System.Collections.Generic;
     using System.Linq;
 
+    using Belot.Engine;
     using Belot.Engine.Game;
+    using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
     public class LoggingPlayerDecorator : IPlayer
@@ -53,6 +55,20 @@
                 + $"=> {cardAction.Card}");
             Console.ResetColor();
             return cardAction;
+        }
+
+        public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)
+        {
+        }
+
+        public void EndOfRound(RoundResult roundResult)
+        {
+            Console.WriteLine(new string('-', 80));
+        }
+
+        public void EndOfGame(GameResult gameResult)
+        {
+            Console.WriteLine(new string('=', 80));
         }
     }
 }

@@ -8,6 +8,7 @@
 @using Belot.AI.DummyPlayer
 @using Belot.Engine.Game
 @using System.Threading
+@using Belot.Engine.GameMechanics
 
 <h1>
     <span class="float-left">Blazor Belot 1.0</span>
@@ -101,5 +102,18 @@
     {
         this.cardsPerPlayer = context.MyCards.Count;
         this.StateHasChanged();
+    }
+
+
+    public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)
+    {
+    }
+
+    public void EndOfRound(RoundResult roundResult)
+    {
+    }
+
+    public void EndOfGame(GameResult gameResult)
+    {
     }
 }

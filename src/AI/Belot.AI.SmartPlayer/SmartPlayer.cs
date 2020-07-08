@@ -70,5 +70,17 @@
                 context.AvailableCardsToPlay.OrderBy(x => x.GetValue(context.CurrentContract.Type))
                     .FirstOrDefault());
         }
+
+        public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)
+        {
+        }
+
+        public void EndOfRound(RoundResult roundResult)
+        {
+        }
+
+        public void EndOfGame(GameResult gameResult)
+        {
+        }
     }
 }

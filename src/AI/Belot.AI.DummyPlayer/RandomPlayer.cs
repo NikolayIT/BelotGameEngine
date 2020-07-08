@@ -1,11 +1,11 @@
 ﻿namespace Belot.AI.DummyPlayer
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
 
     using Belot.Engine;
     using Belot.Engine.Game;
+    using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
     public class RandomPlayer : IPlayer
@@ -36,6 +36,18 @@
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
         {
             return new PlayCardAction(context.AvailableCardsToPlay.RandomElement());
+        }
+
+        public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)
+        {
+        }
+
+        public void EndOfRound(RoundResult roundResult)
+        {
+        }
+
+        public void EndOfGame(GameResult gameResult)
+        {
         }
     }
 }

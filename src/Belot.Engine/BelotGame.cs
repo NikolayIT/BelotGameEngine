@@ -1,5 +1,7 @@
 ﻿namespace Belot.Engine
 {
+    using System.Collections.Generic;
+
     using Belot.Engine.Game;
     using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
@@ -12,8 +14,11 @@
     {
         private readonly RoundManager roundManager;
 
+        private readonly IEnumerable<IPlayer> players;
+
         public BelotGame(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
         {
+            this.players = new List<IPlayer>(4) { southPlayer, eastPlayer, northPlayer, westPlayer };
             this.roundManager = new RoundManager(southPlayer, eastPlayer, northPlayer, westPlayer);
         }
 
@@ -62,12 +67,19 @@
                 firstInRound = firstInRound.Next();
             }
 
-            return new GameResult
+            var gameResult = new GameResult
+                                 {
+                                     RoundsPlayed = roundNumber,
+                                     SouthNorthPoints = southNorthPoints,
+                                     EastWestPoints = eastWestPoints,
+                                 };
+
+            foreach (var player in this.players)
             {
-                RoundsPlayed = roundNumber,
-                SouthNorthPoints = southNorthPoints,
-                EastWestPoints = eastWestPoints,
-            };
+                player.EndOfGame(gameResult);
+            }
+
+            return gameResult;
         }
     }
 }
