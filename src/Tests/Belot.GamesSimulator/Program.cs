@@ -52,6 +52,8 @@
             var game = new ThreadLocal<BelotGame>(simulation);
             var southNorthWins = 0;
             var eastWestWins = 0;
+            var southNorthPoints = 0;
+            var eastWestPoints = 0;
             var rounds = 0;
             var lockObject = new object();
             var stopwatch = Stopwatch.StartNew();
@@ -74,6 +76,8 @@
                                 eastWestWins++;
                             }
 
+                            southNorthPoints += result.SouthNorthPoints;
+                            eastWestPoints += result.EastWestPoints;
                             rounds += result.RoundsPlayed;
                         }
 
@@ -86,7 +90,7 @@
 
             Console.WriteLine(
                 $"Games: {southNorthWins}-{eastWestWins} (Total: {southNorthWins + eastWestWins}, Diff: {southNorthWins - eastWestWins}) (Rounds: {rounds}) ELO: {CalculateElo(southNorthWins, eastWestWins):0.00}");
-            Console.WriteLine(stopwatch.Elapsed + " => Counters: " + string.Join(",", GlobalCounters.Counters));
+            Console.WriteLine(stopwatch.Elapsed + $" => Points: {southNorthPoints / 1000}k-{eastWestPoints / 1000}k => Counters: " + string.Join(",", GlobalCounters.Counters));
             Console.WriteLine(new string('=', LineLength));
         }
 

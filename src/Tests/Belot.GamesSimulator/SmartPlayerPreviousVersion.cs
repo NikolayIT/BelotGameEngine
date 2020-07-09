@@ -20,6 +20,7 @@
         private static readonly string[] UrlsForSourceCode =
             {
                 "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/SmartPlayer.cs",
+                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/GlobalCounters.cs",
                 "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/AllTrumpsPlayingFirstPlayStrategy.cs",
                 "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/AllTrumpsPlayStrategy.cs",
                 "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/IPlayStrategy.cs",

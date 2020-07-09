@@ -13,11 +13,10 @@
     {
         public BidType GetBid(PlayerGetBidContext context)
         {
-            // Group by suit
-            var cardsBySuit = new[] { new List<Card>(8), new List<Card>(8), new List<Card>(8), new List<Card>(8) };
-            foreach (var card in context.MyCards)
+            if (context.MyCards.Count(x => x.Type == CardType.Ace) == 4
+                && context.AvailableBids.HasFlag(BidType.NoTrumps))
             {
-                cardsBySuit[(int)card.Suit].Add(card);
+                return BidType.NoTrumps;
             }
 
             if (context.MyCards.Count(x => x.Type == CardType.Jack) >= 3
@@ -26,10 +25,11 @@
                 return BidType.AllTrumps;
             }
 
-            if (context.MyCards.Count(x => x.Type == CardType.Ace) == 4
-                && context.AvailableBids.HasFlag(BidType.NoTrumps))
+            // Group by suit
+            var cardsBySuit = new[] { new List<Card>(8), new List<Card>(8), new List<Card>(8), new List<Card>(8) };
+            foreach (var card in context.MyCards)
             {
-                return BidType.NoTrumps;
+                cardsBySuit[(int)card.Suit].Add(card);
             }
 
             foreach (var cards in cardsBySuit)
