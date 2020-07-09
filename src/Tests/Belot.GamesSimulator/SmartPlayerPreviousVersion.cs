@@ -29,12 +29,8 @@
         static SmartPlayerPreviousVersion()
         {
             var client = new HttpClient(new HttpClientHandler { Proxy = null, UseProxy = false });
-            var codeFiles = new List<string>();
-            foreach (var url in UrlsForSourceCode)
-            {
-                var code = client.GetStringAsync(url).GetAwaiter().GetResult();
-                codeFiles.Add(code);
-            }
+            var codeFiles = UrlsForSourceCode.Select(
+                url => client.GetStringAsync(url + "?nocache=" + DateTime.Now.Ticks).GetAwaiter().GetResult()).ToList();
 
             var syntaxTrees = new List<SyntaxTree>();
             foreach (var codeFile in codeFiles)
