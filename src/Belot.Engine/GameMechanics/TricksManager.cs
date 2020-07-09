@@ -78,6 +78,7 @@
                     this.validAnnouncesService.UpdateAnnouncesToBeScored(announces);
                 }
 
+                playContext.CurrentTrickNumber = trickNumber;
                 for (var i = 0; i < 4; i++)
                 {
                     // Announces

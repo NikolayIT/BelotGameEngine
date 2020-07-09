@@ -84,26 +84,33 @@
 
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
         {
+            var playedCards = new CardCollection();
+            foreach (var card in context.RoundActions.Where(x => x.TrickNumber < context.CurrentTrickNumber)
+                .Select(x => x.Card))
+            {
+                playedCards.Add(card);
+            }
+
             // All trumps
             if (context.CurrentContract.Type.HasFlag(BidType.AllTrumps))
             {
                 return context.CurrentTrickActions.Any()
-                           ? this.allTrumpsStrategy.PlayCard(context)
-                           : this.allTrumpsPlayingFirstStrategy.PlayCard(context);
+                           ? this.allTrumpsStrategy.PlayCard(context, playedCards)
+                           : this.allTrumpsPlayingFirstStrategy.PlayCard(context, playedCards);
             }
 
             // No trumps
             if (context.CurrentContract.Type.HasFlag(BidType.NoTrumps))
             {
                 return context.CurrentTrickActions.Any()
-                           ? this.noTrumpsStrategy.PlayCard(context)
-                           : this.noTrumpsPlayingFirstStrategy.PlayCard(context);
+                           ? this.noTrumpsStrategy.PlayCard(context, playedCards)
+                           : this.noTrumpsPlayingFirstStrategy.PlayCard(context, playedCards);
             }
 
             // Suit contract
             return context.CurrentTrickActions.Any()
-                       ? this.trumpStrategy.PlayCard(context)
-                       : this.trumpPlayingFirstStrategy.PlayCard(context);
+                       ? this.trumpStrategy.PlayCard(context, playedCards)
+                       : this.trumpPlayingFirstStrategy.PlayCard(context, playedCards);
         }
 
         public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)

@@ -35,9 +35,11 @@
             Console.WriteLine(new string('=', LineLength));
 
             var totalStopwatch = Stopwatch.StartNew();
-            SimulateGames(SmartVsPreviousVersionGames, 200_000, 12);
-            SimulateGames(SmartVsDummyGames, 200_000, 12);
-            SimulateGames(SmartVsRandomGames, 200_000, 12);
+            SimulateGames(TwoSmartVsTwoPreviousVersionGames, 200_000, 12);
+            SimulateGames(TwoSmartVsTwoDummyGames, 200_000, 12);
+            SimulateGames(OneSmartVsThreeDummyGames, 200_000, 12);
+            SimulateGames(TwoSmartVsTwoRandomGames, 200_000, 12);
+            SimulateGames(OneSmartVsThreeRandomGames, 200_000, 12);
             //// SimulateGames(SmartVsSmartGames, 200_000, 12);
             //// SimulateGames(SmartVsSmartGamesWithLogging, 10, 1, true);
             Console.WriteLine($"Total tests time: {totalStopwatch.Elapsed}");
@@ -46,6 +48,7 @@
         private static void SimulateGames(Func<BelotGame> simulation, int games, int parallelism, bool detailedLog = false)
         {
             Console.WriteLine($"Running {simulation.Method.Name}...");
+            GlobalCounters.Counters = new int[GlobalCounters.CountersCount];
             var game = new ThreadLocal<BelotGame>(simulation);
             var southNorthWins = 0;
             var eastWestWins = 0;
@@ -81,27 +84,33 @@
                         }
                     });
 
-            Console.WriteLine(stopwatch.Elapsed);
             Console.WriteLine(
-                $"Games: (SN-EW): {southNorthWins}-{eastWestWins} (Total: {southNorthWins + eastWestWins}, Diff: {southNorthWins - eastWestWins}) (Rounds: {rounds}) ELO: {CalculateElo(southNorthWins, eastWestWins):0.00}");
+                $"Games: {southNorthWins}-{eastWestWins} (Total: {southNorthWins + eastWestWins}, Diff: {southNorthWins - eastWestWins}) (Rounds: {rounds}) ELO: {CalculateElo(southNorthWins, eastWestWins):0.00}");
+            Console.WriteLine(stopwatch.Elapsed + " => Counters: " + string.Join(",", GlobalCounters.Counters));
             Console.WriteLine(new string('=', LineLength));
         }
 
-        private static BelotGame SmartVsSmartGames() =>
+        private static BelotGame TwoSmartVsTwoSmartGames() =>
             new BelotGame(new SmartPlayer(), new SmartPlayer(), new SmartPlayer(), new SmartPlayer());
 
-        private static BelotGame SmartVsPreviousVersionGames() =>
+        private static BelotGame TwoSmartVsTwoPreviousVersionGames() =>
             new BelotGame(
                 new SmartPlayer(),
                 new SmartPlayerPreviousVersion(),
                 new SmartPlayer(),
                 new SmartPlayerPreviousVersion());
 
-        private static BelotGame SmartVsDummyGames() =>
+        private static BelotGame TwoSmartVsTwoDummyGames() =>
             new BelotGame(new SmartPlayer(), new DummyPlayer(), new SmartPlayer(), new DummyPlayer());
 
-        private static BelotGame SmartVsRandomGames() =>
+        private static BelotGame OneSmartVsThreeDummyGames() =>
+            new BelotGame(new SmartPlayer(), new DummyPlayer(), new DummyPlayer(), new DummyPlayer());
+
+        private static BelotGame TwoSmartVsTwoRandomGames() =>
             new BelotGame(new SmartPlayer(), new RandomPlayer(), new SmartPlayer(), new RandomPlayer());
+
+        private static BelotGame OneSmartVsThreeRandomGames() =>
+            new BelotGame(new SmartPlayer(), new RandomPlayer(), new RandomPlayer(), new RandomPlayer());
 
         private static BelotGame SmartVsSmartGamesWithLogging() =>
             new BelotGame(

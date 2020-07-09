@@ -15,5 +15,7 @@
         public IEnumerable<PlayCardAction> RoundActions { get; set; }
 
         public CardCollection AvailableCardsToPlay { get; set; }
+
+        public int CurrentTrickNumber { get; set; }
     }
 }
