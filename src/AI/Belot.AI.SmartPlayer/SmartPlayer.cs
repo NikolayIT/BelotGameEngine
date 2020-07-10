@@ -47,30 +47,31 @@
 
         public BidType GetBid(PlayerGetBidContext context)
         {
+            var announcePoints = this.validAnnouncesService.GetAvailableAnnounces(context.MyCards).Sum(x => x.Value);
             var bids = new Dictionary<BidType, int>();
             if (context.AvailableBids.HasFlag(BidType.Clubs))
             {
-                bids.Add(BidType.Clubs, CalculateTrumpBidPoints(context.MyCards, CardSuit.Club));
+                bids.Add(BidType.Clubs, CalculateTrumpBidPoints(context.MyCards, CardSuit.Club, announcePoints));
             }
 
             if (context.AvailableBids.HasFlag(BidType.Diamonds))
             {
-                bids.Add(BidType.Diamonds, CalculateTrumpBidPoints(context.MyCards, CardSuit.Diamond));
+                bids.Add(BidType.Diamonds, CalculateTrumpBidPoints(context.MyCards, CardSuit.Diamond, announcePoints));
             }
 
             if (context.AvailableBids.HasFlag(BidType.Hearts))
             {
-                bids.Add(BidType.Hearts, CalculateTrumpBidPoints(context.MyCards, CardSuit.Heart));
+                bids.Add(BidType.Hearts, CalculateTrumpBidPoints(context.MyCards, CardSuit.Heart, announcePoints));
             }
 
             if (context.AvailableBids.HasFlag(BidType.Spades))
             {
-                bids.Add(BidType.Spades, CalculateTrumpBidPoints(context.MyCards, CardSuit.Spade));
+                bids.Add(BidType.Spades, CalculateTrumpBidPoints(context.MyCards, CardSuit.Spade, announcePoints));
             }
 
             if (context.AvailableBids.HasFlag(BidType.AllTrumps))
             {
-                bids.Add(BidType.AllTrumps, CalculateAllTrumpBidPoints(context.MyCards));
+                bids.Add(BidType.AllTrumps, CalculateAllTrumpBidPoints(context.MyCards, context.Bids, announcePoints));
             }
 
             if (context.AvailableBids.HasFlag(BidType.NoTrumps))
@@ -137,9 +138,9 @@
         {
         }
 
-        private static int CalculateAllTrumpBidPoints(CardCollection cards)
+        private static int CalculateAllTrumpBidPoints(CardCollection cards, IEnumerable<Bid> contextBids, int announcePoints)
         {
-            var bidPoints = 0;
+            var bidPoints = announcePoints / 3;
             foreach (var card in cards)
             {
                 if (card.Type == CardType.Jack)
@@ -183,9 +184,9 @@
             return bidPoints;
         }
 
-        private static int CalculateTrumpBidPoints(CardCollection cards, CardSuit trumpSuit)
+        private static int CalculateTrumpBidPoints(CardCollection cards, CardSuit trumpSuit, int announcePoints)
         {
-            var bidPoints = 0;
+            var bidPoints = announcePoints / 2;
             foreach (var card in cards)
             {
                 if (card.Type == CardType.Jack && card.Suit == trumpSuit)
@@ -213,8 +214,6 @@
                     bidPoints += 10;
                 }
             }
-
-            //// if (this.validAnnouncesService.GetAvailableAnnounces(cards).Sum())
 
             return bidPoints;
         }

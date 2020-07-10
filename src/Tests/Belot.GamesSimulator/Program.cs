@@ -89,7 +89,7 @@
                     });
 
             Console.WriteLine(
-                $"Games: {southNorthWins}-{eastWestWins} (Total: {southNorthWins + eastWestWins}, Diff: {southNorthWins - eastWestWins}) (Rounds: {rounds}) ELO: {CalculateElo(southNorthWins, eastWestWins):0.00}");
+                $"{southNorthWins + eastWestWins} Games: {southNorthWins}-{eastWestWins} (Δ {southNorthWins - eastWestWins}) (Rounds: {rounds}) ELO: {CalculateElo(southNorthWins, eastWestWins):0.00}");
             Console.WriteLine(stopwatch.Elapsed + $" => Points: {southNorthPoints / 1000}k-{eastWestPoints / 1000}k => Counters: " + string.Join(",", GlobalCounters.Counters));
             Console.WriteLine(new string('=', LineLength));
         }
