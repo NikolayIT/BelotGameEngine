@@ -149,13 +149,13 @@
 
                 if (card.Type == CardType.Nine)
                 {
-                    bidPoints += cards.Any(x => x.Type == CardType.Jack && x.Suit == card.Suit) ? 25 : 15;
+                    bidPoints += cards.Contains(Card.GetCard(card.Suit, CardType.Jack)) ? 25 : 15;
                 }
 
                 if (card.Type == CardType.Ace)
                 {
-                    bidPoints += cards.Any(x => x.Type == CardType.Jack && x.Suit == card.Suit)
-                                 && cards.Any(x => x.Type == CardType.Nine && x.Suit == card.Suit)
+                    bidPoints += cards.Contains(Card.GetCard(card.Suit, CardType.Jack))
+                                 && cards.Contains(Card.GetCard(card.Suit, CardType.Nine))
                                      ? 10
                                      : 5;
                 }
@@ -176,7 +176,7 @@
 
                 if (card.Type == CardType.Ten)
                 {
-                    bidPoints += cards.Any(x => x.Type == CardType.Ace && x.Suit == card.Suit) ? 25 : 15;
+                    bidPoints += cards.Contains(Card.GetCard(card.Suit, CardType.Ace)) ? 25 : 15;
                 }
             }
 
