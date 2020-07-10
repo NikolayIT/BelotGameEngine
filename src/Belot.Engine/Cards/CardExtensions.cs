@@ -11,19 +11,15 @@
         {
             switch (cardSuit)
             {
-                case CardSuit.Club:
-                    return "\u2663"; // ♣
-                case CardSuit.Diamond:
-                    return "\u2666"; // ♦
-                case CardSuit.Heart:
-                    return "\u2665"; // ♥
-                case CardSuit.Spade:
-                    return "\u2660"; // ♠
-                default:
-                    throw new ArgumentException("cardSuit");
+                case CardSuit.Club: return "\u2663"; // ♣
+                case CardSuit.Diamond: return "\u2666"; // ♦
+                case CardSuit.Heart: return "\u2665"; // ♥
+                case CardSuit.Spade: return "\u2660"; // ♠
+                default: throw new ArgumentException("cardSuit");
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static BidType ToBidType(this CardSuit cardSuit) =>
             cardSuit == CardSuit.Club ? BidType.Clubs :
             cardSuit == CardSuit.Diamond ? BidType.Diamonds :

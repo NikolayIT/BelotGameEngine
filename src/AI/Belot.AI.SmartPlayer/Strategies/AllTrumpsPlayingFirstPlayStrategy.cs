@@ -1,6 +1,7 @@
 ﻿namespace Belot.AI.SmartPlayer.Strategies
 {
     using System.Linq;
+    using System.Threading;
 
     using Belot.Engine.Cards;
     using Belot.Engine.Players;
@@ -77,6 +78,21 @@
                     && playedCards.Contains(Card.GetCard(card.Suit, CardType.Jack)))
                 {
                     return new PlayCardAction(card);
+                }
+            }
+
+            var teammate = context.MyPosition.GetTeammate();
+
+            foreach (var cardSuit in Card.AllSuits)
+            {
+                Interlocked.Increment(ref GlobalCounters.Counters[1]);
+                if (context.Bids.Any(x => x.Player == teammate && x.Type == cardSuit.ToBidType())
+                    && context.AvailableCardsToPlay.HasAnyOfSuit(cardSuit))
+                {
+                    Interlocked.Increment(ref GlobalCounters.Counters[2]);
+                    return new PlayCardAction(
+                        context.AvailableCardsToPlay.Where(x => x.Suit == cardSuit)
+                            .OrderBy(x => x.GetValue(context.CurrentContract.Type)).FirstOrDefault());
                 }
             }
 

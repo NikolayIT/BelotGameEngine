@@ -2,6 +2,7 @@
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading;
 
     using Belot.AI.SmartPlayer.Strategies;
     using Belot.Engine;
@@ -71,12 +72,14 @@
 
             if (context.AvailableBids.HasFlag(BidType.AllTrumps))
             {
-                bids.Add(BidType.AllTrumps, CalculateAllTrumpBidPoints(context.MyCards, context.Bids, announcePoints));
+                bids.Add(
+                    BidType.AllTrumps,
+                    CalculateAllTrumpsBidPoints(context.MyCards, context.Bids, context.MyPosition.GetTeammate(), announcePoints));
             }
 
             if (context.AvailableBids.HasFlag(BidType.NoTrumps))
             {
-                bids.Add(BidType.NoTrumps, CalculateNoTrumpBidPoints(context.MyCards));
+                bids.Add(BidType.NoTrumps, CalculateNoTrumpsBidPoints(context.MyCards));
             }
 
             var bid = bids.Where(x => x.Value >= 90).OrderByDescending(x => x.Value)
@@ -138,7 +141,7 @@
         {
         }
 
-        private static int CalculateAllTrumpBidPoints(CardCollection cards, IEnumerable<Bid> contextBids, int announcePoints)
+        private static int CalculateAllTrumpsBidPoints(CardCollection cards, IEnumerable<Bid> previousBids, PlayerPosition teammate, int announcePoints)
         {
             var bidPoints = announcePoints / 3;
             foreach (var card in cards)
@@ -162,10 +165,21 @@
                 }
             }
 
+            if (previousBids.Any(
+                x => x.Player == teammate && (x.Type == BidType.Clubs || x.Type == BidType.Diamonds
+                                                                      || x.Type == BidType.Hearts
+                                                                      || x.Type == BidType.Spades)))
+            {
+                Interlocked.Increment(ref GlobalCounters.Counters[0]);
+
+                // If the teammate has announced suit, increase all trump bid points
+                bidPoints += 5;
+            }
+
             return bidPoints;
         }
 
-        private static int CalculateNoTrumpBidPoints(CardCollection cards)
+        private static int CalculateNoTrumpsBidPoints(CardCollection cards)
         {
             var bidPoints = 0;
             foreach (var card in cards)

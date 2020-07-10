@@ -7,6 +7,7 @@
     public sealed class Card
     {
         public static readonly Card[] AllCards = new Card[32];
+        public static readonly CardSuit[] AllSuits = { CardSuit.Club, CardSuit.Diamond, CardSuit.Heart, CardSuit.Spade, };
 
         private static readonly int[] TrumpOrders = { 1, 2, 7, 5, 8, 3, 4, 6 };
         private static readonly int[] NoTrumpOrders = { 1, 2, 3, 7, 4, 5, 6, 8 };
