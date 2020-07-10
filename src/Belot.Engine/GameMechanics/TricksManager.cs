@@ -1,5 +1,6 @@
 ﻿namespace Belot.Engine.GameMechanics
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -121,33 +122,41 @@
                         playerCards[currentPlayer.Index()],
                         currentContract.Type,
                         trickActions);
-                    playContext.MyPosition = currentPlayer;
-                    playContext.MyCards = playerCards[currentPlayer.Index()];
-                    playContext.AvailableCardsToPlay = availableCards;
-
-                    // Execute PlayCard
-                    var action = this.players[currentPlayer.Index()].PlayCard(playContext);
-
-                    // Validate
-                    if (!availableCards.Contains(action.Card))
+                    PlayCardAction action;
+                    if (availableCards.Count == 1)
                     {
-                        throw new BelotGameException($"Invalid card played from {currentPlayer} player.");
+                        action = new PlayCardAction(availableCards.FirstOrDefault(), false);
                     }
-
-                    // Belote
-                    if (action.Belote)
+                    else
                     {
-                        if (this.validAnnouncesService.IsBeloteAllowed(
-                            playerCards[currentPlayer.Index()],
-                            currentContract.Type,
-                            trickActions,
-                            action.Card))
+                        playContext.MyPosition = currentPlayer;
+                        playContext.MyCards = playerCards[currentPlayer.Index()];
+                        playContext.AvailableCardsToPlay = availableCards;
+
+                        // Execute PlayCard
+                        action = this.players[currentPlayer.Index()].PlayCard(playContext);
+
+                        // Validate
+                        if (!availableCards.Contains(action.Card))
                         {
-                            announces.Add(new Announce(AnnounceType.Belot, action.Card) { Player = currentPlayer });
+                            throw new BelotGameException($"Invalid card played from {currentPlayer} player.");
                         }
-                        else
+
+                        // Belote
+                        if (action.Belote)
                         {
-                            action.Belote = false;
+                            if (this.validAnnouncesService.IsBeloteAllowed(
+                                playerCards[currentPlayer.Index()],
+                                currentContract.Type,
+                                trickActions,
+                                action.Card))
+                            {
+                                announces.Add(new Announce(AnnounceType.Belot, action.Card) { Player = currentPlayer });
+                            }
+                            else
+                            {
+                                action.Belote = false;
+                            }
                         }
                     }
 
