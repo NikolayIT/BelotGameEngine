@@ -125,6 +125,7 @@
                     PlayCardAction action;
                     if (availableCards.Count == 1)
                     {
+                        // Only 1 card is available. Play it. Belot is not available in this situation.
                         action = new PlayCardAction(availableCards.FirstOrDefault(), false);
                     }
                     else

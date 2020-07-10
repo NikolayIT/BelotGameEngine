@@ -17,12 +17,15 @@
 
         private readonly AllTrumpsPlayStrategy allTrumpsStrategy;
         private readonly AllTrumpsPlayingFirstPlayStrategy allTrumpsPlayingFirstStrategy;
+        private readonly AllTrumpsPlayingLastPlayStrategy allTrumpsPlayingLastStrategy;
 
         private readonly NoTrumpsPlayStrategy noTrumpsStrategy;
         private readonly NoTrumpsPlayingFirstPlayStrategy noTrumpsPlayingFirstStrategy;
+        private readonly NoTrumpsPlayingLastPlayStrategy noTrumpsPlayingLastStrategy;
 
         private readonly TrumpPlayStrategy trumpStrategy;
         private readonly TrumpPlayingFirstPlayStrategy trumpPlayingFirstStrategy;
+        private readonly TrumpPlayingLastPlayStrategy trumpPlayingLastStrategy;
 
         public SmartPlayer()
         {
@@ -31,12 +34,15 @@
 
             this.allTrumpsStrategy = new AllTrumpsPlayStrategy();
             this.allTrumpsPlayingFirstStrategy = new AllTrumpsPlayingFirstPlayStrategy();
+            this.allTrumpsPlayingLastStrategy = new AllTrumpsPlayingLastPlayStrategy();
 
             this.noTrumpsStrategy = new NoTrumpsPlayStrategy();
             this.noTrumpsPlayingFirstStrategy = new NoTrumpsPlayingFirstPlayStrategy();
+            this.noTrumpsPlayingLastStrategy = new NoTrumpsPlayingLastPlayStrategy();
 
             this.trumpStrategy = new TrumpPlayStrategy();
             this.trumpPlayingFirstStrategy = new TrumpPlayingFirstPlayStrategy();
+            this.trumpPlayingLastStrategy = new TrumpPlayingLastPlayStrategy(this.trickWinnerService);
         }
 
         public BidType GetBid(PlayerGetBidContext context)
@@ -91,26 +97,32 @@
                 playedCards.Add(card);
             }
 
+            var currentTricksActionsCount = context.CurrentTrickActions.Count();
+
             // All trumps
             if (context.CurrentContract.Type.HasFlag(BidType.AllTrumps))
             {
-                return context.CurrentTrickActions.Any()
-                           ? this.allTrumpsStrategy.PlayCard(context, playedCards)
-                           : this.allTrumpsPlayingFirstStrategy.PlayCard(context, playedCards);
+                return currentTricksActionsCount == 0
+                           ? this.allTrumpsPlayingFirstStrategy.PlayCard(context, playedCards)
+                           : currentTricksActionsCount == 3
+                               ? this.allTrumpsPlayingLastStrategy.PlayCard(context, playedCards)
+                               : this.allTrumpsStrategy.PlayCard(context, playedCards);
             }
 
             // No trumps
             if (context.CurrentContract.Type.HasFlag(BidType.NoTrumps))
             {
-                return context.CurrentTrickActions.Any()
-                           ? this.noTrumpsStrategy.PlayCard(context, playedCards)
-                           : this.noTrumpsPlayingFirstStrategy.PlayCard(context, playedCards);
+                return currentTricksActionsCount == 0
+                           ? this.noTrumpsPlayingFirstStrategy.PlayCard(context, playedCards)
+                           : currentTricksActionsCount == 3
+                               ? this.noTrumpsPlayingLastStrategy.PlayCard(context, playedCards)
+                               : this.noTrumpsStrategy.PlayCard(context, playedCards);
             }
 
             // Suit contract
-            return context.CurrentTrickActions.Any()
-                       ? this.trumpStrategy.PlayCard(context, playedCards)
-                       : this.trumpPlayingFirstStrategy.PlayCard(context, playedCards);
+            return currentTricksActionsCount == 0 ? this.trumpPlayingFirstStrategy.PlayCard(context, playedCards) :
+                   currentTricksActionsCount == 3 ? this.trumpPlayingLastStrategy.PlayCard(context, playedCards) :
+                   this.trumpStrategy.PlayCard(context, playedCards);
         }
 
         public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)
