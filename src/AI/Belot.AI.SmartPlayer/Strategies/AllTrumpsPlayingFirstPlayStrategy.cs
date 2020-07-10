@@ -11,6 +11,11 @@
         {
             foreach (var card in context.AvailableCardsToPlay)
             {
+                if (card.Type == CardType.Jack && context.MyCards.Count(x => x.Suit == card.Suit) > 2)
+                {
+                    return new PlayCardAction(card);
+                }
+
                 if (card.Type == CardType.Nine
                     && playedCards.Contains(Card.GetCard(card.Suit, CardType.Jack)))
                 {
