@@ -38,7 +38,7 @@
 
             this.noTrumpsStrategy = new NoTrumpsPlayStrategy();
             this.noTrumpsPlayingFirstStrategy = new NoTrumpsPlayingFirstPlayStrategy();
-            this.noTrumpsPlayingLastStrategy = new NoTrumpsPlayingLastPlayStrategy();
+            this.noTrumpsPlayingLastStrategy = new NoTrumpsPlayingLastPlayStrategy(this.trickWinnerService);
 
             this.trumpStrategy = new TrumpPlayStrategy();
             this.trumpPlayingFirstStrategy = new TrumpPlayingFirstPlayStrategy();
@@ -171,12 +171,12 @@
             {
                 if (card.Type == CardType.Ace)
                 {
-                    bidPoints += 30;
+                    bidPoints += 35;
                 }
 
                 if (card.Type == CardType.Ten)
                 {
-                    bidPoints += cards.Any(x => x.Type == CardType.Ace && x.Suit == card.Suit) ? 22 : 15;
+                    bidPoints += cards.Any(x => x.Type == CardType.Ace && x.Suit == card.Suit) ? 25 : 15;
                 }
             }
 
