@@ -82,7 +82,7 @@
                 bids.Add(BidType.NoTrumps, CalculateNoTrumpsBidPoints(context.MyCards));
             }
 
-            var bid = bids.Where(x => x.Value >= 90).OrderByDescending(x => x.Value)
+            var bid = bids.Where(x => x.Value >= 100).OrderByDescending(x => x.Value)
                 .Select(e => (KeyValuePair<BidType, int>?)e).FirstOrDefault();
             return bid?.Key ?? BidType.Pass;
         }
@@ -148,7 +148,7 @@
             {
                 if (card.Type == CardType.Jack)
                 {
-                    bidPoints += 35;
+                    bidPoints += 45;
                 }
 
                 if (card.Type == CardType.Nine)
@@ -184,12 +184,12 @@
             {
                 if (card.Type == CardType.Ace)
                 {
-                    bidPoints += 35;
+                    bidPoints += 45;
                 }
 
                 if (card.Type == CardType.Ten)
                 {
-                    bidPoints += cards.Contains(Card.GetCard(card.Suit, CardType.Ace)) ? 20 : 15;
+                    bidPoints += cards.Contains(Card.GetCard(card.Suit, CardType.Ace)) ? 25 : 15;
                 }
 
                 if (card.Type == CardType.King)
@@ -211,15 +211,19 @@
             {
                 if (card.Type == CardType.Jack && card.Suit == trumpSuit)
                 {
-                    bidPoints += 40;
+                    bidPoints += 50;
                 }
                 else if (card.Type == CardType.Nine && card.Suit == trumpSuit)
                 {
-                    bidPoints += 30;
+                    bidPoints += 35;
                 }
                 else if (card.Type == CardType.Ace && card.Suit == trumpSuit)
                 {
                     bidPoints += 25;
+                }
+                else if (card.Type == CardType.Ten && card.Suit == trumpSuit)
+                {
+                    bidPoints += 20;
                 }
                 else if (card.Suit == trumpSuit)
                 {
