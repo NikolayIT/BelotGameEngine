@@ -170,8 +170,6 @@
                                                                       || x.Type == BidType.Hearts
                                                                       || x.Type == BidType.Spades)))
             {
-                Interlocked.Increment(ref GlobalCounters.Counters[0]);
-
                 // If the teammate has announced suit, increase all trump bid points
                 bidPoints += 5;
             }
@@ -191,7 +189,15 @@
 
                 if (card.Type == CardType.Ten)
                 {
-                    bidPoints += cards.Contains(Card.GetCard(card.Suit, CardType.Ace)) ? 25 : 15;
+                    bidPoints += cards.Contains(Card.GetCard(card.Suit, CardType.Ace)) ? 20 : 15;
+                }
+
+                if (card.Type == CardType.King)
+                {
+                    bidPoints += cards.Contains(Card.GetCard(card.Suit, CardType.Ace))
+                                 && cards.Contains(Card.GetCard(card.Suit, CardType.Ten))
+                                     ? 10
+                                     : 5;
                 }
             }
 

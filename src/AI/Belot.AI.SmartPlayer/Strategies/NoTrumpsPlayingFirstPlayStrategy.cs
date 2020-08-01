@@ -46,7 +46,7 @@
                     return new PlayCardAction(card);
                 }
 
-                if (card.Type == CardType.Ten
+                if (card.Type == CardType.Nine
                     && playedCards.Contains(Card.GetCard(card.Suit, CardType.Jack))
                     && playedCards.Contains(Card.GetCard(card.Suit, CardType.Queen))
                     && playedCards.Contains(Card.GetCard(card.Suit, CardType.King))
@@ -57,7 +57,7 @@
                 }
 
                 if (card.Type == CardType.Eight
-                    && playedCards.Contains(Card.GetCard(card.Suit, CardType.Ten))
+                    && playedCards.Contains(Card.GetCard(card.Suit, CardType.Nine))
                     && playedCards.Contains(Card.GetCard(card.Suit, CardType.Jack))
                     && playedCards.Contains(Card.GetCard(card.Suit, CardType.Queen))
                     && playedCards.Contains(Card.GetCard(card.Suit, CardType.King))
@@ -69,7 +69,7 @@
 
                 if (card.Type == CardType.Seven
                     && playedCards.Contains(Card.GetCard(card.Suit, CardType.Eight))
-                    && playedCards.Contains(Card.GetCard(card.Suit, CardType.Ten))
+                    && playedCards.Contains(Card.GetCard(card.Suit, CardType.Nine))
                     && playedCards.Contains(Card.GetCard(card.Suit, CardType.Jack))
                     && playedCards.Contains(Card.GetCard(card.Suit, CardType.Queen))
                     && playedCards.Contains(Card.GetCard(card.Suit, CardType.King))

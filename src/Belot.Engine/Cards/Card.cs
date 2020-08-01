@@ -8,6 +8,11 @@
     {
         public static readonly Card[] AllCards = new Card[32];
         public static readonly CardSuit[] AllSuits = { CardSuit.Club, CardSuit.Diamond, CardSuit.Heart, CardSuit.Spade, };
+        public static readonly CardType[] AllTypes =
+            {
+                CardType.Seven, CardType.Eight, CardType.Nine, CardType.Ten,
+                CardType.Jack, CardType.Queen, CardType.King, CardType.Ace,
+            };
 
         private static readonly int[] TrumpOrders = { 1, 2, 7, 5, 8, 3, 4, 6 };
         private static readonly int[] NoTrumpOrders = { 1, 2, 3, 7, 4, 5, 6, 8 };
@@ -18,9 +23,9 @@
 
         static Card()
         {
-            foreach (CardSuit suit in Enum.GetValues(typeof(CardSuit)))
+            foreach (var suit in AllSuits)
             {
-                foreach (CardType type in Enum.GetValues(typeof(CardType)))
+                foreach (var type in AllTypes)
                 {
                     var card = new Card(suit, type);
                     AllCards[card.hashCode] = card;

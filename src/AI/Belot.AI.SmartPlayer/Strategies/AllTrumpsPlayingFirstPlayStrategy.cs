@@ -85,11 +85,9 @@
 
             foreach (var cardSuit in Card.AllSuits)
             {
-                Interlocked.Increment(ref GlobalCounters.Counters[1]);
                 if (context.Bids.Any(x => x.Player == teammate && x.Type == cardSuit.ToBidType())
                     && context.AvailableCardsToPlay.HasAnyOfSuit(cardSuit))
                 {
-                    Interlocked.Increment(ref GlobalCounters.Counters[2]);
                     return new PlayCardAction(
                         context.AvailableCardsToPlay.Where(x => x.Suit == cardSuit)
                             .OrderBy(x => x.GetValue(context.CurrentContract.Type)).FirstOrDefault());
