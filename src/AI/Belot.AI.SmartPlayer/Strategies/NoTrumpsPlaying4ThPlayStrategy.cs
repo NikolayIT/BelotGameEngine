@@ -7,11 +7,11 @@
     using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
-    public class TrumpPlayingLastPlayStrategy : IPlayStrategy
+    public class NoTrumpsPlaying4ThPlayStrategy : IPlayStrategy
     {
         private readonly TrickWinnerService trickWinnerService;
 
-        public TrumpPlayingLastPlayStrategy(TrickWinnerService trickWinnerService)
+        public NoTrumpsPlaying4ThPlayStrategy(TrickWinnerService trickWinnerService)
         {
             this.trickWinnerService = trickWinnerService;
         }
@@ -19,10 +19,10 @@
         public PlayCardAction PlayCard(PlayerPlayCardContext context, CardCollection playedCards)
         {
             var winner = this.trickWinnerService.GetWinner(context.CurrentContract, context.CurrentTrickActions.ToList());
-            if (winner.IsInSameTeamWith(context.MyPosition) && context.AvailableCardsToPlay.Any(x => x.Suit != context.CurrentContract.Type.ToCardSuit() && x.Type != CardType.Ace))
+            if (winner.IsInSameTeamWith(context.MyPosition) && context.AvailableCardsToPlay.Any(x => x.Type != CardType.Ace && x.Type != CardType.Ten))
             {
                 return new PlayCardAction(
-                    context.AvailableCardsToPlay.Where(x => x.Suit != context.CurrentContract.Type.ToCardSuit() && x.Type != CardType.Ace)
+                    context.AvailableCardsToPlay.Where(x => x.Type != CardType.Ace && x.Type != CardType.Ten)
                         .OrderByDescending(x => x.GetValue(context.CurrentContract.Type)).FirstOrDefault());
             }
 

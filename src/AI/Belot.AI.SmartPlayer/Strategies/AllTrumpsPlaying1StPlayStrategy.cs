@@ -6,7 +6,7 @@
     using Belot.Engine.Cards;
     using Belot.Engine.Players;
 
-    public class AllTrumpsPlayingFirstPlayStrategy : IPlayStrategy
+    public class AllTrumpsPlaying1StPlayStrategy : IPlayStrategy
     {
         public PlayCardAction PlayCard(PlayerPlayCardContext context, CardCollection playedCards)
         {
