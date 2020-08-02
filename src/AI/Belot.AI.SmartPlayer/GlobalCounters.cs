@@ -4,6 +4,6 @@
     {
         public const int CountersCount = 8;
 
-        public static int[] Counters { get; set; } = new int[CountersCount];
+        public static long[] Counters { get; set; } = new long[CountersCount];
     }
 }

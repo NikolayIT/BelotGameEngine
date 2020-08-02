@@ -48,7 +48,7 @@
         private static void SimulateGames(Func<BelotGame> simulation, int games, int parallelism, bool detailedLog = false)
         {
             Console.WriteLine($"Running {simulation.Method.Name}...");
-            GlobalCounters.Counters = new int[GlobalCounters.CountersCount];
+            GlobalCounters.Counters = new long[GlobalCounters.CountersCount];
             var game = new ThreadLocal<BelotGame>(simulation);
             var southNorthWins = 0;
             var eastWestWins = 0;

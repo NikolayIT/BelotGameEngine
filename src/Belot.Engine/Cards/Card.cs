@@ -1,6 +1,6 @@
 ﻿namespace Belot.Engine.Cards
 {
-    using System;
+    using System.Runtime.CompilerServices;
 
     using Belot.Engine.Game;
 
@@ -54,6 +54,7 @@
 
         public static bool operator !=(Card left, Card right) => !(left == right);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Card GetCard(CardSuit suit, CardType type) => AllCards[((int)suit * 8) + (int)type];
 
         public override bool Equals(object obj) => obj is Card anotherCard && this.hashCode == anotherCard.hashCode;
@@ -63,9 +64,9 @@
         public override string ToString() => $"{this.Type.ToFriendlyString()}{this.Suit.ToFriendlyString()}";
 
         public int GetValue(BidType contract) =>
-            contract == BidType.Pass ? 0 :
             contract.HasFlag(BidType.AllTrumps) ? TrumpValues[(int)this.Type] :
             contract.HasFlag(BidType.NoTrumps) ? NoTrumpValues[(int)this.Type] :
+            contract == BidType.Pass ? 0 :
             contract.ToCardSuit() == this.Suit ? TrumpValues[(int)this.Type] : NoTrumpValues[(int)this.Type];
     }
 }

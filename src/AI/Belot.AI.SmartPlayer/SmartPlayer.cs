@@ -235,7 +235,7 @@
                 }
                 else if (card.Type == CardType.Ten)
                 {
-                    bidPoints += 10;
+                    bidPoints += cards.Contains(Card.GetCard(card.Suit, CardType.Ace)) ? 15 : 10;
                 }
             }
 

@@ -21,7 +21,8 @@
             (position == PlayerPosition.South && otherPlayerPosition == PlayerPosition.North)
             || (position == PlayerPosition.North && otherPlayerPosition == PlayerPosition.South)
             || (position == PlayerPosition.East && otherPlayerPosition == PlayerPosition.West)
-            || (position == PlayerPosition.West && otherPlayerPosition == PlayerPosition.East);
+            || (position == PlayerPosition.West && otherPlayerPosition == PlayerPosition.East)
+            || (position == otherPlayerPosition);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static PlayerPosition GetTeammate(this PlayerPosition playerPosition) =>
