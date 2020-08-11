@@ -9,14 +9,30 @@
     {
         public static string ToFriendlyString(this CardSuit cardSuit)
         {
-            switch (cardSuit)
-            {
-                case CardSuit.Club: return "\u2663"; // ♣
-                case CardSuit.Diamond: return "\u2666"; // ♦
-                case CardSuit.Heart: return "\u2665"; // ♥
-                case CardSuit.Spade: return "\u2660"; // ♠
-                default: throw new ArgumentException("cardSuit");
-            }
+            return cardSuit switch
+                {
+                    CardSuit.Club => "\u2663", // ♣
+                    CardSuit.Diamond => "\u2666", // ♦
+                    CardSuit.Heart => "\u2665", // ♥
+                    CardSuit.Spade => "\u2660", // ♠
+                    _ => throw new ArgumentException("Invalid card suit.", nameof(cardSuit)),
+                };
+        }
+
+        public static string ToFriendlyString(this CardType cardType)
+        {
+            return cardType switch
+                {
+                    CardType.Seven => "7",
+                    CardType.Eight => "8",
+                    CardType.Nine => "9",
+                    CardType.Ten => "10",
+                    CardType.Jack => "J",
+                    CardType.Queen => "Q",
+                    CardType.King => "K",
+                    CardType.Ace => "A",
+                    _ => throw new ArgumentException("Invalid card type.", nameof(cardType)),
+                };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -25,30 +41,5 @@
             cardSuit == CardSuit.Diamond ? BidType.Diamonds :
             cardSuit == CardSuit.Heart ? BidType.Hearts :
             cardSuit == CardSuit.Spade ? BidType.Spades : BidType.Pass;
-
-        public static string ToFriendlyString(this CardType cardType)
-        {
-            switch (cardType)
-            {
-                case CardType.Seven:
-                    return "7";
-                case CardType.Eight:
-                    return "8";
-                case CardType.Nine:
-                    return "9";
-                case CardType.Ten:
-                    return "10";
-                case CardType.Jack:
-                    return "J";
-                case CardType.Queen:
-                    return "Q";
-                case CardType.King:
-                    return "K";
-                case CardType.Ace:
-                    return "A";
-                default:
-                    throw new ArgumentException("cardType");
-            }
-        }
     }
 }

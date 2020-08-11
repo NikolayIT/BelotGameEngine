@@ -5,6 +5,7 @@
     using System.Linq;
 
     using Belot.Engine.Cards;
+    using Belot.Engine.Game;
 
     using Xunit;
 
@@ -48,6 +49,27 @@
             var cardTypes = Enum.GetValues(typeof(CardType));
             var cardType = cardTypes.OfType<CardType>().Max() + 1;
             Assert.Throws<ArgumentException>(() => cardType.ToFriendlyString());
+        }
+
+        [Fact]
+        public void CardSuitToBidTypeShouldReturnDifferentValidValueForEachPossibleParameter()
+        {
+            var values = new HashSet<BidType>();
+            foreach (CardSuit cardSuitValue in Enum.GetValues(typeof(CardSuit)))
+            {
+                var bidType = cardSuitValue.ToBidType();
+                Assert.False(values.Contains(bidType), $"Duplicate string value \"{bidType}\" for card suit \"{cardSuitValue}\"");
+                values.Add(bidType);
+            }
+        }
+
+        [Fact]
+        public void CardSuitToBidTypeShouldReturnPassWhenCalledOnAnInvalidValue()
+        {
+            var cardSuits = Enum.GetValues(typeof(CardSuit));
+            var cardSuit = cardSuits.OfType<CardSuit>().Max() + 1;
+            var bidType = cardSuit.ToBidType();
+            Assert.Equal(BidType.Pass, bidType);
         }
     }
 }
