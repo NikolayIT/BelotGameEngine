@@ -12,6 +12,46 @@
     public class CardCollectionTests
     {
         [Fact]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Assertions", "xUnit2013:Do not use equality check to check for collection size.", Justification = "Testing Count.")]
+        public void ConstructorWithPredicateShouldWorkCorrectly()
+        {
+            var fullCollection = new CardCollection(uint.MaxValue);
+            Assert.Equal(8, new CardCollection(fullCollection, x => x.Suit == CardSuit.Heart).Count);
+            Assert.Equal(4, new CardCollection(fullCollection, x => x.Type == CardType.Jack).Count);
+            Assert.Equal(1, new CardCollection(fullCollection, x => x.Type == CardType.Ace && x.Suit == CardSuit.Diamond).Count);
+            Assert.Equal(0, new CardCollection(fullCollection, x => false).Count);
+            Assert.Equal(32, new CardCollection(fullCollection, x => true).Count);
+
+            var oneCardCollection = new CardCollection { Card.GetCard(CardSuit.Spade, CardType.King) };
+            Assert.Equal(1, new CardCollection(oneCardCollection, x => x.Suit == CardSuit.Spade).Count);
+            Assert.Equal(0, new CardCollection(oneCardCollection, x => x.Suit == CardSuit.Diamond).Count);
+            Assert.Equal(1, new CardCollection(oneCardCollection, x => x.Type == CardType.King).Count);
+            Assert.Equal(0, new CardCollection(oneCardCollection, x => x.Type == CardType.Queen).Count);
+            Assert.Equal(1, new CardCollection(oneCardCollection, x => x.Type == CardType.King && x.Suit == CardSuit.Spade).Count);
+            Assert.Equal(1, new CardCollection(oneCardCollection, x => true).Count);
+        }
+
+        [Fact]
+        public void ConstructorWithAnotherCardCollectionShouldReturnExactSameCollectionOfCards()
+        {
+            var collection = new CardCollection
+                                 {
+                                     Card.GetCard(CardSuit.Club, CardType.Ace),
+                                     Card.GetCard(CardSuit.Spade, CardType.King),
+                                     Card.GetCard(CardSuit.Heart, CardType.Ten),
+                                     Card.GetCard(CardSuit.Diamond, CardType.Queen),
+                                     Card.GetCard(CardSuit.Club, CardType.Jack),
+                                     Card.GetCard(CardSuit.Heart, CardType.Nine),
+                                 };
+            var copyCollection = new CardCollection(collection);
+            Assert.Equal(collection.Count, copyCollection.Count);
+            foreach (var card in copyCollection)
+            {
+                Assert.Contains(card, collection);
+            }
+        }
+
+        [Fact]
         public void IsReadOnlyShouldReturnFalse()
         {
             Assert.False(new CardCollection().IsReadOnly);
@@ -21,6 +61,9 @@
         public void CountShouldReturn0WhenCardCollectionIsInitialized()
         {
             Assert.Empty(new CardCollection());
+#pragma warning disable xUnit2013 // Do not use equality check to check for collection size.
+            Assert.Equal(0, new CardCollection().Count);
+#pragma warning restore xUnit2013 // Do not use equality check to check for collection size.
         }
 
         [Fact]
@@ -28,6 +71,9 @@
         {
             var collection = new CardCollection { Card.GetCard(CardSuit.Club, CardType.Ace) };
             Assert.Single(collection);
+#pragma warning disable xUnit2013 // Do not use equality check to check for collection size.
+            Assert.Equal(1, collection.Count);
+#pragma warning restore xUnit2013 // Do not use equality check to check for collection size.
         }
 
         [Fact]
@@ -38,6 +84,10 @@
             collection.Add(card);
             collection.Remove(card);
             Assert.Empty(collection);
+            Assert.Empty(new CardCollection());
+#pragma warning disable xUnit2013 // Do not use equality check to check for collection size.
+            Assert.Equal(0, new CardCollection().Count);
+#pragma warning restore xUnit2013 // Do not use equality check to check for collection size.
         }
 
         [Fact]
@@ -261,27 +311,6 @@
                 Assert.NotNull(firstCard);
                 var found = collection.Any(x => x.Equals(Card.GetCard(CardSuit.Diamond, CardType.Queen)));
                 Assert.True(found);
-            }
-        }
-
-        [Fact]
-        public void CloneShouldReturnExactSameCollectionOfCards()
-        {
-            var collection = new CardCollection
-                                 {
-                                     Card.GetCard(CardSuit.Club, CardType.Ace),
-                                     Card.GetCard(CardSuit.Spade, CardType.King),
-                                     Card.GetCard(CardSuit.Heart, CardType.Ten),
-                                     Card.GetCard(CardSuit.Diamond, CardType.Queen),
-                                     Card.GetCard(CardSuit.Club, CardType.Jack),
-                                     Card.GetCard(CardSuit.Heart, CardType.Nine),
-                                 };
-            var clonedCollection = collection.Clone() as CardCollection;
-            Assert.NotNull(clonedCollection);
-            Assert.Equal(collection.Count, clonedCollection.Count);
-            foreach (var card in clonedCollection)
-            {
-                Assert.Contains(card, collection);
             }
         }
 

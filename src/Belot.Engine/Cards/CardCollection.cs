@@ -8,7 +8,7 @@
     /// <summary>
     /// Low memory (only 2 integers per instance) fast implementation of card collection.
     /// </summary>
-    public class CardCollection : ICollection<Card>, ICloneable
+    public class CardCollection : ICollection<Card>
     {
         private const int MaxCards = 32;
         private const int MaxCardsMinusOne = 31;
@@ -17,12 +17,6 @@
 
         public CardCollection()
         {
-        }
-
-        public CardCollection(uint bitMask)
-        {
-            this.cards = bitMask;
-            this.UpdateCount();
         }
 
         public CardCollection(CardCollection cardCollection)
@@ -42,6 +36,12 @@
                     this.Count++;
                 }
             }
+        }
+
+        internal CardCollection(uint bitMask)
+        {
+            this.cards = bitMask;
+            this.UpdateCount();
         }
 
         public int Count { get; private set; }
@@ -68,23 +68,19 @@
             {
                 return (this.cards & 0b00000000000000000000000011111111u) != 0;
             }
-
-            if (suit == CardSuit.Diamond)
+            else if (suit == CardSuit.Diamond)
             {
                 return (this.cards & 0b00000000000000001111111100000000u) != 0;
             }
-
-            if (suit == CardSuit.Heart)
+            else if (suit == CardSuit.Heart)
             {
                 return (this.cards & 0b00000000111111110000000000000000u) != 0;
             }
-
-            if (suit == CardSuit.Spade)
+            else
             {
+                // suit == CardSuit.Spade
                 return (this.cards & 0b11111111000000000000000000000000u) != 0;
             }
-
-            return false;
         }
 
         public IEnumerator<Card> GetEnumerator()
@@ -139,11 +135,6 @@
             }
 
             return false;
-        }
-
-        public object Clone()
-        {
-            return new CardCollection(this.cards);
         }
 
         private void UpdateCount()
