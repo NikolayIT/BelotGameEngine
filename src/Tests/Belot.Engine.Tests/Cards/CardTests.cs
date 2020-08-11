@@ -64,8 +64,17 @@
         public void EqualsShouldReturnFalseWhenGivenNullValue()
         {
             var card = Card.GetCard(CardSuit.Club, CardType.Nine);
-            var areEqual = card.Equals(null);
-            Assert.False(areEqual);
+            Assert.False(card.Equals(null));
+            Assert.False(card == null);
+        }
+
+        [Fact]
+        public void NotEqualsShouldReturnCorrectValues()
+        {
+            Assert.True(Card.GetCard(CardSuit.Spade, CardType.Seven) != null);
+            Assert.True(Card.GetCard(CardSuit.Spade, CardType.Eight) != Card.GetCard(CardSuit.Spade, CardType.Nine));
+            Assert.True(Card.GetCard(CardSuit.Spade, CardType.Eight) != Card.GetCard(CardSuit.Diamond, CardType.Eight));
+            Assert.True(Card.GetCard(CardSuit.Heart, CardType.Ace) != Card.GetCard(CardSuit.Club, CardType.King));
         }
 
         [Fact]
@@ -92,6 +101,32 @@
                         values.Contains(cardHashCode),
                         $"Duplicate hash code \"{cardHashCode}\" for card \"{card}\"");
                     values.Add(cardHashCode);
+                }
+            }
+        }
+
+        [Fact]
+        public void OrderPropertiesShouldReturnDifferentValues()
+        {
+            foreach (CardSuit cardSuitValue in Enum.GetValues(typeof(CardSuit)))
+            {
+                var noTrumpValues = new HashSet<int>();
+                var trumpValues = new HashSet<int>();
+                foreach (CardType cardTypeValue in Enum.GetValues(typeof(CardType)))
+                {
+                    var card = Card.GetCard(cardSuitValue, cardTypeValue);
+
+                    var noTrumpOrder = card.NoTrumpOrder;
+                    Assert.False(
+                        noTrumpValues.Contains(noTrumpOrder),
+                        $"Duplicate no trump order \"{noTrumpOrder}\" for card \"{card}\"");
+                    noTrumpValues.Add(noTrumpOrder);
+
+                    var trumpOrder = card.TrumpOrder;
+                    Assert.False(
+                        trumpValues.Contains(trumpOrder),
+                        $"Duplicate trump order \"{trumpOrder}\" for card \"{card}\"");
+                    trumpValues.Add(trumpOrder);
                 }
             }
         }
