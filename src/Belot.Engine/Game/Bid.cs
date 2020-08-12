@@ -14,17 +14,6 @@
 
         public BidType Type { get; internal set; }
 
-        public BidType CleanBidType
-        {
-            get
-            {
-                var cleanContract = this.Type;
-                cleanContract &= ~BidType.Double;
-                cleanContract &= ~BidType.ReDouble;
-                return cleanContract;
-            }
-        }
-
         public override string ToString() => $"{this.Type} ({this.Player})";
     }
 }

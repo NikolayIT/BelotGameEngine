@@ -69,7 +69,8 @@
 
                     if (bid == BidType.Double || bid == BidType.ReDouble)
                     {
-                        contract.Type = contract.CleanBidType;
+                        contract.Type &= ~BidType.Double;
+                        contract.Type &= ~BidType.ReDouble;
                         contract.Type |= bid;
                         contract.Player = currentPlayerPosition;
                     }
@@ -103,7 +104,9 @@
             Bid currentContract,
             PlayerPosition currentPlayer)
         {
-            var cleanContract = currentContract.CleanBidType;
+            var cleanContract = currentContract.Type;
+            cleanContract &= ~BidType.Double;
+            cleanContract &= ~BidType.ReDouble;
             var availableBids = BidType.Pass;
             if (cleanContract < BidType.Clubs)
             {
