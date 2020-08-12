@@ -55,7 +55,7 @@
                     AnnounceType.SequenceOf5 => $"Quinte to {this.Card}",
                     AnnounceType.SequenceOf4 => $"Quarte to {this.Card}",
                     AnnounceType.SequenceOf3 => $"Tierce to {this.Card}",
-                    _ => string.Empty,
+                    _ => throw new BelotGameException($"Invalid announce type {this.Type} ({(int)this.Type})"),
                 };
 
         public int CompareTo(Announce other)
