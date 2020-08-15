@@ -42,15 +42,22 @@
             else
             {
                 var trumpSuit = contract.Type.ToCardSuit();
+                //// TODO: Remove this check and merge conditions
                 if (trickActions.Any(x => x.Card.Suit == trumpSuit))
                 {
                     // Trump in the trick cards
                     for (var i = 1; i < trickActions.Count; i++)
                     {
-                        if (trickActions[i].Card.Suit == trumpSuit
-                            && trickActions[i].Card.TrumpOrder > bestAction.Card.TrumpOrder)
+                        if (trickActions[i].Card.Suit == trumpSuit)
                         {
-                            bestAction = trickActions[i];
+                            if (bestAction.Card.Suit != trumpSuit)
+                            {
+                                bestAction = trickActions[i];
+                            }
+                            else if (trickActions[i].Card.TrumpOrder > bestAction.Card.TrumpOrder)
+                            {
+                                bestAction = trickActions[i];
+                            }
                         }
                     }
                 }
