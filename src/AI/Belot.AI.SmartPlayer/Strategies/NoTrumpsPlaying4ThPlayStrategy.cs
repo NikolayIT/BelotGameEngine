@@ -23,7 +23,7 @@
             {
                 return new PlayCardAction(
                     context.AvailableCardsToPlay.Where(x => x.Type != CardType.Ace && x.Type != CardType.Ten)
-                        .OrderByDescending(x => x.GetValue(context.CurrentContract.Type)).FirstOrDefault());
+                        .OrderByDescending(x => x.NoTrumpOrder).FirstOrDefault());
             }
 
             return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());

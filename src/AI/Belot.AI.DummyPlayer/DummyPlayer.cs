@@ -50,8 +50,20 @@
 
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
         {
+            if (context.CurrentContract.Type.HasFlag(BidType.AllTrumps))
+            {
+                return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
+            }
+
+            if (context.CurrentContract.Type.HasFlag(BidType.NoTrumps))
+            {
+                return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());
+            }
+
+            var trumpSuit = context.CurrentContract.Type.ToCardSuit();
             return new PlayCardAction(
-                context.AvailableCardsToPlay.OrderBy(x => x.GetValue(context.CurrentContract.Type)).FirstOrDefault());
+                context.AvailableCardsToPlay.OrderBy(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder)
+                    .FirstOrDefault());
         }
 
         public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)

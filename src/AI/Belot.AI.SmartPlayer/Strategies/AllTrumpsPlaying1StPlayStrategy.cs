@@ -90,7 +90,7 @@
                 {
                     return new PlayCardAction(
                         context.AvailableCardsToPlay.Where(x => x.Suit == cardSuit)
-                            .OrderBy(x => x.GetValue(context.CurrentContract.Type)).FirstOrDefault());
+                            .OrderBy(x => x.TrumpOrder).FirstOrDefault());
                 }
             }
 

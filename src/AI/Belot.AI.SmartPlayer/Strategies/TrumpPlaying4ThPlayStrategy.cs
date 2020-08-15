@@ -19,14 +19,16 @@
         public PlayCardAction PlayCard(PlayerPlayCardContext context, CardCollection playedCards)
         {
             var winner = this.trickWinnerService.GetWinner(context.CurrentContract, context.CurrentTrickActions.ToList());
-            if (winner.IsInSameTeamWith(context.MyPosition) && context.AvailableCardsToPlay.Any(x => x.Suit != context.CurrentContract.Type.ToCardSuit() && x.Type != CardType.Ace))
+            var trumpSuit = context.CurrentContract.Type.ToCardSuit();
+            if (winner.IsInSameTeamWith(context.MyPosition) && context.AvailableCardsToPlay.Any(
+                    x => x.Suit != trumpSuit && x.Type != CardType.Ace))
             {
                 return new PlayCardAction(
-                    context.AvailableCardsToPlay.Where(x => x.Suit != context.CurrentContract.Type.ToCardSuit() && x.Type != CardType.Ace)
-                        .OrderByDescending(x => x.GetValue(context.CurrentContract.Type)).FirstOrDefault());
+                    context.AvailableCardsToPlay.Where(x => x.Suit != trumpSuit && x.Type != CardType.Ace)
+                        .OrderByDescending(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder)
+                        .FirstOrDefault());
             }
 
-            var trumpSuit = context.CurrentContract.Type.ToCardSuit();
             return new PlayCardAction(
                 context.AvailableCardsToPlay.OrderBy(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder)
                     .FirstOrDefault());
