@@ -26,9 +26,7 @@
                         .OrderByDescending(x => x.GetValue(context.CurrentContract.Type)).FirstOrDefault());
             }
 
-            return new PlayCardAction(
-                context.AvailableCardsToPlay.OrderBy(x => x.GetValue(context.CurrentContract.Type))
-                    .FirstOrDefault());
+            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());
         }
     }
 }

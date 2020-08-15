@@ -26,8 +26,9 @@
                         .OrderByDescending(x => x.GetValue(context.CurrentContract.Type)).FirstOrDefault());
             }
 
+            var trumpSuit = context.CurrentContract.Type.ToCardSuit();
             return new PlayCardAction(
-                context.AvailableCardsToPlay.OrderBy(x => x.GetValue(context.CurrentContract.Type))
+                context.AvailableCardsToPlay.OrderBy(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder)
                     .FirstOrDefault());
         }
     }

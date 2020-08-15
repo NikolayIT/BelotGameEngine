@@ -9,9 +9,7 @@
     {
         public PlayCardAction PlayCard(PlayerPlayCardContext context, CardCollection playedCards)
         {
-            return new PlayCardAction(
-                context.AvailableCardsToPlay.OrderBy(x => x.GetValue(context.CurrentContract.Type))
-                    .FirstOrDefault());
+            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
         }
     }
 }
