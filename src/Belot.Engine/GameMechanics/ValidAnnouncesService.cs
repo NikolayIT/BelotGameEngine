@@ -186,7 +186,7 @@
         private static void FindSequentialAnnounces(CardCollection cards, ICollection<Announce> combinations)
         {
             // Group by suit
-            var cardsBySuit = new[] { new List<Card>(8), new List<Card>(8), new List<Card>(8), new List<Card>(8) };
+            var cardsBySuit = new[] { new List<Card>(4), new List<Card>(4), new List<Card>(4), new List<Card>(4) };
             foreach (var card in cards)
             {
                 cardsBySuit[(int)card.Suit].Add(card);
