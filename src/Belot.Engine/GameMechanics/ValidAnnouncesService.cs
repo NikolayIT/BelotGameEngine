@@ -54,7 +54,6 @@
         public ICollection<Announce> GetAvailableAnnounces(CardCollection playerCards)
         {
             var cards = new CardCollection(playerCards);
-
             var combinations = new List<Announce>(2);
             FindFourOfAKindAnnounces(cards, combinations);
             FindSequentialAnnounces(cards, combinations);
@@ -212,35 +211,21 @@
                     }
                     else
                     {
-                        if (count == 3)
+                        switch (count)
                         {
-                            combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[i - 1]));
-                        }
-
-                        if (count == 4)
-                        {
-                            combinations.Add(new Announce(AnnounceType.SequenceOf4, suitedCards[i - 1]));
-                        }
-
-                        if (count == 5)
-                        {
-                            combinations.Add(new Announce(AnnounceType.SequenceOf5, suitedCards[i - 1]));
-                        }
-
-                        if (count == 6)
-                        {
-                            combinations.Add(new Announce(AnnounceType.SequenceOf6, suitedCards[i - 1]));
-                        }
-
-                        if (count == 7)
-                        {
-                            combinations.Add(new Announce(AnnounceType.SequenceOf7, suitedCards[i - 1]));
-                        }
-
-                        if (count == 8)
-                        {
-                            combinations.Add(new Announce(AnnounceType.SequenceOf8, suitedCards[i - 1]));
-                            combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[i - 1]));
+                            case 3:
+                                combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[i - 1]));
+                                break;
+                            case 4:
+                                combinations.Add(new Announce(AnnounceType.SequenceOf4, suitedCards[i - 1]));
+                                break;
+                            case 5:
+                                combinations.Add(new Announce(AnnounceType.SequenceOf5, suitedCards[i - 1]));
+                                break;
+                            case 6:
+                                combinations.Add(new Announce(AnnounceType.SequenceOf6, suitedCards[i - 1]));
+                                break;
+                            //// Cases 7 and 8 cannot happen here, they are instead handled in the code after this for loop
                         }
 
                         count = 1;
@@ -249,35 +234,27 @@
                     previousCardValue = (int)suitedCards[i].Type;
                 }
 
-                if (count == 3)
+                switch (count)
                 {
-                    combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[suitedCards.Count - 1]));
-                }
-
-                if (count == 4)
-                {
-                    combinations.Add(new Announce(AnnounceType.SequenceOf4, suitedCards[suitedCards.Count - 1]));
-                }
-
-                if (count == 5)
-                {
-                    combinations.Add(new Announce(AnnounceType.SequenceOf5, suitedCards[suitedCards.Count - 1]));
-                }
-
-                if (count == 6)
-                {
-                    combinations.Add(new Announce(AnnounceType.SequenceOf6, suitedCards[suitedCards.Count - 1]));
-                }
-
-                if (count == 7)
-                {
-                    combinations.Add(new Announce(AnnounceType.SequenceOf7, suitedCards[suitedCards.Count - 1]));
-                }
-
-                if (count == 8)
-                {
-                    combinations.Add(new Announce(AnnounceType.SequenceOf8, suitedCards[suitedCards.Count - 1]));
-                    combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[suitedCards.Count - 1]));
+                    case 3:
+                        combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[suitedCards.Count - 1]));
+                        break;
+                    case 4:
+                        combinations.Add(new Announce(AnnounceType.SequenceOf4, suitedCards[suitedCards.Count - 1]));
+                        break;
+                    case 5:
+                        combinations.Add(new Announce(AnnounceType.SequenceOf5, suitedCards[suitedCards.Count - 1]));
+                        break;
+                    case 6:
+                        combinations.Add(new Announce(AnnounceType.SequenceOf6, suitedCards[suitedCards.Count - 1]));
+                        break;
+                    case 7:
+                        combinations.Add(new Announce(AnnounceType.SequenceOf7, suitedCards[suitedCards.Count - 1]));
+                        break;
+                    case 8:
+                        combinations.Add(new Announce(AnnounceType.SequenceOf8, suitedCards[suitedCards.Count - 1]));
+                        combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[suitedCards.Count - 1]));
+                        break;
                 }
             }
         }
