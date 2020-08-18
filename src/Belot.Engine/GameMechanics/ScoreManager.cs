@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
 
     using Belot.Engine.Cards;
     using Belot.Engine.Game;
@@ -154,6 +155,7 @@
 
         internal static int RoundPoints(BidType bidType, int points, bool winner)
         {
+            // All trumps
             if (bidType.HasFlag(BidType.AllTrumps))
             {
                 if (points % 10 > 4)
@@ -174,37 +176,35 @@
                 return points / 10;
             }
 
+            // No trumps
             if (bidType.HasFlag(BidType.NoTrumps))
             {
                 return (int)Math.Round(points / 10M);
             }
 
-            if (bidType.HasFlag(BidType.Clubs) || bidType.HasFlag(BidType.Diamonds) || bidType.HasFlag(BidType.Hearts)
-                || bidType.HasFlag(BidType.Spades))
+            // Trump
+            if (points % 10 > 6)
             {
-                if (points % 10 > 6)
+                return (points / 10) + 1;
+            }
+
+            if (points % 10 == 6)
+            {
+                if (winner)
                 {
-                    return (points / 10) + 1;
+                    return points / 10;
                 }
 
-                if (points % 10 == 6)
-                {
-                    if (winner)
-                    {
-                        return points / 10;
-                    }
-
-                    return (points / 10) + 1;
-                }
-
-                return points / 10;
+                return (points / 10) + 1;
             }
 
             return points / 10;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int RoundPoints(int points)
         {
+            // TODO: Try (int)(points + 0.5d)
             return (int)Math.Round(points / 10.0);
         }
     }
