@@ -38,17 +38,10 @@
                 }
             }
 
-            if (playedCard.Type == CardType.Queen)
-            {
-                return playerCards.Contains(Card.GetCard(playedCard.Suit, CardType.King));
-            }
-
-            if (playedCard.Type == CardType.King)
-            {
-                return playerCards.Contains(Card.GetCard(playedCard.Suit, CardType.Queen));
-            }
-
-            return false;
+            return playerCards.Contains(
+                playedCard.Type == CardType.Queen
+                    ? Card.GetCard(playedCard.Suit, CardType.King)
+                    : Card.GetCard(playedCard.Suit, CardType.Queen));
         }
 
         public ICollection<Announce> GetAvailableAnnounces(CardCollection playerCards)
