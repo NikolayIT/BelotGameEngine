@@ -179,7 +179,7 @@
             // No trumps
             if (bidType.HasFlag(BidType.NoTrumps))
             {
-                return (int)Math.Round(points / 10M);
+                return RoundPoints(points);
             }
 
             // Trump
@@ -202,10 +202,6 @@
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int RoundPoints(int points)
-        {
-            // TODO: Try (int)(points + 0.5d)
-            return (int)Math.Round(points / 10.0);
-        }
+        private static int RoundPoints(int points) => (int)Math.Round(points / 10.0);
     }
 }
