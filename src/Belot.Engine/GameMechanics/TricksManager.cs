@@ -76,7 +76,7 @@
                 trickActions.Clear();
                 if (trickNumber == 2)
                 {
-                    this.validAnnouncesService.UpdateAnnouncesToBeScored(announces);
+                    this.validAnnouncesService.UpdateActiveAnnounces(announces);
                 }
 
                 playContext.CurrentTrickNumber = trickNumber;

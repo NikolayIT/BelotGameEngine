@@ -53,7 +53,7 @@
             return combinations;
         }
 
-        public void UpdateAnnouncesToBeScored(ICollection<Announce> announces)
+        public void UpdateActiveAnnounces(ICollection<Announce> announces)
         {
             Announce maxSameTypesAnnounce = null;
             Announce maxSameSuitAnnounce = null;
@@ -101,10 +101,10 @@
             // Mark announces that should be scored
             foreach (var announce in announces)
             {
-                announce.ToBeScored = false;
+                announce.IsActive = false;
                 if (announce.Type == AnnounceType.Belot)
                 {
-                    announce.ToBeScored = true;
+                    announce.IsActive = true;
                 }
                 else if (announce.Type == AnnounceType.FourJacks || announce.Type == AnnounceType.FourNines
                                                                  || announce.Type == AnnounceType.FourOfAKind)
@@ -112,7 +112,7 @@
                     if (announce.CompareTo(maxSameTypesAnnounce) >= 0 ||
                         (maxSameTypesAnnounce != null && announce.Player.IsInSameTeamWith(maxSameTypesAnnounce.Player)))
                     {
-                        announce.ToBeScored = true;
+                        announce.IsActive = true;
                     }
                 }
                 else if (!sameMaxAnnounceInDifferentTeams)
@@ -121,7 +121,7 @@
                     if (announce.CompareTo(maxSameSuitAnnounce) >= 0 ||
                         (maxSameSuitAnnounce != null && announce.Player.IsInSameTeamWith(maxSameSuitAnnounce.Player)))
                     {
-                        announce.ToBeScored = true;
+                        announce.IsActive = true;
                     }
                 }
             }

@@ -40,7 +40,10 @@
 
         internal Card Card { get; }
 
-        internal bool? ToBeScored { get; set; }
+        /// <summary>
+        /// Gets or sets value indicating whether or not this announce will be scored.
+        /// </summary>
+        internal bool? IsActive { get; set; }
 
         public override string ToString() =>
             this.Type switch

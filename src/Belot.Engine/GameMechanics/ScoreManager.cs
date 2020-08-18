@@ -22,7 +22,7 @@
 
             // Sum all south-north points
             result.SouthNorthTotalInRoundPoints = announces.Where(
-                    x => x.ToBeScored == true && (x.Player == PlayerPosition.South || x.Player == PlayerPosition.North))
+                    x => x.IsActive == true && (x.Player == PlayerPosition.South || x.Player == PlayerPosition.North))
                 .Sum(x => x.Value);
             result.SouthNorthTotalInRoundPoints += southNorthTricks.Sum(x => x.GetValue(contract.Type));
             if (lastTrickWinner == PlayerPosition.South || lastTrickWinner == PlayerPosition.North)
@@ -33,7 +33,7 @@
 
             // Sum all east-west points
             result.EastWestTotalInRoundPoints = announces.Where(
-                    x => x.ToBeScored == true && (x.Player == PlayerPosition.East || x.Player == PlayerPosition.West))
+                    x => x.IsActive == true && (x.Player == PlayerPosition.East || x.Player == PlayerPosition.West))
                 .Sum(x => x.Value);
             result.EastWestTotalInRoundPoints += eastWestTricks.Sum(x => x.GetValue(contract.Type));
             if (lastTrickWinner == PlayerPosition.East || lastTrickWinner == PlayerPosition.West)

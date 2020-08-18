@@ -61,11 +61,11 @@
             var announce = new Announce(AnnounceType.SequenceOf3, announceCard);
             Assert.Equal(AnnounceType.SequenceOf3, announce.Type);
             Assert.Equal(announceCard, announce.Card);
-            Assert.Null(announce.ToBeScored);
+            Assert.Null(announce.IsActive);
             Assert.Equal(PlayerPosition.Unknown, announce.Player);
 
-            announce.ToBeScored = true;
-            Assert.True(announce.ToBeScored);
+            announce.IsActive = true;
+            Assert.True(announce.IsActive);
 
             announce.Player = PlayerPosition.West;
             Assert.Equal(PlayerPosition.West, announce.Player);
