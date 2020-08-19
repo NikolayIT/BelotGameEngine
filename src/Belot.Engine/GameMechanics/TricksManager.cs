@@ -71,6 +71,7 @@
             };
 
             var currentPlayer = firstToPlay;
+            var currentPlayerIndex = firstToPlay.Index();
             for (var trickNumber = 1; trickNumber <= 8; trickNumber++)
             {
                 trickActions.Clear();
@@ -120,7 +121,7 @@
 
                     // Prepare PlayCard context
                     var availableCards = this.validCardsService.GetValidCards(
-                        playerCards[currentPlayer.Index()],
+                        playerCards[currentPlayerIndex],
                         currentContract.Type,
                         trickActions);
                     PlayCardAction action;
@@ -132,11 +133,11 @@
                     else
                     {
                         playContext.MyPosition = currentPlayer;
-                        playContext.MyCards = playerCards[currentPlayer.Index()];
+                        playContext.MyCards = playerCards[currentPlayerIndex];
                         playContext.AvailableCardsToPlay = availableCards;
 
                         // Execute PlayCard
-                        action = this.players[currentPlayer.Index()].PlayCard(playContext);
+                        action = this.players[currentPlayerIndex].PlayCard(playContext);
 
                         // Validate
                         if (!availableCards.Contains(action.Card))
@@ -148,7 +149,7 @@
                         if (action.Belote)
                         {
                             if (this.validAnnouncesService.IsBeloteAllowed(
-                                playerCards[currentPlayer.Index()],
+                                playerCards[currentPlayerIndex],
                                 currentContract.Type,
                                 trickActions,
                                 action.Card))
@@ -163,7 +164,7 @@
                     }
 
                     // Update information after the action
-                    playerCards[currentPlayer.Index()].Remove(action.Card);
+                    playerCards[currentPlayerIndex].Remove(action.Card);
                     action.Player = currentPlayer;
                     action.TrickNumber = trickNumber;
                     actions.Add(action);
@@ -171,23 +172,23 @@
 
                     // Next player
                     currentPlayer = currentPlayer.Next();
+                    currentPlayerIndex = currentPlayer.Index();
                 }
 
-                // The player that wins the trick plays first
                 var winner = this.trickWinnerService.GetWinner(currentContract, trickActions);
                 if (winner == PlayerPosition.South || winner == PlayerPosition.North)
                 {
-                    for (var i = 0; i < trickActions.Count; i++)
-                    {
-                        southNorthTricks.Add(trickActions[i].Card);
-                    }
+                    southNorthTricks.Add(trickActions[0].Card);
+                    southNorthTricks.Add(trickActions[1].Card);
+                    southNorthTricks.Add(trickActions[2].Card);
+                    southNorthTricks.Add(trickActions[3].Card);
                 }
                 else if (winner == PlayerPosition.East || winner == PlayerPosition.West)
                 {
-                    for (var i = 0; i < trickActions.Count; i++)
-                    {
-                        eastWestTricks.Add(trickActions[i].Card);
-                    }
+                    eastWestTricks.Add(trickActions[0].Card);
+                    eastWestTricks.Add(trickActions[1].Card);
+                    eastWestTricks.Add(trickActions[2].Card);
+                    eastWestTricks.Add(trickActions[3].Card);
                 }
 
                 if (trickNumber == 8)
@@ -195,7 +196,9 @@
                     lastTrickWinner = winner;
                 }
 
+                // The player that wins the trick plays first
                 currentPlayer = winner;
+                currentPlayerIndex = currentPlayer.Index();
 
                 this.players[0].EndOfTrick(trickActions);
                 this.players[1].EndOfTrick(trickActions);

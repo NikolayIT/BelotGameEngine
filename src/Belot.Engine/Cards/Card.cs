@@ -55,6 +55,7 @@
 
         public override bool Equals(object obj) => obj is Card anotherCard && this.hashCode == anotherCard.hashCode;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode() => this.hashCode;
 
         public override string ToString() => $"{this.Type.ToFriendlyString()}{this.Suit.ToFriendlyString()}";
