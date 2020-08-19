@@ -18,6 +18,7 @@
 
         public static void Main()
         {
+            var parallelism = Environment.ProcessorCount / 2;
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
             Console.OutputEncoding = Encoding.Unicode;
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
@@ -30,16 +31,16 @@
             Console.Write(", Mode=Release");
 #endif
             Console.Write(
-                $", CPUs={Environment.ProcessorCount}, OS={Environment.OSVersion}, .NET={Environment.Version}");
+                $", CPUs={Environment.ProcessorCount}({parallelism}), OS={Environment.OSVersion}, .NET={Environment.Version}");
             Console.WriteLine();
             Console.WriteLine(new string('=', LineLength));
 
             var totalStopwatch = Stopwatch.StartNew();
-            SimulateGames(TwoSmartVsTwoPreviousVersionGames, 200_000, 12);
-            SimulateGames(TwoSmartVsTwoDummyGames, 200_000, 12);
-            SimulateGames(OneSmartVsThreeDummyGames, 200_000, 12);
-            SimulateGames(TwoSmartVsTwoRandomGames, 200_000, 12);
-            SimulateGames(OneSmartVsThreeRandomGames, 200_000, 12);
+            SimulateGames(TwoSmartVsTwoPreviousVersionGames, 200_000, parallelism);
+            SimulateGames(TwoSmartVsTwoDummyGames, 200_000, parallelism);
+            SimulateGames(OneSmartVsThreeDummyGames, 200_000, parallelism);
+            SimulateGames(TwoSmartVsTwoRandomGames, 200_000, parallelism);
+            SimulateGames(OneSmartVsThreeRandomGames, 200_000, parallelism);
             //// SimulateGames(SmartVsSmartGames, 200_000, 12);
             //// SimulateGames(SmartVsSmartGamesWithLogging, 10, 1, true);
             Console.WriteLine($"Total tests time: {totalStopwatch.Elapsed}");
@@ -51,7 +52,6 @@
             GlobalCounters.Counters = new long[GlobalCounters.CountersCount];
             var game = new ThreadLocal<BelotGame>(simulation);
             var southNorthWins = 0;
-            var eastWestWins = 0;
             var southNorthPoints = 0;
             var eastWestPoints = 0;
             var rounds = 0;
@@ -71,10 +71,6 @@
                             {
                                 southNorthWins++;
                             }
-                            else
-                            {
-                                eastWestWins++;
-                            }
 
                             southNorthPoints += result.SouthNorthPoints;
                             eastWestPoints += result.EastWestPoints;
@@ -88,6 +84,7 @@
                         }
                     });
 
+            var eastWestWins = games - southNorthWins;
             Console.WriteLine(
                 $"{southNorthWins + eastWestWins} Games: {southNorthWins}-{eastWestWins} (Δ {southNorthWins - eastWestWins}) (Rounds: {rounds}) ELO: {CalculateElo(southNorthWins, eastWestWins):0.00}");
             Console.WriteLine(stopwatch.Elapsed + $" => Points: {southNorthPoints / 1000}k-{eastWestPoints / 1000}k => Counters: " + string.Join(",", GlobalCounters.Counters));
