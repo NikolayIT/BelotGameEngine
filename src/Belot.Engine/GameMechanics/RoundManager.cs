@@ -92,10 +92,10 @@
                 hangingPoints,
                 lastTrickWinner);
 
-            foreach (var player in this.players)
-            {
-                player.EndOfRound(result);
-            }
+            this.players[0].EndOfRound(result);
+            this.players[1].EndOfRound(result);
+            this.players[2].EndOfRound(result);
+            this.players[3].EndOfRound(result);
 
             return result;
         }

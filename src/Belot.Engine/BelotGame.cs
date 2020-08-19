@@ -14,7 +14,7 @@
     {
         private readonly RoundManager roundManager;
 
-        private readonly IEnumerable<IPlayer> players;
+        private readonly IList<IPlayer> players;
 
         public BelotGame(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
         {
@@ -74,10 +74,10 @@
                                      EastWestPoints = eastWestPoints,
                                  };
 
-            foreach (var player in this.players)
-            {
-                player.EndOfGame(gameResult);
-            }
+            this.players[0].EndOfGame(gameResult);
+            this.players[1].EndOfGame(gameResult);
+            this.players[2].EndOfGame(gameResult);
+            this.players[3].EndOfGame(gameResult);
 
             return gameResult;
         }

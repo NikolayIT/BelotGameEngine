@@ -80,7 +80,7 @@
                 }
 
                 playContext.CurrentTrickNumber = trickNumber;
-                for (var i = 0; i < 4; i++)
+                for (var actionNumber = 0; actionNumber < 4; actionNumber++)
                 {
                     // Announces
                     if (trickNumber == 1 && !currentContract.Type.HasFlag(BidType.NoTrumps))
@@ -99,8 +99,9 @@
                                 .ToList();
 
                             // Validate
-                            foreach (var playerAnnounce in playerAnnounces)
+                            for (var i = 0; i < playerAnnounces.Count; i++)
                             {
+                                var playerAnnounce = playerAnnounces[i];
                                 var availableAnnounce = availableAnnounces.FirstOrDefault(
                                     x => x.Type == playerAnnounce.Type && x.Card == playerAnnounce.Card);
                                 if (availableAnnounce == null)
@@ -176,16 +177,16 @@
                 var winner = this.trickWinnerService.GetWinner(currentContract, trickActions);
                 if (winner == PlayerPosition.South || winner == PlayerPosition.North)
                 {
-                    foreach (var trickAction in trickActions)
+                    for (var i = 0; i < trickActions.Count; i++)
                     {
-                        southNorthTricks.Add(trickAction.Card);
+                        southNorthTricks.Add(trickActions[i].Card);
                     }
                 }
                 else if (winner == PlayerPosition.East || winner == PlayerPosition.West)
                 {
-                    foreach (var trickAction in trickActions)
+                    for (var i = 0; i < trickActions.Count; i++)
                     {
-                        eastWestTricks.Add(trickAction.Card);
+                        eastWestTricks.Add(trickActions[i].Card);
                     }
                 }
 
@@ -196,10 +197,10 @@
 
                 currentPlayer = winner;
 
-                foreach (var player in this.players)
-                {
-                    player.EndOfTrick(trickActions);
-                }
+                this.players[0].EndOfTrick(trickActions);
+                this.players[1].EndOfTrick(trickActions);
+                this.players[2].EndOfTrick(trickActions);
+                this.players[3].EndOfTrick(trickActions);
             }
         }
     }

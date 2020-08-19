@@ -53,12 +53,13 @@
             return combinations;
         }
 
-        public void UpdateActiveAnnounces(ICollection<Announce> announces)
+        public void UpdateActiveAnnounces(IList<Announce> announces)
         {
             Announce maxSameTypesAnnounce = null;
             Announce maxSameSuitAnnounce = null;
-            foreach (var announce in announces)
+            for (var i = 0; i < announces.Count; i++)
             {
+                var announce = announces[i];
                 if (announce.Type == AnnounceType.Belot)
                 {
                 }
@@ -82,8 +83,9 @@
 
             // Check for same announces in different teams
             var sameMaxAnnounceInDifferentTeams = false;
-            foreach (var announce in announces)
+            for (var i = 0; i < announces.Count; i++)
             {
+                var announce = announces[i];
                 if (announce.Type == AnnounceType.SequenceOf3 || announce.Type == AnnounceType.SequenceOf4
                                                               || announce.Type == AnnounceType.SequenceOf5
                                                               || announce.Type == AnnounceType.SequenceOf6
@@ -99,8 +101,9 @@
             }
 
             // Mark announces that should be scored
-            foreach (var announce in announces)
+            for (var i = 0; i < announces.Count; i++)
             {
+                var announce = announces[i];
                 announce.IsActive = false;
                 if (announce.Type == AnnounceType.Belot)
                 {
