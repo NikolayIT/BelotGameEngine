@@ -63,6 +63,7 @@
 
         public override string ToString() => $"{this.Type.ToFriendlyString()}{this.Suit.ToFriendlyString()}";
 
+        // TODO: Extract to CardExtensions and inline the method
         public int GetValue(BidType contract) =>
             contract.HasFlag(BidType.AllTrumps) ? TrumpValues[(int)this.Type] :
             contract.HasFlag(BidType.NoTrumps) ? NoTrumpValues[(int)this.Type] :

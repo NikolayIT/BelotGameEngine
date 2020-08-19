@@ -48,7 +48,7 @@
         public override string ToString() =>
             this.Type switch
                 {
-                    AnnounceType.Belot => $"Belot {this.Card.Suit}",
+                    AnnounceType.Belot => $"Belot {this.Card.Suit.ToFriendlyString()}",
                     AnnounceType.FourJacks => "4 Jacks",
                     AnnounceType.FourNines => "4 Nines",
                     AnnounceType.FourOfAKind => $"4 of a kind {this.Card.Type}",

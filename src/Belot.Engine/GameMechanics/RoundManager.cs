@@ -18,6 +18,8 @@
 
         private readonly Deck deck;
 
+        private readonly List<CardCollection> playerCards;
+
         public RoundManager(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
         {
             this.players = new List<IPlayer>(4) { southPlayer, eastPlayer, northPlayer, westPlayer };
@@ -25,6 +27,11 @@
             this.tricksManager = new TricksManager(southPlayer, eastPlayer, northPlayer, westPlayer);
             this.scoreManager = new ScoreManager();
             this.deck = new Deck();
+            this.playerCards = new List<CardCollection>(this.players.Count);
+            for (var playerIndex = 0; playerIndex < this.players.Count; playerIndex++)
+            {
+                this.playerCards.Add(new CardCollection());
+            }
         }
 
         public RoundResult PlayRound(
@@ -36,14 +43,13 @@
         {
             // Initialize the cards
             this.deck.Shuffle();
-            var playerCards = new List<CardCollection>(this.players.Count);
             for (var playerIndex = 0; playerIndex < this.players.Count; playerIndex++)
             {
-                playerCards.Add(new CardCollection());
+                this.playerCards[playerIndex].Clear();
             }
 
             // Deal 5 cards to each player
-            this.DealCards(playerCards, 5);
+            this.DealCards(5);
 
             // Bidding phase
             var contract = this.contractManager.GetContract(
@@ -51,7 +57,7 @@
                 firstToPlay,
                 southNorthPoints,
                 eastWestPoints,
-                playerCards,
+                this.playerCards,
                 out var bids);
 
             // All pass
@@ -61,7 +67,7 @@
             }
 
             // Deal 3 more cards to each player
-            this.DealCards(playerCards, 3);
+            this.DealCards(3);
 
             // Play 8 tricks
             this.tricksManager.PlayTricks(
@@ -69,7 +75,7 @@
                 firstToPlay,
                 southNorthPoints,
                 eastWestPoints,
-                playerCards,
+                this.playerCards,
                 bids,
                 contract,
                 out var announces,
@@ -94,13 +100,13 @@
             return result;
         }
 
-        private void DealCards(IList<CardCollection> playerCards, int cardsPerPlayer)
+        private void DealCards(int cardsPerPlayer)
         {
             for (var playerIndex = 0; playerIndex < this.players.Count; playerIndex++)
             {
                 for (var i = 0; i < cardsPerPlayer; i++)
                 {
-                    playerCards[playerIndex].Add(this.deck.GetNextCard());
+                    this.playerCards[playerIndex].Add(this.deck.GetNextCard());
                 }
             }
         }

@@ -38,15 +38,13 @@
                 // Trump card played first
                 return GetValidCardsForAllTrumps(playerCards, currentTrickActions, firstCardSuit);
             }
-            else
-            {
-                // Non-trump card played first
-                return GetValidCardsForTrumpWhenNonTrumpIsPlayedFirst(
-                    playerCards,
-                    trumpSuit,
-                    currentTrickActions,
-                    firstCardSuit);
-            }
+
+            // Playing Clubs, Diamonds, Hearts or Spades and non-trump card played first
+            return GetValidCardsForTrumpWhenNonTrumpIsPlayedFirst(
+                playerCards,
+                trumpSuit,
+                currentTrickActions,
+                firstCardSuit);
         }
 
         // For all trumps the player should play bigger card from the same suit if available.
