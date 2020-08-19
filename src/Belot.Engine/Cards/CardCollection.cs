@@ -64,22 +64,16 @@
 
         public bool HasAnyOfSuit(CardSuit suit)
         {
-            if (suit == CardSuit.Club)
+            switch (suit)
             {
-                return (this.cards & 0b00000000000000000000000011111111u) != 0;
-            }
-            else if (suit == CardSuit.Diamond)
-            {
-                return (this.cards & 0b00000000000000001111111100000000u) != 0;
-            }
-            else if (suit == CardSuit.Heart)
-            {
-                return (this.cards & 0b00000000111111110000000000000000u) != 0;
-            }
-            else
-            {
-                // suit == CardSuit.Spade
-                return (this.cards & 0b11111111000000000000000000000000u) != 0;
+                case CardSuit.Club:
+                    return (this.cards & 0b00000000000000000000000011111111u) != 0;
+                case CardSuit.Diamond:
+                    return (this.cards & 0b00000000000000001111111100000000u) != 0;
+                case CardSuit.Heart:
+                    return (this.cards & 0b00000000111111110000000000000000u) != 0;
+                default: // CardSuit.Spade
+                    return (this.cards & 0b11111111000000000000000000000000u) != 0;
             }
         }
 
@@ -93,14 +87,13 @@
             return this.GetEnumerator();
         }
 
-        public void Add(Card item)
+        public void Add(Card card)
         {
-            if (!this.Contains(item))
+            if (!this.Contains(card))
             {
-                this.cards |= 1U << item.GetHashCode();
+                this.cards |= 1U << card.GetHashCode();
+                this.Count++;
             }
-
-            this.Count++;
         }
 
         public void Clear()
@@ -109,9 +102,9 @@
             this.Count = 0;
         }
 
-        public bool Contains(Card item)
+        public bool Contains(Card card)
         {
-            return ((this.cards >> item.GetHashCode()) & 1) == 1;
+            return ((this.cards >> card.GetHashCode()) & 1) == 1;
         }
 
         public void CopyTo(Card[] array, int arrayIndex)

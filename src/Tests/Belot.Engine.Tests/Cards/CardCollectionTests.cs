@@ -339,5 +339,15 @@
 
             Assert.Equal(collection.Count, count);
         }
+
+        [Fact]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Assertions", "xUnit2013:Do not use equality check to check for collection size.", Justification = "Testing Count attribute.")]
+        public void AddingTheSameCardShouldNotIncreaseTheCount()
+        {
+            var collection = new CardCollection();
+            collection.Add(Card.GetCard(CardSuit.Diamond, CardType.Jack));
+            collection.Add(Card.GetCard(CardSuit.Diamond, CardType.Jack));
+            Assert.Equal(1, collection.Count);
+        }
     }
 }
