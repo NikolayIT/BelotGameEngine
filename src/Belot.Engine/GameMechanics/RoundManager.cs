@@ -43,13 +43,19 @@
         {
             // Initialize the cards
             this.deck.Shuffle();
-            for (var playerIndex = 0; playerIndex < this.players.Count; playerIndex++)
-            {
-                this.playerCards[playerIndex].Clear();
-            }
+            this.playerCards[0].Clear();
+            this.playerCards[1].Clear();
+            this.playerCards[2].Clear();
+            this.playerCards[3].Clear();
 
             // Deal 5 cards to each player
-            this.DealCards(5);
+            for (var i = 0; i < 5; i++)
+            {
+                this.playerCards[0].Add(this.deck.GetNextCard());
+                this.playerCards[1].Add(this.deck.GetNextCard());
+                this.playerCards[2].Add(this.deck.GetNextCard());
+                this.playerCards[3].Add(this.deck.GetNextCard());
+            }
 
             // Bidding phase
             var contract = this.contractManager.GetContract(
@@ -67,7 +73,13 @@
             }
 
             // Deal 3 more cards to each player
-            this.DealCards(3);
+            for (var i = 0; i < 3; i++)
+            {
+                this.playerCards[0].Add(this.deck.GetNextCard());
+                this.playerCards[1].Add(this.deck.GetNextCard());
+                this.playerCards[2].Add(this.deck.GetNextCard());
+                this.playerCards[3].Add(this.deck.GetNextCard());
+            }
 
             // Play 8 tricks
             this.tricksManager.PlayTricks(
@@ -98,17 +110,6 @@
             this.players[3].EndOfRound(result);
 
             return result;
-        }
-
-        private void DealCards(int cardsPerPlayer)
-        {
-            for (var playerIndex = 0; playerIndex < this.players.Count; playerIndex++)
-            {
-                for (var i = 0; i < cardsPerPlayer; i++)
-                {
-                    this.playerCards[playerIndex].Add(this.deck.GetNextCard());
-                }
-            }
         }
     }
 }
