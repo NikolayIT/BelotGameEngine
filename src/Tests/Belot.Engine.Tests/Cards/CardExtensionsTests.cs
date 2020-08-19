@@ -71,5 +71,46 @@
             var bidType = cardSuit.ToBidType();
             Assert.Equal(BidType.Pass, bidType);
         }
+
+        [Fact]
+        public void GetValueShouldReturnPositiveValueForEveryCardType()
+        {
+            foreach (CardType cardTypeValue in Enum.GetValues(typeof(CardType)))
+            {
+                var card = Card.GetCard(CardSuit.Diamond, cardTypeValue);
+                var allTrumpValue = card.GetValue(BidType.AllTrumps); // Not expecting exceptions here
+                Assert.True(allTrumpValue >= 0);
+                var noTrumpValue = card.GetValue(BidType.NoTrumps); // Not expecting exceptions here
+                Assert.True(noTrumpValue >= 0);
+                var trumpValue = card.GetValue(BidType.Diamonds); // Not expecting exceptions here
+                Assert.True(trumpValue >= 0);
+            }
+        }
+
+        [Theory]
+        [InlineData(BidType.Pass, 0)]
+        [InlineData(BidType.Clubs, 152)]
+        [InlineData(BidType.Clubs | BidType.Double, 152)]
+        [InlineData(BidType.Clubs | BidType.ReDouble, 152)]
+        [InlineData(BidType.Diamonds, 152)]
+        [InlineData(BidType.Diamonds | BidType.Double, 152)]
+        [InlineData(BidType.Diamonds | BidType.ReDouble, 152)]
+        [InlineData(BidType.Hearts, 152)]
+        [InlineData(BidType.Hearts | BidType.Double, 152)]
+        [InlineData(BidType.Hearts | BidType.ReDouble, 152)]
+        [InlineData(BidType.Spades, 152)]
+        [InlineData(BidType.Spades | BidType.Double, 152)]
+        [InlineData(BidType.Spades | BidType.ReDouble, 152)]
+        [InlineData(BidType.NoTrumps, 120)]
+        [InlineData(BidType.NoTrumps | BidType.Double, 120)]
+        [InlineData(BidType.NoTrumps | BidType.ReDouble, 120)]
+        [InlineData(BidType.AllTrumps, 248)]
+        [InlineData(BidType.AllTrumps | BidType.Double, 248)]
+        [InlineData(BidType.AllTrumps | BidType.ReDouble, 248)]
+        public void SumOfAllCardValuesShouldBeCorrect(BidType bidType, int expectedPoints)
+        {
+            var allPoints = Card.AllCards.Sum(x => x.GetValue(bidType));
+            Assert.Equal(expectedPoints, allPoints);
+        }
     }
 }

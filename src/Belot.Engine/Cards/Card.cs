@@ -2,8 +2,6 @@
 {
     using System.Runtime.CompilerServices;
 
-    using Belot.Engine.Game;
-
     public sealed class Card
     {
         public static readonly Card[] AllCards = new Card[32];
@@ -16,8 +14,6 @@
 
         private static readonly int[] TrumpOrders = { 1, 2, 7, 5, 8, 3, 4, 6 };
         private static readonly int[] NoTrumpOrders = { 1, 2, 3, 7, 4, 5, 6, 8 };
-        private static readonly int[] NoTrumpValues = { 0, 0, 0, 10, 2, 3, 4, 11 };
-        private static readonly int[] TrumpValues = { 0, 0, 14, 10, 20, 3, 4, 11 };
 
         private readonly int hashCode;
 
@@ -62,12 +58,5 @@
         public override int GetHashCode() => this.hashCode;
 
         public override string ToString() => $"{this.Type.ToFriendlyString()}{this.Suit.ToFriendlyString()}";
-
-        // TODO: Extract to CardExtensions and inline the method
-        public int GetValue(BidType contract) =>
-            contract.HasFlag(BidType.AllTrumps) ? TrumpValues[(int)this.Type] :
-            contract.HasFlag(BidType.NoTrumps) ? NoTrumpValues[(int)this.Type] :
-            contract == BidType.Pass ? 0 :
-            contract.ToCardSuit() == this.Suit ? TrumpValues[(int)this.Type] : NoTrumpValues[(int)this.Type];
     }
 }

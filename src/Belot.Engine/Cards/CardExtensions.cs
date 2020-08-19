@@ -7,6 +7,9 @@
 
     public static class CardExtensions
     {
+        private static readonly int[] NoTrumpValues = { 0, 0, 0, 10, 2, 3, 4, 11 };
+        private static readonly int[] TrumpValues = { 0, 0, 14, 10, 20, 3, 4, 11 };
+
         public static string ToFriendlyString(this CardSuit cardSuit)
         {
             return cardSuit switch
@@ -41,5 +44,12 @@
             cardSuit == CardSuit.Diamond ? BidType.Diamonds :
             cardSuit == CardSuit.Heart ? BidType.Hearts :
             cardSuit == CardSuit.Spade ? BidType.Spades : BidType.Pass;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetValue(this Card card, BidType contract) =>
+            contract.HasFlag(BidType.AllTrumps) ? TrumpValues[(int)card.Type] :
+            contract.HasFlag(BidType.NoTrumps) ? NoTrumpValues[(int)card.Type] :
+            contract == BidType.Pass ? 0 :
+            contract.ToCardSuit() == card.Suit ? TrumpValues[(int)card.Type] : NoTrumpValues[(int)card.Type];
     }
 }
