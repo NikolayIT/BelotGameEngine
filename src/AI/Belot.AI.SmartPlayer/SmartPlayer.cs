@@ -101,10 +101,12 @@
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
         {
             var playedCards = new CardCollection();
-            foreach (var card in context.RoundActions.Where(x => x.TrickNumber < context.CurrentTrickNumber)
-                .Select(x => x.Card))
+            foreach (var action in context.RoundActions)
             {
-                playedCards.Add(card);
+                if (action.TrickNumber < context.CurrentTrickNumber)
+                {
+                    playedCards.Add(action.Card);
+                }
             }
 
             var currentTricksActionsCount = context.CurrentTrickActions.Count();
