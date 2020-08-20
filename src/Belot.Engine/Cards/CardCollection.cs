@@ -62,6 +62,55 @@
             return false;
         }
 
+        public CardCollection Where(Func<Card, bool> predicate)
+        {
+            return new CardCollection(this, predicate);
+        }
+
+        public Card Lowest<TKey>(Func<Card, TKey> orderByFunc)
+            where TKey : IComparable
+        {
+            Card minCard = null;
+            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
+            {
+                if (((this.cards >> currentHashCode) & 1) == 1)
+                {
+                    if (minCard == null)
+                    {
+                        minCard = Card.AllCards[currentHashCode];
+                    }
+                    else if (orderByFunc(Card.AllCards[currentHashCode]).CompareTo(orderByFunc(minCard)) < 0)
+                    {
+                        minCard = Card.AllCards[currentHashCode];
+                    }
+                }
+            }
+
+            return minCard;
+        }
+
+        public Card Highest<TKey>(Func<Card, TKey> orderByFunc)
+            where TKey : IComparable
+        {
+            Card maxCard = null;
+            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
+            {
+                if (((this.cards >> currentHashCode) & 1) == 1)
+                {
+                    if (maxCard == null)
+                    {
+                        maxCard = Card.AllCards[currentHashCode];
+                    }
+                    else if (orderByFunc(Card.AllCards[currentHashCode]).CompareTo(orderByFunc(maxCard)) > 0)
+                    {
+                        maxCard = Card.AllCards[currentHashCode];
+                    }
+                }
+            }
+
+            return maxCard;
+        }
+
         public bool HasAnyOfSuit(CardSuit suit)
         {
             switch (suit)

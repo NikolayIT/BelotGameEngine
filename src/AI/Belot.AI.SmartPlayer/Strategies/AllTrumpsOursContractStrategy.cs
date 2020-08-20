@@ -88,13 +88,11 @@
                 if (context.Bids.Any(x => x.Player == teammate && x.Type == cardSuit.ToBidType())
                     && context.AvailableCardsToPlay.HasAnyOfSuit(cardSuit))
                 {
-                    return new PlayCardAction(
-                        context.AvailableCardsToPlay.Where(x => x.Suit == cardSuit)
-                            .OrderBy(x => x.TrumpOrder).FirstOrDefault());
+                    return new PlayCardAction(context.AvailableCardsToPlay.Where(x => x.Suit == cardSuit).Lowest(x => x.TrumpOrder));
                 }
             }
 
-            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
+            return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.TrumpOrder));
         }
 
         public PlayCardAction PlaySecond(PlayerPlayCardContext context, CardCollection playedCards)
@@ -111,7 +109,7 @@
                 return new PlayCardAction(Card.GetCard(firstCardSuit, CardType.Nine));
             }
 
-            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
+            return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.TrumpOrder));
         }
 
         public PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
@@ -135,12 +133,18 @@
                 return new PlayCardAction(Card.GetCard(firstCardSuit, CardType.Ace));
             }
 
-            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
+            return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.TrumpOrder));
         }
 
         public PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
         {
-            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
+            //// var firstCardSuit = context.CurrentTrickActions[0].Card.Suit;
+            //// if (trickWinner.IsInSameTeamWith(context.MyPosition) && context.AvailableCardsToPlay.HasAnyOfSuit(firstCardSuit))
+            //// {
+            ////     return new PlayCardAction(context.AvailableCardsToPlay.Where(x => x.Suit == firstCardSuit).Highest(x => x.TrumpOrder));
+            //// }
+
+            return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.TrumpOrder));
         }
     }
 }

@@ -81,17 +81,17 @@
                 }
             }
 
-            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());
+            return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.NoTrumpOrder));
         }
 
         public PlayCardAction PlaySecond(PlayerPlayCardContext context, CardCollection playedCards)
         {
-            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());
+            return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.NoTrumpOrder));
         }
 
         public PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
         {
-            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());
+            return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.NoTrumpOrder));
         }
 
         public PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
@@ -99,11 +99,10 @@
             if (trickWinner.IsInSameTeamWith(context.MyPosition) && context.AvailableCardsToPlay.Any(x => x.Type != CardType.Ace && x.Type != CardType.Ten))
             {
                 return new PlayCardAction(
-                    context.AvailableCardsToPlay.Where(x => x.Type != CardType.Ace && x.Type != CardType.Ten)
-                        .OrderByDescending(x => x.NoTrumpOrder).FirstOrDefault());
+                    context.AvailableCardsToPlay.Where(x => x.Type != CardType.Ace && x.Type != CardType.Ten).Highest(x => x.NoTrumpOrder));
             }
 
-            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());
+            return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.NoTrumpOrder));
         }
     }
 }

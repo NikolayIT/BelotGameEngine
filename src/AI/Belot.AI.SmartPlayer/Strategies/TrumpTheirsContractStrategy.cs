@@ -13,24 +13,21 @@
         {
             var trumpSuit = context.CurrentContract.Type.ToCardSuit();
             return new PlayCardAction(
-                context.AvailableCardsToPlay.OrderBy(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder)
-                    .FirstOrDefault());
+                context.AvailableCardsToPlay.Lowest(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder));
         }
 
         public PlayCardAction PlaySecond(PlayerPlayCardContext context, CardCollection playedCards)
         {
             var trumpSuit = context.CurrentContract.Type.ToCardSuit();
             return new PlayCardAction(
-                context.AvailableCardsToPlay.OrderBy(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder)
-                    .FirstOrDefault());
+                context.AvailableCardsToPlay.Lowest(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder));
         }
 
         public PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
         {
             var trumpSuit = context.CurrentContract.Type.ToCardSuit();
             return new PlayCardAction(
-                context.AvailableCardsToPlay.OrderBy(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder)
-                    .FirstOrDefault());
+                context.AvailableCardsToPlay.Lowest(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder));
         }
 
         public PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
@@ -41,13 +38,11 @@
             {
                 return new PlayCardAction(
                     context.AvailableCardsToPlay.Where(x => x.Suit != trumpSuit && x.Type != CardType.Ace)
-                        .OrderByDescending(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder)
-                        .FirstOrDefault());
+                        .Highest(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder));
             }
 
             return new PlayCardAction(
-                context.AvailableCardsToPlay.OrderBy(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder)
-                    .FirstOrDefault());
+                context.AvailableCardsToPlay.Lowest(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder));
         }
     }
 }

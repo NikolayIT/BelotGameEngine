@@ -52,18 +52,17 @@
         {
             if (context.CurrentContract.Type.HasFlag(BidType.AllTrumps))
             {
-                return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
+                return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.TrumpOrder));
             }
 
             if (context.CurrentContract.Type.HasFlag(BidType.NoTrumps))
             {
-                return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());
+                return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.NoTrumpOrder));
             }
 
             var trumpSuit = context.CurrentContract.Type.ToCardSuit();
             return new PlayCardAction(
-                context.AvailableCardsToPlay.OrderBy(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder)
-                    .FirstOrDefault());
+                context.AvailableCardsToPlay.Lowest(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder));
         }
 
         public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)

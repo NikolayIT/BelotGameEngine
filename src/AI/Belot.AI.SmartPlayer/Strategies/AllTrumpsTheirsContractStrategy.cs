@@ -89,12 +89,11 @@
                     && context.AvailableCardsToPlay.HasAnyOfSuit(cardSuit))
                 {
                     return new PlayCardAction(
-                        context.AvailableCardsToPlay.Where(x => x.Suit == cardSuit)
-                            .OrderBy(x => x.TrumpOrder).FirstOrDefault());
+                        context.AvailableCardsToPlay.Where(x => x.Suit == cardSuit).Lowest(x => x.TrumpOrder));
                 }
             }
 
-            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
+            return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.TrumpOrder));
         }
 
         public PlayCardAction PlaySecond(PlayerPlayCardContext context, CardCollection playedCards)
@@ -111,7 +110,7 @@
                 return new PlayCardAction(Card.GetCard(firstCardSuit, CardType.Nine));
             }
 
-            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
+            return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.TrumpOrder));
         }
 
         public PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
@@ -128,12 +127,12 @@
                 return new PlayCardAction(Card.GetCard(firstCardSuit, CardType.Nine));
             }
 
-            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
+            return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.TrumpOrder));
         }
 
         public PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
         {
-            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
+            return new PlayCardAction(context.AvailableCardsToPlay.Lowest(x => x.TrumpOrder));
         }
     }
 }
