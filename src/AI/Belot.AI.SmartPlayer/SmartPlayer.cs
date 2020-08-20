@@ -210,7 +210,7 @@
             {
                 if (card.Type == CardType.Jack && card.Suit == trumpSuit)
                 {
-                    bidPoints += 50;
+                    bidPoints += 55;
                 }
                 else if (card.Type == CardType.Nine && card.Suit == trumpSuit)
                 {

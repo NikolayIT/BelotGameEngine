@@ -10,6 +10,7 @@
     {
         public PlayCardAction PlayFirst(PlayerPlayCardContext context, CardCollection playedCards)
         {
+            // Play card if it will surely win the trick
             foreach (var card in context.AvailableCardsToPlay)
             {
                 if (card.Type == CardType.Jack && context.MyCards.Count(x => x.Suit == card.Suit) > 2)
@@ -81,8 +82,8 @@
                 }
             }
 
+            // Play card of the same suit as one of my teammate's bids
             var teammate = context.MyPosition.GetTeammate();
-
             foreach (var cardSuit in Card.AllSuits)
             {
                 if (context.Bids.Any(x => x.Player == teammate && x.Type == cardSuit.ToBidType())
