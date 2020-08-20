@@ -1,7 +1,6 @@
 ﻿namespace Belot.AI.DummyPlayer
 {
     using System.Collections.Generic;
-    using System.Linq;
 
     using Belot.Engine;
     using Belot.Engine.Cards;
@@ -13,30 +12,25 @@
     {
         public BidType GetBid(PlayerGetBidContext context)
         {
-            if (context.MyCards.Count(x => x.Type == CardType.Ace) == 4
+            if (context.MyCards.GetCount(x => x.Type == CardType.Ace) == 4
                 && context.AvailableBids.HasFlag(BidType.NoTrumps))
             {
                 return BidType.NoTrumps;
             }
 
-            if (context.MyCards.Count(x => x.Type == CardType.Jack) >= 3
+            if (context.MyCards.GetCount(x => x.Type == CardType.Jack) >= 3
                 && context.AvailableBids.HasFlag(BidType.AllTrumps))
             {
                 return BidType.AllTrumps;
             }
 
-            // Group by suit
-            var cardsBySuit = new[] { new List<Card>(8), new List<Card>(8), new List<Card>(8), new List<Card>(8) };
-            foreach (var card in context.MyCards)
+            for (var i = 0; i < Card.AllSuits.Length; i++)
             {
-                cardsBySuit[(int)card.Suit].Add(card);
-            }
-
-            foreach (var cards in cardsBySuit)
-            {
-                if (cards.Count >= 4 && context.AvailableBids.HasFlag(cards.First().Suit.ToBidType()))
+                var cardSuit = Card.AllSuits[i];
+                if (context.AvailableBids.HasFlag(cardSuit.ToBidType())
+                    && context.MyCards.GetCount(x => x.Suit == cardSuit) >= 4)
                 {
-                    return cards.First().Suit.ToBidType();
+                    return cardSuit.ToBidType();
                 }
             }
 

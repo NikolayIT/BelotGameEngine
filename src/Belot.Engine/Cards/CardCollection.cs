@@ -62,6 +62,21 @@
             return false;
         }
 
+        public int GetCount(Func<Card, bool> predicate)
+        {
+            int count = 0;
+            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
+            {
+                if (((this.cards >> currentHashCode) & 1) == 1
+                    && predicate(Card.AllCards[currentHashCode]))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
         public CardCollection Where(Func<Card, bool> predicate)
         {
             return new CardCollection(this, predicate);

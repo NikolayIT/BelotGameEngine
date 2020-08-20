@@ -38,37 +38,38 @@
         public BidType GetBid(PlayerGetBidContext context)
         {
             var announcePoints = this.validAnnouncesService.GetAvailableAnnounces(context.MyCards).Sum(x => x.Value);
+            var cards = context.MyCards.ToList();
             var bids = new Dictionary<BidType, int>();
             if (context.AvailableBids.HasFlag(BidType.Clubs))
             {
-                bids.Add(BidType.Clubs, CalculateTrumpBidPoints(context.MyCards, CardSuit.Club, announcePoints));
+                bids.Add(BidType.Clubs, CalculateTrumpBidPoints(cards, CardSuit.Club, announcePoints));
             }
 
             if (context.AvailableBids.HasFlag(BidType.Diamonds))
             {
-                bids.Add(BidType.Diamonds, CalculateTrumpBidPoints(context.MyCards, CardSuit.Diamond, announcePoints));
+                bids.Add(BidType.Diamonds, CalculateTrumpBidPoints(cards, CardSuit.Diamond, announcePoints));
             }
 
             if (context.AvailableBids.HasFlag(BidType.Hearts))
             {
-                bids.Add(BidType.Hearts, CalculateTrumpBidPoints(context.MyCards, CardSuit.Heart, announcePoints));
+                bids.Add(BidType.Hearts, CalculateTrumpBidPoints(cards, CardSuit.Heart, announcePoints));
             }
 
             if (context.AvailableBids.HasFlag(BidType.Spades))
             {
-                bids.Add(BidType.Spades, CalculateTrumpBidPoints(context.MyCards, CardSuit.Spade, announcePoints));
+                bids.Add(BidType.Spades, CalculateTrumpBidPoints(cards, CardSuit.Spade, announcePoints));
             }
 
             if (context.AvailableBids.HasFlag(BidType.AllTrumps))
             {
                 bids.Add(
                     BidType.AllTrumps,
-                    CalculateAllTrumpsBidPoints(context.MyCards, context.Bids, context.MyPosition.GetTeammate(), announcePoints));
+                    CalculateAllTrumpsBidPoints(cards, context.Bids, context.MyPosition.GetTeammate(), announcePoints));
             }
 
             if (context.AvailableBids.HasFlag(BidType.NoTrumps))
             {
-                bids.Add(BidType.NoTrumps, CalculateNoTrumpsBidPoints(context.MyCards));
+                bids.Add(BidType.NoTrumps, CalculateNoTrumpsBidPoints(cards));
             }
 
             var bid = bids.Where(x => x.Value >= 100).OrderByDescending(x => x.Value)
@@ -140,11 +141,12 @@
         {
         }
 
-        private static int CalculateAllTrumpsBidPoints(CardCollection cards, IEnumerable<Bid> previousBids, PlayerPosition teammate, int announcePoints)
+        private static int CalculateAllTrumpsBidPoints(List<Card> cards, IEnumerable<Bid> previousBids, PlayerPosition teammate, int announcePoints)
         {
             var bidPoints = announcePoints / 3;
-            foreach (var card in cards)
+            for (var i = 0; i < cards.Count; i++)
             {
+                var card = cards[i];
                 if (card.Type == CardType.Jack)
                 {
                     bidPoints += 45;
@@ -176,11 +178,12 @@
             return bidPoints;
         }
 
-        private static int CalculateNoTrumpsBidPoints(CardCollection cards)
+        private static int CalculateNoTrumpsBidPoints(List<Card> cards)
         {
             var bidPoints = 0;
-            foreach (var card in cards)
+            for (var i = 0; i < cards.Count; i++)
             {
+                var card = cards[i];
                 if (card.Type == CardType.Ace)
                 {
                     bidPoints += 45;
@@ -203,11 +206,12 @@
             return bidPoints;
         }
 
-        private static int CalculateTrumpBidPoints(CardCollection cards, CardSuit trumpSuit, int announcePoints)
+        private static int CalculateTrumpBidPoints(List<Card> cards, CardSuit trumpSuit, int announcePoints)
         {
             var bidPoints = announcePoints / 2;
-            foreach (var card in cards)
+            for (var i = 0; i < cards.Count; i++)
             {
+                var card = cards[i];
                 if (card.Type == CardType.Jack && card.Suit == trumpSuit)
                 {
                     bidPoints += 55;
