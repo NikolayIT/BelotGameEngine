@@ -8,13 +8,6 @@
 
     public class NoTrumpsOursContractStrategy : IPlayStrategy
     {
-        private readonly TrickWinnerService trickWinnerService;
-
-        public NoTrumpsOursContractStrategy(TrickWinnerService trickWinnerService)
-        {
-            this.trickWinnerService = trickWinnerService;
-        }
-
         public PlayCardAction PlayFirst(PlayerPlayCardContext context, CardCollection playedCards)
         {
             foreach (var card in context.AvailableCardsToPlay)
@@ -96,15 +89,14 @@
             return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());
         }
 
-        public PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards)
+        public PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
         {
             return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());
         }
 
-        public PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards)
+        public PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCard, PlayerPosition trickWinners)
         {
-            var winner = this.trickWinnerService.GetWinner(context.CurrentContract, context.CurrentTrickActions.ToList());
-            if (winner.IsInSameTeamWith(context.MyPosition) && context.AvailableCardsToPlay.Any(x => x.Type != CardType.Ace && x.Type != CardType.Ten))
+            if (trickWinners.IsInSameTeamWith(context.MyPosition) && context.AvailableCardsToPlay.Any(x => x.Type != CardType.Ace && x.Type != CardType.Ten))
             {
                 return new PlayCardAction(
                     context.AvailableCardsToPlay.Where(x => x.Type != CardType.Ace && x.Type != CardType.Ten)

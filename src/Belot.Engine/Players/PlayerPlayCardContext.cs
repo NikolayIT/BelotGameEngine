@@ -10,7 +10,7 @@
         // TODO: Don't disclose the exact type of announce
         public IEnumerable<Announce> Announces { get; set; }
 
-        public IEnumerable<PlayCardAction> CurrentTrickActions { get; set; }
+        public IList<PlayCardAction> CurrentTrickActions { get; set; }
 
         public IEnumerable<PlayCardAction> RoundActions { get; set; }
 

@@ -8,13 +8,6 @@
 
     public class AllTrumpsOursContractStrategy : IPlayStrategy
     {
-        private readonly TrickWinnerService trickWinnerService;
-
-        public AllTrumpsOursContractStrategy(TrickWinnerService trickWinnerService)
-        {
-            this.trickWinnerService = trickWinnerService;
-        }
-
         public PlayCardAction PlayFirst(PlayerPlayCardContext context, CardCollection playedCards)
         {
             foreach (var card in context.AvailableCardsToPlay)
@@ -106,7 +99,7 @@
 
         public PlayCardAction PlaySecond(PlayerPlayCardContext context, CardCollection playedCards)
         {
-            var firstCardSuit = context.CurrentTrickActions.First().Card.Suit;
+            var firstCardSuit = context.CurrentTrickActions[0].Card.Suit;
             if (context.AvailableCardsToPlay.Contains(Card.GetCard(firstCardSuit, CardType.Jack)))
             {
                 return new PlayCardAction(Card.GetCard(firstCardSuit, CardType.Jack));
@@ -121,9 +114,9 @@
             return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
         }
 
-        public PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards)
+        public PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
         {
-            var firstCardSuit = context.CurrentTrickActions.First().Card.Suit;
+            var firstCardSuit = context.CurrentTrickActions[0].Card.Suit;
             if (context.AvailableCardsToPlay.Contains(Card.GetCard(firstCardSuit, CardType.Jack)))
             {
                 return new PlayCardAction(Card.GetCard(firstCardSuit, CardType.Jack));
@@ -135,10 +128,17 @@
                 return new PlayCardAction(Card.GetCard(firstCardSuit, CardType.Nine));
             }
 
+            if (context.AvailableCardsToPlay.Contains(Card.GetCard(firstCardSuit, CardType.Ace))
+                && playedCards.Contains(Card.GetCard(firstCardSuit, CardType.Nine))
+                && playedCards.Contains(Card.GetCard(firstCardSuit, CardType.Jack)))
+            {
+                return new PlayCardAction(Card.GetCard(firstCardSuit, CardType.Ace));
+            }
+
             return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
         }
 
-        public PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards)
+        public PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
         {
             return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.TrumpOrder).FirstOrDefault());
         }

@@ -14,6 +14,7 @@
     public class SmartPlayer : IPlayer
     {
         private readonly ValidAnnouncesService validAnnouncesService;
+        private readonly TrickWinnerService trickWinnerService;
 
         private readonly IPlayStrategy allTrumpsOursContractStrategy;
         private readonly IPlayStrategy allTrumpsTheirsContractStrategy;
@@ -25,13 +26,13 @@
         public SmartPlayer()
         {
             this.validAnnouncesService = new ValidAnnouncesService();
-            var trickWinnerService = new TrickWinnerService();
-            this.allTrumpsOursContractStrategy = new AllTrumpsOursContractStrategy(trickWinnerService);
-            this.allTrumpsTheirsContractStrategy = new AllTrumpsTheirsContractStrategy(trickWinnerService);
-            this.noTrumpsOursContractStrategy = new NoTrumpsOursContractStrategy(trickWinnerService);
-            this.noTrumpsTheirsContractStrategy = new NoTrumpsTheirsContractStrategy(trickWinnerService);
-            this.trumpOursContractStrategy = new TrumpOursContractStrategy(trickWinnerService);
-            this.trumpTheirsContractStrategy = new TrumpTheirsContractStrategy(trickWinnerService);
+            this.trickWinnerService = new TrickWinnerService();
+            this.allTrumpsOursContractStrategy = new AllTrumpsOursContractStrategy();
+            this.allTrumpsTheirsContractStrategy = new AllTrumpsTheirsContractStrategy();
+            this.noTrumpsOursContractStrategy = new NoTrumpsOursContractStrategy();
+            this.noTrumpsTheirsContractStrategy = new NoTrumpsTheirsContractStrategy();
+            this.trumpOursContractStrategy = new TrumpOursContractStrategy();
+            this.trumpTheirsContractStrategy = new TrumpTheirsContractStrategy();
         }
 
         public BidType GetBid(PlayerGetBidContext context)
@@ -91,8 +92,6 @@
                 }
             }
 
-            var currentTricksActionsCount = context.CurrentTrickActions.Count();
-
             IPlayStrategy strategy;
             if (context.CurrentContract.Type.HasFlag(BidType.AllTrumps))
             {
@@ -108,18 +107,24 @@
             }
             else
             {
-                // Suit contract
+                // Trump contract
                 strategy = context.CurrentContract.Player.IsInSameTeamWith(context.MyPosition)
                                ? this.trumpOursContractStrategy
                                : this.trumpTheirsContractStrategy;
             }
 
-            return currentTricksActionsCount switch
+            return context.CurrentTrickActions.Count switch
                 {
                     0 => strategy.PlayFirst(context, playedCards),
                     1 => strategy.PlaySecond(context, playedCards),
-                    2 => strategy.PlayThird(context, playedCards),
-                    _ => strategy.PlayFourth(context, playedCards),
+                    2 => strategy.PlayThird(
+                        context,
+                        playedCards,
+                        this.trickWinnerService.GetWinner(context.CurrentContract, context.CurrentTrickActions)),
+                    _ => strategy.PlayFourth(
+                        context,
+                        playedCards,
+                        this.trickWinnerService.GetWinner(context.CurrentContract, context.CurrentTrickActions)),
                 };
         }
 

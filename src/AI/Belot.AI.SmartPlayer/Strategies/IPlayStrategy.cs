@@ -9,8 +9,8 @@
 
         PlayCardAction PlaySecond(PlayerPlayCardContext context, CardCollection playedCards);
 
-        PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards);
+        PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner);
 
-        PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards);
+        PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner);
     }
 }

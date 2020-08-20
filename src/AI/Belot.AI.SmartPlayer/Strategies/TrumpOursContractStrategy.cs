@@ -9,17 +9,9 @@
 
     public class TrumpOursContractStrategy : IPlayStrategy
     {
-        private readonly TrickWinnerService trickWinnerService;
-
-        public TrumpOursContractStrategy(TrickWinnerService trickWinnerService)
-        {
-            this.trickWinnerService = trickWinnerService;
-        }
-
         public PlayCardAction PlayFirst(PlayerPlayCardContext context, CardCollection playedCards)
         {
-            //// if (context.CurrentContract.Player.IsInSameTeamWith(context.MyPosition)
-            ////     && context.AvailableCardsToPlay.HasAnyOfSuit(context.CurrentContract.Type.ToCardSuit()))
+            //// if (context.AvailableCardsToPlay.HasAnyOfSuit(context.CurrentContract.Type.ToCardSuit()))
             //// {
             ////     Interlocked.Increment(ref GlobalCounters.Counters[1]);
             ////     return new PlayCardAction(
@@ -41,7 +33,7 @@
                     .FirstOrDefault());
         }
 
-        public PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards)
+        public PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
         {
             var trumpSuit = context.CurrentContract.Type.ToCardSuit();
             return new PlayCardAction(
@@ -49,11 +41,10 @@
                     .FirstOrDefault());
         }
 
-        public PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards)
+        public PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
         {
-            var winner = this.trickWinnerService.GetWinner(context.CurrentContract, context.CurrentTrickActions.ToList());
             var trumpSuit = context.CurrentContract.Type.ToCardSuit();
-            if (winner.IsInSameTeamWith(context.MyPosition) && context.AvailableCardsToPlay.Any(
+            if (trickWinner.IsInSameTeamWith(context.MyPosition) && context.AvailableCardsToPlay.Any(
                     x => x.Suit != trumpSuit && x.Type != CardType.Ace))
             {
                 return new PlayCardAction(
