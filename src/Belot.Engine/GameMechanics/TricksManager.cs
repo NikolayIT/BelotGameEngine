@@ -96,8 +96,7 @@
                             announceContext.AvailableAnnounces = availableAnnounces;
 
                             // Execute GetAnnounces
-                            var playerAnnounces = this.players[currentPlayer.Index()].GetAnnounces(announceContext)
-                                .ToList();
+                            var playerAnnounces = this.players[currentPlayer.Index()].GetAnnounces(announceContext);
 
                             // Validate
                             for (var i = 0; i < playerAnnounces.Count; i++)

@@ -35,8 +35,12 @@
             Console.WriteLine();
             Console.WriteLine(new string('=', LineLength));
 
+            // Warmup
+            new BelotGame(new SmartPlayer(), new SmartPlayerPreviousVersion(), new DummyPlayer(), new RandomPlayer())
+                .PlayGame();
+
             var totalStopwatch = Stopwatch.StartNew();
-            SimulateGames(FourSmartGames, 200_000, parallelism);
+            SimulateGames(TwoSmartVsTwoPreviousVersionGames, 200_000, parallelism);
             SimulateGames(TwoSmartVsTwoDummyGames, 200_000, parallelism);
             SimulateGames(OneSmartVsThreeDummyGames, 200_000, parallelism);
             SimulateGames(TwoSmartVsTwoRandomGames, 200_000, parallelism);
