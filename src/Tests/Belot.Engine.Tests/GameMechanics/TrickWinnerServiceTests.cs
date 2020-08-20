@@ -42,7 +42,17 @@
         [InlineData(CardType.Ten, CardSuit.Diamond, CardType.Ace, CardSuit.Diamond, CardType.Nine, CardSuit.Diamond, CardType.Jack, CardSuit.Diamond, BidType.AllTrumps, PlayerPosition.West)]
         [InlineData(CardType.Queen, CardSuit.Diamond, CardType.King, CardSuit.Diamond, CardType.Seven, CardSuit.Diamond, CardType.Eight, CardSuit.Diamond, BidType.AllTrumps, PlayerPosition.East)]
         [InlineData(CardType.Queen, CardSuit.Diamond, CardType.King, CardSuit.Spade, CardType.Seven, CardSuit.Heart, CardType.Eight, CardSuit.Club, BidType.AllTrumps, PlayerPosition.South)]
-        public void GetWinnerShouldWorkCorrectly(CardType southCardType, CardSuit southCardSuit, CardType eastCardType, CardSuit eastCardSuit, CardType northCardType, CardSuit northCardSuit, CardType westCardType, CardSuit westCardSuit, BidType bidType, PlayerPosition winnerPosition)
+        public void GetWinnerShouldWorkCorrectly(
+            CardType southCardType,
+            CardSuit southCardSuit,
+            CardType eastCardType,
+            CardSuit eastCardSuit,
+            CardType northCardType,
+            CardSuit northCardSuit,
+            CardType westCardType,
+            CardSuit westCardSuit,
+            BidType bidType,
+            PlayerPosition winnerPosition)
         {
             var trickWinnerService = new TrickWinnerService();
             var bid = new Bid(PlayerPosition.East, bidType);
