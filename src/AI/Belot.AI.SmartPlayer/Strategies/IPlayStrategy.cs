@@ -5,6 +5,12 @@
 
     public interface IPlayStrategy
     {
-        PlayCardAction PlayCard(PlayerPlayCardContext context, CardCollection playedCards);
+        PlayCardAction PlayFirst(PlayerPlayCardContext context, CardCollection playedCards);
+
+        PlayCardAction PlaySecond(PlayerPlayCardContext context, CardCollection playedCards);
+
+        PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards);
+
+        PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards);
     }
 }

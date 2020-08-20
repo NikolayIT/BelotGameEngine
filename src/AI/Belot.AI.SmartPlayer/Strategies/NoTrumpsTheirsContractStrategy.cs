@@ -3,11 +3,19 @@
     using System.Linq;
 
     using Belot.Engine.Cards;
+    using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
-    public class NoTrumpsPlaying1StPlayStrategy : IPlayStrategy
+    public class NoTrumpsTheirsContractStrategy : IPlayStrategy
     {
-        public PlayCardAction PlayCard(PlayerPlayCardContext context, CardCollection playedCards)
+        private readonly TrickWinnerService trickWinnerService;
+
+        public NoTrumpsTheirsContractStrategy(TrickWinnerService trickWinnerService)
+        {
+            this.trickWinnerService = trickWinnerService;
+        }
+
+        public PlayCardAction PlayFirst(PlayerPlayCardContext context, CardCollection playedCards)
         {
             foreach (var card in context.AvailableCardsToPlay)
             {
@@ -78,6 +86,29 @@
                 {
                     return new PlayCardAction(card);
                 }
+            }
+
+            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());
+        }
+
+        public PlayCardAction PlaySecond(PlayerPlayCardContext context, CardCollection playedCards)
+        {
+            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());
+        }
+
+        public PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards)
+        {
+            return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());
+        }
+
+        public PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards)
+        {
+            var winner = this.trickWinnerService.GetWinner(context.CurrentContract, context.CurrentTrickActions.ToList());
+            if (winner.IsInSameTeamWith(context.MyPosition) && context.AvailableCardsToPlay.Any(x => x.Type != CardType.Ace && x.Type != CardType.Ten))
+            {
+                return new PlayCardAction(
+                    context.AvailableCardsToPlay.Where(x => x.Type != CardType.Ace && x.Type != CardType.Ten)
+                        .OrderByDescending(x => x.NoTrumpOrder).FirstOrDefault());
             }
 
             return new PlayCardAction(context.AvailableCardsToPlay.OrderBy(x => x.NoTrumpOrder).FirstOrDefault());

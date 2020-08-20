@@ -13,43 +13,25 @@
 
     public class SmartPlayer : IPlayer
     {
-        private readonly TrickWinnerService trickWinnerService;
         private readonly ValidAnnouncesService validAnnouncesService;
 
-        private readonly IPlayStrategy allTrumpsPlaying1StStrategy;
-        private readonly IPlayStrategy allTrumpsPlaying2NdStrategy;
-        private readonly IPlayStrategy allTrumpsPlaying3RdStrategy;
-        private readonly IPlayStrategy allTrumpsPlaying4ThStrategy;
-
-        private readonly IPlayStrategy noTrumpsPlaying1StStrategy;
-        private readonly IPlayStrategy noTrumpsPlaying2NdStrategy;
-        private readonly IPlayStrategy noTrumpsPlaying3RdStrategy;
-        private readonly IPlayStrategy noTrumpsPlaying4ThStrategy;
-
-        private readonly IPlayStrategy trumpPlaying1StStrategy;
-        private readonly IPlayStrategy trumpPlaying2NdStrategy;
-        private readonly IPlayStrategy trumpPlaying3RdStrategy;
-        private readonly IPlayStrategy trumpPlaying4ThStrategy;
+        private readonly IPlayStrategy allTrumpsOursContractStrategy;
+        private readonly IPlayStrategy allTrumpsTheirsContractStrategy;
+        private readonly IPlayStrategy noTrumpsOursContractStrategy;
+        private readonly IPlayStrategy noTrumpsTheirsContractStrategy;
+        private readonly IPlayStrategy trumpOursContractStrategy;
+        private readonly IPlayStrategy trumpTheirsContractStrategy;
 
         public SmartPlayer()
         {
-            this.trickWinnerService = new TrickWinnerService();
             this.validAnnouncesService = new ValidAnnouncesService();
-
-            this.allTrumpsPlaying1StStrategy = new AllTrumpsPlaying1StPlayStrategy();
-            this.allTrumpsPlaying2NdStrategy = new AllTrumpsPlaying2NdPlayStrategy();
-            this.allTrumpsPlaying3RdStrategy = new AllTrumpsPlaying3RdPlayStrategy();
-            this.allTrumpsPlaying4ThStrategy = new AllTrumpsPlaying4ThPlayStrategy();
-
-            this.noTrumpsPlaying1StStrategy = new NoTrumpsPlaying1StPlayStrategy();
-            this.noTrumpsPlaying2NdStrategy = new NoTrumpsPlaying2NdPlayStrategy();
-            this.noTrumpsPlaying3RdStrategy = new NoTrumpsPlaying3RdPlayStrategy();
-            this.noTrumpsPlaying4ThStrategy = new NoTrumpsPlaying4ThPlayStrategy(this.trickWinnerService);
-
-            this.trumpPlaying1StStrategy = new TrumpPlaying1StPlayStrategy();
-            this.trumpPlaying2NdStrategy = new TrumpPlaying2NdPlayStrategy();
-            this.trumpPlaying3RdStrategy = new TrumpPlaying3RdPlayStrategy();
-            this.trumpPlaying4ThStrategy = new TrumpPlaying4ThPlayStrategy(this.trickWinnerService);
+            var trickWinnerService = new TrickWinnerService();
+            this.allTrumpsOursContractStrategy = new AllTrumpsOursContractStrategy(trickWinnerService);
+            this.allTrumpsTheirsContractStrategy = new AllTrumpsTheirsContractStrategy(trickWinnerService);
+            this.noTrumpsOursContractStrategy = new NoTrumpsOursContractStrategy(trickWinnerService);
+            this.noTrumpsTheirsContractStrategy = new NoTrumpsTheirsContractStrategy(trickWinnerService);
+            this.trumpOursContractStrategy = new TrumpOursContractStrategy(trickWinnerService);
+            this.trumpTheirsContractStrategy = new TrumpTheirsContractStrategy(trickWinnerService);
         }
 
         public BidType GetBid(PlayerGetBidContext context)
@@ -111,38 +93,34 @@
 
             var currentTricksActionsCount = context.CurrentTrickActions.Count();
 
-            // All trumps
+            IPlayStrategy strategy;
             if (context.CurrentContract.Type.HasFlag(BidType.AllTrumps))
             {
-                return currentTricksActionsCount == 0
-                           ? this.allTrumpsPlaying1StStrategy.PlayCard(context, playedCards)
-                           : currentTricksActionsCount == 1
-                               ? this.allTrumpsPlaying2NdStrategy.PlayCard(context, playedCards)
-                               : currentTricksActionsCount == 2
-                                   ? this.allTrumpsPlaying3RdStrategy.PlayCard(context, playedCards)
-                                   : this.allTrumpsPlaying4ThStrategy.PlayCard(context, playedCards);
+                strategy = context.CurrentContract.Player.IsInSameTeamWith(context.MyPosition)
+                               ? this.allTrumpsOursContractStrategy
+                               : this.allTrumpsTheirsContractStrategy;
             }
-
-            // No trumps
-            if (context.CurrentContract.Type.HasFlag(BidType.NoTrumps))
+            else if (context.CurrentContract.Type.HasFlag(BidType.NoTrumps))
             {
-                return currentTricksActionsCount == 0
-                           ? this.noTrumpsPlaying1StStrategy.PlayCard(context, playedCards)
-                           : currentTricksActionsCount == 1
-                               ? this.noTrumpsPlaying2NdStrategy.PlayCard(context, playedCards)
-                               : currentTricksActionsCount == 2
-                                   ? this.noTrumpsPlaying3RdStrategy.PlayCard(context, playedCards)
-                                   : this.noTrumpsPlaying4ThStrategy.PlayCard(context, playedCards);
+                strategy = context.CurrentContract.Player.IsInSameTeamWith(context.MyPosition)
+                               ? this.noTrumpsOursContractStrategy
+                               : this.noTrumpsTheirsContractStrategy;
+            }
+            else
+            {
+                // Suit contract
+                strategy = context.CurrentContract.Player.IsInSameTeamWith(context.MyPosition)
+                               ? this.trumpOursContractStrategy
+                               : this.trumpTheirsContractStrategy;
             }
 
-            // Suit contract
-            return currentTricksActionsCount == 0
-                       ? this.trumpPlaying1StStrategy.PlayCard(context, playedCards)
-                       : currentTricksActionsCount == 1
-                           ? this.trumpPlaying2NdStrategy.PlayCard(context, playedCards)
-                           : currentTricksActionsCount == 2
-                               ? this.trumpPlaying3RdStrategy.PlayCard(context, playedCards)
-                               : this.trumpPlaying4ThStrategy.PlayCard(context, playedCards);
+            return currentTricksActionsCount switch
+                {
+                    0 => strategy.PlayFirst(context, playedCards),
+                    1 => strategy.PlaySecond(context, playedCards),
+                    2 => strategy.PlayThird(context, playedCards),
+                    _ => strategy.PlayFourth(context, playedCards),
+                };
         }
 
         public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)
