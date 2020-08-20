@@ -41,8 +41,10 @@
             SimulateGames(OneSmartVsThreeDummyGames, 200_000, parallelism);
             SimulateGames(TwoSmartVsTwoRandomGames, 200_000, parallelism);
             SimulateGames(OneSmartVsThreeRandomGames, 200_000, parallelism);
-            //// SimulateGames(SmartVsSmartGames, 200_000, 12);
+            //// SimulateGames(FourSmartGames, 200_000, parallelism);
             //// SimulateGames(SmartVsSmartGamesWithLogging, 10, 1, true);
+            //// SimulateGames(FourRandomGames, 200_000, parallelism);
+            //// SimulateGames(TwoDummyVsTwoRandomGames, 200_000, parallelism);
             Console.WriteLine($"Total tests time: {totalStopwatch.Elapsed}");
         }
 
@@ -91,7 +93,7 @@
             Console.WriteLine(new string('=', LineLength));
         }
 
-        private static BelotGame TwoSmartVsTwoSmartGames() =>
+        private static BelotGame FourSmartGames() =>
             new BelotGame(new SmartPlayer(), new SmartPlayer(), new SmartPlayer(), new SmartPlayer());
 
         private static BelotGame TwoSmartVsTwoPreviousVersionGames() =>
@@ -112,6 +114,12 @@
 
         private static BelotGame OneSmartVsThreeRandomGames() =>
             new BelotGame(new SmartPlayer(), new RandomPlayer(), new RandomPlayer(), new RandomPlayer());
+
+        private static BelotGame FourRandomGames() =>
+            new BelotGame(new RandomPlayer(), new RandomPlayer(), new RandomPlayer(), new RandomPlayer());
+
+        private static BelotGame TwoDummyVsTwoRandomGames() =>
+            new BelotGame(new DummyPlayer(), new RandomPlayer(), new DummyPlayer(), new RandomPlayer());
 
         private static BelotGame SmartVsSmartGamesWithLogging() =>
             new BelotGame(
