@@ -44,7 +44,7 @@
                     : Card.GetCard(playedCard.Suit, CardType.Queen));
         }
 
-        public ICollection<Announce> GetAvailableAnnounces(CardCollection playerCards)
+        public IList<Announce> GetAvailableAnnounces(CardCollection playerCards)
         {
             var cards = new CardCollection(playerCards);
             var combinations = new List<Announce>(2);

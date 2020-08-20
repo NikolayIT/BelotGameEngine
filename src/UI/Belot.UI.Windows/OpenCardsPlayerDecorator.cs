@@ -26,7 +26,7 @@
             return this.realPlayer.GetBid(context);
         }
 
-        public IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
+        public IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
         {
             this.Cards = context.MyCards;
             return this.realPlayer.GetAnnounces(context);

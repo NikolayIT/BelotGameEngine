@@ -9,7 +9,7 @@
     {
         BidType GetBid(PlayerGetBidContext context);
 
-        IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context);
+        IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context);
 
         PlayCardAction PlayCard(PlayerPlayCardContext context);
 

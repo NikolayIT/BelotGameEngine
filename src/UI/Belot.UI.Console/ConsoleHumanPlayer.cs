@@ -126,7 +126,7 @@
             }
         }
 
-        public IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
+        public IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
         {
             this.NewRoundCheck(context);
             this.DrawLastBids(context);

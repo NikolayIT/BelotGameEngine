@@ -21,7 +21,7 @@
 
         public BidType? GetBidAction { get; set; }
 
-        public IEnumerable<Announce> GetAnnouncesAction { get; set; }
+        public IList<Announce> GetAnnouncesAction { get; set; }
 
         public PlayCardAction PlayCardAction { get; set; }
 
@@ -38,7 +38,7 @@
             return returnAction;
         }
 
-        public IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
+        public IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
         {
             this.InfoChangedInGetAnnounces?.Invoke(this, context);
             return context.AvailableAnnounces;

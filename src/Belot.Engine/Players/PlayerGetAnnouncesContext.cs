@@ -10,6 +10,6 @@
 
         public IEnumerable<PlayCardAction> CurrentTrickActions { get; set; }
 
-        public IEnumerable<Announce> AvailableAnnounces { get; set; }
+        public IList<Announce> AvailableAnnounces { get; set; }
     }
 }

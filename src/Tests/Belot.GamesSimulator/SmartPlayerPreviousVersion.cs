@@ -97,7 +97,7 @@
 
         public BidType GetBid(PlayerGetBidContext context) => this.compiledPlayer.GetBid(context);
 
-        public IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context) => this.compiledPlayer.GetAnnounces(context);
+        public IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context) => this.compiledPlayer.GetAnnounces(context);
 
         public PlayCardAction PlayCard(PlayerPlayCardContext context) => this.compiledPlayer.PlayCard(context);
 

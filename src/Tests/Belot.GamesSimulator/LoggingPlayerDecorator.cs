@@ -29,7 +29,7 @@
             return bid;
         }
 
-        public IEnumerable<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
+        public IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
         {
             var announces = this.player.GetAnnounces(context);
             Console.ForegroundColor = ConsoleColor.DarkYellow;

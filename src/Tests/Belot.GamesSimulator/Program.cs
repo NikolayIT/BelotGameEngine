@@ -36,7 +36,7 @@
             Console.WriteLine(new string('=', LineLength));
 
             var totalStopwatch = Stopwatch.StartNew();
-            SimulateGames(TwoSmartVsTwoPreviousVersionGames, 200_000, parallelism);
+            SimulateGames(FourSmartGames, 200_000, parallelism);
             SimulateGames(TwoSmartVsTwoDummyGames, 200_000, parallelism);
             SimulateGames(OneSmartVsThreeDummyGames, 200_000, parallelism);
             SimulateGames(TwoSmartVsTwoRandomGames, 200_000, parallelism);
