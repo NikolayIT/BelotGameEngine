@@ -21,19 +21,13 @@
             {
                 "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/SmartPlayer.cs",
                 "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/GlobalCounters.cs",
-                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/AllTrumpsPlaying1StPlayStrategy.cs",
-                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/AllTrumpsPlaying2NdPlayStrategy.cs",
-                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/AllTrumpsPlaying3RdPlayStrategy.cs",
-                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/AllTrumpsPlaying4ThPlayStrategy.cs",
+                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/AllTrumpsOursContractStrategy.cs",
+                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/AllTrumpsTheirsContractStrategy.cs",
                 "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/IPlayStrategy.cs",
-                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/NoTrumpsPlaying1StPlayStrategy.cs",
-                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/NoTrumpsPlaying2NdPlayStrategy.cs",
-                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/NoTrumpsPlaying3RdPlayStrategy.cs",
-                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/NoTrumpsPlaying4ThPlayStrategy.cs",
-                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/TrumpPlaying1StPlayStrategy.cs",
-                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/TrumpPlaying2NdPlayStrategy.cs",
-                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/TrumpPlaying3RdPlayStrategy.cs",
-                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/TrumpPlaying4ThPlayStrategy.cs",
+                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/NoTrumpsOursContractStrategy.cs",
+                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/NoTrumpsTheirsContractStrategy.cs",
+                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/TrumpOursContractStrategy.cs",
+                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/TrumpTheirsContractStrategy.cs",
             };
 
         private static readonly Type CompiledPlayerType;
