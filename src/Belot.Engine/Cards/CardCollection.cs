@@ -62,6 +62,19 @@
             return false;
         }
 
+        public Card FirstOrDefault()
+        {
+            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
+            {
+                if (((this.cards >> currentHashCode) & 1) == 1)
+                {
+                    return Card.AllCards[currentHashCode];
+                }
+            }
+
+            return null;
+        }
+
         public int GetCount(Func<Card, bool> predicate)
         {
             int count = 0;
