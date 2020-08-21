@@ -1,9 +1,6 @@
 ﻿namespace Belot.AI.SmartPlayer.Strategies
 {
-    using System.Linq;
-
     using Belot.Engine.Cards;
-    using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
     public class NoTrumpsOursContractStrategy : IPlayStrategy
@@ -12,7 +9,7 @@
         {
             foreach (var card in context.AvailableCardsToPlay)
             {
-                if (card.Type == CardType.Ace && context.MyCards.Count(x => x.Suit == card.Suit) > 3)
+                if (card.Type == CardType.Ace && context.MyCards.GetCount(x => x.Suit == card.Suit) > 3)
                 {
                     return new PlayCardAction(card);
                 }

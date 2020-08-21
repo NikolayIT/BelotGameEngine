@@ -3,7 +3,6 @@
     using System.Linq;
 
     using Belot.Engine.Cards;
-    using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
     public class AllTrumpsOursContractStrategy : IPlayStrategy
@@ -13,7 +12,7 @@
             // Play card if it will surely win the trick
             foreach (var card in context.AvailableCardsToPlay)
             {
-                if (card.Type == CardType.Jack && context.MyCards.Count(x => x.Suit == card.Suit) > 2)
+                if (card.Type == CardType.Jack && context.MyCards.GetCount(x => x.Suit == card.Suit) > 2)
                 {
                     return new PlayCardAction(card);
                 }
@@ -84,12 +83,14 @@
 
             // Play card of the same suit as one of my teammate's bids
             var teammate = context.MyPosition.GetTeammate();
-            foreach (var cardSuit in Card.AllSuits)
+            for (var i = 0; i < Card.AllSuits.Length; i++)
             {
+                var cardSuit = Card.AllSuits[i];
                 if (context.Bids.Any(x => x.Player == teammate && x.Type == cardSuit.ToBidType())
                     && context.AvailableCardsToPlay.HasAnyOfSuit(cardSuit))
                 {
-                    return new PlayCardAction(context.AvailableCardsToPlay.Where(x => x.Suit == cardSuit).Lowest(x => x.TrumpOrder));
+                    return new PlayCardAction(
+                        context.AvailableCardsToPlay.Where(x => x.Suit == cardSuit).Lowest(x => x.TrumpOrder));
                 }
             }
 

@@ -4,7 +4,6 @@
 
     using Belot.Engine.Cards;
     using Belot.Engine.Game;
-    using Belot.Engine.Players;
 
     using Xunit;
 

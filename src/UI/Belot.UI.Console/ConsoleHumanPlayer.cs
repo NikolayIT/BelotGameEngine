@@ -176,7 +176,7 @@
             this.DrawLastPlayedCards(context, context.RoundActions);
 
             var sb = new StringBuilder();
-            var allowedCardsList = new List<Card>(context.AvailableCardsToPlay);
+            var allowedCardsList = context.AvailableCardsToPlay.ToList();
             for (var i = 0; i < allowedCardsList.Count; i++)
             {
                 sb.AppendFormat("{0}({1}); ", i + 1, allowedCardsList[i]);

@@ -1,6 +1,5 @@
 ﻿namespace Belot.Engine.GameMechanics
 {
-    using System;
     using System.Collections.Generic;
     using System.Linq;
 

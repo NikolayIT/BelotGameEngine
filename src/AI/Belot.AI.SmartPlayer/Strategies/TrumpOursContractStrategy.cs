@@ -1,10 +1,7 @@
 ﻿namespace Belot.AI.SmartPlayer.Strategies
 {
-    using System.Linq;
-
     using Belot.Engine.Cards;
     using Belot.Engine.Game;
-    using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
     public class TrumpOursContractStrategy : IPlayStrategy

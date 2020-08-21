@@ -18,11 +18,10 @@
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
             Console.WriteLine(new string('=', LineLength));
             Console.WriteLine("Belot Games Simulator");
-            Console.Write(DateTime.Now.ToShortDateString());
 #if DEBUG
-            Console.Write(", Mode=Debug");
+            Console.Write("Mode=Debug");
 #elif RELEASE
-            Console.Write(", Mode=Release");
+            Console.Write("Mode=Release");
 #endif
             Console.Write(
                 $", CPUs={Environment.ProcessorCount}({parallelism}), OS={Environment.OSVersion}, .NET={Environment.Version}");
