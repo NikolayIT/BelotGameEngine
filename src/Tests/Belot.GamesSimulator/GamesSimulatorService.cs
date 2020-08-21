@@ -83,10 +83,12 @@
                     }
                 });
 
+            var elapsed = stopwatch.Elapsed;
             var eastWestWins = games - southNorthWins;
             Console.WriteLine(
                 $"{southNorthWins + eastWestWins} games: {southNorthWins}-{eastWestWins} (Δ {southNorthWins - eastWestWins}) (Rounds: {rounds}) ELO: {CalculateElo(southNorthWins, eastWestWins):0.00}");
-            Console.WriteLine(stopwatch.Elapsed + $" => Points: {southNorthPoints / 1000}k-{eastWestPoints / 1000}k => Counters: " + string.Join(",", GlobalCounters.Counters));
+            Console.WriteLine(
+                $"{elapsed:mm\\:ss\\.fffffff} (~{(double)elapsed.Ticks / rounds:0.00}) => Points: {southNorthPoints / 1000}k-{eastWestPoints / 1000}k => Counters: {string.Join(",", GlobalCounters.Counters)}");
             Console.WriteLine(new string('=', LineLength));
         }
 
