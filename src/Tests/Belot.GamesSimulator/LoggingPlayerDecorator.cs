@@ -13,17 +13,21 @@
     {
         private readonly IPlayer player;
 
-        public LoggingPlayerDecorator(IPlayer player)
+        private readonly ConsoleColor color;
+
+        public LoggingPlayerDecorator(IPlayer player, ConsoleColor color)
         {
             this.player = player;
+            this.color = color;
         }
 
         public BidType GetBid(PlayerGetBidContext context)
         {
             var bid = this.player.GetBid(context);
-            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.ForegroundColor = this.color;
             Console.WriteLine(
-                $"[#{context.RoundNumber,-2}][{context.MyPosition}]: {context.CurrentContract.Type,-9} | "
+                $"[#{context.RoundNumber,-2}][{context.SouthNorthPoints}-{context.EastWestPoints}][-][{context.MyPosition,-5}]: {context.CurrentContract.Type,-9} | "
+                + $"{string.Join(" ", context.MyCards),-18} "
                 + $"Available bids: {context.AvailableBids} => {bid}");
             Console.ResetColor();
             return bid;
@@ -32,9 +36,9 @@
         public IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
         {
             var announces = this.player.GetAnnounces(context);
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.ForegroundColor = this.color;
             Console.WriteLine(
-                $"[#{context.RoundNumber,-2}][{context.MyPosition}]: {context.CurrentContract.Type,-9} | "
+                $"[#{context.RoundNumber,-2}][{context.SouthNorthPoints}-{context.EastWestPoints}][-][{context.MyPosition,-5}]: "
                 + $"{string.Join(" ", context.MyCards),-27} "
                 + $"Actions: {string.Join(" ", context.CurrentTrickActions.Select(x => x.Card)),-11} "
                 + $"Available announces: {string.Join(" ", string.Join(",", context.AvailableAnnounces))} "
@@ -46,9 +50,9 @@
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
         {
             var cardAction = this.player.PlayCard(context);
-            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            Console.ForegroundColor = this.color;
             Console.WriteLine(
-                $"[#{context.RoundNumber,-2}][{context.MyPosition}]: {context.CurrentContract.Type,-9} | "
+                $"[#{context.RoundNumber,-2}][{context.SouthNorthPoints}-{context.EastWestPoints}][{context.CurrentTrickNumber}][{context.MyPosition,-5}]: "
                 + $"{string.Join(" ", context.MyCards),-27} "
                 + $"Actions: {string.Join(" ", context.CurrentTrickActions.Select(x => x.Card)),-11} "
                 + $"Playable: {string.Join(" ", context.AvailableCardsToPlay),-27} "

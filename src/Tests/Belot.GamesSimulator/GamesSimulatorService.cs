@@ -34,7 +34,15 @@
 
         public void RunDetailedGames(int count)
         {
-            SimulateGames(SmartVsSmartGamesWithLogging, count, 1, true);
+            SimulateGames(
+                () => new BelotGame(
+                    new LoggingPlayerDecorator(new SmartPlayer(), ConsoleColor.White),
+                    new LoggingPlayerDecorator(new SmartPlayer(), ConsoleColor.Yellow),
+                    new LoggingPlayerDecorator(new SmartPlayer(), ConsoleColor.Cyan),
+                    new LoggingPlayerDecorator(new SmartPlayer(), ConsoleColor.DarkYellow)),
+                count,
+                1,
+                true);
         }
 
         private static void SimulateGames(Func<BelotGame> simulation, int games, int parallelism, bool detailedLog = false)
@@ -49,8 +57,8 @@
             var lockObject = new object();
             var stopwatch = Stopwatch.StartNew();
             Parallel.For(
-                1,
-                games + 1,
+                0,
+                games,
                 new ParallelOptions { MaxDegreeOfParallelism = parallelism },
                 i =>
                 {
@@ -109,13 +117,6 @@
 
         private static BelotGame TwoDummyVsTwoRandomGames() =>
             new BelotGame(new DummyPlayer(), new RandomPlayer(), new DummyPlayer(), new RandomPlayer());
-
-        private static BelotGame SmartVsSmartGamesWithLogging() =>
-            new BelotGame(
-                new LoggingPlayerDecorator(new SmartPlayer()),
-                new SmartPlayer(),
-                new SmartPlayer(),
-                new SmartPlayer());
 
         private static double CalculateElo(int wins, int loses)
         {

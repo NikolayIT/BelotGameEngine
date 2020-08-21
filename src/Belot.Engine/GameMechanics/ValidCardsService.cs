@@ -11,9 +11,9 @@
     {
         public CardCollection GetValidCards(CardCollection playerCards, BidType contract, IList<PlayCardAction> currentTrickActions)
         {
-            if (currentTrickActions.Count == 0)
+            if (currentTrickActions.Count == 0 || playerCards.Count == 1)
             {
-                // The player is first and can play any card
+                // The player is first and can play any card or has only 1 card available
                 return playerCards;
             }
 

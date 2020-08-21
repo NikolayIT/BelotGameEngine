@@ -30,7 +30,7 @@
             Console.WriteLine(new string('=', LineLength));
 
             new GamesSimulatorService().Run(parallelism);
-            //// new GamesSimulatorService().RunDetailedGames(10);
+            //// new GamesSimulatorService().RunDetailedGames(2);
         }
     }
 }
