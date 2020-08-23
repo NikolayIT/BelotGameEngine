@@ -2,6 +2,7 @@
 {
     using System.Collections.Generic;
     using System.Linq;
+    using System.Runtime.CompilerServices;
 
     using Belot.Engine.Cards;
     using Belot.Engine.Game;
@@ -143,6 +144,7 @@
             return new CardCollection(playerCards, x => x.Suit == trumpSuit);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static Card BiggestTrumpCard(IList<PlayCardAction> currentTrickActions, CardSuit firstCardSuit)
         {
             var bestCard = currentTrickActions[0].Card;
