@@ -42,6 +42,9 @@
         [InlineData(CardType.Ten, CardSuit.Diamond, CardType.Ace, CardSuit.Diamond, CardType.Nine, CardSuit.Diamond, CardType.Jack, CardSuit.Diamond, BidType.AllTrumps, PlayerPosition.West)]
         [InlineData(CardType.Queen, CardSuit.Diamond, CardType.King, CardSuit.Diamond, CardType.Seven, CardSuit.Diamond, CardType.Eight, CardSuit.Diamond, BidType.AllTrumps, PlayerPosition.East)]
         [InlineData(CardType.Queen, CardSuit.Diamond, CardType.King, CardSuit.Spade, CardType.Seven, CardSuit.Heart, CardType.Eight, CardSuit.Club, BidType.AllTrumps, PlayerPosition.South)]
+        [InlineData(CardType.Ace, CardSuit.Club, CardType.King, CardSuit.Spade, CardType.Seven, CardSuit.Heart, CardType.Eight, CardSuit.Club, BidType.Diamonds, PlayerPosition.South)]
+        [InlineData(CardType.Eight, CardSuit.Club, CardType.King, CardSuit.Spade, CardType.Seven, CardSuit.Heart, CardType.Ten, CardSuit.Club, BidType.Diamonds, PlayerPosition.West)]
+        [InlineData(CardType.Jack, CardSuit.Club, CardType.Queen, CardSuit.Club, CardType.King, CardSuit.Club, CardType.Ace, CardSuit.Spade, BidType.Hearts, PlayerPosition.North)]
         public void GetWinnerShouldWorkCorrectly(
             CardType southCardType,
             CardSuit southCardSuit,
