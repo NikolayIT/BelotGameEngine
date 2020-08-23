@@ -349,5 +349,99 @@
             collection.Add(Card.GetCard(CardSuit.Diamond, CardType.Jack));
             Assert.Equal(1, collection.Count);
         }
+
+        [Fact]
+        public void HighestMethodShouldReturnHighestCardFromTheCollection()
+        {
+            var collection = new CardCollection
+            {
+                Card.GetCard(CardSuit.Heart, CardType.Jack),
+                Card.GetCard(CardSuit.Heart, CardType.Nine),
+                Card.GetCard(CardSuit.Heart, CardType.Queen),
+                Card.GetCard(CardSuit.Heart, CardType.King),
+            };
+
+            Assert.Equal(Card.GetCard(CardSuit.Heart, CardType.Jack), collection.Highest(x => x.TrumpOrder));
+            Assert.Equal(Card.GetCard(CardSuit.Heart, CardType.King), collection.Highest(x => x.NoTrumpOrder));
+        }
+
+        [Fact]
+        public void LowestMethodShouldReturnLowestCardFromTheCollection()
+        {
+            var collection = new CardCollection
+            {
+                Card.GetCard(CardSuit.Spade, CardType.Jack),
+                Card.GetCard(CardSuit.Spade, CardType.Ace),
+                Card.GetCard(CardSuit.Spade, CardType.King),
+            };
+
+            Assert.Equal(Card.GetCard(CardSuit.Spade, CardType.King), collection.Lowest(x => x.TrumpOrder));
+            Assert.Equal(Card.GetCard(CardSuit.Spade, CardType.Jack), collection.Lowest(x => x.NoTrumpOrder));
+        }
+
+        [Fact]
+        public void GetCountShouldWorkProperly()
+        {
+            var collection = new CardCollection
+            {
+                Card.GetCard(CardSuit.Spade, CardType.Queen),
+                Card.GetCard(CardSuit.Club, CardType.Ace),
+                Card.GetCard(CardSuit.Club, CardType.Jack),
+                Card.GetCard(CardSuit.Spade, CardType.Seven),
+                Card.GetCard(CardSuit.Heart, CardType.Seven),
+            };
+
+            Assert.Equal(0, collection.GetCount(x => x.Type == CardType.Eight && x.Suit == CardSuit.Diamond));
+
+            Assert.Equal(0, collection.GetCount(x => x.Type == CardType.Eight));
+            Assert.Equal(1, collection.GetCount(x => x.Type == CardType.Jack));
+            Assert.Equal(2, collection.GetCount(x => x.Type == CardType.Seven));
+
+            Assert.Equal(0, collection.GetCount(x => x.Suit == CardSuit.Diamond));
+            Assert.Equal(1, collection.GetCount(x => x.Suit == CardSuit.Heart));
+            Assert.Equal(2, collection.GetCount(x => x.Suit == CardSuit.Spade));
+        }
+
+        [Fact]
+        public void FirstOrDefaultShouldWorkProperly()
+        {
+            var emptyCollection = new CardCollection();
+
+            var collection = new CardCollection
+            {
+                Card.GetCard(CardSuit.Spade, CardType.King),
+                Card.GetCard(CardSuit.Diamond, CardType.Ace),
+                Card.GetCard(CardSuit.Club, CardType.Eight),
+                Card.GetCard(CardSuit.Spade, CardType.Seven),
+            };
+
+            Assert.Null(emptyCollection.FirstOrDefault());
+
+            Assert.Equal(Card.GetCard(CardSuit.Club, CardType.Eight), collection.FirstOrDefault());
+        }
+
+        [Fact]
+        public void WhereShouldWorkProperly()
+        {
+            var collection = new CardCollection
+            {
+                Card.GetCard(CardSuit.Heart, CardType.King),
+                Card.GetCard(CardSuit.Club, CardType.Eight),
+                Card.GetCard(CardSuit.Club, CardType.Queen),
+                Card.GetCard(CardSuit.Spade, CardType.Seven),
+            };
+
+            Assert.Empty(collection.Where(x => x.Type == CardType.Eight && x.Suit == CardSuit.Diamond));
+
+            Assert.Collection(
+                collection.Where(x => x.Suit == CardSuit.Club),
+                item => Assert.Equal(CardSuit.Club, item.Suit),
+                item => Assert.Equal(CardSuit.Club, item.Suit));
+
+            Assert.Collection(
+                collection.Where(x => x.Suit == CardSuit.Club),
+                item => Assert.Equal(CardType.Eight, item.Type),
+                item => Assert.Equal(CardType.Queen, item.Type));
+        }
     }
 }
