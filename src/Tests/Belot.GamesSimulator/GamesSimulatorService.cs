@@ -17,8 +17,14 @@
         public void Run(int parallelism)
         {
             // Warmup
-            new BelotGame(new SmartPlayer(), new SmartPlayerPreviousVersion(), new DummyPlayer(), new RandomPlayer())
-                .PlayGame();
+            for (var i = 0; i < 10; i++)
+            {
+                new BelotGame(
+                    new SmartPlayer(),
+                    new SmartPlayerPreviousVersion(),
+                    new DummyPlayer(),
+                    new RandomPlayer()).PlayGame();
+            }
 
             var totalStopwatch = Stopwatch.StartNew();
             SimulateGames(TwoSmartVsTwoPreviousVersionGames, 200_000, parallelism);

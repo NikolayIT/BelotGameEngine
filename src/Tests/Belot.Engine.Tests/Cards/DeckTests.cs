@@ -9,7 +9,7 @@
     public class DeckTests
     {
         [Fact]
-        public void ShuffleShouldWorkCorrectlyWhenCalled32Times()
+        public void ShuffleShouldNotCrash()
         {
             var deck = new Deck();
             for (var i = 0; i < 100; i++)

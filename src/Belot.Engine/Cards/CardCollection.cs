@@ -3,6 +3,7 @@
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Runtime.CompilerServices;
 
     /// <inheritdoc cref="ICollection" />
     /// <summary>
@@ -164,6 +165,7 @@
             return this.GetEnumerator();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(Card card)
         {
             if (!this.Contains(card))
@@ -179,6 +181,7 @@
             this.Count = 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Contains(Card card)
         {
             return ((this.cards >> card.GetHashCode()) & 1) == 1;

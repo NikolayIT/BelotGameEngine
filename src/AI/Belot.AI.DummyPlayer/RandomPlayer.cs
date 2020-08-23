@@ -12,7 +12,6 @@
     {
         private readonly List<BidType> allBids = new List<BidType>
                                                      {
-                                                         BidType.Pass,
                                                          BidType.Clubs,
                                                          BidType.Diamonds,
                                                          BidType.Hearts,
@@ -23,8 +22,8 @@
 
         public BidType GetBid(PlayerGetBidContext context)
         {
-            return ThreadSafeRandom.Next(0, 2) == 0
-                       ? BidType.Pass // In 50% of the cases announce Pass
+            return ThreadSafeRandom.Next(0, 100) <= 75
+                       ? BidType.Pass // In 75% of the cases announce Pass
                        : this.allBids.Where(x => context.AvailableBids.HasFlag(x)).RandomElement();
         }
 

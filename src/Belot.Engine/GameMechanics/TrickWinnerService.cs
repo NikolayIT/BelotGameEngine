@@ -10,11 +10,6 @@
     {
         public PlayerPosition GetWinner(Bid contract, IList<PlayCardAction> trickActions)
         {
-            if (trickActions.Count == 0)
-            {
-                return PlayerPosition.Unknown;
-            }
-
             var firstCard = trickActions[0].Card;
             var bestAction = trickActions[0];
             if (contract.Type.HasFlag(BidType.AllTrumps))
