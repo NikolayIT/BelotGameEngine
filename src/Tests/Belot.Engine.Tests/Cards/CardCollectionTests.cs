@@ -356,13 +356,13 @@
             var collection = new CardCollection
             {
                 Card.GetCard(CardSuit.Heart, CardType.Jack),
-                Card.GetCard(CardSuit.Heart, CardType.Eight),
+                Card.GetCard(CardSuit.Heart, CardType.Nine),
+                Card.GetCard(CardSuit.Heart, CardType.Queen),
                 Card.GetCard(CardSuit.Heart, CardType.King),
-                Card.GetCard(CardSuit.Heart, CardType.Ten),
             };
 
             Assert.Equal(Card.GetCard(CardSuit.Heart, CardType.Jack), collection.Highest(x => x.TrumpOrder));
-            Assert.Equal(Card.GetCard(CardSuit.Heart, CardType.Ten), collection.Highest(x => x.NoTrumpOrder));
+            Assert.Equal(Card.GetCard(CardSuit.Heart, CardType.King), collection.Highest(x => x.NoTrumpOrder));
         }
 
         [Fact]
@@ -384,7 +384,7 @@
         {
             var collection = new CardCollection
             {
-                Card.GetCard(CardSuit.Spade, CardType.King),
+                Card.GetCard(CardSuit.Spade, CardType.Queen),
                 Card.GetCard(CardSuit.Club, CardType.Ace),
                 Card.GetCard(CardSuit.Club, CardType.Jack),
                 Card.GetCard(CardSuit.Spade, CardType.Seven),
@@ -411,13 +411,13 @@
             {
                 Card.GetCard(CardSuit.Spade, CardType.King),
                 Card.GetCard(CardSuit.Diamond, CardType.Ace),
-                Card.GetCard(CardSuit.Club, CardType.Jack),
+                Card.GetCard(CardSuit.Club, CardType.Eight),
                 Card.GetCard(CardSuit.Spade, CardType.Seven),
             };
 
             Assert.Null(emptyCollection.FirstOrDefault());
 
-            Assert.Equal(Card.GetCard(CardSuit.Club, CardType.Jack), collection.FirstOrDefault());
+            Assert.Equal(Card.GetCard(CardSuit.Club, CardType.Eight), collection.FirstOrDefault());
         }
 
         [Fact]
