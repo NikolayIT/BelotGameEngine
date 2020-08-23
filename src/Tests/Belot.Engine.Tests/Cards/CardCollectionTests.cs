@@ -369,14 +369,13 @@
         {
             var collection = new CardCollection
             {
-                Card.GetCard(CardSuit.Spade, CardType.Queen),
+                Card.GetCard(CardSuit.Spade, CardType.Jack),
                 Card.GetCard(CardSuit.Spade, CardType.Ace),
-                Card.GetCard(CardSuit.Spade, CardType.Nine),
-                Card.GetCard(CardSuit.Spade, CardType.Seven),
+                Card.GetCard(CardSuit.Spade, CardType.King),
             };
 
-            Assert.Equal(Card.GetCard(CardSuit.Spade, CardType.Seven), collection.Lowest(x => x.TrumpOrder));
-            Assert.Equal(Card.GetCard(CardSuit.Spade, CardType.Seven), collection.Lowest(x => x.NoTrumpOrder));
+            Assert.Equal(Card.GetCard(CardSuit.Spade, CardType.King), collection.Lowest(x => x.TrumpOrder));
+            Assert.Equal(Card.GetCard(CardSuit.Spade, CardType.Jack), collection.Lowest(x => x.NoTrumpOrder));
         }
 
         [Fact]
