@@ -13,11 +13,15 @@
     <Authors>Nikolay.IT</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/NikolayIT/BelotGameEngine</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/NikolayIT/BelotGameEngine</RepositoryUrl>
-    <PackageReleaseNotes>First published stable version.</PackageReleaseNotes>
-    <PackageTags>belot, belote, bridge-belote, card game</PackageTags>
+    <RepositoryUrl>https://github.com/NikolayIT/BelotGameEngine.git</RepositoryUrl>
+    <PackageReleaseNotes>- A lot of performance optimizations - 33% faster code
+- Few bugs fixed</PackageReleaseNotes>
+    <PackageTags>belot, belote, bridge-belote, card game, белот</PackageTags>
     <Description>Belot card game engine written in C#. Belot (Bridge-Belot or Belote) is a 32-card, trick-taking game popular in Bulgaria, France, Armenia, Croatia, Cyprus, Greece, Moldova, North Macedonia and also in Saudi Arabia.</Description>
     <Product>BelotGameEngine</Product>
+    <Version>1.1.0</Version>
+    <RepositoryType>git</RepositoryType>
+    <Copyright>Nikolay.IT © 2020</Copyright>
   </PropertyGroup>
   <ItemGroup>
     <AdditionalFiles Include="..\stylecop.json" />
