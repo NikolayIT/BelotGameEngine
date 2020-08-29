@@ -130,7 +130,7 @@
                 },
              new object[]
              {
-                 // ---
+                 // --The rival team played trump, but the player has higher trump card
                  BidType.Hearts,
                  new CardCollection { Card.GetCard(CardSuit.Diamond, CardType.Queen), Card.GetCard(CardSuit.Diamond, CardType.King), Card.GetCard(CardSuit.Heart, CardType.Ace) },
                  new CardCollection { Card.GetCard(CardSuit.Club, CardType.Seven), Card.GetCard(CardSuit.Heart, CardType.Jack) },
@@ -138,7 +138,7 @@
              },
              new object[]
              {
-                 // ---
+                 // --The rival team played trump, but the player doesn't have higher trump card
                  BidType.Hearts,
                  new CardCollection { Card.GetCard(CardSuit.Diamond, CardType.Queen), Card.GetCard(CardSuit.Diamond, CardType.King), Card.GetCard(CardSuit.Heart, CardType.Ace) },
                  new CardCollection { Card.GetCard(CardSuit.Club, CardType.Seven), Card.GetCard(CardSuit.Heart, CardType.King) },
