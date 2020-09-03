@@ -211,33 +211,49 @@
             for (var i = 0; i < cards.Count; i++)
             {
                 var card = cards[i];
-                if (card.Type == CardType.Jack && card.Suit == trumpSuit)
+                if (card.Suit == trumpSuit)
                 {
-                    bidPoints += 55;
+                    switch (card.Type)
+                    {
+                        case CardType.Jack:
+                            bidPoints += 55;
+                            break;
+                        case CardType.Nine:
+                            bidPoints += 35;
+                            break;
+                        case CardType.Ace:
+                            bidPoints += 25;
+                            break;
+                        case CardType.Ten:
+                            bidPoints += 20;
+                            break;
+                        case CardType.Queen when cards.Contains(Card.GetCard(trumpSuit, CardType.King)):
+                            bidPoints += 25;
+                            break;
+                        case CardType.King:
+                        case CardType.Queen:
+                            bidPoints += 16;
+                            break;
+                        case CardType.Seven:
+                        case CardType.Eight:
+                            bidPoints += 15;
+                            break;
+                    }
                 }
-                else if (card.Type == CardType.Nine && card.Suit == trumpSuit)
+                else
                 {
-                    bidPoints += 35;
-                }
-                else if (card.Type == CardType.Ace && card.Suit == trumpSuit)
-                {
-                    bidPoints += 25;
-                }
-                else if (card.Type == CardType.Ten && card.Suit == trumpSuit)
-                {
-                    bidPoints += 20;
-                }
-                else if (card.Suit == trumpSuit)
-                {
-                    bidPoints += 15;
-                }
-                else if (card.Type == CardType.Ace)
-                {
-                    bidPoints += 20;
-                }
-                else if (card.Type == CardType.Ten)
-                {
-                    bidPoints += cards.Contains(Card.GetCard(card.Suit, CardType.Ace)) ? 15 : 10;
+                    switch (card.Type)
+                    {
+                        case CardType.Ace:
+                            bidPoints += 20;
+                            break;
+                        case CardType.Ten when cards.Contains(Card.GetCard(card.Suit, CardType.Ace)):
+                            bidPoints += 15;
+                            break;
+                        case CardType.Ten:
+                            bidPoints += 10;
+                            break;
+                    }
                 }
             }
 
