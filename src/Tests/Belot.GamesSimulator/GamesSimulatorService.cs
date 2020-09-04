@@ -27,15 +27,16 @@
             }
 
             var totalStopwatch = Stopwatch.StartNew();
+            var elo = 0.0;
             SimulateGames(TwoSmartVsTwoPreviousVersionGames, 200_000, parallelism);
-            SimulateGames(TwoSmartVsTwoDummyGames, 200_000, parallelism);
-            SimulateGames(OneSmartVsThreeDummyGames, 200_000, parallelism);
-            SimulateGames(TwoSmartVsTwoRandomGames, 200_000, parallelism);
-            SimulateGames(OneSmartVsThreeRandomGames, 200_000, parallelism);
-            //// SimulateGames(FourSmartGames, 200_000, parallelism);
-            //// SimulateGames(FourRandomGames, 200_000, parallelism);
-            //// SimulateGames(TwoDummyVsTwoRandomGames, 200_000, parallelism);
-            Console.WriteLine($"Total tests time: {totalStopwatch.Elapsed}");
+            elo += SimulateGames(TwoSmartVsTwoDummyGames, 200_000, parallelism);
+            elo += SimulateGames(OneSmartVsThreeDummyGames, 200_000, parallelism);
+            elo += SimulateGames(TwoSmartVsTwoRandomGames, 200_000, parallelism);
+            elo += SimulateGames(OneSmartVsThreeRandomGames, 200_000, parallelism);
+            //// elo += SimulateGames(FourSmartGames, 200_000, parallelism);
+            //// elo += SimulateGames(FourRandomGames, 200_000, parallelism);
+            //// elo += SimulateGames(TwoDummyVsTwoRandomGames, 200_000, parallelism);
+            Console.WriteLine($"Total tests time: {totalStopwatch.Elapsed}. Total ELO: {elo:0.00}.");
         }
 
         public void RunDetailedGames(int count)
@@ -51,7 +52,7 @@
                 true);
         }
 
-        private static void SimulateGames(Func<BelotGame> simulation, int games, int parallelism, bool detailedLog = false)
+        private static double SimulateGames(Func<BelotGame> simulation, int games, int parallelism, bool detailedLog = false)
         {
             Console.WriteLine($"Running {simulation.Method.Name}...");
             GlobalCounters.Counters = new long[GlobalCounters.CountersCount];
@@ -91,11 +92,13 @@
 
             var elapsed = stopwatch.Elapsed;
             var eastWestWins = games - southNorthWins;
+            var elo = CalculateElo(southNorthWins, eastWestWins);
             Console.WriteLine(
-                $"{southNorthWins + eastWestWins} games: {southNorthWins}-{eastWestWins} (Δ {southNorthWins - eastWestWins}) (Rounds: {rounds}) ELO: {CalculateElo(southNorthWins, eastWestWins):0.00}");
+                $"{southNorthWins + eastWestWins} games: {southNorthWins}-{eastWestWins} (Δ {southNorthWins - eastWestWins}) (Rounds: {rounds}) ELO: {elo:0.00}");
             Console.WriteLine(
-                $"{elapsed:mm\\:ss\\.fffffff} (~{(double)elapsed.Ticks / rounds:0.00}) => Points: {southNorthPoints / 1000}k-{eastWestPoints / 1000}k => Counters: {string.Join(",", GlobalCounters.Counters)}");
+                $"{elapsed:mm\\:ss\\.fffffff} (~{(double)elapsed.Ticks / rounds:0.00}); Points: {southNorthPoints / 1000}k-{eastWestPoints / 1000}k; Counters: {string.Join(",", GlobalCounters.Counters)}");
             Console.WriteLine(new string('=', LineLength));
+            return elo;
         }
 
         private static BelotGame FourSmartGames() =>

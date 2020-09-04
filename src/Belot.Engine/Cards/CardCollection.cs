@@ -235,7 +235,7 @@
 
             public Card Current => Card.AllCards[this.currentHashCode];
 
-            object IEnumerator.Current => this.Current;
+            object IEnumerator.Current => Card.AllCards[this.currentHashCode];
 
             public void Dispose()
             {
