@@ -7,7 +7,7 @@
     {
         public PlayCardAction PlayFirst(PlayerPlayCardContext context, CardCollection playedCards)
         {
-            var card = CardHelpers.GetCardThatSurelyWinsTheTrickInNoTrumps(
+            var card = CardHelpers.GetCardThatSurelyWinsATrickInNoTrumps(
                 context.AvailableCardsToPlay,
                 context.MyCards,
                 playedCards);

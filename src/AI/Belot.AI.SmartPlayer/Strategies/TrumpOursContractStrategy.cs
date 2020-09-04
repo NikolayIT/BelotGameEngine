@@ -12,6 +12,7 @@
             if (playedCards.GetCount(x => x.Suit == trumpSuit)
                 + context.MyCards.GetCount(x => x.Suit == trumpSuit) == 8)
             {
+                // No trump cards in other players
                 foreach (var card in context.AvailableCardsToPlay)
                 {
                     if (card.Suit != trumpSuit && card.Type == CardType.Ace)

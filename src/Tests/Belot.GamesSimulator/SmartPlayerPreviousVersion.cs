@@ -23,6 +23,7 @@
                 "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/GlobalCounters.cs",
                 "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/AllTrumpsOursContractStrategy.cs",
                 "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/AllTrumpsTheirsContractStrategy.cs",
+                "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/CardHelpers.cs",
                 "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/IPlayStrategy.cs",
                 "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/NoTrumpsOursContractStrategy.cs",
                 "https://raw.githubusercontent.com/NikolayIT/BelotGameEngine/master/src/AI/Belot.AI.SmartPlayer/Strategies/NoTrumpsTheirsContractStrategy.cs",
