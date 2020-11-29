@@ -1,12 +1,11 @@
 ﻿namespace Belot.Engine.Tests.GameMechanics
 {
-    using System;
     using System.Collections.Generic;
-    using System.Linq;
+
     using Belot.Engine.Game;
     using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
-    using Engine.Cards;
+
     using Moq;
     using Xunit;
 
