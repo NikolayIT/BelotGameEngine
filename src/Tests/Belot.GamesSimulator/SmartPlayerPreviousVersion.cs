@@ -83,12 +83,7 @@
                 }
             }
 
-            if (assembly == null)
-            {
-                throw new Exception("Remote assembly code cannot be compiled.");
-            }
-
-            CompiledPlayerType = assembly.GetType("Belot.AI.SmartPlayer.SmartPlayer");
+            CompiledPlayerType = assembly?.GetType("Belot.AI.SmartPlayer.SmartPlayer");
         }
 
         public SmartPlayerPreviousVersion()

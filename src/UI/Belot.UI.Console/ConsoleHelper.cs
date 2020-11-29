@@ -32,10 +32,13 @@
 
         public static void ResizeConsole(int width, int height)
         {
-            Console.WindowWidth = width;
-            Console.WindowHeight = height;
-            Console.BufferWidth = Console.WindowWidth;
-            Console.BufferHeight = Console.WindowHeight;
+            if (OperatingSystem.IsWindows())
+            {
+                Console.WindowWidth = width;
+                Console.WindowHeight = height;
+                Console.BufferWidth = Console.WindowWidth;
+                Console.BufferHeight = Console.WindowHeight;
+            }
         }
 
         public static void ClearAndResetConsole()
