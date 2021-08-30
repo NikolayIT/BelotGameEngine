@@ -19,21 +19,21 @@
 
     public sealed partial class MainPage : Page
     {
-        private readonly UiPlayer uiPlayer = new UiPlayer();
+        private readonly UiPlayer player = new UiPlayer();
         private readonly OpenCardsPlayerDecorator eastPlayer = new OpenCardsPlayerDecorator(new SmartPlayer());
         private readonly OpenCardsPlayerDecorator northPlayer = new OpenCardsPlayerDecorator(new SmartPlayer());
         private readonly OpenCardsPlayerDecorator westPlayer = new OpenCardsPlayerDecorator(new SmartPlayer());
         private readonly BelotGame game;
 
-        private readonly ValidAnnouncesService validAnnouncesService;
+        //// private readonly ValidAnnouncesService validAnnouncesService;
 
         public MainPage()
         {
             this.InitializeComponent();
-            this.game = new BelotGame(this.uiPlayer, this.eastPlayer, this.northPlayer, this.westPlayer);
-            this.uiPlayer.InfoChangedInGetBid += this.UiPlayerOnInfoChangedInGetBid;
-            this.uiPlayer.InfoChangedInGetAnnounces += this.UiPlayerOnInfoChangedInGetAnnounces;
-            this.uiPlayer.InfoChangedInPlayCard += this.UiPlayerOnInfoChangedInPlayCard;
+            this.game = new BelotGame(this.player, this.eastPlayer, this.northPlayer, this.westPlayer);
+            this.player.InfoChangedInGetBid += this.UiPlayerOnInfoChangedInGetBid;
+            this.player.InfoChangedInGetAnnounces += this.UiPlayerOnInfoChangedInGetAnnounces;
+            this.player.InfoChangedInPlayCard += this.UiPlayerOnInfoChangedInPlayCard;
             Task.Run(() => this.game.PlayGame(PlayerPosition.East));
             this.ProgramVersion.Text = "Belot v1.0";
         }
@@ -52,7 +52,7 @@
                                              {
                                                  Content = bidType.ToString(),
                                                  IsEnabled = e.AvailableBids.HasFlag(bidType),
-                                                 Tag = bidType
+                                                 Tag = bidType,
                                              };
                             button.Tapped += this.BidTapped;
                             this.BidsPanel.Children.Add(button);
@@ -192,13 +192,13 @@
         private void PlayerCardTapped(object sender, TappedRoutedEventArgs eventArgs)
         {
             // TODO: Ask for belot - var dialog = new MessageDialog(content, title);
-            this.uiPlayer.PlayCardAction = new PlayCardAction((sender as CardControl)?.Card);
+            this.player.PlayCardAction = new PlayCardAction((sender as CardControl)?.Card);
         }
 
         private void BidTapped(object sender, TappedRoutedEventArgs eventArgs)
         {
             this.BidsPanel.Visibility = Visibility.Collapsed;
-            this.uiPlayer.GetBidAction = ((sender as Button)?.Tag as BidType?) ?? BidType.Pass;
+            this.player.GetBidAction = ((sender as Button)?.Tag as BidType?) ?? BidType.Pass;
         }
 
         private async void OpenCardsCheckBoxTapped(object sender, TappedRoutedEventArgs e)

@@ -42,6 +42,8 @@
         {
             this.InfoChangedInGetAnnounces?.Invoke(this, context);
             return context.AvailableAnnounces;
+
+            /*
             while (this.GetAnnouncesAction == null)
             {
                 Task.Delay(WaitTimeForAction);
@@ -50,6 +52,7 @@
             var returnAction = this.GetAnnouncesAction;
             this.GetAnnouncesAction = null;
             return returnAction;
+            */
         }
 
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
