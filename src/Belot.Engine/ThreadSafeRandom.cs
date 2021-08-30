@@ -3,6 +3,7 @@
     using System;
     using System.Threading;
 
+    // TODO: Replace with .NET 6 Random.Shared.Next
     // https://stackoverflow.com/a/9310486/1862812
     public static class ThreadSafeRandom
     {

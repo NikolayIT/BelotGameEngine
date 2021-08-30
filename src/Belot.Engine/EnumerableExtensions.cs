@@ -17,6 +17,7 @@
             var n = array.Length;
             while (n > 1)
             {
+                // TODO: Replace with .NET 6 Random.Shared.Next
                 var k = ThreadSafeRandom.Next(0, n--);
                 var temp = array[n];
                 array[n] = array[k];
@@ -29,6 +30,7 @@
         public static T RandomElement<T>(this IEnumerable<T> source)
         {
             // Get a random index
+            // TODO: Replace with .NET 6 Random.Shared.Next
             var index = ThreadSafeRandom.Next(0, source.Count());
 
             // Get the random element by traversing the collection one element at a time.

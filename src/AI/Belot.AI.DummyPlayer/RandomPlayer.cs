@@ -22,6 +22,7 @@
 
         public BidType GetBid(PlayerGetBidContext context)
         {
+            // TODO: Replace with .NET 6 Random.Shared.Next
             return ThreadSafeRandom.Next(0, 100) <= 75
                        ? BidType.Pass // In 75% of the cases announce Pass
                        : this.allBids.Where(x => context.AvailableBids.HasFlag(x)).RandomElement();
