@@ -105,7 +105,7 @@
             {
                 // The teammate played card
                 var biggestCard = currentTrickActions.Any(x => x.Card.Suit == trumpSuit)
-                                      ? BiggestTrumpCard(currentTrickActions, trumpSuit)
+                                      ? BiggestTrumpPlayedCard(currentTrickActions, trumpSuit)
                                       : currentTrickActions.OrderByDescending(x => x.Card.NoTrumpOrder).First().Card;
                 if (currentTrickActions[currentTrickActions.Count - 2].Card == biggestCard)
                 {
@@ -126,7 +126,7 @@
             if (currentTrickActions.Any(x => x.Card.Suit == trumpSuit))
             {
                 // Someone of the rivals has played trump card and is winning the trick
-                var biggestTrumpCard = BiggestTrumpCard(currentTrickActions, trumpSuit);
+                var biggestTrumpCard = BiggestTrumpPlayedCard(currentTrickActions, trumpSuit);
                 if (playerCards.Any(
                     x => x.Suit == trumpSuit && x.TrumpOrder > biggestTrumpCard.TrumpOrder))
                 {
@@ -160,6 +160,13 @@
                 bestCard = currentTrickActions[2].Card;
             }
 
+            return bestCard;
+        }
+
+        private static Card BiggestTrumpPlayedCard(IList<PlayCardAction> currentTrickActions, CardSuit trumpSuit)
+        {
+            var bestCard = currentTrickActions.OrderByDescending(a => a.Card.Suit == trumpSuit).ThenByDescending(a => a.Card.TrumpOrder).FirstOrDefault().Card;
+           
             return bestCard;
         }
     }
