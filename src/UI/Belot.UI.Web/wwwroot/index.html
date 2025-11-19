@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Белот - Онлайн Игра</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+        }
+        
+        .section h2 {
+            color: #764ba2;
+            margin-bottom: 15px;
+        }
+        
+        input, button {
+            padding: 12px 20px;
+            margin: 5px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        #status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            background: #f0f0f0;
+            min-height: 50px;
+        }
+        
+        #roomList {
+            display: grid;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .room-item {
+            padding: 15px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9ff;
+        }
+        
+        .room-info {
+            flex-grow: 1;
+        }
+        
+        .room-name {
+            font-weight: bold;
+            color: #764ba2;
+            font-size: 1.2em;
+        }
+        
+        .room-players {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        #gameArea {
+            display: none;
+            text-align: center;
+        }
+        
+        #gameArea.active {
+            display: block;
+        }
+        
+        .game-table {
+            background: #2d5016;
+            border-radius: 50%;
+            width: 500px;
+            height: 500px;
+            margin: 30px auto;
+            position: relative;
+            border: 10px solid #654321;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+        }
+        
+        .player-position {
+            position: absolute;
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            border: 3px solid #667eea;
+            min-width: 150px;
+            font-weight: bold;
+        }
+        
+        .position-south {
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff3cd;
+        }
+        
+        .position-north {
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .position-east {
+            right: -180px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .position-west {
+            left: -180px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .log {
+            background: #f5f5f5;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .info { color: #2196F3; }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .warning { color: #ff9800; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🃏 Белот - Онлайн Игра 🃏</h1>
+        
+        <div id="connectionStatus" class="section">
+            <h2>Връзка</h2>
+            <div id="status">Свързване...</div>
+        </div>
+        
+        <div id="lobbyArea">
+            <div class="section">
+                <h2>Създай стая</h2>
+                <input type="text" id="playerName" placeholder="Твоето име" value="Играч 1">
+                <input type="text" id="roomName" placeholder="Име на стаята" value="Стая 1">
+                <button onclick="createRoom()">Създай стая</button>
+            </div>
+            
+            <div class="section">
+                <h2>Налични стаи</h2>
+                <button onclick="refreshRooms()">Обнови списъка</button>
+                <div id="roomList"></div>
+            </div>
+        </div>
+        
+        <div id="gameArea">
+            <div class="section">
+                <h2>Игра</h2>
+                <p>Стая: <strong id="currentRoomName"></strong></p>
+                <p>Твоя позиция: <strong id="currentPosition"></strong></p>
+                <button onclick="leaveRoom()">Напусни стаята</button>
+            </div>
+            
+            <div class="game-table">
+                <div class="player-position position-south" id="playerSouth">Юг</div>
+                <div class="player-position position-north" id="playerNorth">Север</div>
+                <div class="player-position position-east" id="playerEast">Изток</div>
+                <div class="player-position position-west" id="playerWest">Запад</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Дневник на събитията</h2>
+            <div id="eventLog" class="log"></div>
+        </div>
+    </div>
+
+    <script src="/signalr.min.js"></script>
+    <script>
+        let connection;
+        let currentRoomId = null;
+        let currentPosition = null;
+        
+        // Initialize SignalR connection
+        async function initSignalR() {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("/gamehub")
+                .withAutomaticReconnect()
+                .build();
+            
+            // Register event handlers
+            connection.on("RoomCreated", (data) => {
+                log(`Стая създадена: ${data.roomName}`, 'success');
+            });
+            
+            connection.on("PlayerJoined", (player) => {
+                log(`Играч се присъедини: ${player.name} (${player.position})`, 'info');
+                updatePlayerDisplay(player.position, player.name);
+            });
+            
+            connection.on("PlayerLeft", (connectionId) => {
+                log("Играч напусна играта", 'warning');
+            });
+            
+            connection.on("GameStarting", (data) => {
+                log("Играта започва!", 'success');
+                data.players.forEach(p => {
+                    updatePlayerDisplay(p.position, p.name);
+                });
+            });
+            
+            connection.on("BidReceived", (data) => {
+                log(`Наддаване от ${data.position}: ${data.bidType}`, 'info');
+            });
+            
+            connection.on("CardPlayed", (data) => {
+                log(`Карта изиграна от ${data.position}: ${data.cardType} of ${data.cardSuit}`, 'info');
+            });
+            
+            try {
+                await connection.start();
+                document.getElementById('status').innerHTML = '<span class="success">✓ Свързан</span>';
+                log("Свързан успешно към сървъра", 'success');
+                refreshRooms();
+            } catch (err) {
+                document.getElementById('status').innerHTML = '<span class="error">✗ Грешка при свързване</span>';
+                log("Грешка при свързване: " + err, 'error');
+            }
+        }
+        
+        async function createRoom() {
+            const playerName = document.getElementById('playerName').value || 'Играч';
+            const roomName = document.getElementById('roomName').value || 'Стая';
+            
+            try {
+                const result = await connection.invoke("CreateRoom", roomName, playerName);
+                if (result.success) {
+                    currentRoomId = result.roomId;
+                    currentPosition = result.position;
+                    showGameArea(roomName);
+                    log(`Стая "${roomName}" създадена успешно`, 'success');
+                } else {
+                    log("Грешка при създаване на стая: " + result.message, 'error');
+                }
+            } catch (err) {
+                log("Грешка: " + err, 'error');
+            }
+        }
+        
+        async function joinRoom(roomId, roomName) {
+            const playerName = document.getElementById('playerName').value || 'Играч';
+            
+            try {
+                const result = await connection.invoke("JoinRoom", roomId, playerName);
+                if (result.success) {
+                    currentRoomId = result.roomId;
+                    currentPosition = result.position;
+                    showGameArea(roomName);
+                    log(`Присъединен към стая "${roomName}"`, 'success');
+                } else {
+                    log("Грешка при присъединяване: " + result.message, 'error');
+                }
+            } catch (err) {
+                log("Грешка: " + err, 'error');
+            }
+        }
+        
+        async function refreshRooms() {
+            try {
+                const rooms = await connection.invoke("GetAvailableRooms");
+                const roomList = document.getElementById('roomList');
+                
+                if (rooms.length === 0) {
+                    roomList.innerHTML = '<p style="color: #666; padding: 20px; text-align: center;">Няма налични стаи. Създайте нова!</p>';
+                    return;
+                }
+                
+                roomList.innerHTML = rooms.map(room => `
+                    <div class="room-item">
+                        <div class="room-info">
+                            <div class="room-name">${room.roomName}</div>
+                            <div class="room-players">Играчи: ${room.playerCount}/${room.maxPlayers}</div>
+                        </div>
+                        <button onclick="joinRoom('${room.roomId}', '${room.roomName}')">Присъедини се</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                log("Грешка при зареждане на стаи: " + err, 'error');
+            }
+        }
+        
+        async function leaveRoom() {
+            try {
+                await connection.invoke("LeaveRoom");
+                currentRoomId = null;
+                currentPosition = null;
+                showLobbyArea();
+                log("Напуснахте стаята", 'info');
+                refreshRooms();
+            } catch (err) {
+                log("Грешка: " + err, 'error');
+            }
+        }
+        
+        function showGameArea(roomName) {
+            document.getElementById('lobbyArea').style.display = 'none';
+            document.getElementById('gameArea').classList.add('active');
+            document.getElementById('currentRoomName').textContent = roomName;
+            document.getElementById('currentPosition').textContent = getPositionName(currentPosition);
+        }
+        
+        function showLobbyArea() {
+            document.getElementById('lobbyArea').style.display = 'block';
+            document.getElementById('gameArea').classList.remove('active');
+            // Reset player displays
+            ['South', 'North', 'East', 'West'].forEach(pos => {
+                document.getElementById('player' + pos).textContent = getPositionName(pos);
+            });
+        }
+        
+        function updatePlayerDisplay(position, name) {
+            const positionName = position.charAt(0).toUpperCase() + position.slice(1);
+            const element = document.getElementById('player' + positionName);
+            if (element) {
+                element.textContent = `${getPositionName(position)}\n${name}`;
+            }
+        }
+        
+        function getPositionName(position) {
+            const names = {
+                'South': 'Юг',
+                'North': 'Север',
+                'East': 'Изток',
+                'West': 'Запад',
+                '1': 'Юг',    // South = 1
+                '2': 'Изток', // East = 2
+                '4': 'Север', // North = 4
+                '8': 'Запад'  // West = 8
+            };
+            return names[position] || position;
+        }
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('eventLog');
+            const time = new Date().toLocaleTimeString('bg-BG');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${time}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', initSignalR);
+    </script>
+</body>
+</html>

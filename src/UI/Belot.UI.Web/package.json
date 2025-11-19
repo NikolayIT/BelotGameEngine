@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@microsoft/signalr": "^10.0.0"
+  }
+}
