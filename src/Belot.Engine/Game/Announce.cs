@@ -93,7 +93,7 @@
                 return -1;
             }
 
-            return this.Card.Type.CompareTo(other.Card.Type);
+            return Math.Sign(this.Card.Type.CompareTo(other.Card.Type));
         }
     }
 }
