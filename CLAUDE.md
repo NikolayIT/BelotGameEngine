@@ -13,7 +13,7 @@ important thing to understand here. The full rules are in `etc/Rules.md`.
 ## Commands
 
 The solution lives in `src/`. Library projects target `netstandard2.0`; runnable/test projects
-target `net8.0`.
+target `net10.0`.
 
 ```bash
 # Run the unit tests (xUnit)
