@@ -122,8 +122,7 @@ class PlayEmu(BelotEmu):
         self.frame = None
         self.capture = True
         try:
-            self.call(0x46F5C0, eax=self._form, edx=self._group, ecx=out,
-                      timeout_insns=80_000_000)
+            self._call_routine(out)
         finally:
             self.capture = False
         idx = self.r32(out)
@@ -131,6 +130,34 @@ class PlayEmu(BelotEmu):
         if st is not None:
             st["rngSeed"] = seed
         return (None if idx in (0xFFFFFFFF, 0xFFFFFFFB) else idx), st
+
+    def _call_routine(self, out):
+        """
+        Run player2BeforePlay, naming the one position it cannot answer.
+
+        Two sites in the routine (0x4731ad and 0x473bcf) read the caller's index back out of the
+        var parameter -- `mov edx,[ebp-0xc]; mov edx,[edx]` -- and hand it to the accessor at
+        0x484c88, which returns nil for an out-of-range index; the caller then dereferences that
+        nil at +0x20 to read the chosen card's suit. In the real game the index is always valid
+        there, so whatever calls this passes a card index in rather than a "nothing chosen yet"
+        marker. What it passes is not recovered: the routine is a published method invoked
+        indirectly, and no dispatch site for it survives in the binary to read the answer off.
+
+        So the harness cannot invent one. Substituting a plausible index (0, say) does change the
+        answers -- regenerating the vectors that way turns roughly ninety "no decision" positions
+        into decisions -- and a guess dressed up as a measurement is worse than a gap.
+        """
+        try:
+            self.call(0x46F5C0, eax=self._form, edx=self._group, ecx=out, timeout_insns=80_000_000)
+        except EmuError as e:
+            idx = self.r32(out)
+            signed = idx - 0x100000000 if idx >= 0x80000000 else idx
+            if "Invalid memory read" in str(e):
+                raise EmuError(
+                    f"[out={signed}] position depends on the caller's incoming card index: the "
+                    "routine read it back (0x4731ad/0x473bcf) before choosing one, and what the "
+                    f"game passes in is not recovered. Underlying fault: {e}") from None
+            raise
 
     def install_round_memory(self, mem):
         """Write a whole 0x60-byte memory block at MEM_A (see memory.py).
@@ -191,9 +218,54 @@ class PlayEmu(BelotEmu):
         self._build_state(contract, me, my_hand, played_in_trick, all_played, voids)
         out = self.alloc(16)
         self.w32(out, 0xFFFFFFFF)
-        self.call(0x46F5C0, eax=self._form, edx=self._group, ecx=out, timeout_insns=80_000_000)
+        try:
+            self._call_routine(out)
+        except EmuError as e:
+            if "incoming card index" not in str(e):
+                raise
+            return self._answer_regardless(contract, me, my_hand, played_in_trick, all_played, voids)
+
         idx = self.r32(out)
         return None if idx in (0xFFFFFFFF, 0xFFFFFFFB) else idx
+
+    def _answer_regardless(self, contract, me, my_hand, played_in_trick, all_played, voids):
+        """
+        For the positions where the routine reads the caller's index before choosing one.
+
+        What the game passes in is not recovered, but the answer does not have to depend on it:
+        run the position once for every index the caller could plausibly have held, and if they
+        all come out at the same card then that card is the routine's answer whatever the caller
+        did. Only when they disagree is the position genuinely unanswerable, and then it says so
+        rather than picking one.
+        """
+        got = []
+        for start in range(len(my_hand)):
+            self._build_state(contract, me, my_hand, played_in_trick, all_played, voids)
+            out = self.alloc(16)
+            self.w32(out, start)
+            try:
+                self.call(0x46F5C0, eax=self._form, edx=self._group, ecx=out,
+                          timeout_insns=80_000_000)
+            except EmuError as e:
+                raise EmuError(f"incoming index {start} faults too: {e}") from None
+
+            idx = self.r32(out)
+            got.append(None if idx in (0xFFFFFFFF, 0xFFFFFFFB) else idx)
+
+        if len(set(got)) == 1:
+            return got[0]
+
+        if got == list(range(len(my_hand))):
+            raise EmuError(
+                "the routine declines to override here: it hands back exactly the card index it "
+                "was given (tried 0.." f"{len(my_hand) - 1}" ", got the same back each time). "
+                "player2BeforePlay is an override hook -- the caller pre-selects a card and the "
+                "AI changes it or leaves it -- and the harness has no pre-selection for it to "
+                "leave alone, so there is no answer to report")
+
+        raise EmuError(
+            "the answer depends on the caller's incoming card index, which is not recovered: "
+            f"indices 0..{len(my_hand) - 1} give {got}")
 
     def _build_state(self, contract, me, my_hand, played_in_trick, all_played, voids):
         self.reset_heap()
@@ -233,12 +305,22 @@ class PlayEmu(BelotEmu):
         led = played_in_trick[0][1][0] if played_in_trick else 4
         table = self.make_table(led, CONTRACT_TRUMP_SUIT.get(contract, 4), table_slots)
 
+        # How many cards each opponent still holds. This is not cosmetic: the routine reads
+        # GetCount on the other players' groups (e.g. at 0x473171) and branches on it, so giving
+        # everyone a full hand of eight all round sends it down paths the real game never takes --
+        # including one that reads back a choice it has not made yet and dereferences nil.
+        # Everyone has played one card per completed trick, plus one more if they are already in
+        # the current trick.
+        seen = set(all_played) | set(my_hand)
+        completed = (len(seen) - len(my_hand) - len(played_in_trick)) // 4
+        in_trick = {p for p, _ in played_in_trick}
         groups = []
         for p in (1, 2, 3, 4):
             if p == me:
                 groups.append(group)
             else:
-                g = self.make_group(p, [self.make_card(0, 7, hidden=1) for _ in range(8)])
+                left = max(0, min(8, 8 - completed - (1 if p in in_trick else 0)))
+                g = self.make_group(p, [self.make_card(0, 7, hidden=1) for _ in range(left)])
                 self.w8(g + 0x18A, 0)
                 groups.append(g)
         self._form = self.make_form(table, groups)

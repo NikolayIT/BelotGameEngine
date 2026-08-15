@@ -53,6 +53,13 @@ namespace BelotV2
         /// <summary>Declarer seat (1..4) reported to the AI; affects a few of its branches.</summary>
         public int Declarer { get; set; } = 1;
 
+        /// <summary>
+        /// Delphi's RandSeed as the routine saw it on the last call. A few branches break ties
+        /// with Random(), so anything comparing its own answer against this one has to start its
+        /// RNG here, or the two disagree by coin flip rather than by logic.
+        /// </summary>
+        public uint LastSeed { get; private set; }
+
         public BidType GetBid(BidContext context) => BiddingAi.ChooseBid(context, this.rng);
 
         public Card PlayCard(PlayContext context)
@@ -136,6 +143,11 @@ namespace BelotV2
             if (doc.RootElement.TryGetProperty("error", out JsonElement err))
             {
                 throw new InvalidOperationException($"original AI: {err.GetString()}");
+            }
+
+            if (doc.RootElement.TryGetProperty("seed", out JsonElement s))
+            {
+                this.LastSeed = s.GetUInt32();
             }
 
             Card chosen = hand[doc.RootElement.GetProperty("index").GetInt32()];

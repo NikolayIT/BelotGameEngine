@@ -12,10 +12,13 @@ Request:
    "trick": [[1,"C",7], ...],                     # cards already on the table this trick
    "played":[["C",7], ...],                       # every card seen so far (incl. hand & trick)
    "voids": {"1":["C"],"2":[],"3":[],"4":[]},     # suits each player has shown void in
-   "mem":   [0, 0, ...]}                          # optional: the AI's 0x60-byte round memory
+   "mem":   [0, 0, ...],                          # optional: the AI's 0x60-byte round memory
                                                   # (see memory.py); omitted = round-start state
+   "seed":  12345}                                # optional: force Delphi's RandSeed
 Reply:
-  {"index": 2}            index into "hand"
+  {"index": 2, "seed": 12345}   index into "hand", and the RandSeed the routine ran with
+                                (feed that to your own implementation before comparing:
+                                 some branches break ties with Random())
   {"error": "..."}
 
 Contracts 1..6 = Clubs, Diamonds, Hearts, Spades, No-trumps, All-trumps.
@@ -56,9 +59,16 @@ def main():
             emu.declarer = int(req.get("declarer", 1))
             mem = req.get("mem")
             emu.round_memory = bytearray(mem) if mem else None
+            if "seed" in req:
+                emu.w32(0x48B040, int(req["seed"]) & 0xFFFFFFFF)
+
+            # Delphi's RandSeed as the routine will see it. Some branches break ties with
+            # Random(), so a caller comparing its own implementation against this one has to
+            # start from the same seed or it is comparing two coin flips.
+            seed = emu.r32(0x48B040)
             idx = emu.choose_card_ex(int(req["contract"]), int(req["me"]), hand,
                                      trick, played, voids)
-            reply = {"index": idx} if idx is not None else {"error": "no decision"}
+            reply = {"index": idx, "seed": seed} if idx is not None else {"error": "no decision"}
         except EmuError as e:
             reply = {"error": f"emulation: {e}"}
         except Exception as e:                      # noqa: BLE001 - protocol robustness

@@ -23,6 +23,7 @@ pip install unicorn pefile capstone
 | `memory.py` | the AI's per-round memory block at 0x48BEB8 and the rules that maintain it, so the emulated AI plays a round with the memory it would really have. `BelotV2.AI/PlayMemory.cs` is the same thing in C#, and every vector carries the block so the two are compared byte for byte. |
 | `bid_probe.py` | drives `choosegame`'s bidding decision (not just its scoring loop). Plays whole auctions, or with `synth` writes the auction state directly so every entry of the decision's jump table is exercised — the doubled and redoubled ones are otherwise unreachable. |
 | `score_probe.py` | runs the round-scoring routine `FUN_0047AC00` and reads the match board back. Mostly a matter of stubbing the score dialogue it wants to paint; `vectors` mode writes `vectors/golden_score.json`. It also writes the declarations directly, which is how the contest between two competing declarations was settled — including pairings a fair deal reaches only rarely. It never deals the same four of a kind to two seats: that cannot happen in a real game, and what the routine does with it is not a rule worth copying. |
+| `ai_server.py` | see below; takes an optional `seed` and reports the `RandSeed` each decision ran with, so a client can align its own RNG before comparing (some branches break ties with `Random()`). |
 | `probe_exit.py` | replays one recorded position and reports **which store site** in the routine wrote the answer, which names the decision-tree branch the original actually took. |
 | `vectors/golden_bids.json` | 17,499 bid decisions from emulated auctions plus a synthetic sweep, with the auction state, the match score, the seat that opened and the RNG seed each one ran with. The match scores are sampled deliberately: only a board of 146+ leaves a team needing five or fewer points, which is the only way the routine reaches its doubling branches. |
 | `vectors/golden_score.json` | 2,500 scored rounds: the cards each seat took, each seat's declarations, the contract, declarer, doubling level, last trick, hanging points, and the two numbers the original added to the match board. |
@@ -102,7 +103,15 @@ what to play. `BelotV2.AI.OriginalAiPlayer` is the C# client for it.
 
 ```bash
 echo '{"contract":1,"me":2,"declarer":1,"hand":[["C",7],["C",14],["D",9]],"trick":[],"played":[["C",7],["C",14],["D",9]],"voids":{"1":[],"2":[],"3":[],"4":[]}}' | python ai_server.py
-# -> {"index": 0}
+# -> {"index": 0, "seed": 1234567}
 ```
 
 Roughly half a second per decision — built for comparison harnesses, not bulk simulation.
+
+Feed the returned `seed` to your own implementation before comparing answers, or the two disagree
+by coin flip wherever the routine breaks a tie at random. About 0.8% of live positions come back
+as an error instead of an index: `player2BeforePlay` is an override hook that is handed the
+caller's pre-selected card index by reference, and on those positions it hands the same index
+straight back rather than choosing. The harness proves that by running the position once per
+possible incoming index; with no pre-selection of its own it has nothing to report, and says so
+rather than inventing a card.
