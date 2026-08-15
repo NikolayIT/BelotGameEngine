@@ -11,9 +11,9 @@ namespace BelotV2
 
     public readonly record struct Announce(AnnounceKind Kind, int Seat, Rank TopRank, int Value)
     {
-        // Comparison rank between competing declarations (higher wins the whole comparison).
-        // Sequences: quinte(3) > quarte(2) > terca(1); a careta outranks any sequence (4);
-        // ties broken by top rank. Belote never competes (always scores for its holder).
+        // Kind ordering, consulted only after value (see Announces.Compare): quinte(3) >
+        // quarte(2) > terca(1), and a careta(4) outranks any sequence it ties with.
+        // Belote never competes — it always scores for its holder.
         public int Tier => this.Kind switch
         {
             AnnounceKind.Terca => 1,
@@ -118,10 +118,14 @@ namespace BelotV2
         }
 
         /// <summary>
-        /// Resolve competing declarations between the two teams. Only the team holding the
-        /// single strongest declaration scores its sequence/careta announcements; an exact
-        /// tie cancels them for both teams. Belote (declared during play) always scores.
-        /// Returns the announcements that actually count.
+        /// Resolve competing declarations between the two teams. Only the team holding the single
+        /// strongest declaration scores, and when it does it scores ALL of its sequences and
+        /// caretas, not just the winning one; the other team scores none of its own. An exact tie
+        /// cancels the contest for both. Belote (declared during play) always scores, for whoever
+        /// holds it, and takes no part in the contest. Returns the announcements that count.
+        ///
+        /// Measured against the binary rather than assumed: see Compare for the ordering, which
+        /// is not the one the printed rules suggest.
         /// </summary>
         public static List<Announce> Resolve(IEnumerable<Announce> all)
         {
@@ -163,15 +167,42 @@ namespace BelotV2
             return kept;
         }
 
-        // Higher = stronger. Careta beats sequence; within a kind, higher top rank wins.
+        // Higher = stronger, and what is compared first is the VALUE, not the kind: four nines
+        // (150) outrank four queens (100) even though a nine is the lower card, and four jacks
+        // (200) outrank both. Only when two declarations are worth the same does the kind decide
+        // (a careta beats a sequence), and only then does the top rank break the remaining tie.
+        // Comparing by kind first — the intuitive reading — awards the round to the wrong side
+        // whenever two fours of a kind meet.
         private static int Compare(Announce a, Announce b)
         {
+            if (a.Value != b.Value)
+            {
+                return a.Value.CompareTo(b.Value);
+            }
+
             if (a.Tier != b.Tier)
             {
                 return a.Tier.CompareTo(b.Tier);
             }
 
-            return ((int)a.TopRank).CompareTo((int)b.TopRank);
+            // Last tie-break, and the two kinds do not use the same order.
+            //
+            // A sequence is ranked by its top card by RANK: a terca to the king beats a terca to
+            // the ten, and a terca to the jack beats a terca to the ten, which is what the run's
+            // "top" card means. Two identical sequences cancel.
+            //
+            // A careta is ranked by the card's STRENGTH instead — the plain trick-taking order,
+            // where a ten sits above a king. Four tens (100) therefore beats four kings (100),
+            // but four aces beats four tens. All twelve orderings of the four hundred-point
+            // caretas were measured against the binary, both seat orders each, and the result is
+            // exactly Cards.NoTrumpOrder. Nines and jacks never reach here: 150 and 200 are
+            // unique values, so they are already decided above.
+            if (a.Kind != AnnounceKind.Careta)
+            {
+                return ((int)a.TopRank).CompareTo((int)b.TopRank);
+            }
+
+            return Cards.NoTrumpOrder[(int)a.TopRank - 7].CompareTo(Cards.NoTrumpOrder[(int)b.TopRank - 7]);
         }
     }
 }

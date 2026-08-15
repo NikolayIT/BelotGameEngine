@@ -22,8 +22,10 @@ pip install unicorn pefile capstone
 | `disasm.py` | small capstone disassembler used during analysis (annotates x87 constant loads). |
 | `memory.py` | the AI's per-round memory block at 0x48BEB8 and the rules that maintain it, so the emulated AI plays a round with the memory it would really have. `BelotV2.AI/PlayMemory.cs` is the same thing in C#, and every vector carries the block so the two are compared byte for byte. |
 | `bid_probe.py` | drives `choosegame`'s bidding decision (not just its scoring loop). Plays whole auctions, or with `synth` writes the auction state directly so every entry of the decision's jump table is exercised — the doubled and redoubled ones are otherwise unreachable. |
+| `score_probe.py` | runs the round-scoring routine `FUN_0047AC00` and reads the match board back. Mostly a matter of stubbing the score dialogue it wants to paint; `vectors` mode writes `vectors/golden_score.json`. It also writes the declarations directly, which is how the contest between two competing declarations was settled — including pairings a fair deal reaches only rarely. It never deals the same four of a kind to two seats: that cannot happen in a real game, and what the routine does with it is not a rule worth copying. |
 | `probe_exit.py` | replays one recorded position and reports **which store site** in the routine wrote the answer, which names the decision-tree branch the original actually took. |
 | `vectors/golden_bids.json` | 17,499 bid decisions from emulated auctions plus a synthetic sweep, with the auction state, the match score, the seat that opened and the RNG seed each one ran with. The match scores are sampled deliberately: only a board of 146+ leaves a team needing five or fewer points, which is the only way the routine reaches its doubling branches. |
+| `vectors/golden_score.json` | 2,500 scored rounds: the cards each seat took, each seat's declarations, the contract, declarer, doubling level, last trick, hanging points, and the two numbers the original added to the match board. |
 | `vectors/golden.json` | 14,692 committed vectors: card tables, announces, bid scores, legal moves. |
 | `vectors/golden_play.json` | 800 trick-winner + 5,160 card-play decisions, each with the routine's own internal state (`internals`), the AI's memory block, and the RNG seed it ran with. |
 
@@ -37,12 +39,14 @@ python gen_vectors.py 2000 11 vectors/golden.json          # rules + bidding
 python gen_play_vectors.py 110 23 vectors/golden_play.json # trick winner + play AI
 python bid_probe.py 600 7 vectors/golden_bids.json         # what the AI bids
 python bid_probe.py synth 90 5 vectors/synth_bids.json     # ...every standing bid, incl. doubles
+python score_probe.py vectors 2500 23 vectors/golden_score.json  # round scoring
 
 cd ../BelotV2.UI
 dotnet run -c Release -- verify ../tools/vectors/golden.json
 dotnet run -c Release -- verify ../tools/vectors/golden_play.json
 dotnet run -c Release -- verifystate ../tools/vectors/golden_play.json   # stage-by-stage
 dotnet run -c Release -- verify ../tools/vectors/golden_bids.json
+dotnet run -c Release -- verifyscoring ../tools/vectors/golden_score.json
 dotnet run -c Release -- bidscan ../tools/vectors/golden_bids.json      # decisions + scores, as CSV
 ```
 

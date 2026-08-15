@@ -21,6 +21,9 @@ switch (mode)
     case "verify":
         Environment.ExitCode = Verify.Run(args.Length > 1 ? args[1] : "golden.json");
         break;
+    case "verifyscoring":
+        Environment.ExitCode = VerifyScoring.Run(args.Length > 1 ? args[1] : "golden_score.json");
+        break;
     case "bidscan":
         BidScan.Run(args.Length > 1 ? args[1] : "golden_bids.json");
         break;

@@ -16,7 +16,8 @@ BelotV2.sln
 │    Cards, Contract, Deck, DelphiRandom, Seats, Rules(+ValidCards),
 │    Announces, Scoring, Players (IPlayer + contexts), Game
 ├─ BelotV2.AI      class library — the reverse-engineered AI  (→ Rules)
-│    AiTables, BiddingAi (choosegame), PlayAi (player2BeforePlay), AiPlayer
+│    AiTables, BiddingAi (choosegame), OriginalPlayAi (player2BeforePlay),
+│    PlayMemory, OriginalPlayAdapter, AiPlayer, OriginalAiPlayer
 └─ BelotV2.UI      console app                                 (→ Rules, AI)
      Program, ConsoleHumanPlayer, RandomPlayer
 ```
@@ -73,6 +74,7 @@ dotnet run --project BelotV2.UI -- verify tools/vectors/golden_play.json
 | announcement detection | `FUN_00479EE8` | **500/500 (100%)** |
 | bidding valuation (all 6 contracts per hand) | `choosegame` scoring loop | **12000/12000 (100%)** |
 | what the AI actually bids | `choosegame` decision | **17499/17499 (100%)** |
+| round scoring | `FUN_0047AC00` | **2500/2500 (100%)** |
 | legal-move rules | `FUN_004767F8` | **2000/2000 (100%)** |
 | trick winner | `FUN_004766A8` | **800/800 (100%)** |
 | card-play analysis + lookahead | `player2BeforePlay` internals | **100%** |
@@ -230,27 +232,59 @@ Fully reverse-engineered, and worth knowing if you are writing your own:
   **`OriginalAiPlayer` (via `tools/ai_server.py`) remains available when you want the card straight
   from the binary** — useful as an oracle when testing another engine.
 
-### The one part that is NOT verified against the binary: round scoring
+### Round scoring
 
-Everything above is diffed against the exe. Round scoring is not, and it is the weakest link in
-using this as a reference. The card-point tables and the four-of-a-kind values do come from the
-binary, but the rules around them — last-10, no-trumps ×2, capot +90, "С капо не се излиза", the
-double/redouble coefficients, the "inside"/hanging logic and tens-rounding (suit 6/7, all-trumps
-4/5 thresholds) — are the canonical Bulgarian rules, written from the game rather than recovered
-from `FUN_0047AC00`. Sequence values (terca 20 / quarte 50 / quinte 100) are the universal ones.
-There is no automated check of `Scoring.cs` against either the exe or another implementation, so
-treat it as "standard rules, plausibly what the exe does" rather than as established.
+Also diffed against the exe now, at **2,500/2,500** scored rounds. `FUN_0047AC00` is called with
+nothing but the form and writes the match board straight to 0x48BFDC/0x48BFE0, so the harness can
+run it and read the answer back (`tools/score_probe.py`). About four fifths of it is the score
+dialogue — 35 VCL calls, 22 integer-to-string conversions, three vtable dispatches — so it needs
+a synthetic form and a table of no-op stubs before it will execute, and the run stops at
+entry+5933, the moment both board figures have been written.
 
-What it would take to close this, having looked: `FUN_0047AC00` (0x47AC00..0x47D1F5, ~9.7 KB)
-writes the match board at 0x48BFDC/0x48BFE0, so the result is easy to read back. It never calls
-the card accessors, so it does not walk the trick pile — it works from totals the play code
-accumulated, and those inputs would have to be located first. The bulk of it is presentation: 35
-VCL calls, 22 integer-to-string conversions and 10 string concatenations, all of which need
-stubbing before it will run on a synthetic form. It is a bigger job than the bidding decision was,
-for a numerically smaller payoff, which is why it is documented rather than done.
+Doing this turned up four rules the canonical version had wrong:
 
-The deal/shuffle order and the resolution of competing announcements between the two teams are in
-the same position: detection is verified (500/500), resolution is not.
+- **Where the points come from.** Each seat's group carries a Delphi dynamic array at +0x174 of
+  the cards that seat took, and the sides are seats 1+3 against 2+4. The entries are
+  `SUITMAP[suit] * 13 + rank` — the *display* suit order, in which spades and hearts swap places
+  relative to the binary's own suit numbering. Getting that wrong values the trump jack as a
+  plain one and quietly shifts 18 points.
+- **A double or an inside contract collapses the round.** The whole pot goes to whichever side
+  scored more (level points to east-west), multiplied by the doubling coefficient, then nudged to
+  an even number of tens — up in all-trumps, down in a suit contract, untouched in no-trumps.
+  Hanging points follow the winner.
+- **A made contract does not round both sides.** The leader's tens are rounded and the other side
+  takes whatever is left of the round's total, so the two always add up. A side that took
+  anything at all never rounds away to nothing: two points against a hundred and sixty still
+  banks one, out of the leader's share.
+- **Level points hang.** Neither side banks the round: the declaring side's half carries to the
+  next deal and the other side takes its own half — and under a double the whole multiplied pot
+  hangs and nobody scores.
+
+Declarations are part of this too. `FUN_00479EE8` — the detector already verified at 500/500 —
+writes an eight-byte descriptor per seat which 0x47A21A copies to 0x48BE90, seven bytes holding
+the top rank of each declaration: `[careta1, careta2, terca1, terca2, quarte1, quarte2, quinte]`.
+Feeding those in and re-scoring settled three more rules:
+
+- **They are added to the raw team totals at face value, after the no-trumps doubling.** No-trumps
+  doubles what the cards are worth, not what a terca is worth — and in no-trumps declarations do
+  not count at all.
+- **Competing declarations compare by VALUE first, not by kind.** Four nines (150) outrank four
+  queens (100) even though the nine is the lower card, and four jacks (200) outrank both. Only
+  when two are worth the same does the kind decide (a careta beats a sequence). Comparing by kind
+  first — the intuitive reading, and what this port did — hands the round to the wrong side
+  whenever two fours of a kind meet. The winning side then scores *all* of its declarations, and
+  an exact tie cancels both sides.
+- **The last tie-break runs in two different directions.** A sequence is ranked by its top card by
+  rank, as you would expect: a terca to the king beats a terca to the ten. A four of a kind is
+  ranked by that card's *strength* instead — the plain trick-taking order, in which a ten sits
+  above a king — so four tens beats four kings, while four aces beats four tens. All twelve
+  orderings of the four hundred-point caretas were put to the binary, in both seat orders, and the
+  answer is exactly the game's own `NoTrumpOrder`; it does not depend on who declared first.
+  Nines and jacks never reach this test, their values being unique.
+
+Not recovered, and deliberately so: the deal/shuffle order. The original re-seeds from the clock,
+so it cannot be reproduced even in principle; a Fisher-Yates on the same RNG is behaviourally
+equivalent, and `oracle` prints the hands so comparisons never need it.
 
 An internal detail that does not affect the port: the exe's suit **index** order is
 Clubs=0, Diamonds=1, Spades=2, Hearts=3 (tables @0x489C5C/@0x489DAC), distinct from the bid-ladder
