@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- deliberately NOT under BelotV2: that namespace's Card/IPlayer/BidType/Contract/Announce
+         would all be in scope here and collide with the engine's types of the same name -->
+    <RootNamespace>BelotArena</RootNamespace>
+    <AssemblyName>BelotV2.Arena</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- the 2001 game, reconstructed -->
+    <ProjectReference Include="..\BelotV2.Rules\BelotV2.Rules.csproj" />
+    <ProjectReference Include="..\BelotV2.AI\BelotV2.AI.csproj" />
+    <!-- the modern engine and its SmartPlayer -->
+    <ProjectReference Include="..\..\..\..\..\src\Belot.Engine\Belot.Engine.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\AI\Belot.AI.SmartPlayer\Belot.AI.SmartPlayer.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\AI\Belot.AI.DummyPlayer\Belot.AI.DummyPlayer.csproj" />
+  </ItemGroup>
+
+</Project>

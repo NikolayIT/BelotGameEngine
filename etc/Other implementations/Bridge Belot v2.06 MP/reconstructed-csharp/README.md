@@ -282,6 +282,58 @@ Feeding those in and re-scoring settled three more rules:
   answer is exactly the game's own `NoTrumpOrder`; it does not depend on who declared first.
   Nines and jacks never reach this test, their values being unique.
 
+## Against a modern engine: SmartPlayer vs the 2001 AI
+
+`BelotV2.Arena` puts the reconstructed AI up against `SmartPlayer` from this repository's own
+`Belot.Engine`, hosted by that engine so it owns the rules, validates every bid and card, and
+SmartPlayer plays with the contexts it was written for. The 2001 AI is wrapped, not
+reimplemented: bidding goes to `BiddingAi`, card play to `OriginalPlayAdapter` or -- with
+`originalemu` -- to the real x86 routine under emulation.
+
+```bash
+dotnet run -c Release --project BelotV2.Arena -- smart original 5000
+dotnet run -c Release --project BelotV2.Arena -- smart smart 1000        # the control
+dotnet run -c Release --project BelotV2.Arena -- smart originalemu 40    # the real exe code
+```
+
+**The 2001 AI wins 67% of matches (ELO +123 over 5,000 games.)** The controls say that is real
+rather than a harness artefact: `smart smart` lands on exactly 50.0%, and swapping the sides has
+the original winning 71.3% from the other seats. Against the shared baselines the two are level --
+vs `dummy` 90.5% (SmartPlayer) against 91.8% (the original), vs `random` 99.5% against 100% -- so
+this is a bad matchup for SmartPlayer rather than a generally stronger opponent.
+
+Hybrid players, which take their bids from one AI and their card play from the other, say where it
+comes from:
+
+| matchup | what differs | SmartPlayer wins |
+|---|---|---|
+| smart vs *smart bids + original plays* | card play only | **32.7%** (-125 ELO) |
+| smart vs *original bids + smart plays* | bidding only | **51.8%** (+13 ELO) |
+
+All of it is card play. The original's bidding is, if anything, marginally the worse of the two --
+the aggressive all-trumps opening is a faithful quirk, not an edge. Its one-trick lookahead is
+what beats a heuristic player. Nothing is smuggled in: the wrapper builds the AI's "who can still
+hold what" matrix from its own hand, the cards played and the voids seats have shown, all of it
+public knowledge.
+
+Running the same match against the **real binary** (40 games, 4,706 decisions taken by the x86
+code itself) gives 27.5%, consistent with the transcription's 33% at that sample size. That run
+also re-checks the transcription on positions the golden vectors cannot contain, since those were
+recorded with the original playing itself rather than a different engine: with both sides started
+from the same `RandSeed` -- some branches break ties with `Random()`, so this matters -- the
+transcription reproduces the binary on **99.5%** of live decisions. The remaining handful are the
+only known daylight between the port and the binary.
+
+A further 0.8% of positions the emulator declines to answer at all, and the reason is worth
+recording: `player2BeforePlay` is an **override hook**, not a chooser. The caller pre-selects a
+card and passes its index by reference; the routine either changes it or leaves it. Two sites
+(0x4731ad, 0x473bcf) read that index straight back and dereference the card, so a caller that
+passes "nothing chosen yet" gets a nil. On those positions the harness runs the routine once per
+possible incoming index and finds it hands back exactly what it was given -- it is declining to
+override -- and since the harness has no pre-selection for it to keep, there is no answer to
+report. The game's own caller is a published method invoked indirectly, with no dispatch site left
+in the binary to read the default off, so this stays a gap rather than a guess.
+
 Not recovered, and deliberately so: the deal/shuffle order. The original re-seeds from the clock,
 so it cannot be reproduced even in principle; a Fisher-Yates on the same RNG is behaviourally
 equivalent, and `oracle` prints the hands so comparisons never need it.
