@@ -32,7 +32,7 @@ namespace BelotV2
 
             if (root.TryGetProperty("playai", out JsonElement pa))
             {
-                failures += CheckPlayAi(pa);
+                failures += CheckCardPlay(pa);
             }
 
             if (root.TryGetProperty("bidchoice", out JsonElement bc))
@@ -284,7 +284,7 @@ namespace BelotV2
             return suits;
         }
 
-        private static int CheckPlayAi(JsonElement cases)
+        private static int CheckCardPlay(JsonElement cases)
         {
             int bad = 0, n = 0;
             var rng = new DelphiRandom(1);

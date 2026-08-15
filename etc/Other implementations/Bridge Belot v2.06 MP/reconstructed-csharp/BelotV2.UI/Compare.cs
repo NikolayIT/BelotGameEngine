@@ -5,7 +5,7 @@ namespace BelotV2
     ///
     ///   compare &lt;rounds&gt; [pathToAiServer] [python]
     ///
-    /// Every card decision is put to both the reconstructed <see cref="PlayAi"/> and the real
+    /// Every card decision is put to both the transcribed <see cref="OriginalPlayAi"/> and the real
     /// routine; the deals are driven by the original's choices, so the positions visited are the
     /// ones the original would actually reach. Swap in your own decision function to measure
     /// another engine against the authentic AI.
@@ -105,7 +105,7 @@ namespace BelotV2
             }
 
             Console.WriteLine();
-            Console.WriteLine($"Reconstructed PlayAi vs the ORIGINAL AI: {agree}/{total} " +
+            Console.WriteLine($"Transcribed OriginalPlayAi vs the ORIGINAL AI: {agree}/{total} " +
                               $"({100.0 * agree / Math.Max(total, 1):F1}%)");
             foreach (var kv in byContext.OrderBy(k => k.Key))
             {

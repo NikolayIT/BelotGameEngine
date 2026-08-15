@@ -3,7 +3,7 @@
 Golden vectors for the two remaining behaviours, taken from the ORIGINAL code:
 
   trickwinner : FUN_004766A8   -> Rules.WinnerIndex
-  playai      : player2BeforePlay @0x46F5C0 -> PlayAi.Play
+  playai      : player2BeforePlay @0x46F5C0 -> OriginalPlayAi.Decide
 
 Play positions are produced by letting the emulated original AI play complete rounds against
 itself, recording every decision together with the exact information state it had.
