@@ -1,7 +1,6 @@
 ﻿namespace Belot.AI.SmartPlayer
 {
     using System.Collections.Generic;
-    using System.Linq;
 
     using Belot.AI.SmartPlayer.Strategies;
     using Belot.Engine;
@@ -22,6 +21,10 @@
         private readonly IPlayStrategy trumpOursContractStrategy;
         private readonly IPlayStrategy trumpTheirsContractStrategy;
 
+        // Scratch collection rebuilt on every PlayCard call. The engine drives a player
+        // sequentially within a game, so reusing one instance instead of allocating is safe.
+        private readonly CardCollection playedCards = new CardCollection();
+
         public SmartPlayer()
         {
             this.validAnnouncesService = new ValidAnnouncesService();
@@ -36,44 +39,56 @@
 
         public BidType GetBid(PlayerGetBidContext context)
         {
-            var announcePoints = this.validAnnouncesService.GetAvailableAnnounces(context.MyCards).Sum(x => x.Value);
-            var cards = context.MyCards.ToList();
-            var bids = new Dictionary<BidType, int>();
-            if (context.AvailableBids.HasFlag(BidType.Clubs))
+            var availableAnnounces = this.validAnnouncesService.GetAvailableAnnounces(context.MyCards);
+            var announcePoints = 0;
+            for (var i = 0; i < availableAnnounces.Count; i++)
             {
-                bids.Add(BidType.Clubs, CalculateTrumpBidPoints(cards, CardSuit.Club, announcePoints));
+                announcePoints += availableAnnounces[i].Value;
             }
 
-            if (context.AvailableBids.HasFlag(BidType.Diamonds))
+            var cards = context.MyCards;
+            var availableBids = context.AvailableBids;
+
+            // Candidates are evaluated in the same order the bids dictionary used to be filled
+            // in, and a tie keeps the earlier candidate, so the chosen bid is exactly what the
+            // old Where(>=100)/OrderByDescending (stable) chain produced.
+            var bestBid = BidType.Pass;
+            var bestPoints = 99;
+            if (availableBids.HasFlag(BidType.Clubs))
             {
-                bids.Add(BidType.Diamonds, CalculateTrumpBidPoints(cards, CardSuit.Diamond, announcePoints));
+                Consider(BidType.Clubs, CalculateTrumpBidPoints(cards, CardSuit.Club, announcePoints), ref bestBid, ref bestPoints);
             }
 
-            if (context.AvailableBids.HasFlag(BidType.Hearts))
+            if (availableBids.HasFlag(BidType.Diamonds))
             {
-                bids.Add(BidType.Hearts, CalculateTrumpBidPoints(cards, CardSuit.Heart, announcePoints));
+                Consider(BidType.Diamonds, CalculateTrumpBidPoints(cards, CardSuit.Diamond, announcePoints), ref bestBid, ref bestPoints);
             }
 
-            if (context.AvailableBids.HasFlag(BidType.Spades))
+            if (availableBids.HasFlag(BidType.Hearts))
             {
-                bids.Add(BidType.Spades, CalculateTrumpBidPoints(cards, CardSuit.Spade, announcePoints));
+                Consider(BidType.Hearts, CalculateTrumpBidPoints(cards, CardSuit.Heart, announcePoints), ref bestBid, ref bestPoints);
             }
 
-            if (context.AvailableBids.HasFlag(BidType.AllTrumps))
+            if (availableBids.HasFlag(BidType.Spades))
             {
-                bids.Add(
+                Consider(BidType.Spades, CalculateTrumpBidPoints(cards, CardSuit.Spade, announcePoints), ref bestBid, ref bestPoints);
+            }
+
+            if (availableBids.HasFlag(BidType.AllTrumps))
+            {
+                Consider(
                     BidType.AllTrumps,
-                    CalculateAllTrumpsBidPoints(cards, context.Bids, context.MyPosition.GetTeammate(), announcePoints));
+                    CalculateAllTrumpsBidPoints(cards, context.Bids, context.MyPosition.GetTeammate(), announcePoints),
+                    ref bestBid,
+                    ref bestPoints);
             }
 
-            if (context.AvailableBids.HasFlag(BidType.NoTrumps))
+            if (availableBids.HasFlag(BidType.NoTrumps))
             {
-                bids.Add(BidType.NoTrumps, CalculateNoTrumpsBidPoints(cards));
+                Consider(BidType.NoTrumps, CalculateNoTrumpsBidPoints(cards), ref bestBid, ref bestPoints);
             }
 
-            var bid = bids.Where(x => x.Value >= 100).OrderByDescending(x => x.Value)
-                .Select(e => (KeyValuePair<BidType, int>?)e).FirstOrDefault();
-            return bid?.Key ?? BidType.Pass;
+            return bestBid;
         }
 
         public IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
@@ -83,12 +98,28 @@
 
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
         {
-            var playedCards = new CardCollection();
-            foreach (var action in context.RoundActions)
+            var playedCards = this.playedCards;
+            playedCards.Clear();
+            if (context.RoundActions is IList<PlayCardAction> roundActions)
             {
-                if (action.TrickNumber < context.CurrentTrickNumber)
+                // The engine always passes a List, so take the allocation-free indexed path.
+                for (var i = 0; i < roundActions.Count; i++)
                 {
-                    playedCards.Add(action.Card);
+                    var action = roundActions[i];
+                    if (action.TrickNumber < context.CurrentTrickNumber)
+                    {
+                        playedCards.Add(action.Card);
+                    }
+                }
+            }
+            else
+            {
+                foreach (var action in context.RoundActions)
+                {
+                    if (action.TrickNumber < context.CurrentTrickNumber)
+                    {
+                        playedCards.Add(action.Card);
+                    }
                 }
             }
 
@@ -140,12 +171,20 @@
         {
         }
 
-        private static int CalculateAllTrumpsBidPoints(List<Card> cards, IEnumerable<Bid> previousBids, PlayerPosition teammate, int announcePoints)
+        private static void Consider(BidType bid, int points, ref BidType bestBid, ref int bestPoints)
+        {
+            if (points > bestPoints)
+            {
+                bestPoints = points;
+                bestBid = bid;
+            }
+        }
+
+        private static int CalculateAllTrumpsBidPoints(CardCollection cards, IEnumerable<Bid> previousBids, PlayerPosition teammate, int announcePoints)
         {
             var bidPoints = announcePoints / 3;
-            for (var i = 0; i < cards.Count; i++)
+            foreach (var card in cards)
             {
-                var card = cards[i];
                 if (card.Type == CardType.Jack)
                 {
                     bidPoints += 45;
@@ -165,10 +204,7 @@
                 }
             }
 
-            if (previousBids.Any(
-                x => x.Player == teammate && (x.Type == BidType.Clubs || x.Type == BidType.Diamonds
-                                                                      || x.Type == BidType.Hearts
-                                                                      || x.Type == BidType.Spades)))
+            if (TeammateHasSuitBid(previousBids, teammate))
             {
                 // If the teammate has announced suit, increase all trump bid points
                 bidPoints += 5;
@@ -177,12 +213,45 @@
             return bidPoints;
         }
 
-        private static int CalculateNoTrumpsBidPoints(List<Card> cards)
+        private static bool TeammateHasSuitBid(IEnumerable<Bid> previousBids, PlayerPosition teammate)
+        {
+            // The engine always passes a List<Bid>, so take the allocation-free indexed path.
+            if (previousBids is IList<Bid> bidsList)
+            {
+                for (var i = 0; i < bidsList.Count; i++)
+                {
+                    if (IsSuitBidByTeammate(bidsList[i], teammate))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            foreach (var bid in previousBids)
+            {
+                if (IsSuitBidByTeammate(bid, teammate))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsSuitBidByTeammate(Bid bid, PlayerPosition teammate)
+        {
+            return bid.Player == teammate && (bid.Type == BidType.Clubs || bid.Type == BidType.Diamonds
+                                                                        || bid.Type == BidType.Hearts
+                                                                        || bid.Type == BidType.Spades);
+        }
+
+        private static int CalculateNoTrumpsBidPoints(CardCollection cards)
         {
             var bidPoints = 0;
-            for (var i = 0; i < cards.Count; i++)
+            foreach (var card in cards)
             {
-                var card = cards[i];
                 if (card.Type == CardType.Ace)
                 {
                     bidPoints += 45;
@@ -205,12 +274,11 @@
             return bidPoints;
         }
 
-        private static int CalculateTrumpBidPoints(List<Card> cards, CardSuit trumpSuit, int announcePoints)
+        private static int CalculateTrumpBidPoints(CardCollection cards, CardSuit trumpSuit, int announcePoints)
         {
             var bidPoints = announcePoints / 2;
-            for (var i = 0; i < cards.Count; i++)
+            foreach (var card in cards)
             {
-                var card = cards[i];
                 if (card.Suit == trumpSuit)
                 {
                     switch (card.Type)
