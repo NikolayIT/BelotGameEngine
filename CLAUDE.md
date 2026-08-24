@@ -31,8 +31,8 @@ dotnet run --project src/UI/Belot.UI.Console/Belot.UI.Console.csproj
 
 Build cross-platform projects individually with `dotnet build`. Do **not** run `dotnet build` on
 the whole `src/Belot.sln`: it includes `UI/Belot.UI.Windows`, a UWP (x86) project that only builds
-with Visual Studio / full MSBuild. CI (`azure-pipelines.yml`) uses `VSBuild` on `windows-latest`
-for exactly this reason.
+with Visual Studio / full MSBuild. CI (`.github/workflows/build.yml`) builds the projects
+individually for exactly this reason and leaves the UWP project out.
 
 ## The ELO benchmark workflow (read this before touching the AI)
 

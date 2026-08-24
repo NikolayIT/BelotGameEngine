@@ -1,0 +1,66 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      # The solution also contains src/UI/Belot.UI.Windows, a UWP (x86) project that only builds
+      # with full MSBuild / Visual Studio, so the projects are built individually instead of
+      # building src/Belot.sln. These three cover every cross-platform project via their project
+      # references: Belot.Engine, Belot.AI.DummyPlayer and Belot.AI.SmartPlayer.
+      - name: Build
+        run: |
+          dotnet build src/Tests/Belot.Engine.Tests/Belot.Engine.Tests.csproj -c Release
+          dotnet build src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -c Release
+          dotnet build src/UI/Belot.UI.Console/Belot.UI.Console.csproj -c Release
+
+      - name: Test
+        run: >
+          dotnet test src/Tests/Belot.Engine.Tests/Belot.Engine.Tests.csproj
+          -c Release --no-build --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/TestResults/*.trx'
+          if-no-files-found: warn
+
+      - name: Upload NuGet package
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-package
+          path: src/Belot.Engine/bin/Release/*.nupkg
+          if-no-files-found: error
