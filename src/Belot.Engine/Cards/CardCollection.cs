@@ -101,17 +101,20 @@
         }
 
         public Card Lowest<TKey>(Func<Card, TKey> orderByFunc)
-            where TKey : IComparable
+            where TKey : IComparable<TKey>
         {
             Card minCard = null;
+            var minKey = default(TKey);
             var bits = this.cards;
             while (bits != 0)
             {
                 var card = Card.AllCards[TrailingZeroCount(bits)];
                 bits &= bits - 1;
-                if (minCard == null || orderByFunc(card).CompareTo(orderByFunc(minCard)) < 0)
+                var key = orderByFunc(card);
+                if (minCard == null || key.CompareTo(minKey) < 0)
                 {
                     minCard = card;
+                    minKey = key;
                 }
             }
 
@@ -119,17 +122,20 @@
         }
 
         public Card Highest<TKey>(Func<Card, TKey> orderByFunc)
-            where TKey : IComparable
+            where TKey : IComparable<TKey>
         {
             Card maxCard = null;
+            var maxKey = default(TKey);
             var bits = this.cards;
             while (bits != 0)
             {
                 var card = Card.AllCards[TrailingZeroCount(bits)];
                 bits &= bits - 1;
-                if (maxCard == null || orderByFunc(card).CompareTo(orderByFunc(maxCard)) > 0)
+                var key = orderByFunc(card);
+                if (maxCard == null || key.CompareTo(maxKey) > 0)
                 {
                     maxCard = card;
+                    maxKey = key;
                 }
             }
 
