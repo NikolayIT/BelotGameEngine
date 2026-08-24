@@ -66,10 +66,10 @@
                 this.playerCards,
                 out var bids);
 
-            // All pass
+            // All pass. Hanging points stay on the table for the winner of the next played deal.
             if (contract.Type == BidType.Pass)
             {
-                return new RoundResult(contract);
+                return new RoundResult(contract) { HangingPoints = hangingPoints };
             }
 
             // Deal 3 more cards to each player
