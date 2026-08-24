@@ -152,7 +152,15 @@
                                 trickActions,
                                 action.Card))
                             {
-                                announces.Add(new Announce(AnnounceType.Belot, action.Card) { Player = currentPlayer });
+                                // Belote may be declared in any trick, after UpdateActiveAnnounces
+                                // (which runs once, before trick 2) has already passed, so it is
+                                // activated at creation. It never competes with other announces.
+                                announces.Add(
+                                    new Announce(AnnounceType.Belot, action.Card)
+                                    {
+                                        Player = currentPlayer,
+                                        IsActive = true,
+                                    });
                             }
                             else
                             {
