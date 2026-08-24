@@ -14,11 +14,11 @@
         /// <typeparam name="T">The generic type parameter of the collection.</typeparam>
         public static void Shuffle<T>(this T[] array)
         {
+            var random = ThreadSafeRandom.Current;
             var n = array.Length;
             while (n > 1)
             {
-                // TODO: Replace with .NET 6 Random.Shared.Next
-                var k = ThreadSafeRandom.Next(0, n--);
+                var k = random.Next(0, n--);
                 var temp = array[n];
                 array[n] = array[k];
                 array[k] = temp;

@@ -15,6 +15,9 @@
 
         private static int staticSeed = Environment.TickCount;
 
+        // The per-thread instance, so hot loops can pay the ThreadLocal lookup only once.
+        internal static Random Current => LocalRandom.Value;
+
         public static int Next(int min, int max) => LocalRandom.Value.Next(min, max);
     }
 }
