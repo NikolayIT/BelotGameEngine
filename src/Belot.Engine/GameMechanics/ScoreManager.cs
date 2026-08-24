@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Runtime.CompilerServices;
 
     using Belot.Engine.Cards;
@@ -21,11 +20,27 @@
         {
             var result = new RoundResult(contract);
 
+            // Sum all active announce points
+            for (var i = 0; i < announces.Count; i++)
+            {
+                var announce = announces[i];
+                if (announce.IsActive != true)
+                {
+                    continue;
+                }
+
+                if (announce.Player == PlayerPosition.South || announce.Player == PlayerPosition.North)
+                {
+                    result.SouthNorthTotalInRoundPoints += announce.Value;
+                }
+                else if (announce.Player == PlayerPosition.East || announce.Player == PlayerPosition.West)
+                {
+                    result.EastWestTotalInRoundPoints += announce.Value;
+                }
+            }
+
             // Sum all south-north points
-            result.SouthNorthTotalInRoundPoints = announces.Where(
-                    x => x.IsActive == true && (x.Player == PlayerPosition.South || x.Player == PlayerPosition.North))
-                .Sum(x => x.Value);
-            result.SouthNorthTotalInRoundPoints += southNorthTricks.Sum(x => x.GetValue(contract.Type));
+            result.SouthNorthTotalInRoundPoints += SumCardValues(southNorthTricks, contract.Type);
             if (lastTrickWinner == PlayerPosition.South || lastTrickWinner == PlayerPosition.North)
             {
                 // Last 10
@@ -33,10 +48,7 @@
             }
 
             // Sum all east-west points
-            result.EastWestTotalInRoundPoints = announces.Where(
-                    x => x.IsActive == true && (x.Player == PlayerPosition.East || x.Player == PlayerPosition.West))
-                .Sum(x => x.Value);
-            result.EastWestTotalInRoundPoints += eastWestTricks.Sum(x => x.GetValue(contract.Type));
+            result.EastWestTotalInRoundPoints += SumCardValues(eastWestTricks, contract.Type);
             if (lastTrickWinner == PlayerPosition.East || lastTrickWinner == PlayerPosition.West)
             {
                 // Last 10
@@ -196,6 +208,17 @@
             }
 
             return points / 10;
+        }
+
+        private static int SumCardValues(CardCollection cards, BidType contractType)
+        {
+            var sum = 0;
+            foreach (var card in cards)
+            {
+                sum += card.GetValue(contractType);
+            }
+
+            return sum;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
