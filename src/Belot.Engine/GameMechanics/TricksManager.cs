@@ -9,7 +9,7 @@
 
     public class TricksManager
     {
-        private readonly IList<IPlayer> players;
+        private readonly IPlayer[] players;
 
         private readonly TrickWinnerService trickWinnerService;
 
@@ -19,7 +19,7 @@
 
         public TricksManager(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
         {
-            this.players = new List<IPlayer>(4) { southPlayer, eastPlayer, northPlayer, westPlayer };
+            this.players = new[] { southPlayer, eastPlayer, northPlayer, westPlayer };
             this.trickWinnerService = new TrickWinnerService();
             this.validCardsService = new ValidCardsService();
             this.validAnnouncesService = new ValidAnnouncesService();
@@ -103,8 +103,17 @@
                             for (var i = 0; i < playerAnnounces.Length; i++)
                             {
                                 var playerAnnounce = playerAnnounces[i];
-                                var availableAnnounce = availableAnnounces.FirstOrDefault(
-                                    x => x.Type == playerAnnounce.Type && x.Card == playerAnnounce.Card);
+                                Announce availableAnnounce = null;
+                                for (var j = 0; j < availableAnnounces.Count; j++)
+                                {
+                                    if (availableAnnounces[j].Type == playerAnnounce.Type
+                                        && availableAnnounces[j].Card == playerAnnounce.Card)
+                                    {
+                                        availableAnnounce = availableAnnounces[j];
+                                        break;
+                                    }
+                                }
+
                                 if (availableAnnounce == null)
                                 {
                                     // Invalid announce

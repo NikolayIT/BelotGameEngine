@@ -1,7 +1,5 @@
 ﻿namespace Belot.Engine
 {
-    using System.Collections.Generic;
-
     using Belot.Engine.Game;
     using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
@@ -14,11 +12,11 @@
     {
         private readonly RoundManager roundManager;
 
-        private readonly IList<IPlayer> players;
+        private readonly IPlayer[] players;
 
         public BelotGame(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
         {
-            this.players = new List<IPlayer>(4) { southPlayer, eastPlayer, northPlayer, westPlayer };
+            this.players = new[] { southPlayer, eastPlayer, northPlayer, westPlayer };
             this.roundManager = new RoundManager(southPlayer, eastPlayer, northPlayer, westPlayer);
         }
 

@@ -8,7 +8,7 @@
 
     public class RoundManager
     {
-        private readonly IList<IPlayer> players;
+        private readonly IPlayer[] players;
 
         private readonly ContractManager contractManager;
 
@@ -22,13 +22,13 @@
 
         public RoundManager(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
         {
-            this.players = new List<IPlayer>(4) { southPlayer, eastPlayer, northPlayer, westPlayer };
+            this.players = new[] { southPlayer, eastPlayer, northPlayer, westPlayer };
             this.contractManager = new ContractManager(southPlayer, eastPlayer, northPlayer, westPlayer);
             this.tricksManager = new TricksManager(southPlayer, eastPlayer, northPlayer, westPlayer);
             this.scoreManager = new ScoreManager();
             this.deck = new Deck();
-            this.playerCards = new List<CardCollection>(this.players.Count);
-            for (var playerIndex = 0; playerIndex < this.players.Count; playerIndex++)
+            this.playerCards = new List<CardCollection>(this.players.Length);
+            for (var playerIndex = 0; playerIndex < this.players.Length; playerIndex++)
             {
                 this.playerCards.Add(new CardCollection());
             }
