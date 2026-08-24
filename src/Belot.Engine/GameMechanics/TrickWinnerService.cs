@@ -1,7 +1,6 @@
 ﻿namespace Belot.Engine.GameMechanics
 {
     using System.Collections.Generic;
-    using System.Linq;
 
     using Belot.Engine.Game;
     using Belot.Engine.Players;
@@ -36,36 +35,25 @@
             }
             else
             {
+                // A trump beats any non-trump; trumps race by trump order; with no trump in the
+                // trick the led suit races by no-trump order. Single pass, no allocations.
                 var trumpSuit = contract.Type.ToCardSuit();
-                //// TODO: Remove this check and merge conditions
-                if (trickActions.Any(x => x.Card.Suit == trumpSuit))
+                var bestIsTrump = firstCard.Suit == trumpSuit;
+                for (var i = 1; i < trickActions.Count; i++)
                 {
-                    // Trump in the trick cards
-                    for (var i = 1; i < trickActions.Count; i++)
+                    var card = trickActions[i].Card;
+                    if (card.Suit == trumpSuit)
                     {
-                        if (trickActions[i].Card.Suit == trumpSuit)
-                        {
-                            if (bestAction.Card.Suit != trumpSuit)
-                            {
-                                bestAction = trickActions[i];
-                            }
-                            else if (trickActions[i].Card.TrumpOrder > bestAction.Card.TrumpOrder)
-                            {
-                                bestAction = trickActions[i];
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    // No trick in the cards
-                    for (var i = 1; i < trickActions.Count; i++)
-                    {
-                        if (trickActions[i].Card.Suit == firstCard.Suit
-                            && trickActions[i].Card.NoTrumpOrder > bestAction.Card.NoTrumpOrder)
+                        if (!bestIsTrump || card.TrumpOrder > bestAction.Card.TrumpOrder)
                         {
                             bestAction = trickActions[i];
+                            bestIsTrump = true;
                         }
+                    }
+                    else if (!bestIsTrump && card.Suit == firstCard.Suit
+                                          && card.NoTrumpOrder > bestAction.Card.NoTrumpOrder)
+                    {
+                        bestAction = trickActions[i];
                     }
                 }
             }
