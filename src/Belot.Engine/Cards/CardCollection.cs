@@ -11,8 +11,13 @@
     /// </summary>
     public class CardCollection : ICollection<Card>
     {
-        private const int MaxCards = 32;
-        private const int MaxCardsMinusOne = 31;
+        // Maps (lowestSetBit * DeBruijnSequence) >> 27 to the bit index. Portable
+        // (netstandard2.0) trailing zero count, so loops visit only the set bits.
+        private static readonly int[] DeBruijnBitPositions =
+            {
+                0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8,
+                31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9,
+            };
 
         private uint cards; // 32 bits for 32 possible cards
 
@@ -27,11 +32,12 @@
 
         public CardCollection(CardCollection cardCollection, Func<Card, bool> predicate)
         {
-            this.Count = 0;
-            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
+            var bits = cardCollection.cards;
+            while (bits != 0)
             {
-                if (((cardCollection.cards >> currentHashCode) & 1) == 1
-                    && predicate(Card.AllCards[currentHashCode]))
+                var currentHashCode = TrailingZeroCount(bits);
+                bits &= bits - 1;
+                if (predicate(Card.AllCards[currentHashCode]))
                 {
                     this.cards |= 1U << currentHashCode;
                     this.Count++;
@@ -42,22 +48,26 @@
         internal CardCollection(uint bitMask)
         {
             this.cards = bitMask;
-            this.UpdateCount();
+            this.Count = PopCount(bitMask);
         }
 
         public int Count { get; private set; }
 
         public bool IsReadOnly => false;
 
+        internal uint BitMask => this.cards;
+
         public bool Any(Func<Card, bool> predicate)
         {
-            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
+            var bits = this.cards;
+            while (bits != 0)
             {
-                if (((this.cards >> currentHashCode) & 1) == 1
-                    && predicate(Card.AllCards[currentHashCode]))
+                if (predicate(Card.AllCards[TrailingZeroCount(bits)]))
                 {
                     return true;
                 }
+
+                bits &= bits - 1;
             }
 
             return false;
@@ -65,27 +75,21 @@
 
         public Card FirstOrDefault()
         {
-            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
-            {
-                if (((this.cards >> currentHashCode) & 1) == 1)
-                {
-                    return Card.AllCards[currentHashCode];
-                }
-            }
-
-            return null;
+            return this.cards == 0 ? null : Card.AllCards[TrailingZeroCount(this.cards)];
         }
 
         public int GetCount(Func<Card, bool> predicate)
         {
-            int count = 0;
-            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
+            var count = 0;
+            var bits = this.cards;
+            while (bits != 0)
             {
-                if (((this.cards >> currentHashCode) & 1) == 1
-                    && predicate(Card.AllCards[currentHashCode]))
+                if (predicate(Card.AllCards[TrailingZeroCount(bits)]))
                 {
                     count++;
                 }
+
+                bits &= bits - 1;
             }
 
             return count;
@@ -100,18 +104,14 @@
             where TKey : IComparable
         {
             Card minCard = null;
-            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
+            var bits = this.cards;
+            while (bits != 0)
             {
-                if (((this.cards >> currentHashCode) & 1) == 1)
+                var card = Card.AllCards[TrailingZeroCount(bits)];
+                bits &= bits - 1;
+                if (minCard == null || orderByFunc(card).CompareTo(orderByFunc(minCard)) < 0)
                 {
-                    if (minCard == null)
-                    {
-                        minCard = Card.AllCards[currentHashCode];
-                    }
-                    else if (orderByFunc(Card.AllCards[currentHashCode]).CompareTo(orderByFunc(minCard)) < 0)
-                    {
-                        minCard = Card.AllCards[currentHashCode];
-                    }
+                    minCard = card;
                 }
             }
 
@@ -122,18 +122,14 @@
             where TKey : IComparable
         {
             Card maxCard = null;
-            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
+            var bits = this.cards;
+            while (bits != 0)
             {
-                if (((this.cards >> currentHashCode) & 1) == 1)
+                var card = Card.AllCards[TrailingZeroCount(bits)];
+                bits &= bits - 1;
+                if (maxCard == null || orderByFunc(card).CompareTo(orderByFunc(maxCard)) > 0)
                 {
-                    if (maxCard == null)
-                    {
-                        maxCard = Card.AllCards[currentHashCode];
-                    }
-                    else if (orderByFunc(Card.AllCards[currentHashCode]).CompareTo(orderByFunc(maxCard)) > 0)
-                    {
-                        maxCard = Card.AllCards[currentHashCode];
-                    }
+                    maxCard = card;
                 }
             }
 
@@ -155,9 +151,14 @@
             }
         }
 
-        public IEnumerator<Card> GetEnumerator()
+        public Enumerator GetEnumerator()
         {
-            return new CardCollectionEnumerator(this.cards);
+            return new Enumerator(this.cards);
+        }
+
+        IEnumerator<Card> IEnumerable<Card>.GetEnumerator()
+        {
+            return this.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -189,12 +190,11 @@
 
         public void CopyTo(Card[] array, int arrayIndex)
         {
-            for (var currentHashCode = 0; currentHashCode < MaxCards; currentHashCode++)
+            var bits = this.cards;
+            while (bits != 0)
             {
-                if (((this.cards >> currentHashCode) & 1) == 1)
-                {
-                    array[arrayIndex++] = Card.AllCards[currentHashCode];
-                }
+                array[arrayIndex++] = Card.AllCards[TrailingZeroCount(bits)];
+                bits &= bits - 1;
             }
         }
 
@@ -210,26 +210,32 @@
             return false;
         }
 
-        private void UpdateCount()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int TrailingZeroCount(uint bits)
         {
-            this.Count = 0;
-            var bits = this.cards;
-            while (bits != 0)
-            {
-                this.Count++;
-                bits &= bits - 1;
-            }
+            return DeBruijnBitPositions[((bits & (0u - bits)) * 0x077CB531u) >> 27];
         }
 
-        private class CardCollectionEnumerator : IEnumerator<Card>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int PopCount(uint bits)
+        {
+            bits -= (bits >> 1) & 0x55555555u;
+            bits = (bits & 0x33333333u) + ((bits >> 2) & 0x33333333u);
+            return (int)((((bits + (bits >> 4)) & 0x0F0F0F0Fu) * 0x01010101u) >> 24);
+        }
+
+        public struct Enumerator : IEnumerator<Card>
         {
             private readonly uint cards;
 
+            private uint remainingCards;
+
             private int currentHashCode;
 
-            public CardCollectionEnumerator(uint cards)
+            internal Enumerator(uint cards)
             {
                 this.cards = cards;
+                this.remainingCards = cards;
                 this.currentHashCode = -1;
             }
 
@@ -243,19 +249,19 @@
 
             public bool MoveNext()
             {
-                while (this.currentHashCode < MaxCardsMinusOne)
+                if (this.remainingCards == 0)
                 {
-                    if (((this.cards >> ++this.currentHashCode) & 1) == 1)
-                    {
-                        return true;
-                    }
+                    return false;
                 }
 
-                return false;
+                this.currentHashCode = TrailingZeroCount(this.remainingCards);
+                this.remainingCards &= this.remainingCards - 1;
+                return true;
             }
 
             public void Reset()
             {
+                this.remainingCards = this.cards;
                 this.currentHashCode = -1;
             }
         }
