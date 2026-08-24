@@ -1,7 +1,5 @@
 ﻿namespace Belot.AI.SmartPlayer.Strategies
 {
-    using System.Linq;
-
     using Belot.Engine.Cards;
     using Belot.Engine.Players;
 
@@ -21,15 +19,17 @@
             }
 
             // Play card of the same suit as one of my teammate's bids
-            var teammate = context.MyPosition.GetTeammate();
-            for (var i = 0; i < Card.AllSuits.Length; i++)
+            var teammateSuitBids = CardHelpers.TeammateSuitBidsMask(context.Bids, context.MyPosition.GetTeammate());
+            if (teammateSuitBids != 0)
             {
-                var cardSuit = Card.AllSuits[i];
-                if (context.Bids.Any(x => x.Player == teammate && x.Type == cardSuit.ToBidType())
-                    && context.AvailableCardsToPlay.HasAnyOfSuit(cardSuit))
+                for (var i = 0; i < Card.AllSuits.Length; i++)
                 {
-                    return new PlayCardAction(
-                        context.AvailableCardsToPlay.Where(x => x.Suit == cardSuit).Lowest(x => x.TrumpOrder));
+                    var cardSuit = Card.AllSuits[i];
+                    if ((teammateSuitBids & (1 << i)) != 0 && context.AvailableCardsToPlay.HasAnyOfSuit(cardSuit))
+                    {
+                        return new PlayCardAction(
+                            CardHelpers.LowestOfSuitByTrumpOrder(context.AvailableCardsToPlay, cardSuit));
+                    }
                 }
             }
 
