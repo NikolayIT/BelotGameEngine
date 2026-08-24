@@ -1,9 +1,24 @@
 ﻿namespace Belot.AI.SmartPlayer.Strategies
 {
+    using System;
+
     using Belot.Engine.Cards;
 
     public static class CardHelpers
     {
+        /// <summary>
+        /// One cached ordering delegate per trump suit for suit contracts: trumps rank above
+        /// every plain card (TrumpOrder + 8), plain cards rank by NoTrumpOrder. An inline
+        /// lambda with this shape captures the trump suit and allocates on every call.
+        /// </summary>
+        public static readonly Func<Card, int>[] SuitContractOrderBySuit =
+        {
+            x => x.Suit == CardSuit.Club ? x.TrumpOrder + 8 : x.NoTrumpOrder,
+            x => x.Suit == CardSuit.Diamond ? x.TrumpOrder + 8 : x.NoTrumpOrder,
+            x => x.Suit == CardSuit.Heart ? x.TrumpOrder + 8 : x.NoTrumpOrder,
+            x => x.Suit == CardSuit.Spade ? x.TrumpOrder + 8 : x.NoTrumpOrder,
+        };
+
         /// <summary>
         /// Allocation-free count of the cards of the given suit (a predicate lambda here would
         /// capture the suit and allocate a closure on every call).

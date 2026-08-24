@@ -9,8 +9,8 @@
         public PlayCardAction PlayFirst(PlayerPlayCardContext context, CardCollection playedCards)
         {
             var trumpSuit = context.CurrentContract.Type.ToCardSuit();
-            if (playedCards.GetCount(x => x.Suit == trumpSuit)
-                + context.MyCards.GetCount(x => x.Suit == trumpSuit) == 8)
+            if (CardHelpers.CountOfSuit(playedCards, trumpSuit)
+                + CardHelpers.CountOfSuit(context.MyCards, trumpSuit) == 8)
             {
                 // No trump cards in other players
                 foreach (var card in context.AvailableCardsToPlay)
@@ -86,36 +86,55 @@
             }
 
             return new PlayCardAction(
-                context.AvailableCardsToPlay.Lowest(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder));
+                context.AvailableCardsToPlay.Lowest(CardHelpers.SuitContractOrderBySuit[(int)trumpSuit]));
         }
 
         public PlayCardAction PlaySecond(PlayerPlayCardContext context, CardCollection playedCards)
         {
             var trumpSuit = context.CurrentContract.Type.ToCardSuit();
             return new PlayCardAction(
-                context.AvailableCardsToPlay.Lowest(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder));
+                context.AvailableCardsToPlay.Lowest(CardHelpers.SuitContractOrderBySuit[(int)trumpSuit]));
         }
 
         public PlayCardAction PlayThird(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
         {
             var trumpSuit = context.CurrentContract.Type.ToCardSuit();
             return new PlayCardAction(
-                context.AvailableCardsToPlay.Lowest(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder));
+                context.AvailableCardsToPlay.Lowest(CardHelpers.SuitContractOrderBySuit[(int)trumpSuit]));
         }
 
         public PlayCardAction PlayFourth(PlayerPlayCardContext context, CardCollection playedCards, PlayerPosition trickWinner)
         {
             var trumpSuit = context.CurrentContract.Type.ToCardSuit();
-            if (trickWinner.IsInSameTeamWith(context.MyPosition) && context.AvailableCardsToPlay.Any(
-                    x => x.Suit != trumpSuit && x.Type != CardType.Ace))
+            if (trickWinner.IsInSameTeamWith(context.MyPosition))
             {
-                return new PlayCardAction(
-                    context.AvailableCardsToPlay.Where(x => x.Suit != trumpSuit && x.Type != CardType.Ace)
-                        .Highest(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder));
+                // The trick is ours: give it the biggest non-trump, non-ace card. Single pass
+                // with the same predicate, key (non-trumps rank by NoTrumpOrder) and
+                // first-on-ties rule as the old Any/Where/Highest chain, without allocating.
+                Card best = null;
+                var bestKey = 0;
+                foreach (var card in context.AvailableCardsToPlay)
+                {
+                    if (card.Suit == trumpSuit || card.Type == CardType.Ace)
+                    {
+                        continue;
+                    }
+
+                    if (best == null || card.NoTrumpOrder > bestKey)
+                    {
+                        best = card;
+                        bestKey = card.NoTrumpOrder;
+                    }
+                }
+
+                if (best != null)
+                {
+                    return new PlayCardAction(best);
+                }
             }
 
             return new PlayCardAction(
-                context.AvailableCardsToPlay.Lowest(x => x.Suit == trumpSuit ? (x.TrumpOrder + 8) : x.NoTrumpOrder));
+                context.AvailableCardsToPlay.Lowest(CardHelpers.SuitContractOrderBySuit[(int)trumpSuit]));
         }
     }
 }
