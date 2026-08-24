@@ -94,11 +94,13 @@
                             announceContext.MyCards = playerCards[currentPlayer.Index()];
                             announceContext.AvailableAnnounces = availableAnnounces;
 
-                            // Execute GetAnnounces
-                            var playerAnnounces = this.players[currentPlayer.Index()].GetAnnounces(announceContext);
+                            // Execute GetAnnounces. Players may return the AvailableAnnounces list
+                            // itself, so snapshot it before removing matched items from it below.
+                            var playerAnnounces =
+                                this.players[currentPlayer.Index()].GetAnnounces(announceContext).ToArray();
 
                             // Validate
-                            for (var i = 0; i < playerAnnounces.Count; i++)
+                            for (var i = 0; i < playerAnnounces.Length; i++)
                             {
                                 var playerAnnounce = playerAnnounces[i];
                                 var availableAnnounce = availableAnnounces.FirstOrDefault(
