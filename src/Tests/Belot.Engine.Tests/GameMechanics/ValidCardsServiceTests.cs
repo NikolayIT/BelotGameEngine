@@ -74,11 +74,13 @@
                 },
              new object[]
                 {
-                    // The teammate played trump so the player should be able to play any card
+                    // The teammate played trump so the player should be able to play any card.
+                    // Trick (in bitmask order): 9♦ led by an opponent, the teammate ruffs with 8♥,
+                    // the other opponent discards 7♠ - the teammate holds the trick.
                     BidType.Hearts,
-                    new CardCollection { Card.GetCard(CardSuit.Diamond, CardType.Nine), Card.GetCard(CardSuit.Heart, CardType.Eight), Card.GetCard(CardSuit.Diamond, CardType.Nine) },
-                    new CardCollection { Card.GetCard(CardSuit.Spade, CardType.Seven), Card.GetCard(CardSuit.Spade, CardType.Jack), Card.GetCard(CardSuit.Heart, CardType.Jack), Card.GetCard(CardSuit.Heart, CardType.Seven) },
-                    new CardCollection { Card.GetCard(CardSuit.Spade, CardType.Seven), Card.GetCard(CardSuit.Spade, CardType.Jack), Card.GetCard(CardSuit.Heart, CardType.Jack), Card.GetCard(CardSuit.Heart, CardType.Seven) },
+                    new CardCollection { Card.GetCard(CardSuit.Diamond, CardType.Nine), Card.GetCard(CardSuit.Heart, CardType.Eight), Card.GetCard(CardSuit.Spade, CardType.Seven) },
+                    new CardCollection { Card.GetCard(CardSuit.Spade, CardType.Eight), Card.GetCard(CardSuit.Spade, CardType.Jack), Card.GetCard(CardSuit.Heart, CardType.Jack), Card.GetCard(CardSuit.Heart, CardType.Seven) },
+                    new CardCollection { Card.GetCard(CardSuit.Spade, CardType.Eight), Card.GetCard(CardSuit.Spade, CardType.Jack), Card.GetCard(CardSuit.Heart, CardType.Jack), Card.GetCard(CardSuit.Heart, CardType.Seven) },
                 },
              new object[]
                 {

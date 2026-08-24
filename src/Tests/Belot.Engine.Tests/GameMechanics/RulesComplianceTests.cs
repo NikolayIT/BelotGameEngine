@@ -247,6 +247,52 @@ namespace Belot.Engine.Tests.GameMechanics
                 validCards);
         }
 
+        // A low ruff by an opponent must not free the void player from overtrumping. The winner
+        // detection seeded "the biggest trump" with the led card and compared trump orders across
+        // suits, so a high led card (a nine or a jack) masked the opponent's ruff entirely.
+        [Fact]
+        public void LowRuffByAnOpponentMustStillForceOvertrumping()
+        {
+            var validCardsService = new ValidCardsService();
+            var trickActions = new List<PlayCardAction>
+            {
+                new PlayCardAction(C(CardSuit.Diamond, CardType.Jack)), // partner leads J♦
+                new PlayCardAction(C(CardSuit.Heart, CardType.Eight)), // opponent ruffs low, winning
+            };
+            var hand = new CardCollection
+            {
+                C(CardSuit.Heart, CardType.Ten),
+                C(CardSuit.Club, CardType.Seven),
+            };
+
+            var validCards = validCardsService.GetValidCards(hand, BidType.Hearts, trickActions);
+
+            Assert.Equal(new CardCollection { C(CardSuit.Heart, CardType.Ten) }, validCards);
+        }
+
+        // The same defect in the over-ruff branch: the obligation must be measured against the
+        // highest trump actually played, not against the (non-trump) led card's trump order.
+        [Fact]
+        public void OverruffObligationMustCompareAgainstTheHighestTrumpInTheTrick()
+        {
+            var validCardsService = new ValidCardsService();
+            var trickActions = new List<PlayCardAction>
+            {
+                new PlayCardAction(C(CardSuit.Diamond, CardType.Jack)), // opponent leads J♦
+                new PlayCardAction(C(CardSuit.Heart, CardType.Seven)), // partner ruffs low
+                new PlayCardAction(C(CardSuit.Heart, CardType.Eight)), // opponent over-ruffs, winning
+            };
+            var hand = new CardCollection
+            {
+                C(CardSuit.Heart, CardType.Ten),
+                C(CardSuit.Club, CardType.Seven),
+            };
+
+            var validCards = validCardsService.GetValidCards(hand, BidType.Hearts, trickActions);
+
+            Assert.Equal(new CardCollection { C(CardSuit.Heart, CardType.Ten) }, validCards);
+        }
+
         // Rule (etc/Rules.md "Scoring"; hit.bg §Запис): under a double/redouble the winning team
         // records ALL points multiplied — "all bonuses are doubled including the bonus for
         // getting all the hands". The engine instead sets the coefficient to 1 whenever a team

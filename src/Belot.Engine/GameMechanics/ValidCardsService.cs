@@ -103,10 +103,12 @@
             var currentPlayerTeamIsCurrentTrickWinner = false;
             if (currentTrickActions.Count > 1)
             {
-                // The teammate played card
+                // The teammate played a card. The winning card is the biggest trump if any was
+                // played, otherwise the biggest card of the led suit (an off-suit discard can
+                // never win the trick).
                 var biggestCard = currentTrickActions.Any(x => x.Card.Suit == trumpSuit)
-                                      ? BiggestTrumpCard(currentTrickActions, trumpSuit)
-                                      : currentTrickActions.OrderByDescending(x => x.Card.NoTrumpOrder).First().Card;
+                                      ? BiggestTrumpWhenNonTrumpLed(currentTrickActions, trumpSuit)
+                                      : BiggestNoTrumpCard(currentTrickActions, firstCardSuit);
                 if (currentTrickActions[currentTrickActions.Count - 2].Card == biggestCard)
                 {
                     // The teammate has the best card in current trick
@@ -126,7 +128,7 @@
             if (currentTrickActions.Any(x => x.Card.Suit == trumpSuit))
             {
                 // Someone of the rivals has played trump card and is winning the trick
-                var biggestTrumpCard = BiggestTrumpCard(currentTrickActions, trumpSuit);
+                var biggestTrumpCard = BiggestTrumpWhenNonTrumpLed(currentTrickActions, trumpSuit);
                 if (playerCards.Any(
                     x => x.Suit == trumpSuit && x.TrumpOrder > biggestTrumpCard.TrumpOrder))
                 {
@@ -142,6 +144,45 @@
 
             // No one played trump card, but the player should play one of them
             return new CardCollection(playerCards, x => x.Suit == trumpSuit);
+        }
+
+        // The biggest card of the led suit when no trump has been played to the trick.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Card BiggestNoTrumpCard(IList<PlayCardAction> currentTrickActions, CardSuit firstCardSuit)
+        {
+            var bestCard = currentTrickActions[0].Card;
+            if (currentTrickActions.Count > 1 && currentTrickActions[1].Card.Suit == firstCardSuit
+                                              && currentTrickActions[1].Card.NoTrumpOrder > bestCard.NoTrumpOrder)
+            {
+                bestCard = currentTrickActions[1].Card;
+            }
+
+            if (currentTrickActions.Count > 2 && currentTrickActions[2].Card.Suit == firstCardSuit
+                                              && currentTrickActions[2].Card.NoTrumpOrder > bestCard.NoTrumpOrder)
+            {
+                bestCard = currentTrickActions[2].Card;
+            }
+
+            return bestCard;
+        }
+
+        // The biggest trump played to a trick led by a non-trump card. Unlike BiggestTrumpCard,
+        // the led card must not seed the comparison: it is not a trump, so it cannot win once
+        // the trick was ruffed. Only call this when at least one trump is in the trick.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Card BiggestTrumpWhenNonTrumpLed(IList<PlayCardAction> currentTrickActions, CardSuit trumpSuit)
+        {
+            Card bestCard = null;
+            for (var i = 0; i < currentTrickActions.Count; i++)
+            {
+                var card = currentTrickActions[i].Card;
+                if (card.Suit == trumpSuit && (bestCard == null || card.TrumpOrder > bestCard.TrumpOrder))
+                {
+                    bestCard = card;
+                }
+            }
+
+            return bestCard;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
