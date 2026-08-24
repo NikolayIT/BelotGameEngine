@@ -45,6 +45,27 @@
         [InlineData(CardType.Ace, CardSuit.Club, CardType.King, CardSuit.Spade, CardType.Seven, CardSuit.Heart, CardType.Eight, CardSuit.Club, BidType.Diamonds, PlayerPosition.South)]
         [InlineData(CardType.Eight, CardSuit.Club, CardType.King, CardSuit.Spade, CardType.Seven, CardSuit.Heart, CardType.Ten, CardSuit.Club, BidType.Diamonds, PlayerPosition.West)]
         [InlineData(CardType.Jack, CardSuit.Club, CardType.Queen, CardSuit.Club, CardType.King, CardSuit.Club, CardType.Ace, CardSuit.Spade, BidType.Hearts, PlayerPosition.North)]
+        //// A ruff beats the ace of the led suit.
+        [InlineData(CardType.Ace, CardSuit.Spade, CardType.Seven, CardSuit.Heart, CardType.King, CardSuit.Spade, CardType.Ten, CardSuit.Spade, BidType.Hearts, PlayerPosition.East)]
+        //// Successive over-ruffs: the highest trump wins the ruffing war.
+        [InlineData(CardType.Ten, CardSuit.Spade, CardType.Seven, CardSuit.Heart, CardType.Eight, CardSuit.Heart, CardType.Nine, CardSuit.Heart, BidType.Hearts, PlayerPosition.West)]
+        [InlineData(CardType.King, CardSuit.Spade, CardType.Seven, CardSuit.Heart, CardType.Jack, CardSuit.Heart, CardType.Eight, CardSuit.Heart, BidType.Hearts, PlayerPosition.North)]
+        //// Nobody followed, nobody trumped: the led seven wins the trick.
+        [InlineData(CardType.Seven, CardSuit.Spade, CardType.Ace, CardSuit.Diamond, CardType.Ace, CardSuit.Heart, CardType.King, CardSuit.Heart, BidType.Clubs, PlayerPosition.South)]
+        //// The led card is the only trump in the trick.
+        [InlineData(CardType.Seven, CardSuit.Spade, CardType.Ace, CardSuit.Heart, CardType.Ace, CardSuit.Diamond, CardType.Ace, CardSuit.Club, BidType.Spades, PlayerPosition.South)]
+        //// All Trumps: an off-suit jack is just a discard and cannot win.
+        [InlineData(CardType.Seven, CardSuit.Diamond, CardType.Jack, CardSuit.Spade, CardType.Nine, CardSuit.Club, CardType.Eight, CardSuit.Diamond, BidType.AllTrumps, PlayerPosition.West)]
+        [InlineData(CardType.Nine, CardSuit.Spade, CardType.Jack, CardSuit.Spade, CardType.Ace, CardSuit.Spade, CardType.Seven, CardSuit.Spade, BidType.AllTrumps, PlayerPosition.East)]
+        //// No Trumps: the ten outranks king and jack.
+        [InlineData(CardType.Ten, CardSuit.Spade, CardType.King, CardSuit.Spade, CardType.Nine, CardSuit.Spade, CardType.Eight, CardSuit.Spade, BidType.NoTrumps, PlayerPosition.South)]
+        [InlineData(CardType.Ten, CardSuit.Heart, CardType.Jack, CardSuit.Heart, CardType.Seven, CardSuit.Heart, CardType.Eight, CardSuit.Heart, BidType.NoTrumps, PlayerPosition.South)]
+        //// The same ranks resolve by TRUMP order when the trump suit is led (9 wins)...
+        [InlineData(CardType.Ten, CardSuit.Heart, CardType.King, CardSuit.Heart, CardType.Nine, CardSuit.Heart, CardType.Ace, CardSuit.Heart, BidType.Hearts, PlayerPosition.North)]
+        //// ...and by PLAIN order when a side suit is led under the same contract (ace wins).
+        [InlineData(CardType.Ten, CardSuit.Spade, CardType.King, CardSuit.Spade, CardType.Nine, CardSuit.Spade, CardType.Ace, CardSuit.Spade, BidType.Hearts, PlayerPosition.West)]
+        //// A fourth-seat ruff steals the trick from the ace that was winning it.
+        [InlineData(CardType.Ten, CardSuit.Spade, CardType.Ace, CardSuit.Spade, CardType.Seven, CardSuit.Diamond, CardType.Seven, CardSuit.Heart, BidType.Hearts, PlayerPosition.West)]
         public void GetWinnerShouldWorkCorrectly(
             CardType southCardType,
             CardSuit southCardSuit,
