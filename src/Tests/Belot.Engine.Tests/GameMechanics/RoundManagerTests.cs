@@ -32,7 +32,10 @@
 
             var roundResult = roundManager.PlayRound(1, PlayerPosition.South, 0, 0, 0);
 
-            var acutalTotalPoints = roundResult.EastWestPoints + roundResult.SouthNorthPoints;
+            // On a hanging (equal) round only the defenders' half is banked and the declarer's
+            // half hangs, so the invariant must count the hanging points as well.
+            var acutalTotalPoints =
+                roundResult.EastWestPoints + roundResult.SouthNorthPoints + roundResult.HangingPoints;
 
             Assert.True(acutalTotalPoints >= expectedTotalPoints);
         }
