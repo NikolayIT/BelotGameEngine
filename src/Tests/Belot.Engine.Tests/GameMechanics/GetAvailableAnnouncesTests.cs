@@ -445,7 +445,7 @@
                 x => x.Type == AnnounceType.SequenceOf8 && x.Card == Card.GetCard(CardSuit.Spade, CardType.Ace));
             Assert.Contains(
                 combinations,
-                x => x.Type == AnnounceType.SequenceOf3 && x.Card == Card.GetCard(CardSuit.Spade, CardType.Ace));
+                x => x.Type == AnnounceType.SequenceOf3 && x.Card == Card.GetCard(CardSuit.Spade, CardType.Nine));
         }
 
         [Fact]

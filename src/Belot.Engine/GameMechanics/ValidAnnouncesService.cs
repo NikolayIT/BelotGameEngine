@@ -248,8 +248,11 @@
                         combinations.Add(new Announce(AnnounceType.SequenceOf7, suitedCards[suitedCards.Count - 1]));
                         break;
                     case 8:
+                        // A whole suit is declared as a quint on the top five cards plus a
+                        // tierce on 9-8-7: a card may take part in only one combination, so
+                        // the leftover tierce tops at the nine.
                         combinations.Add(new Announce(AnnounceType.SequenceOf8, suitedCards[suitedCards.Count - 1]));
-                        combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[suitedCards.Count - 1]));
+                        combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[2]));
                         break;
                 }
             }
