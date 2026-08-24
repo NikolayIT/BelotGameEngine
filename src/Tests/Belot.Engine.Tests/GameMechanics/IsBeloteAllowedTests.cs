@@ -245,6 +245,99 @@
         }
 
         [Fact]
+        public void RuffingWithTheTrumpKingOrQueenAllowsBelote()
+        {
+            // Rules.md, belote condition 3: "The player is trumping".
+            var validAnnouncesService = new ValidAnnouncesService();
+            var hand = new CardCollection
+                           {
+                               Card.GetCard(CardSuit.Heart, CardType.Queen),
+                               Card.GetCard(CardSuit.Heart, CardType.King),
+                               Card.GetCard(CardSuit.Club, CardType.Seven),
+                           };
+
+            var trick = new List<PlayCardAction> { new PlayCardAction(Card.GetCard(CardSuit.Spade, CardType.Ace)) };
+
+            Assert.True(
+                validAnnouncesService.IsBeloteAllowed(
+                    hand,
+                    BidType.Hearts,
+                    trick,
+                    Card.GetCard(CardSuit.Heart, CardType.King)));
+
+            Assert.True(
+                validAnnouncesService.IsBeloteAllowed(
+                    hand,
+                    BidType.Hearts,
+                    trick,
+                    Card.GetCard(CardSuit.Heart, CardType.Queen)));
+        }
+
+        [Fact]
+        public void BeloteIsNotAllowedWhenNotHavingAQueen()
+        {
+            var validAnnouncesService = new ValidAnnouncesService();
+            var hand = new CardCollection
+                           {
+                               Card.GetCard(CardSuit.Heart, CardType.King),
+                               Card.GetCard(CardSuit.Heart, CardType.Ace),
+                           };
+
+            var trick = new List<PlayCardAction>();
+
+            Assert.False(
+                validAnnouncesService.IsBeloteAllowed(
+                    hand,
+                    BidType.AllTrumps,
+                    trick,
+                    Card.GetCard(CardSuit.Heart, CardType.King)));
+
+            Assert.False(
+                validAnnouncesService.IsBeloteAllowed(
+                    hand,
+                    BidType.Hearts,
+                    trick,
+                    Card.GetCard(CardSuit.Heart, CardType.King)));
+        }
+
+        [Fact]
+        public void OnlyKingsAndQueensCanAnnounceBelote()
+        {
+            var validAnnouncesService = new ValidAnnouncesService();
+            var hand = new CardCollection
+                           {
+                               Card.GetCard(CardSuit.Heart, CardType.Queen),
+                               Card.GetCard(CardSuit.Heart, CardType.King),
+                               Card.GetCard(CardSuit.Heart, CardType.Jack),
+                               Card.GetCard(CardSuit.Heart, CardType.Ten),
+                               Card.GetCard(CardSuit.Heart, CardType.Seven),
+                           };
+
+            var trick = new List<PlayCardAction>();
+
+            Assert.False(
+                validAnnouncesService.IsBeloteAllowed(
+                    hand,
+                    BidType.Hearts,
+                    trick,
+                    Card.GetCard(CardSuit.Heart, CardType.Jack)));
+
+            Assert.False(
+                validAnnouncesService.IsBeloteAllowed(
+                    hand,
+                    BidType.Hearts,
+                    trick,
+                    Card.GetCard(CardSuit.Heart, CardType.Ten)));
+
+            Assert.False(
+                validAnnouncesService.IsBeloteAllowed(
+                    hand,
+                    BidType.Hearts,
+                    trick,
+                    Card.GetCard(CardSuit.Heart, CardType.Seven)));
+        }
+
+        [Fact]
         public void BeloteIsNotAllowedWhenNotHavingAKing()
         {
             var validAnnouncesService = new ValidAnnouncesService();

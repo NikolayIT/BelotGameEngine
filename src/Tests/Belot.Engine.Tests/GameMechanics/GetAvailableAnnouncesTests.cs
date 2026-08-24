@@ -503,6 +503,126 @@
         }
 
         [Fact]
+        public void TierceAndQuarteFromDifferentSuits()
+        {
+            var validAnnouncesService = new ValidAnnouncesService();
+            var hand = new CardCollection
+                           {
+                               Card.GetCard(CardSuit.Heart, CardType.Seven),
+                               Card.GetCard(CardSuit.Heart, CardType.Eight),
+                               Card.GetCard(CardSuit.Heart, CardType.Nine),
+                               Card.GetCard(CardSuit.Spade, CardType.Jack),
+                               Card.GetCard(CardSuit.Spade, CardType.Queen),
+                               Card.GetCard(CardSuit.Spade, CardType.King),
+                               Card.GetCard(CardSuit.Spade, CardType.Ace),
+                               Card.GetCard(CardSuit.Club, CardType.Seven),
+                           };
+
+            var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
+
+            Assert.Equal(2, combinations.Count);
+            Assert.Contains(
+                combinations,
+                x => x.Type == AnnounceType.SequenceOf3 && x.Card == Card.GetCard(CardSuit.Heart, CardType.Nine));
+            Assert.Contains(
+                combinations,
+                x => x.Type == AnnounceType.SequenceOf4 && x.Card == Card.GetCard(CardSuit.Spade, CardType.Ace));
+        }
+
+        [Fact]
+        public void FourNinesConsumeTheNineOfTheSequence()
+        {
+            // A card takes part in only one combination: the nines go to the carre, and the
+            // leftover 7-8 spades are no longer a sequence.
+            var validAnnouncesService = new ValidAnnouncesService();
+            var hand = new CardCollection
+                           {
+                               Card.GetCard(CardSuit.Club, CardType.Nine),
+                               Card.GetCard(CardSuit.Diamond, CardType.Nine),
+                               Card.GetCard(CardSuit.Heart, CardType.Nine),
+                               Card.GetCard(CardSuit.Spade, CardType.Nine),
+                               Card.GetCard(CardSuit.Spade, CardType.Seven),
+                               Card.GetCard(CardSuit.Spade, CardType.Eight),
+                               Card.GetCard(CardSuit.Spade, CardType.Ten),
+                               Card.GetCard(CardSuit.Spade, CardType.Jack),
+                           };
+
+            var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
+
+            Assert.Single(combinations);
+            Assert.Contains(combinations, x => x.Type == AnnounceType.FourNines);
+        }
+
+        [Fact]
+        public void TierceAtTheTopOfTheSuit()
+        {
+            var validAnnouncesService = new ValidAnnouncesService();
+            var hand = new CardCollection
+                           {
+                               Card.GetCard(CardSuit.Spade, CardType.Queen),
+                               Card.GetCard(CardSuit.Spade, CardType.King),
+                               Card.GetCard(CardSuit.Spade, CardType.Ace),
+                               Card.GetCard(CardSuit.Heart, CardType.Seven),
+                               Card.GetCard(CardSuit.Diamond, CardType.Eight),
+                               Card.GetCard(CardSuit.Club, CardType.Nine),
+                               Card.GetCard(CardSuit.Heart, CardType.Ten),
+                               Card.GetCard(CardSuit.Diamond, CardType.Jack),
+                           };
+
+            var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
+
+            Assert.Single(combinations);
+            Assert.Contains(
+                combinations,
+                x => x.Type == AnnounceType.SequenceOf3 && x.Card == Card.GetCard(CardSuit.Spade, CardType.Ace));
+        }
+
+        [Fact]
+        public void MiddleQuarteHasItsOwnTopCard()
+        {
+            var validAnnouncesService = new ValidAnnouncesService();
+            var hand = new CardCollection
+                           {
+                               Card.GetCard(CardSuit.Diamond, CardType.Nine),
+                               Card.GetCard(CardSuit.Diamond, CardType.Ten),
+                               Card.GetCard(CardSuit.Diamond, CardType.Jack),
+                               Card.GetCard(CardSuit.Diamond, CardType.Queen),
+                               Card.GetCard(CardSuit.Diamond, CardType.Ace),
+                               Card.GetCard(CardSuit.Heart, CardType.Seven),
+                               Card.GetCard(CardSuit.Spade, CardType.Eight),
+                               Card.GetCard(CardSuit.Club, CardType.Nine),
+                           };
+
+            var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
+
+            Assert.Single(combinations);
+            Assert.Contains(
+                combinations,
+                x => x.Type == AnnounceType.SequenceOf4 && x.Card == Card.GetCard(CardSuit.Diamond, CardType.Queen));
+        }
+
+        [Fact]
+        public void ThreeOfAKindIsNotACombination()
+        {
+            var validAnnouncesService = new ValidAnnouncesService();
+            var hand = new CardCollection
+                           {
+                               Card.GetCard(CardSuit.Club, CardType.Jack),
+                               Card.GetCard(CardSuit.Diamond, CardType.Jack),
+                               Card.GetCard(CardSuit.Heart, CardType.Jack),
+                               Card.GetCard(CardSuit.Spade, CardType.Seven),
+                               Card.GetCard(CardSuit.Spade, CardType.Nine),
+                               Card.GetCard(CardSuit.Diamond, CardType.Seven),
+                               Card.GetCard(CardSuit.Heart, CardType.King),
+                               Card.GetCard(CardSuit.Club, CardType.Eight),
+                           };
+
+            var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
+
+            Assert.Empty(combinations);
+        }
+
+        [Fact]
         public void NoCombinationsAvailable()
         {
             var validAnnouncesService = new ValidAnnouncesService();
