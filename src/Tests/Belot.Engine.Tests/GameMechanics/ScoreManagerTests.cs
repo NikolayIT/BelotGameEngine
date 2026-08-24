@@ -149,14 +149,14 @@
         [InlineData(BidType.NoTrumps, 0, 0, 14, 136)]
         [InlineData(BidType.Hearts, 0, 0, 13, 127)]
         [InlineData(BidType.Diamonds, 0, 0, 13, 131)]
-        [InlineData(BidType.AllTrumps | BidType.Double, 0, 0, 14, 145)]
-        [InlineData(BidType.NoTrumps | BidType.Double, 0, 0, 14, 136)]
-        [InlineData(BidType.Hearts | BidType.Double, 0, 0, 13, 127)]
-        [InlineData(BidType.Diamonds | BidType.Double, 0, 0, 13, 131)]
-        [InlineData(BidType.AllTrumps | BidType.ReDouble, 0, 0, 14, 145)]
-        [InlineData(BidType.NoTrumps | BidType.ReDouble, 0, 0, 14, 136)]
-        [InlineData(BidType.Hearts | BidType.ReDouble, 0, 0, 13, 127)]
-        [InlineData(BidType.Diamonds | BidType.ReDouble, 0, 0, 13, 131)]
+        [InlineData(BidType.AllTrumps | BidType.Double, 0, 0, 30, 145)]
+        [InlineData(BidType.NoTrumps | BidType.Double, 0, 0, 28, 136)]
+        [InlineData(BidType.Hearts | BidType.Double, 0, 0, 26, 127)]
+        [InlineData(BidType.Diamonds | BidType.Double, 0, 0, 26, 131)]
+        [InlineData(BidType.AllTrumps | BidType.ReDouble, 0, 0, 60, 145)]
+        [InlineData(BidType.NoTrumps | BidType.ReDouble, 0, 0, 56, 136)]
+        [InlineData(BidType.Hearts | BidType.ReDouble, 0, 0, 52, 127)]
+        [InlineData(BidType.Diamonds | BidType.ReDouble, 0, 0, 52, 131)]
         public void GetScoreShouldWorkCorrectlyWhenOneOfTheTeamsHasNoTricks(
             BidType bidType,
             int expectedSouthNorthPoints,

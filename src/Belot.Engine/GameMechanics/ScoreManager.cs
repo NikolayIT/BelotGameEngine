@@ -66,25 +66,22 @@
             // Check if game is inside or hanging
             if (contract.Type.HasFlag(BidType.Double) || contract.Type.HasFlag(BidType.ReDouble))
             {
+                // The multiplier applies to everything, including the 90 for taking all the
+                // tricks: "all bonuses are doubled including the bonus for getting all the hands".
                 var coefficient = contract.Type.HasFlag(BidType.ReDouble) ? 4 : 2;
-                if (result.NoTricksForOneOfTheTeams)
-                {
-                    // When no tricks - double and re-double doesn't take place
-                    coefficient = 1;
-                }
-
                 var allPoints = result.SouthNorthTotalInRoundPoints + result.EastWestTotalInRoundPoints;
+                var allPointsRounded = RoundPoints(contract.Type, allPoints, true);
                 if (result.SouthNorthTotalInRoundPoints > result.EastWestTotalInRoundPoints)
                 {
-                    result.SouthNorthPoints += (RoundPoints(allPoints) * coefficient) + hangingPoints;
+                    result.SouthNorthPoints += (allPointsRounded * coefficient) + hangingPoints;
                 }
                 else if (result.EastWestTotalInRoundPoints > result.SouthNorthTotalInRoundPoints)
                 {
-                    result.EastWestPoints += (RoundPoints(allPoints) * coefficient) + hangingPoints;
+                    result.EastWestPoints += (allPointsRounded * coefficient) + hangingPoints;
                 }
                 else if (result.SouthNorthTotalInRoundPoints == result.EastWestTotalInRoundPoints)
                 {
-                    result.HangingPoints = (RoundPoints(allPoints) * coefficient) + hangingPoints;
+                    result.HangingPoints = (allPointsRounded * coefficient) + hangingPoints;
                 }
             }
             else if ((contract.Player == PlayerPosition.South || contract.Player == PlayerPosition.North) &&
