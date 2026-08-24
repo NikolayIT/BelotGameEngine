@@ -93,6 +93,14 @@
                 return -1;
             }
 
+            if (this.Type == AnnounceType.FourOfAKind)
+            {
+                // Quads of equal point value rank by the card's strength in trumps:
+                // A > 10 > K > Q ("in trump suit order"). Four jacks and four nines carry
+                // unique values, so they never reach this tie-break.
+                return Math.Sign(this.Card.TrumpOrder.CompareTo(other.Card.TrumpOrder));
+            }
+
             return Math.Sign(this.Card.Type.CompareTo(other.Card.Type));
         }
     }
