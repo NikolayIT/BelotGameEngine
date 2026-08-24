@@ -4,6 +4,24 @@
 
     public static class CardHelpers
     {
+        /// <summary>
+        /// Allocation-free count of the cards of the given suit (a predicate lambda here would
+        /// capture the suit and allocate a closure on every call).
+        /// </summary>
+        public static int CountOfSuit(CardCollection cards, CardSuit suit)
+        {
+            var count = 0;
+            foreach (var card in cards)
+            {
+                if (card.Suit == suit)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
         public static Card GetCardThatSurelyWinsATrickInAllTrumps(
             CardCollection availableCardsToPlay,
             CardCollection playerCards,
@@ -13,8 +31,8 @@
             foreach (var card in availableCardsToPlay)
             {
                 if (card.Type == CardType.Jack &&
-                    playedCards.GetCount(x => x.Suit == card.Suit) +
-                    playerCards.GetCount(x => x.Suit == card.Suit) > cardsThreshold)
+                    CountOfSuit(playedCards, card.Suit) +
+                    CountOfSuit(playerCards, card.Suit) > cardsThreshold)
                 {
                     return card;
                 }
@@ -94,8 +112,8 @@
             foreach (var card in availableCardsToPlay)
             {
                 if (card.Type == CardType.Ace &&
-                    playedCards.GetCount(x => x.Suit == card.Suit) +
-                    playerCards.GetCount(x => x.Suit == card.Suit) > 4)
+                    CountOfSuit(playedCards, card.Suit) +
+                    CountOfSuit(playerCards, card.Suit) > 4)
                 {
                     return card;
                 }
