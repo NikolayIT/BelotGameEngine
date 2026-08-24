@@ -33,6 +33,9 @@ namespace Belot.Engine.Tests.FakeObjects
         /// <summary>Gets how many times the engine asked this player for announces.</summary>
         public int AnnounceAsksCount { get; private set; }
 
+        /// <summary>Gets how many times EndOfTrick was called on this player.</summary>
+        public int EndOfTrickCalls { get; private set; }
+
         public BidType GetBid(PlayerGetBidContext context) =>
             this.bids.Count > 0 ? this.bids.Dequeue() : BidType.Pass;
 
@@ -50,6 +53,7 @@ namespace Belot.Engine.Tests.FakeObjects
 
         public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)
         {
+            this.EndOfTrickCalls++;
         }
 
         public void EndOfRound(RoundResult roundResult)
