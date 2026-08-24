@@ -403,6 +403,47 @@
         }
 
         [Fact]
+        public void EnumeratorShouldBeASnapshotUnaffectedByMutationsDuringEnumeration()
+        {
+            // FindFourOfAKindAnnounces removes cards from the collection while enumerating it,
+            // relying on the enumerator snapshotting the bitmask at creation.
+            var first = Card.GetCard(CardSuit.Club, CardType.Ace); // hash 7
+            var second = Card.GetCard(CardSuit.Heart, CardType.Ten); // hash 19
+            var third = Card.GetCard(CardSuit.Spade, CardType.King); // hash 30
+            var added = Card.GetCard(CardSuit.Diamond, CardType.Queen); // hash 13
+            var collection = new CardCollection { first, second, third };
+
+            var seen = new List<Card>();
+            foreach (var card in collection)
+            {
+                seen.Add(card);
+                collection.Remove(card);
+                collection.Add(added);
+            }
+
+            Assert.Equal(new[] { first, second, third }, seen);
+            Assert.Single(collection);
+            Assert.Contains(added, collection);
+        }
+
+        [Fact]
+        public void HighestAndLowestShouldWorkOnSingleElementAndFullCollections()
+        {
+            var single = new CardCollection { Card.GetCard(CardSuit.Heart, CardType.Nine) };
+            Assert.Equal(Card.GetCard(CardSuit.Heart, CardType.Nine), single.Highest(x => x.TrumpOrder));
+            Assert.Equal(Card.GetCard(CardSuit.Heart, CardType.Nine), single.Lowest(x => x.NoTrumpOrder));
+
+            var full = new CardCollection(uint.MaxValue);
+            Assert.Equal(CardType.Jack, full.Highest(x => x.TrumpOrder).Type);
+            Assert.Equal(CardType.Ace, full.Highest(x => x.NoTrumpOrder).Type);
+            Assert.Equal(CardType.Seven, full.Lowest(x => x.TrumpOrder).Type);
+            Assert.Equal(CardType.Seven, full.Lowest(x => x.NoTrumpOrder).Type);
+
+            Assert.Null(new CardCollection().Highest(x => x.TrumpOrder));
+            Assert.Null(new CardCollection().Lowest(x => x.TrumpOrder));
+        }
+
+        [Fact]
         public void FirstOrDefaultShouldWorkProperly()
         {
             var emptyCollection = new CardCollection();

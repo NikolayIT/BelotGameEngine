@@ -27,14 +27,26 @@ namespace Belot.Engine.Tests.FakeObjects
 
         public bool ReturnAvailableAnnounces { get; set; }
 
+        /// <summary>Gets how many times the engine actually asked this player for a card.</summary>
+        public int CardAsksCount { get; private set; }
+
+        /// <summary>Gets how many times the engine asked this player for announces.</summary>
+        public int AnnounceAsksCount { get; private set; }
+
         public BidType GetBid(PlayerGetBidContext context) =>
             this.bids.Count > 0 ? this.bids.Dequeue() : BidType.Pass;
 
-        public IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context) =>
-            this.ReturnAvailableAnnounces ? context.AvailableAnnounces : new List<Announce>();
+        public IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
+        {
+            this.AnnounceAsksCount++;
+            return this.ReturnAvailableAnnounces ? context.AvailableAnnounces : new List<Announce>();
+        }
 
-        public PlayCardAction PlayCard(PlayerPlayCardContext context) =>
-            new PlayCardAction(this.cards.Dequeue());
+        public PlayCardAction PlayCard(PlayerPlayCardContext context)
+        {
+            this.CardAsksCount++;
+            return new PlayCardAction(this.cards.Dequeue());
+        }
 
         public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)
         {

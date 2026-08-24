@@ -31,6 +31,23 @@
         }
 
         [Fact]
+        public void ShuffleAndDealShouldProduceAll32DistinctCards()
+        {
+            var deck = new Deck();
+            for (var round = 0; round < 10; round++)
+            {
+                deck.Shuffle();
+                var seen = new CardCollection();
+                for (var i = 0; i < 32; i++)
+                {
+                    seen.Add(deck.GetNextCard());
+                }
+
+                Assert.Equal(32, seen.Count);
+            }
+        }
+
+        [Fact]
         public void GetNextCardShouldThrowExceptionWhenCalled33TimesAfterShuffle()
         {
             var deck = new Deck();

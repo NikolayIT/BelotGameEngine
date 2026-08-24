@@ -144,5 +144,51 @@
             var hashCode = card.GetHashCode();
             Assert.Equal(expectedHashCode, hashCode);
         }
+
+        // The canonical Belot strength orders (etc/Rules.md §2; identical to the tables recovered
+        // from the 2001 belot.exe): trump J > 9 > A > 10 > K > Q > 8 > 7, plain A > 10 > K > Q > J > 9 > 8 > 7.
+        // Any refactoring of Card's internals must keep reproducing these exact values.
+        [Theory]
+        [InlineData(CardType.Seven, 1, 1)]
+        [InlineData(CardType.Eight, 2, 2)]
+        [InlineData(CardType.Nine, 7, 3)]
+        [InlineData(CardType.Ten, 5, 7)]
+        [InlineData(CardType.Jack, 8, 4)]
+        [InlineData(CardType.Queen, 3, 5)]
+        [InlineData(CardType.King, 4, 6)]
+        [InlineData(CardType.Ace, 6, 8)]
+        public void StrengthOrderTablesShouldMatchTheCanonicalBelotOrders(
+            CardType cardType,
+            int expectedTrumpOrder,
+            int expectedNoTrumpOrder)
+        {
+            foreach (var cardSuit in Card.AllSuits)
+            {
+                var card = Card.GetCard(cardSuit, cardType);
+                Assert.Equal(expectedTrumpOrder, card.TrumpOrder);
+                Assert.Equal(expectedNoTrumpOrder, card.NoTrumpOrder);
+            }
+        }
+
+        [Fact]
+        public void GetCardShouldReturnTheSameFlyweightInstanceEveryTime()
+        {
+            foreach (var cardSuit in Card.AllSuits)
+            {
+                foreach (var cardType in Card.AllTypes)
+                {
+                    Assert.Same(Card.GetCard(cardSuit, cardType), Card.GetCard(cardSuit, cardType));
+                    Assert.Same(Card.GetCard(cardSuit, cardType), Card.AllCards[((int)cardSuit * 8) + (int)cardType]);
+                }
+            }
+        }
+
+        [Fact]
+        public void AllCardsShouldContain32DistinctNonNullCards()
+        {
+            Assert.Equal(32, Card.AllCards.Length);
+            Assert.Equal(32, Card.AllCards.Distinct().Count());
+            Assert.All(Card.AllCards, Assert.NotNull);
+        }
     }
 }
