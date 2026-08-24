@@ -46,10 +46,38 @@
 
         public IList<Announce> GetAvailableAnnounces(CardCollection playerCards)
         {
-            var cards = new CardCollection(playerCards);
             var combinations = new List<Announce>(2);
-            FindFourOfAKindAnnounces(cards, combinations);
-            FindSequentialAnnounces(cards, combinations);
+
+            // One byte per suit, bit index == card type in deck order (Seven=0 … Ace=7).
+            var bits = playerCards.BitMask;
+            var clubs = bits & 0xFFu;
+            var diamonds = (bits >> 8) & 0xFFu;
+            var hearts = (bits >> 16) & 0xFFu;
+            var spades = bits >> 24;
+
+            // Four of a kind: a type present in all four suits (sevens and eights don't count).
+            var fourOfAKinds = clubs & diamonds & hearts & spades & 0b11111100u;
+            while (fourOfAKinds != 0)
+            {
+                var type = (CardType)BitIndexOfLowestSetBit(fourOfAKinds);
+                fourOfAKinds &= fourOfAKinds - 1;
+                var announceType = type == CardType.Jack ? AnnounceType.FourJacks :
+                                   type == CardType.Nine ? AnnounceType.FourNines : AnnounceType.FourOfAKind;
+                combinations.Add(new Announce(announceType, Card.GetCard(CardSuit.Spade, type)));
+
+                // A card may take part in only one combination, so remove the four cards
+                // from the bytes used for the sequence detection below.
+                var withoutType = ~(1u << (int)type);
+                clubs &= withoutType;
+                diamonds &= withoutType;
+                hearts &= withoutType;
+                spades &= withoutType;
+            }
+
+            FindSequentialAnnounces(combinations, CardSuit.Club, clubs);
+            FindSequentialAnnounces(combinations, CardSuit.Diamond, diamonds);
+            FindSequentialAnnounces(combinations, CardSuit.Heart, hearts);
+            FindSequentialAnnounces(combinations, CardSuit.Spade, spades);
             return combinations;
         }
 
@@ -130,132 +158,66 @@
             }
         }
 
-        private static void FindFourOfAKindAnnounces(CardCollection cards, ICollection<Announce> combinations)
+        private static void FindSequentialAnnounces(ICollection<Announce> combinations, CardSuit suit, uint suitBits)
         {
-            // Group by type
-            var countOfCardTypes = new int[8];
-            foreach (var card in cards)
+            if (suitBits == 0)
             {
-                countOfCardTypes[(int)card.Type]++;
+                return;
             }
 
-            // Check each type
-            for (var i = 0; i < 8; i++)
+            // Bits are in deck order, so sequences are runs of consecutive set bits. The loop
+            // goes one position past the top bit so the last run is flushed too.
+            var runLength = 0;
+            for (var type = 0; type <= 8; type++)
             {
-                var cardType = (CardType)i;
-                if (countOfCardTypes[i] != 4 || cardType == CardType.Seven || cardType == CardType.Eight)
+                if (type < 8 && ((suitBits >> type) & 1) == 1)
                 {
+                    runLength++;
                     continue;
                 }
 
-                switch (cardType)
-                {
-                    case CardType.Jack:
-                        combinations.Add(
-                            new Announce(AnnounceType.FourJacks, Card.GetCard(CardSuit.Spade, cardType)));
-                        break;
-                    case CardType.Nine:
-                        combinations.Add(
-                            new Announce(AnnounceType.FourNines, Card.GetCard(CardSuit.Spade, cardType)));
-                        break;
-                    case CardType.Ace:
-                    case CardType.King:
-                    case CardType.Queen:
-                    case CardType.Ten:
-                        combinations.Add(
-                            new Announce(AnnounceType.FourOfAKind, Card.GetCard(CardSuit.Spade, cardType)));
-                        break;
-                }
-
-                // Remove these cards from the available combination cards
-                foreach (var card in cards)
-                {
-                    if (card.Type == cardType)
-                    {
-                        cards.Remove(card);
-                    }
-                }
-            }
-        }
-
-        private static void FindSequentialAnnounces(CardCollection cards, ICollection<Announce> combinations)
-        {
-            // Group by suit
-            var cardsBySuit = new[] { new List<Card>(4), new List<Card>(4), new List<Card>(4), new List<Card>(4) };
-            foreach (var card in cards)
-            {
-                cardsBySuit[(int)card.Suit].Add(card);
-            }
-
-            // Check each suit
-            for (var suitIndex = 0; suitIndex < 4; suitIndex++)
-            {
-                var suitedCards = cardsBySuit[suitIndex];
-                if (suitedCards.Count < 3)
-                {
-                    continue;
-                }
-
-                suitedCards.Sort((card, card1) => card.Type.CompareTo(card1.Type));
-                var previousCardValue = (int)suitedCards[0].Type;
-                var count = 1;
-                for (var i = 1; i < suitedCards.Count; i++)
-                {
-                    if ((int)suitedCards[i].Type == previousCardValue + 1)
-                    {
-                        count++;
-                    }
-                    else
-                    {
-                        switch (count)
-                        {
-                            case 3:
-                                combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[i - 1]));
-                                break;
-                            case 4:
-                                combinations.Add(new Announce(AnnounceType.SequenceOf4, suitedCards[i - 1]));
-                                break;
-                            case 5:
-                                combinations.Add(new Announce(AnnounceType.SequenceOf5, suitedCards[i - 1]));
-                                break;
-                            case 6:
-                                combinations.Add(new Announce(AnnounceType.SequenceOf6, suitedCards[i - 1]));
-                                break;
-                            //// Cases 7 and 8 cannot happen here, they are instead handled in the code after this for loop
-                        }
-
-                        count = 1;
-                    }
-
-                    previousCardValue = (int)suitedCards[i].Type;
-                }
-
-                switch (count)
+                switch (runLength)
                 {
                     case 3:
-                        combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[suitedCards.Count - 1]));
+                        combinations.Add(new Announce(AnnounceType.SequenceOf3, Card.GetCard(suit, (CardType)(type - 1))));
                         break;
                     case 4:
-                        combinations.Add(new Announce(AnnounceType.SequenceOf4, suitedCards[suitedCards.Count - 1]));
+                        combinations.Add(new Announce(AnnounceType.SequenceOf4, Card.GetCard(suit, (CardType)(type - 1))));
                         break;
                     case 5:
-                        combinations.Add(new Announce(AnnounceType.SequenceOf5, suitedCards[suitedCards.Count - 1]));
+                        combinations.Add(new Announce(AnnounceType.SequenceOf5, Card.GetCard(suit, (CardType)(type - 1))));
                         break;
                     case 6:
-                        combinations.Add(new Announce(AnnounceType.SequenceOf6, suitedCards[suitedCards.Count - 1]));
+                        combinations.Add(new Announce(AnnounceType.SequenceOf6, Card.GetCard(suit, (CardType)(type - 1))));
                         break;
                     case 7:
-                        combinations.Add(new Announce(AnnounceType.SequenceOf7, suitedCards[suitedCards.Count - 1]));
+                        combinations.Add(new Announce(AnnounceType.SequenceOf7, Card.GetCard(suit, (CardType)(type - 1))));
                         break;
                     case 8:
                         // A whole suit is declared as a quint on the top five cards plus a
                         // tierce on 9-8-7: a card may take part in only one combination, so
                         // the leftover tierce tops at the nine.
-                        combinations.Add(new Announce(AnnounceType.SequenceOf8, suitedCards[suitedCards.Count - 1]));
-                        combinations.Add(new Announce(AnnounceType.SequenceOf3, suitedCards[2]));
+                        combinations.Add(new Announce(AnnounceType.SequenceOf8, Card.GetCard(suit, CardType.Ace)));
+                        combinations.Add(new Announce(AnnounceType.SequenceOf3, Card.GetCard(suit, CardType.Nine)));
                         break;
                 }
+
+                runLength = 0;
             }
+        }
+
+        // The bit index of the lowest set bit (bits must be non-zero). The card type bytes have
+        // only 8 bits, so a tiny shift loop beats a de Bruijn lookup here.
+        private static int BitIndexOfLowestSetBit(uint bits)
+        {
+            var index = 0;
+            while ((bits & 1) == 0)
+            {
+                bits >>= 1;
+                index++;
+            }
+
+            return index;
         }
     }
 }
