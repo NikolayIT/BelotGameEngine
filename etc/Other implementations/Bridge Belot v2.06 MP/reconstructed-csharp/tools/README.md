@@ -115,3 +115,20 @@ caller's pre-selected card index by reference, and on those positions it hands t
 straight back rather than choosing. The harness proves that by running the position once per
 possible incoming index; with no pre-selection of its own it has nothing to report, and says so
 rather than inventing a card.
+
+## EngineDiff — differential check against the repository engine
+
+`EngineDiff/` is a console harness that plays seeded random rounds and compares, at every
+decision point, the repository's `Belot.Engine` against this reconstruction's `BelotV2.Rules`
+(which is itself diff-tested against the original binary): the legal-card set offered to the
+player on every turn, the winner of every trick, and the per-hand announce detection (normalized;
+the 8-card-run representation differs by design, so whole-suit hands are skipped).
+
+```bash
+cd EngineDiff
+dotnet run -c Release -- 100000 12345   # deals x seed; ~30s, prints ALL MATCH or the mismatches
+```
+
+Run it after any change to the repository's play rules (ValidCardsService, TrickWinnerService,
+ValidAnnouncesService) to re-verify behavioral equivalence with the 2001 game. As of 2026-08-24
+a 100,000-deal run (19.2M turn checks, 4.8M trick checks, 2M announce checks) matches completely.

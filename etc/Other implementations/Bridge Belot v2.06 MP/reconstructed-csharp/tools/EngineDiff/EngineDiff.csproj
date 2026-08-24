@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>EngineDiff</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\..\src\Belot.Engine\Belot.Engine.csproj" />
+    <ProjectReference Include="..\..\BelotV2.Rules\BelotV2.Rules.csproj" />
+  </ItemGroup>
+
+</Project>
