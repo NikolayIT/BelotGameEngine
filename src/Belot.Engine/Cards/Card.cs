@@ -46,7 +46,9 @@
 
         public int NoTrumpOrder { get; }
 
-        public static bool operator ==(Card left, Card right) => left?.hashCode == right?.hashCode;
+        // There are exactly 32 Card instances (the constructor is private), so two equal cards
+        // are always the same instance and equality is a reference comparison.
+        public static bool operator ==(Card left, Card right) => ReferenceEquals(left, right);
 
         public static bool operator !=(Card left, Card right) => !(left == right);
 
