@@ -10,7 +10,8 @@ core engine ships as the `BelotGameEngine` NuGet package. The repository's real 
 `SmartPlayer`, measured against its previously committed version (see "The ELO benchmark
 workflow" below, the single most important thing to understand about it), and the much stronger
 search player `ClaudePlayerIsmcts` (see "ClaudePlayerIsmcts design"), measured in mirrored
-matches. The full rules are in `etc/Rules.md`.
+matches. People play them in the MAUI app for Android and Windows (see "The MAUI app"). The full
+rules are in `etc/Rules.md`.
 
 ## Commands
 
@@ -36,9 +37,22 @@ dotnet test src/Tests/Belot.AI.ClaudePlayer.Tests/Belot.AI.ClaudePlayer.Tests.cs
 # (options are listed in Program.cs, e.g. "c=0.3,margin=1"; "-" = the defaults). No internet needed.
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- claude 100 100
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- claude-ab 200 30 c=0.3 -
+
+# The app's four levels in a pair-vs-pair round robin, printing the ratings for Game/AiLevels.cs:
+# elo [fast pairs] [pairs with ISMCTS] (defaults 20000 and 150, ≈16 minutes)
+dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- elo
+
+# The MAUI app (needs the MAUI workloads): run it on Windows, or build it for Android
+dotnet build src/UI/Belot.UI/Belot.UI.csproj -f net10.0-windows10.0.19041.0 -t:Run
+dotnet build src/UI/Belot.UI/Belot.UI.csproj -f net10.0-android
+
+# The app's game layer, playing whole games (no MAUI needed)
+dotnet test src/Tests/Belot.UI.Tests/Belot.UI.Tests.csproj
 ```
 
-Build projects individually with `dotnet build`, as CI (`.github/workflows/build.yml`) does.
+Build projects individually with `dotnet build`, as CI (`.github/workflows/build.yml`) does:
+building the whole `src/Belot.sln` includes the MAUI app, which needs the MAUI workloads (CI
+builds and runs `Belot.UI.Tests`, not the app).
 
 ## The ELO benchmark workflow (read this before touching the AI)
 
@@ -206,6 +220,56 @@ games (+375 ELO, +64 points a game), and one of it with a SmartPlayer partner wi
   1,000 bidding deals instead of 300 (50.5%). **More search time does not help** (100 ms against
   30 ms: 49%, and 84% vs 86.5% against SmartPlayer): the greedy rollout's judgement, not the
   number of deals searched, is the limit, so that is where the next gains are.
+
+## The MAUI app (`src/UI/Belot.UI`)
+
+Android and Windows (`net10.0-android`; `net10.0-windows10.0.19041.0` only when building on
+Windows), modelled file for file on the Santase engine's `Santase.UI`. The person plays South and
+picks the level of each other seat separately: the partner (North) and the rivals West (on the
+left) and East (on the right), from `Game/AiLevels.cs`: Random (`RandomPlayer`), Beginner
+(`DummyPlayer`), Skilled (`SmartPlayer`), Master (`ClaudePlayerIsmcts`). The app references the
+three AI projects, so an `IPlayer` break in any of them breaks the app build too.
+
+- **The game is one async flow on the UI thread, never a thread of its own.** `Game/GameSession.cs`
+  drives a `BelotMatch`: the person's decision is an awaited `TaskCompletionSource`, registered
+  before `TurnStarted` is raised (`TryBid`/`TryDeclare`/`TryPlay`, checked with
+  `BelotMatch.Validate`; the person's belote is always claimed); a computer seat decides with
+  `Task.Run(() => player.Decide(view))` during the think pause (the only work off the UI thread;
+  each seat has its own player, built per game by `Lineup.CreatePlayer`); a finished trick stays
+  for the settle pause, the passes and cards the rules make wait for the auto-move pause, and a
+  finished deal waits for `Continue`. Once stopped or restarted, a run raises nothing more: it
+  checks for the stop after every await and every raised event. **Don't reintroduce a game
+  thread, blocking waits or `Thread.Sleep` pacing.**
+- **One `Act` is many things at the table**: after a bid the seats that can only pass pass; a card
+  is followed by every forced card, across tricks and to the end of the deal, which is then scored
+  and the next one dealt. `Game/ActReplay.cs` (pure) turns an act into the ordered events by
+  comparing South's view before and after it; a finished deal's auction and tricks come from
+  `PreviousRounds[^1]` (`BelotRoundSummary.Bids`/`Tricks`). **`GameViewModel` renders from the
+  events only** (the live view is already past them while they are replayed) and re-syncs from
+  `GetView(South)` at each of the person's turns.
+- **The game layer is MAUI-free**: all of `Game/` except `PreferencesSettingsStore.cs`, plus
+  `Localization/AppStrings.cs` (English and Bulgarian, in code; `{loc:Tr Key}` in XAML) and
+  `LocalizationManager.cs`. MAUI sits behind two seams: `ISettingsStore` (`SettingsStore.Current`,
+  MAUI `Preferences`, set first thing in `MauiProgram`) and `IGameTableHost` (UI timers, vibration,
+  leaving the page; `GamePage` implements it). The value converters live in `Converters/`.
+- **Rating**: an on-device ELO (`PlayerRatingStore`, start 1000, K = 32) by the team formula:
+  expected = 1 / (1 + 10^((rivals − (person + partner) / 2) / 400)), the rivals rated as the
+  average of their two levels (`Lineup.RivalsElo`). The levels' ratings in `AiLevels` are pair
+  ratings from the simulator's `elo` suite (`EloTournament`: two of a level against two of
+  another in mirrored pairs, a Bradley-Terry fit anchored at Dummy = 1200). Latest run
+  (September 2026, 16 minutes): Random 634, Beginner 1200, Skilled 1536, Master 1886 (two
+  SmartPlayers took 34 of 300 games from two ClaudePlayerIsmcts). Re-run it and re-paste them if
+  the players change.
+- **`src/Tests/Belot.UI.Tests`** compiles those files and plays whole games on a UI-like
+  single-threaded `SynchronizationContext`: `ActReplayTests` (every act of 300 engine matches
+  replays into exactly `GetRecord()`), `GameSessionTests` (every level, the table's event order,
+  illegal decisions refused, stop and restart from any handler, hints, pacing, a player per seat),
+  `GameTableTests` through `TableTester` (it plays through the view model's commands like a person
+  and checks the screen against the person's view at every decision, then every deal's result
+  screen, the game over, the rating, history and records), plus the strings (both languages, and
+  every key the app uses), the hand order and the history. Tests that touch the static app state
+  run in the non-parallel `AppState` collection on a fresh in-memory store. Keep the linked files
+  MAUI-free.
 
 ## Conventions
 
