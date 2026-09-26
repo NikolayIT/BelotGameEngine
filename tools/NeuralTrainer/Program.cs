@@ -31,6 +31,7 @@
                 return 1;
             }
 
+            PowerThrottling.Disable();
             var settings = TrainingSettings.Parse(args.Skip(1).ToArray(), new TrainingSettings());
             switch (args[0])
             {
@@ -93,24 +94,56 @@
         private static void Bench(TrainingSettings settings)
         {
             var models = string.IsNullOrEmpty(settings.In) ? NeuralModels.Embedded : NeuralModels.Load(settings.In);
-            var bench = new TrainingSettings { CardLabelChance = 0, BidLabelChance = 0, CardExploration = 0, BidExploration = 0 };
+            var labels = settings.Deals > 0;
+            var bench = new TrainingSettings
+            {
+                CardLabelChance = labels ? settings.CardLabelChance : 0,
+                BidLabelChance = labels ? settings.BidLabelChance : 0,
+                CardExploration = 0,
+                BidExploration = 0,
+            };
             var actor = new SelfPlayActor(bench, settings.Seed);
             var seats = new[] { models, models, models, models };
-            for (var i = 0; i < 2000; i++)
+            var buffers = Enumerable.Range(0, 4).Select(t => new SampleBuffer(100_000, t == 0 ? FeatureEncoder.BidOutputs : FeatureEncoder.CardOutputs)).ToArray();
+            var deals = labels ? settings.Deals : 20_000;
+            for (var i = 0; i < deals / 10; i++)
             {
-                actor.PlayDeal(seats, 0, null);
+                actor.PlayDeal(seats, 0b1111, buffers);
             }
 
             var stopwatch = Stopwatch.StartNew();
-            const int Deals = 20_000;
-            for (var i = 0; i < Deals; i++)
+            var count = deals;
+            for (var i = 0; i < count; i++)
             {
-                actor.PlayDeal(seats, 0, null);
+                actor.PlayDeal(seats, 0b1111, buffers);
+            }
+
+            if (labels)
+            {
+                Console.WriteLine($"labelled: {stopwatch.Elapsed.TotalMilliseconds / count:0.0} ms a deal; samples {string.Join(", ", buffers.Select(x => x.Written))}; rollout decisions {actor.RolloutDecisions}");
+                if (settings.Threads > 1)
+                {
+                    // The same with an actor per thread, as a training run has them.
+                    var parallel = Stopwatch.StartNew();
+                    System.Threading.Tasks.Parallel.For(
+                        0,
+                        settings.Threads,
+                        new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = settings.Threads },
+                        t =>
+                        {
+                            var threadActor = new SelfPlayActor(bench, settings.Seed + t);
+                            for (var i = 0; i < count; i++)
+                            {
+                                threadActor.PlayDeal(seats, 0b1111, buffers);
+                            }
+                        });
+                    Console.WriteLine($"{settings.Threads} threads: {settings.Threads * count / parallel.Elapsed.TotalSeconds:0} labelled deals a second");
+                }
             }
 
             var elapsed = stopwatch.Elapsed;
             Console.WriteLine(
-                $"{Deals} deals in {elapsed.TotalSeconds:0.00} s: {elapsed.TotalMilliseconds * 1000 / Deals:0} µs a deal, "
+                $"{count} deals in {elapsed.TotalSeconds:0.00} s: {elapsed.TotalMilliseconds * 1000 / count:0} µs a deal, "
                 + $"{elapsed.TotalMilliseconds * 1000 / actor.Decisions:0.0} µs a decision ({actor.Decisions} decisions); "
                 + $"networks {string.Join(", ", models.Networks.Select(n => $"{string.Join("-", n.GetSizes())} ({n.ParameterCount / 1000}k)"))}");
         }

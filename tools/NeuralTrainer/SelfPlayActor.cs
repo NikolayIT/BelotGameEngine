@@ -54,6 +54,9 @@
 
         public long BidSamples { get; private set; }
 
+        /// <summary>Gets how many decisions the rollouts asked the networks for.</summary>
+        public long RolloutDecisions { get; private set; }
+
         /// <summary>Gets how many decisions the deals had (bids, and cards with a choice).</summary>
         public long Decisions { get; private set; }
 
@@ -182,6 +185,7 @@
                 while (!copy.AuctionFinished)
                 {
                     copy.Bid(this.seats[copy.ToBid].BestBid(in copy, this.rolloutValues));
+                    this.RolloutDecisions++;
                 }
 
                 if (copy.Contract != BidType.Pass)
@@ -208,9 +212,17 @@
             {
                 deal.DeclareIfFirstCard();
                 var legal = this.simulator.LegalMoves(in deal.Play);
-                var card = (legal & (legal - 1)) == 0
-                    ? BitOperations.TrailingZeroCount(legal)
-                    : this.seats[deal.Play.Turn].BestCard(in deal, legal, this.rolloutValues);
+                int card;
+                if ((legal & (legal - 1)) == 0)
+                {
+                    card = BitOperations.TrailingZeroCount(legal);
+                }
+                else
+                {
+                    card = this.seats[deal.Play.Turn].BestCard(in deal, legal, this.rolloutValues);
+                    this.RolloutDecisions++;
+                }
+
                 deal.PlayCard(this.simulator, card, legal);
             }
         }

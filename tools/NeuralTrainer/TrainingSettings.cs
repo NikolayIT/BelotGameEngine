@@ -103,6 +103,9 @@
 
         public int Pairs { get; set; } = 200;
 
+        /// <summary>Gets or sets how many labelled deals "bench" times (0 = time 20000 deals without labels).</summary>
+        public int Deals { get; set; }
+
         /// <summary>Gets or sets a value indicating whether the networks may double ("validate").</summary>
         public bool MayDouble { get; set; } = true;
 
