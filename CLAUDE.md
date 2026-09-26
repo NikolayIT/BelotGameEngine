@@ -6,14 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A C# engine for **Belot** (Bridge-Belote), a 4-player (2v2) 32-card trick-taking game. The
 core engine ships as the `BelotGameEngine` NuGet package. The repository's real purpose is to
-**evolve a card-playing AI (`SmartPlayer`) and measure each change in ELO** against the
-previously committed version — see "The ELO benchmark workflow" below, which is the single most
-important thing to understand here. The full rules are in `etc/Rules.md`.
+**evolve card-playing AIs and measure each change in ELO**. There are two: the hand-written
+`SmartPlayer`, measured against its previously committed version (see "The ELO benchmark
+workflow" below, the single most important thing to understand about it), and the much stronger
+search player `ClaudePlayerIsmcts` (see "ClaudePlayerIsmcts design"), measured in mirrored
+matches. The full rules are in `etc/Rules.md`.
 
 ## Commands
 
-The solution lives in `src/`. Library projects target `netstandard2.0`; runnable/test projects
-target `net10.0`.
+The solution lives in `src/`. Library projects target `netstandard2.0` (except
+`Belot.AI.ClaudePlayer`, which needs `net10.0` for `BitOperations` and `[InlineArray]`);
+runnable/test projects target `net10.0`.
 
 ```bash
 # Run the unit tests (xUnit)
@@ -24,6 +27,15 @@ dotnet test src/Tests/Belot.Engine.Tests/Belot.Engine.Tests.csproj --filter "Ful
 
 # Run the ELO benchmark / simulator — ALWAYS in Release, and it needs internet (see below)
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj
+
+# The search player's tests (simulator vs engine, inference soundness, the bidding model)
+dotnet test src/Tests/Belot.AI.ClaudePlayer.Tests/Belot.AI.ClaudePlayer.Tests.csproj
+
+# ClaudePlayerIsmcts vs SmartPlayer, and two configurations of it against each other, in mirrored
+# pairs of games: claude [pairs] [ms per card]; claude-ab [pairs] [ms] [candidate] [baseline]
+# (options are listed in Program.cs, e.g. "c=0.3,margin=1"; "-" = the defaults). No internet needed.
+dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- claude 100 100
+dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- claude-ab 200 30 c=0.3 -
 
 # Play in the console (you are South vs three SmartPlayers)
 dotnet run --project src/UI/Belot.UI.Console/Belot.UI.Console.csproj
@@ -65,7 +77,9 @@ owns all rules and state; players only make decisions.
 Control flow, outer to inner:
 
 - `BelotGame.PlayGame(firstToPlay)` — loops rounds until a team reaches ≥151 points (with the
-  capot/contract guards in the win check) and returns a `GameResult`.
+  capot/contract guards in the win check) and returns a `GameResult`. `new BelotGame(..., Random)`
+  seeds the deals: every deal shuffles the whole deck once, so the n-th deal depends only on the
+  seed and n, and the same seed with the teams swapped replays the same deals (a mirror match).
 - `GameMechanics/RoundManager.PlayRound(...)` — deals 5 cards, runs bidding, deals 3 more, plays
   the tricks, scores. Owns the `Deck` and the four players' `CardCollection`s.
 - `GameMechanics/ContractManager.GetContract(...)` — the bidding loop (suit ladder, no-trumps,
@@ -123,6 +137,56 @@ Match this style when extending the engine:
 
 Baseline opponents for the benchmark live in `AI/Belot.AI.DummyPlayer`: `DummyPlayer` (simple
 rules) and `RandomPlayer`.
+
+## ClaudePlayerIsmcts design (the strongest AI)
+
+`AI/Belot.AI.ClaudePlayer`, a port of the design of the strongest player of the sister project
+Santase (github.com/NikolayIT/SantaseGameEngine, `ClaudePlayerIsmcts`). Measured in mirrored pairs
+at its 100 ms default (September 2026): two of it beat two SmartPlayers in 89.7% ± 1.7% of 300
+games (+375 ELO, +64 points a game), and one of it with a SmartPlayer partner wins 76.0% ± 2.2%
+(+200 ELO). For scale, the 2001 `belot.exe` AI beats SmartPlayer by ~+123 ELO.
+
+- **Card play: single-observer ISMCTS.** One tree keyed by the public play; every iteration deals
+  the unseen cards anew, walks the tree choosing among the cards legal in that deal (UCB with
+  availability counts, `ExplorationConstant` 0.7), adds one node, and plays the deal out with a
+  greedy perfect-information rollout (`BelotSimulator.ChooseRolloutMove`, a random card 10% of
+  the time). The reward is the team's game points minus the other team's for the deal (hanging
+  points carried in included), mapped to [0, 1]; the partner's nodes maximise it, the opponents'
+  minimise it. The most visited card is played.
+- **It keeps no state between decisions**: `Search/RoundKnowledge` rebuilds everything from the
+  `PlayerPlayCardContext` (only the hanging points come from `EndOfRound`), so a player can be
+  created for any position.
+- **What the play shows** (`RoundKnowledge`): not following shows a void; in all trumps, or with
+  trumps led, following below the best card shows nothing higher; in a suit contract not trumping
+  while an opponent holds the trick shows no trumps, and not overtrumping shows no higher trump;
+  a belote shows the other card of the pair, a trump king or queen without one shows there is
+  none; four jacks/nines (and a carre whose rank only one rank fits) show the cards.
+  `Search/WorldSampler` deals within these constraints (Hall's condition keeps it from getting
+  stuck). `RoundKnowledgeTests` checks at every decision of thousands of deals that the real hands
+  always fit.
+- **The simulator** (`Search/BelotSimulator`, card masks only) mirrors `ValidCardsService`,
+  `TrickWinnerService`, `IsBeloteAllowed` and `ScoreManager`; `SimulatorAgreesWithEngineTests`
+  replays thousands of random deals in every contract through both. **Change a rule in the engine
+  and that test tells you to change the simulator.** Combinations: `Search/AnnounceScorer`
+  (declare-everything, which keeps the carre; which ones score, hidden ranks drawn at random).
+- **Bidding: Monte Carlo** (`Search/BidEvaluator`): the contracts the player may bid and the one
+  that stands if it passes are played out with the rollout policy over the same 300 random deals,
+  and the best is bid if it is worth at least `BidMargin` (0) game points more than passing. The
+  others' first five cards are dealt to fit their bids so far under `Search/BidModel`, which is
+  **SmartPlayer's bidding on card masks** (every bot bids like it). Without that conditioning the
+  opponents' contracts look hopeless and the bidding loses badly. `SmartBidIsSmartPlayersBid`
+  compares the two on 50,000 hands: **change SmartPlayer's bidding and update `BidModel`.**
+- **Tuning record** (`claude-ab`, 400 mirrored games at 30 ms, 1σ ≈ 2 pp; don't re-try the
+  rejects blindly). Kept: Monte Carlo bidding with the auction-fitting deals (58% against
+  SmartPlayer's bidding), margin 0 (54% against 1), `ExplorationConstant` 0.2 → 0.4 (52.5%) →
+  0.7 (51.7%), 10% random rollout cards (52%, twice). Rejected: Monte Carlo bidding with uniform
+  deals (34%); margins 2.5 (43% against 1) and -1 (47% against 0); doubling and redoubling (47% at
+  margin 0, 52% at margin 1: noise, so off, `MayDouble`); making the card-play deals also explain
+  the auction (`UseBidInference`, 50.2%); rollouts leading into the partner's winning suit
+  (48.5%); `ExplorationConstant` 0.1 (45% against 0.2) and 1.2 (51%, fewer points, against 0.7);
+  1,000 bidding deals instead of 300 (50.5%). **More search time does not help** (100 ms against
+  30 ms: 49%, and 84% vs 86.5% against SmartPlayer): the greedy rollout's judgement, not the
+  number of deals searched, is the limit, so that is where the next gains are.
 
 ## Conventions
 
