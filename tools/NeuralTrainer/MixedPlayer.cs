@@ -2,20 +2,20 @@
 {
     using System.Collections.Generic;
 
-    using Belot.AI.SmartPlayer;
     using Belot.Engine;
     using Belot.Engine.Game;
     using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
-    /// <summary>A player whose bids are SmartPlayer's: to judge another player's card play alone.</summary>
-    internal sealed class SmartBiddingPlayer : IPlayer
+    /// <summary>One player's bids with another's card play: to judge either part alone.</summary>
+    internal sealed class MixedPlayer : IPlayer
     {
+        private readonly IPlayer bidding;
         private readonly IPlayer cards;
-        private readonly SmartPlayer bidding = new SmartPlayer();
 
-        public SmartBiddingPlayer(IPlayer cards)
+        public MixedPlayer(IPlayer bidding, IPlayer cards)
         {
+            this.bidding = bidding;
             this.cards = cards;
         }
 

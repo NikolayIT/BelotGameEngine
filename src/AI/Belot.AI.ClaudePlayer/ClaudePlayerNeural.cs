@@ -85,6 +85,23 @@
         /// </summary>
         public int SearchDeals { get; set; }
 
+        /// <summary>Gets or sets how many deals the card network's value counts as in the search's averages.</summary>
+        public double SearchPriorDeals
+        {
+            get => this.search.PriorDeals;
+            set => this.search.PriorDeals = value;
+        }
+
+        /// <summary>
+        /// Gets or sets how far below the best (game points) a card may be after half the search's
+        /// deals and still be played out in the rest; 0 plays every card in every deal.
+        /// </summary>
+        public double SearchPruneMargin
+        {
+            get => this.search.PruneMargin;
+            set => this.search.PruneMargin = value;
+        }
+
         /// <summary>Gets how many decisions fell back to SmartPlayer (a context that did not add up).</summary>
         public int Fallbacks { get; private set; }
 

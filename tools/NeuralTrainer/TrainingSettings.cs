@@ -35,6 +35,9 @@
 
         public double LearningRate { get; set; } = 1e-4;
 
+        /// <summary>Gets or sets the learning rate at the end of the run (it falls linearly to it; negative = constant).</summary>
+        public double FinalLearningRate { get; set; } = -1;
+
         public double MaxNorm { get; set; } = 1.0;
 
         /// <summary>Gets or sets where the loss turns from squared to linear, in units of 26 game points.</summary>
@@ -115,11 +118,15 @@
         /// <summary>Gets or sets how many deals the networks' card decisions play out in "validate" (0 = none).</summary>
         public int SearchDeals { get; set; }
 
+        public double SearchPriorDeals { get; set; }
+
+        public double SearchPruneMargin { get; set; }
+
         /// <summary>Gets or sets a value indicating whether the networks may double ("validate").</summary>
         public bool MayDouble { get; set; } = true;
 
-        /// <summary>Gets or sets a value indicating whether "validate" lets SmartPlayer bid for the networks (to judge the card play alone).</summary>
-        public bool SmartBidding { get; set; }
+        /// <summary>Gets or sets who bids for the networks in "validate": net, smart or ismcts (to judge the card play alone).</summary>
+        public string Bidding { get; set; } = "net";
 
         public int Threads { get; set; } = Math.Max(1, Environment.ProcessorCount / 2);
 

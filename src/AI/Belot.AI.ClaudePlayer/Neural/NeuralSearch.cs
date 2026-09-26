@@ -23,6 +23,21 @@
         private readonly DeclaredAnnounce[] announces = new DeclaredAnnounce[AnnounceScorer.MaxAnnounces];
         private readonly float[] values = new float[FeatureEncoder.CardOutputs];
         private readonly double[] sums = new double[FeatureEncoder.CardOutputs];
+        private readonly int[] counts = new int[FeatureEncoder.CardOutputs];
+        private readonly float[] prior = new float[FeatureEncoder.CardOutputs];
+
+        /// <summary>
+        /// Gets or sets how many deals the card network's own value counts as: it is averaged in
+        /// with the playouts, which steadies a small number of deals.
+        /// </summary>
+        public double PriorDeals { get; set; }
+
+        /// <summary>
+        /// Gets or sets how far below the best, in game points, a card may fall after half the
+        /// deals and still be played out in the rest (the others keep their first-half average);
+        /// 0 plays every card in every deal.
+        /// </summary>
+        public double PruneMargin { get; set; }
 
         /// <summary>
         /// Fills the value of every legal card (indexed by card) from the given number of deals.
@@ -46,8 +61,20 @@
 
             var team = deal.Play.Turn & 1;
             Array.Clear(this.sums);
+            Array.Clear(this.counts);
+            if (this.PriorDeals > 0)
+            {
+                evaluator.EvaluateCards(in deal, legal, this.prior);
+            }
+
+            var playing = legal;
             for (var i = 0; i < deals; i++)
             {
+                if (i == deals / 2 && this.PruneMargin > 0)
+                {
+                    playing = this.Contenders(legal, cardValues);
+                }
+
                 var state = this.knowledge.Root;
                 this.sampler.Sample(ref state, random);
                 var world = deal;
@@ -57,7 +84,7 @@
                 }
 
                 this.Declarations(ref world, in state, random);
-                for (var rest = legal; rest != 0; rest &= rest - 1)
+                for (var rest = playing; rest != 0; rest &= rest - 1)
                 {
                     var card = BitOperations.TrailingZeroCount(rest);
                     var copy = world;
@@ -74,16 +101,47 @@
 
                     copy.Score(simulator, out var southNorth, out var eastWest, out _);
                     this.sums[card] += team == 0 ? southNorth - eastWest : eastWest - southNorth;
+                    this.counts[card]++;
                 }
             }
 
+            this.Averages(legal, cardValues);
+            return true;
+        }
+
+        // Each card's average so far, the network's value counted as PriorDeals deals.
+        private void Averages(uint legal, float[] cardValues)
+        {
             for (var rest = legal; rest != 0; rest &= rest - 1)
             {
                 var card = BitOperations.TrailingZeroCount(rest);
-                cardValues[card] = (float)(this.sums[card] / deals);
+                var weight = this.PriorDeals > 0 ? this.PriorDeals : 0;
+                var total = this.sums[card] + (weight * this.prior[card]);
+                cardValues[card] = (float)(total / Math.Max(1e-9, this.counts[card] + weight));
+            }
+        }
+
+        // The cards within PruneMargin of the best so far.
+        private uint Contenders(uint legal, float[] cardValues)
+        {
+            this.Averages(legal, cardValues);
+            var best = float.NegativeInfinity;
+            for (var rest = legal; rest != 0; rest &= rest - 1)
+            {
+                best = Math.Max(best, cardValues[BitOperations.TrailingZeroCount(rest)]);
             }
 
-            return true;
+            var contenders = 0u;
+            for (var rest = legal; rest != 0; rest &= rest - 1)
+            {
+                var card = BitOperations.TrailingZeroCount(rest);
+                if (cardValues[card] >= best - this.PruneMargin)
+                {
+                    contenders |= 1u << card;
+                }
+            }
+
+            return contenders;
         }
 
         // The combinations of this deal: those declared (hidden ranks drawn at random), and in

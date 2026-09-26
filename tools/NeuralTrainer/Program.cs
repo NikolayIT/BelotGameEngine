@@ -70,9 +70,16 @@
                     Temperature = settings.Temperature,
                     MaxRegret = settings.MaxRegret,
                     SearchDeals = settings.SearchDeals,
+                    SearchPriorDeals = settings.SearchPriorDeals,
+                    SearchPruneMargin = settings.SearchPruneMargin,
                     Rng = new Random(Environment.CurrentManagedThreadId),
                 };
-                return settings.SmartBidding ? new SmartBiddingPlayer(player) : player;
+                return settings.Bidding switch
+                    {
+                        "smart" => new MixedPlayer(new SmartPlayer(), player),
+                        "ismcts" => new MixedPlayer(new ClaudePlayerIsmcts(), player),
+                        _ => player,
+                    };
             }
 
             Func<IPlayer> opponent;

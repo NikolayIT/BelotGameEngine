@@ -231,7 +231,7 @@
                     var loss = this.networks[tag].Train(
                         batches[tag],
                         workers[tag],
-                        (float)this.settings.LearningRate,
+                        (float)this.LearningRate(),
                         (float)this.settings.MaxNorm,
                         (float)this.settings.Huber);
                     this.losses[tag] = this.trained[tag] == 0 ? loss : (0.98 * this.losses[tag]) + (0.02 * loss);
@@ -255,6 +255,18 @@
             this.current = ToModels(this.networks);
         }
 
+        // The learning rate now: constant, or falling linearly to the final one over the run.
+        private double LearningRate()
+        {
+            if (this.settings.FinalLearningRate < 0)
+            {
+                return this.settings.LearningRate;
+            }
+
+            var progress = Math.Min(1, this.clock.Elapsed.TotalHours / this.settings.Hours);
+            return this.settings.LearningRate + ((this.settings.FinalLearningRate - this.settings.LearningRate) * progress);
+        }
+
         private double Evaluate(int index)
         {
             var models = this.current;
@@ -274,7 +286,7 @@
                 ", ",
                 Enumerable.Range(0, 4).Select(t =>
                     $"{Names[t]} {this.buffers[t].Written / 1000}k (loss {this.losses[t]:0.0000}, x{(double)this.trained[t] / Math.Max(1, this.buffers[t].Written):0.0})"));
-            this.Log($"{this.clock.Elapsed:hh\\:mm\\:ss} deals {deals} ({deals / seconds:0}/s), steps {this.steps}, samples: {samples}");
+            this.Log($"{this.clock.Elapsed:hh\\:mm\\:ss} deals {deals} ({deals / seconds:0}/s), steps {this.steps}, rate {this.LearningRate():0.0e0}, samples: {samples}");
         }
 
         private void Log(string line)
