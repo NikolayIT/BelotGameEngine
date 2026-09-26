@@ -2,9 +2,11 @@
 {
     using System;
     using System.Diagnostics;
+    using System.Globalization;
     using System.Threading;
     using System.Threading.Tasks;
 
+    using Belot.AI.ClaudePlayer;
     using Belot.AI.DummyPlayer;
     using Belot.AI.SmartPlayer;
     using Belot.Engine;
@@ -39,6 +41,31 @@
             Console.WriteLine($"Total tests time: {totalStopwatch.Elapsed}. Total ELO: {elo:0.00}.");
         }
 
+        public void RunClaude(int parallelism, int pairs, int budgetMilliseconds)
+        {
+            Console.WriteLine($"ClaudePlayerIsmcts at {budgetMilliseconds} ms per card, mirrored pairs of games");
+            Console.WriteLine(new string('=', LineLength));
+            IPlayer Claude() => CreateClaude(budgetMilliseconds, "-");
+            IPlayer Smart() => new SmartPlayer();
+
+            var totalStopwatch = Stopwatch.StartNew();
+            MirrorMatch("TwoClaudeIsmctsVsTwoSmart", Claude, Claude, Smart, Smart, pairs, parallelism);
+            MirrorMatch("ClaudeIsmctsAndSmartVsTwoSmart", Claude, Smart, Smart, Smart, pairs, parallelism);
+            Console.WriteLine($"Total tests time: {totalStopwatch.Elapsed}.");
+        }
+
+        public void RunClaudeAb(int parallelism, int pairs, int budgetMilliseconds, string candidate, string baseline)
+        {
+            Console.WriteLine($"ClaudePlayerIsmcts [{candidate}] vs [{baseline}] at {budgetMilliseconds} ms per card, mirrored pairs");
+            Console.WriteLine(new string('=', LineLength));
+            IPlayer Candidate() => CreateClaude(budgetMilliseconds, candidate);
+            IPlayer Baseline() => CreateClaude(budgetMilliseconds, baseline);
+
+            var totalStopwatch = Stopwatch.StartNew();
+            MirrorMatch("CandidateVsBaseline", Candidate, Candidate, Baseline, Baseline, pairs, parallelism);
+            Console.WriteLine($"Total tests time: {totalStopwatch.Elapsed}.");
+        }
+
         public void RunDetailedGames(int count)
         {
             SimulateGames(
@@ -52,9 +79,118 @@
                 true);
         }
 
-        private static double SimulateGames(Func<BelotGame> simulation, int games, int parallelism, bool detailedLog = false)
+        private static ClaudePlayerIsmcts CreateClaude(int budgetMilliseconds, string options)
         {
-            Console.WriteLine($"Running {simulation.Method.Name}...");
+            var player = new ClaudePlayerIsmcts { TimeLimitMilliseconds = budgetMilliseconds };
+            foreach (var option in options.Split(',', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var parts = option.Split('=');
+                switch (parts[0])
+                {
+                    case "-":
+                        break;
+                    case "ms":
+                        player.TimeLimitMilliseconds = int.Parse(parts[1], CultureInfo.InvariantCulture);
+                        break;
+                    case "c":
+                        player.ExplorationConstant = double.Parse(parts[1], CultureInfo.InvariantCulture);
+                        break;
+                    case "eps":
+                        player.RolloutRandomness = double.Parse(parts[1], CultureInfo.InvariantCulture);
+                        break;
+                    case "inf":
+                        player.UsePlayInference = parts[1] != "0";
+                        break;
+                    case "bidinf":
+                        player.UseBidInference = parts[1] != "0";
+                        break;
+                    case "mcbid":
+                        player.UseMonteCarloBidding = parts[1] != "0";
+                        break;
+                    case "dbl":
+                        player.MayDouble = parts[1] != "0";
+                        break;
+                    case "margin":
+                        player.BidMargin = double.Parse(parts[1], CultureInfo.InvariantCulture);
+                        break;
+                    case "deals":
+                        player.BiddingDeals = int.Parse(parts[1], CultureInfo.InvariantCulture);
+                        break;
+                    default:
+                        throw new ArgumentException($"Unknown option {option}");
+                }
+            }
+
+            return player;
+        }
+
+        // Every pair plays the same deals twice (one seeded deck), the teams swapping seats, so
+        // the luck of the cards cancels out. Team A is South-North in the first game of a pair.
+        private static void MirrorMatch(
+            string name,
+            Func<IPlayer> teamA1,
+            Func<IPlayer> teamA2,
+            Func<IPlayer> teamB1,
+            Func<IPlayer> teamB2,
+            int pairs,
+            int parallelism)
+        {
+            Console.WriteLine($"Running {name}...");
+            var players = new ThreadLocal<IPlayer[]>(() => new[] { teamA1(), teamA2(), teamB1(), teamB2() });
+            var pairScores = new double[pairs];
+            long pointsA = 0;
+            long pointsB = 0;
+            long rounds = 0;
+            var lockObject = new object();
+            var stopwatch = Stopwatch.StartNew();
+            Parallel.For(
+                0,
+                pairs,
+                new ParallelOptions { MaxDegreeOfParallelism = parallelism },
+                i =>
+                {
+                    var p = players.Value;
+                    var firstToPlay = (PlayerPosition)(1 << (i % 4));
+                    var first = new BelotGame(p[0], p[2], p[1], p[3], new Random(i)).PlayGame(firstToPlay);
+                    var second = new BelotGame(p[2], p[0], p[3], p[1], new Random(i)).PlayGame(firstToPlay);
+                    var winsA = (first.Winner == PlayerPosition.SouthNorthTeam ? 1 : 0)
+                                + (second.Winner == PlayerPosition.EastWestTeam ? 1 : 0);
+                    pairScores[i] = winsA / 2.0;
+                    lock (lockObject)
+                    {
+                        pointsA += first.SouthNorthPoints + second.EastWestPoints;
+                        pointsB += first.EastWestPoints + second.SouthNorthPoints;
+                        rounds += first.RoundsPlayed + second.RoundsPlayed;
+                    }
+                });
+
+            var elapsed = stopwatch.Elapsed;
+            var mean = 0.0;
+            foreach (var score in pairScores)
+            {
+                mean += score;
+            }
+
+            mean /= pairs;
+            var variance = 0.0;
+            foreach (var score in pairScores)
+            {
+                variance += (score - mean) * (score - mean);
+            }
+
+            var sigma = Math.Sqrt(variance / Math.Max(1, pairs - 1) / pairs);
+            var gamesA = (int)Math.Round(mean * pairs * 2);
+            var gamesB = (pairs * 2) - gamesA;
+            Console.WriteLine(
+                $"{pairs * 2} games: {gamesA}-{gamesB} ({mean:P1} ± {sigma:P1}) (Rounds: {rounds}) ELO: {CalculateElo(gamesA, gamesB):0.00}");
+            Console.WriteLine(
+                $"{elapsed}; Points: {pointsA}-{pointsB} ({(double)(pointsA - pointsB) / (pairs * 2):+0.0;-0.0} a game)");
+            Console.WriteLine(new string('=', LineLength));
+        }
+
+        private static double SimulateGames(Func<BelotGame> simulation, int games, int parallelism, bool detailedLog = false, string name = null)
+        {
+            Console.WriteLine($"Running {name ?? simulation.Method.Name}...");
             GlobalCounters.Counters = new long[GlobalCounters.CountersCount];
             var game = new ThreadLocal<BelotGame>(simulation);
             var southNorthWins = 0;

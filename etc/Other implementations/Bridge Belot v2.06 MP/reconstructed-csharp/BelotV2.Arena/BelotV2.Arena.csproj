@@ -19,6 +19,7 @@
     <ProjectReference Include="..\..\..\..\..\src\Belot.Engine\Belot.Engine.csproj" />
     <ProjectReference Include="..\..\..\..\..\src\AI\Belot.AI.SmartPlayer\Belot.AI.SmartPlayer.csproj" />
     <ProjectReference Include="..\..\..\..\..\src\AI\Belot.AI.DummyPlayer\Belot.AI.DummyPlayer.csproj" />
+    <ProjectReference Include="..\..\..\..\..\src\AI\Belot.AI.ClaudePlayer\Belot.AI.ClaudePlayer.csproj" />
   </ItemGroup>
 
 </Project>

@@ -2,6 +2,7 @@ namespace BelotArena
 {
     using System.Diagnostics;
 
+    using Belot.AI.ClaudePlayer;
     using Belot.AI.DummyPlayer;
     using Belot.AI.SmartPlayer;
     using Belot.Engine;
@@ -20,7 +21,8 @@ namespace BelotArena
     ///
     ///   arena &lt;south-north&gt; &lt;east-west&gt; [games] [seed]
     ///
-    /// where each side is one of: smart, dummy, random, original (the C# transcription) or
+    /// where each side is one of: smart, dummy, random, claude (ClaudePlayerIsmcts; claude:30 sets
+    /// its budget per card in ms, 100 by default), original (the C# transcription) or
     /// originalemu (the real x86 routine under emulation, ~0.5s per decision).
     ///
     /// Always run the controls before believing a result: `smart smart` must land near 50% or
@@ -32,7 +34,7 @@ namespace BelotArena
         {
             if (args.Length < 2)
             {
-                Console.Error.WriteLine("usage: arena <smart|dummy|random|original|originalemu> <same> [games] [seed]");
+                Console.Error.WriteLine("usage: arena <smart|dummy|random|claude[:ms]|original|originalemu> <same> [games] [seed]");
                 return 2;
             }
 
@@ -67,6 +69,12 @@ namespace BelotArena
                     return new DummyPlayer();
                 case "random":
                     return new RandomPlayer();
+                case var claude when claude.StartsWith("claude", StringComparison.Ordinal):
+                    return new ClaudePlayerIsmcts
+                    {
+                        Rng = new Random((int)seed),
+                        TimeLimitMilliseconds = claude.Length > 7 ? int.Parse(claude.Substring(7)) : 100,
+                    };
                 case "original":
                     return new OriginalEnginePlayer(
                         "original", ctx => V2.OriginalPlayAdapter.Play(ctx, new V2.DelphiRandom(seed)), seed);
