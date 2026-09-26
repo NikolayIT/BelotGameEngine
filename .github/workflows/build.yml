@@ -35,16 +35,13 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: ${{ runner.os }}-nuget-
 
-      # The solution also contains src/UI/Belot.UI.Windows, a UWP (x86) project that only builds
-      # with full MSBuild / Visual Studio, so the projects are built individually instead of
-      # building src/Belot.sln. These four cover every cross-platform project via their project
-      # references: Belot.Engine and the three AI projects.
+      # The projects are built one by one; these three cover Belot.Engine and the three AI
+      # projects through their project references.
       - name: Build
         run: |
           dotnet build src/Tests/Belot.Engine.Tests/Belot.Engine.Tests.csproj -c Release
           dotnet build src/Tests/Belot.AI.ClaudePlayer.Tests/Belot.AI.ClaudePlayer.Tests.csproj -c Release
           dotnet build src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -c Release
-          dotnet build src/UI/Belot.UI.Console/Belot.UI.Console.csproj -c Release
 
       - name: Test
         run: |

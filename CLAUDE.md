@@ -36,15 +36,9 @@ dotnet test src/Tests/Belot.AI.ClaudePlayer.Tests/Belot.AI.ClaudePlayer.Tests.cs
 # (options are listed in Program.cs, e.g. "c=0.3,margin=1"; "-" = the defaults). No internet needed.
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- claude 100 100
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- claude-ab 200 30 c=0.3 -
-
-# Play in the console (you are South vs three SmartPlayers)
-dotnet run --project src/UI/Belot.UI.Console/Belot.UI.Console.csproj
 ```
 
-Build cross-platform projects individually with `dotnet build`. Do **not** run `dotnet build` on
-the whole `src/Belot.sln`: it includes `UI/Belot.UI.Windows`, a UWP (x86) project that only builds
-with Visual Studio / full MSBuild. CI (`.github/workflows/build.yml`) builds the projects
-individually for exactly this reason and leaves the UWP project out.
+Build projects individually with `dotnet build`, as CI (`.github/workflows/build.yml`) does.
 
 ## The ELO benchmark workflow (read this before touching the AI)
 
@@ -74,7 +68,7 @@ A game can be driven two ways, both over the same rules:
 - **Pull, with `IPlayer`s** (`Belot.Engine/Players/IPlayer.cs`): `BelotGame.PlayGame(firstToPlay)`
   asks the players through six callbacks (`GetBid`, `GetAnnounces`, `PlayCard` decide;
   `EndOfTrick`, `EndOfRound`, `EndOfGame` inform) until a team wins. This is what the simulator,
-  the bots' tests and the console UI use. **To add an AI, implement `IPlayer`.**
+  and the bots' tests use. **To add an AI, implement `IPlayer`.**
 - **Push, with `GameMechanics/BelotMatch`** (modelled on the Santase engine's `SantaseMatch`):
   `Start()`, then read `ToMove` and `Decision` (`Bid`, `Announce` or `PlayCard`), give that seat
   `CreateBidContext()` / `CreateAnnouncesContext()` / `CreatePlayCardContext()` (copies) and pass
