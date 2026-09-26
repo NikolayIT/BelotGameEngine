@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Trains ClaudePlayerNeural's networks (see NEURAL_NETWORK.md). Dev tooling, not in
+       src/Belot.sln; the ClaudePlayer tests reference it, so CI builds it. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <TieredPGO>true</TieredPGO>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <CodeAnalysisRuleSet>..\..\src\Rules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="..\..\src\stylecop.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Belot.AI.ClaudePlayer.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AI\Belot.AI.ClaudePlayer\Belot.AI.ClaudePlayer.csproj" />
+    <ProjectReference Include="..\..\src\AI\Belot.AI.DummyPlayer\Belot.AI.DummyPlayer.csproj" />
+    <ProjectReference Include="..\..\src\AI\Belot.AI.SmartPlayer\Belot.AI.SmartPlayer.csproj" />
+    <ProjectReference Include="..\..\src\Belot.Engine\Belot.Engine.csproj" />
+  </ItemGroup>
+
+</Project>

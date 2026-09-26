@@ -363,3 +363,9 @@ FodyWeavers.xsd
 **/wwwroot/lib/
 *.min.css
 *.min.js
+
+# The neural trainer's runs and sample files (NEURAL_NETWORK.md); the shipped networks are in
+# src/AI/Belot.AI.ClaudePlayer/Neural/Weights.
+tools/NeuralTrainer/checkpoints/
+tools/NeuralTrainer/data/
+*.samples

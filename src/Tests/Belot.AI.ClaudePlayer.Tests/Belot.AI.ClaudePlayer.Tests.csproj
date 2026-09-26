@@ -31,6 +31,8 @@
     <ProjectReference Include="..\..\AI\Belot.AI.DummyPlayer\Belot.AI.DummyPlayer.csproj" />
     <ProjectReference Include="..\..\AI\Belot.AI.SmartPlayer\Belot.AI.SmartPlayer.csproj" />
     <ProjectReference Include="..\..\Belot.Engine\Belot.Engine.csproj" />
+    <!-- The trainer's math is tested here, which also makes CI build it. -->
+    <ProjectReference Include="..\..\..\tools\NeuralTrainer\NeuralTrainer.csproj" />
   </ItemGroup>
 
 </Project>
