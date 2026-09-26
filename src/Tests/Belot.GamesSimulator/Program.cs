@@ -19,7 +19,10 @@
         ///   other, each given as comma-separated options (ms=100 its own budget, c=0.3 the
         ///   exploration constant, inf=0 no play inference, bidinf=1 deals that explain the
         ///   auction, mcbid=0 SmartPlayer's bidding, dbl=0 no doubling, margin=1.5 and deals=300
-        ///   for the Monte Carlo bidding; "-" for the defaults).
+        ///   for the Monte Carlo bidding; "-" for the defaults);
+        ///   elo [fastPairs] [slowPairs]: the MAUI app's levels in a pair-vs-pair round robin
+        ///   (default 20000 mirrored pairs a matchup, 150 with ISMCTS), printing the ratings to
+        ///   paste into the app's level list.
         /// </summary>
         /// <param name="args">The optional suite name and its arguments.</param>
         public static void Main(string[] args)
@@ -39,6 +42,15 @@
                 $", CPUs={Environment.ProcessorCount}({parallelism}), OS={Environment.OSVersion}, .NET={Environment.Version}");
             Console.WriteLine();
             Console.WriteLine(new string('=', LineLength));
+
+            if (args.Length > 0 && args[0] == "elo")
+            {
+                EloTournament.Run(
+                    parallelism,
+                    args.Length > 1 ? int.Parse(args[1], CultureInfo.InvariantCulture) : 20_000,
+                    args.Length > 2 ? int.Parse(args[2], CultureInfo.InvariantCulture) : 150);
+                return;
+            }
 
             if (args.Length > 0 && (args[0] == "claude" || args[0] == "claude-ab"))
             {
