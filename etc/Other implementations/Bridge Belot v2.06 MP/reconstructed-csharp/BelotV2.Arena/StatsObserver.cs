@@ -24,6 +24,12 @@ namespace BelotArena
 
         public void Observe(RoundResult r)
         {
+            // Passed-out deals are reported too; they are counted from the caller's round total.
+            if (r.Contract.Type == BidType.Pass)
+            {
+                return;
+            }
+
             this.Rounds++;
             BidType type = r.Contract.Type;
             if (type.HasFlag(BidType.Double) || type.HasFlag(BidType.ReDouble))
@@ -46,8 +52,8 @@ namespace BelotArena
         }
 
         /// <summary>
-        /// The engine returns a passed-out round before it notifies the players, so those rounds
-        /// are never observed here; the caller's own round count is what reveals them.
+        /// Passed-out rounds are skipped by <see cref="Observe"/>, so the caller's own round
+        /// count is what reveals them.
         /// </summary>
         public void Print(long totalRounds)
         {

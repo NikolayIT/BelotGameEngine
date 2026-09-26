@@ -69,7 +69,9 @@
             // All pass. Hanging points stay on the table for the winner of the next played deal.
             if (contract.Type == BidType.Pass)
             {
-                return new RoundResult(contract) { HangingPoints = hangingPoints };
+                var passResult = new RoundResult(contract) { HangingPoints = hangingPoints };
+                this.NotifyEndOfRound(passResult);
+                return passResult;
             }
 
             // Deal 3 more cards to each player
@@ -104,12 +106,16 @@
                 hangingPoints,
                 lastTrickWinner);
 
+            this.NotifyEndOfRound(result);
+            return result;
+        }
+
+        private void NotifyEndOfRound(RoundResult result)
+        {
             this.players[0].EndOfRound(result);
             this.players[1].EndOfRound(result);
             this.players[2].EndOfRound(result);
             this.players[3].EndOfRound(result);
-
-            return result;
         }
     }
 }
