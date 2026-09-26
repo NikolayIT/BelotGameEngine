@@ -156,6 +156,21 @@
         }
 
         /// <summary>
+        /// Whether <see cref="Play"/> would declare a belote with the card: the queen or king of
+        /// trumps (in all trumps of the suit led) with the other one in the hand, not forced.
+        /// </summary>
+        public bool IsBelote(in SimState state, int card, uint legal)
+        {
+            var type = card & 7;
+            var suit = card >> 3;
+            return (type == SimTables.Queen || type == SimTables.King)
+                   && this.kind != SimTables.NoTrumps
+                   && (legal & (legal - 1)) != 0
+                   && (state.Hands[state.Turn] & (1u << (card ^ 3))) != 0
+                   && suit == (this.kind == SimTables.AllTrumps ? (state.TrickCards == 0 ? suit : state.LedSuit) : this.kind);
+        }
+
+        /// <summary>
         /// Scores a finished deal like ScoreManager. The announces are the active combinations'
         /// points (the belotes are already in the state). The hanging points carried into the
         /// deal go to its winner.

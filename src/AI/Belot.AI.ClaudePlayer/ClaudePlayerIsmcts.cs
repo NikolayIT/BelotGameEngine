@@ -64,6 +64,7 @@
         // Per decision: the searching player's team, the other seats whose bids tell something,
         // and the reward scale in game points.
         private int searchTeam;
+        private int lastBidCount;
         private int biddingSeats;
         private double rewardScale;
 
@@ -195,9 +196,11 @@
 
             if (count == bids)
             {
+                this.lastBidCount = 0;
                 return BidType.Pass;
             }
 
+            this.lastBidCount = count;
             this.bidEvaluator.Evaluate(
                 context,
                 this.candidateContracts,
@@ -274,6 +277,48 @@
 
             this.LastIterations = iterations;
             return this.MostVisitedRootMove();
+        }
+
+        /// <summary>
+        /// After <see cref="Search"/>: each card tried at the root, its average result in game
+        /// points (the searching team's minus the other team's, as the rewards measured it) and
+        /// its visits (indexed by card; 0 visits for the cards not tried).
+        /// </summary>
+        internal void GetRootValues(double[] values, int[] visits)
+        {
+            Array.Clear(values);
+            Array.Clear(visits);
+            for (var child = this.nodes[0].FirstChild; child != NoNode; child = this.nodes[child].NextSibling)
+            {
+                ref var node = ref this.nodes[child];
+                visits[node.Move] = node.Visits;
+                values[node.Move] = node.Visits > 0 ? ((2 * node.Value / node.Visits) - 1) * this.rewardScale : 0;
+            }
+        }
+
+        /// <summary>
+        /// After <see cref="ChooseBid"/>: the bids it weighed and their average results in game
+        /// points (Pass first, worth the contract that stands or 0 for a new deal).
+        /// </summary>
+        /// <returns>How many bids there are (0 when it had nothing to weigh).</returns>
+        internal int GetBidValues(BidType[] bids, double[] values)
+        {
+            var count = 0;
+            var first = this.lastBidCount > 0 && this.candidateBids[0] == BidType.Pass ? 1 : 0;
+            if (this.lastBidCount == 0)
+            {
+                return 0;
+            }
+
+            bids[count] = BidType.Pass;
+            values[count++] = first == 1 ? this.candidateValues[0] : 0;
+            for (var i = first; i < this.lastBidCount; i++)
+            {
+                bids[count] = this.candidateBids[i];
+                values[count++] = this.candidateValues[i];
+            }
+
+            return count;
         }
 
         private static int RandomCard(uint legal, Random random)

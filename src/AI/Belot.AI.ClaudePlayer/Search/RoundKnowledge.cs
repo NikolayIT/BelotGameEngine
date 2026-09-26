@@ -154,72 +154,8 @@
         }
 
         // What the card, played by another seat in this position, says about that seat's hand.
-        private void Infer(in SimState state, int seat, int card, bool belote, int kind, bool usePlayInference)
-        {
-            var suit = card >> 3;
-            var type = card & 7;
-            var beloteSuit = kind == SimTables.AllTrumps ? (state.TrickCards == 0 ? suit : state.LedSuit) : kind;
-            if ((type == SimTables.Queen || type == SimTables.King) && kind != SimTables.NoTrumps && suit == beloteSuit)
-            {
-                var other = 1u << (card ^ 3);
-                if (belote)
-                {
-                    this.Known[seat] |= other;
-                }
-                else if (usePlayInference)
-                {
-                    this.Excluded[seat] |= other;
-                }
-            }
-
-            if (!usePlayInference || state.TrickCards == 0)
-            {
-                return;
-            }
-
-            var led = state.LedSuit;
-            var bit = 1u << card;
-            if (kind == SimTables.AllTrumps || led == kind)
-            {
-                if (suit != led)
-                {
-                    this.Excluded[seat] |= SimTables.SuitMasks[led];
-                }
-                else if ((SimTables.HigherTrumps[state.WinnerCard] & bit) == 0)
-                {
-                    // Followed below the best card: nothing higher of the suit.
-                    this.Excluded[seat] |= SimTables.HigherTrumps[state.WinnerCard];
-                }
-
-                return;
-            }
-
-            if (suit == led)
-            {
-                return;
-            }
-
-            this.Excluded[seat] |= SimTables.SuitMasks[led];
-            if (kind == SimTables.NoTrumps || (state.TrickCards >= 2 && state.WinnerSeat == ((seat + 2) & 3)))
-            {
-                // No trumps, or the partner held the trick: any card was allowed.
-                return;
-            }
-
-            if (state.WinnerCard >> 3 == kind)
-            {
-                // An opponent had trumped: overtrumping was compulsory.
-                if (suit != kind || (SimTables.HigherTrumps[state.WinnerCard] & bit) == 0)
-                {
-                    this.Excluded[seat] |= SimTables.HigherTrumps[state.WinnerCard];
-                }
-            }
-            else if (suit != kind)
-            {
-                // Trumping was compulsory.
-                this.Excluded[seat] |= SimTables.SuitMasks[kind];
-            }
-        }
+        private void Infer(in SimState state, int seat, int card, bool belote, int kind, bool usePlayInference) =>
+            PlayInference.Observe(in state, seat, card, belote, kind, usePlayInference, ref this.Excluded[seat], ref this.Known[seat]);
 
         private void ReadAnnounces(PlayerPlayCardContext context, ref SimState state, int kind)
         {
