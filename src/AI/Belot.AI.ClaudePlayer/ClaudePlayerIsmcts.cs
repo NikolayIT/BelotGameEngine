@@ -60,7 +60,6 @@
         private Node[] nodes;
         private int[] path;
         private int nodeCount;
-        private int hangingPoints;
 
         // Per decision: the searching player's team, the other seats whose bids tell something,
         // and the reward scale in game points.
@@ -126,11 +125,6 @@
 
         public BidType GetBid(PlayerGetBidContext context)
         {
-            if (context.RoundNumber == 1)
-            {
-                this.hangingPoints = 0;
-            }
-
             return this.UseMonteCarloBidding ? this.ChooseBid(context) : this.smartPlayer.GetBid(context);
         }
 
@@ -160,12 +154,10 @@
 
         public void EndOfRound(RoundResult roundResult)
         {
-            this.hangingPoints = roundResult.HangingPoints;
         }
 
         public void EndOfGame(GameResult gameResult)
         {
-            this.hangingPoints = 0;
         }
 
         internal BidType ChooseBid(PlayerGetBidContext context)
@@ -212,7 +204,7 @@
                 this.candidateDeclarers,
                 count,
                 this.BiddingDeals,
-                this.hangingPoints,
+                context.HangingPoints,
                 this.Rng,
                 this.candidateValues);
             var best = BidType.Pass;
@@ -233,7 +225,7 @@
         internal int Search(PlayerPlayCardContext context)
         {
             var contract = context.CurrentContract;
-            this.simulator.SetContract(contract.Type, contract.Player.Index(), this.hangingPoints);
+            this.simulator.SetContract(contract.Type, contract.Player.Index(), context.HangingPoints);
             if (!this.knowledge.Build(context, this.simulator, this.UsePlayInference) || !this.sampler.Configure(this.knowledge))
             {
                 return -1;
@@ -261,7 +253,7 @@
             // A deal is worth up to ~26 game points (more with a capot or combinations) in a
             // suit contract and ~35 otherwise; the doubling multiplies everything.
             this.rewardScale = (this.simulator.Kind < SimTables.NoTrumps ? 26.0 : 36.0) * this.simulator.Coefficient;
-            this.rewardScale += this.hangingPoints;
+            this.rewardScale += context.HangingPoints;
 
             this.EnsurePool();
             this.nodeCount = 0;
