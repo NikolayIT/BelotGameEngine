@@ -27,6 +27,12 @@ namespace Belot.Engine.Tests.FakeObjects
 
         public bool ReturnAvailableAnnounces { get; set; }
 
+        /// <summary>Gets or sets the announces to declare verbatim (overrides the other settings).</summary>
+        public IList<Announce> AnnouncesToDeclare { get; set; }
+
+        /// <summary>Gets the cards this player plays without claiming the belote.</summary>
+        public ISet<Card> CardsPlayedWithoutBelote { get; } = new HashSet<Card>();
+
         /// <summary>Gets how many times the engine actually asked this player for a card.</summary>
         public int CardAsksCount { get; private set; }
 
@@ -42,13 +48,19 @@ namespace Belot.Engine.Tests.FakeObjects
         public IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
         {
             this.AnnounceAsksCount++;
+            if (this.AnnouncesToDeclare != null)
+            {
+                return this.AnnouncesToDeclare;
+            }
+
             return this.ReturnAvailableAnnounces ? context.AvailableAnnounces : new List<Announce>();
         }
 
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
         {
             this.CardAsksCount++;
-            return new PlayCardAction(this.cards.Dequeue());
+            var card = this.cards.Dequeue();
+            return new PlayCardAction(card, !this.CardsPlayedWithoutBelote.Contains(card));
         }
 
         public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)
