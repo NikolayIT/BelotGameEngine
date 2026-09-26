@@ -88,6 +88,40 @@
             Assert.True(notBest > 20);
         }
 
+        // With SearchDeals the cards are valued by playing them out in sampled deals: it plays
+        // whole games, values every legal card, takes the best, and repeats itself with a seed.
+        [Fact]
+        public void TheSearchPlaysTheCardsOut()
+        {
+            var models = RandomModels.Create(7);
+            for (var game = 0; game < 6; game++)
+            {
+                var searching = new ClaudePlayerNeural(models) { SearchDeals = 4, Rng = new Random(game) };
+                var partner = new ClaudePlayerNeural(models) { SearchDeals = 4, Rng = new Random(game + 100) };
+                IPlayer smart = new SmartPlayer.SmartPlayer();
+                new BelotGame(searching, smart, partner, smart, new Random(game)).PlayGame((PlayerPosition)(1 << (game % 4)));
+                Assert.Equal(0, searching.Fallbacks + partner.Fallbacks);
+            }
+
+            var cards = 0;
+            ForEveryDecision(
+                seed: 8,
+                matches: 2,
+                onBid: _ => { },
+                onCard: context =>
+                {
+                    var first = new ClaudePlayerNeural(models) { SearchDeals = 6, Rng = new Random(cards) };
+                    var second = new ClaudePlayerNeural(models) { SearchDeals = 6, Rng = new Random(cards) };
+                    var values = first.EvaluateCards(context);
+                    Assert.Equal(context.AvailableCardsToPlay.Count, values.Count);
+                    Assert.Equal(values.Select(x => x.Value), second.EvaluateCards(context).Select(x => x.Value));
+                    var chosen = new ClaudePlayerNeural(models) { SearchDeals = 6, Rng = new Random(cards) }.PlayCard(context).Card;
+                    Assert.Equal(values[0].Value, values.First(x => x.Card == chosen).Value);
+                    cards++;
+                });
+            Assert.True(cards > 50);
+        }
+
         // Plays random legal matches, handing each bid and card decision to the checks.
         private static void ForEveryDecision(int seed, int matches, Action<PlayerGetBidContext> onBid, Action<PlayerPlayCardContext> onCard)
         {

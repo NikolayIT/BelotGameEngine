@@ -29,6 +29,7 @@
         private readonly SmartPlayer smartPlayer = new SmartPlayer();
         private readonly BelotSimulator simulator = new BelotSimulator();
         private readonly NeuralEvaluator evaluator;
+        private readonly NeuralSearch search = new NeuralSearch();
         private readonly float[] cardValues = new float[FeatureEncoder.CardOutputs];
         private readonly float[] bidValues = new float[FeatureEncoder.BidOutputs];
 
@@ -75,6 +76,14 @@
 
         /// <summary>Gets or sets a value indicating whether the player may double and redouble.</summary>
         public bool MayDouble { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets how many deals a card decision plays out (<see cref="NeuralSearch"/>): 0,
+        /// the default, takes the card network's values as they are; with N deals every legal
+        /// card is played out in N deals of the unseen cards, by the networks for every seat, and
+        /// valued by the average result (slower: about N times the cards times the rest of the deal).
+        /// </summary>
+        public int SearchDeals { get; set; }
 
         /// <summary>Gets how many decisions fell back to SmartPlayer (a context that did not add up).</summary>
         public int Fallbacks { get; private set; }
@@ -178,6 +187,12 @@
                 || this.simulator.LegalMoves(in deal.Play) != legal)
             {
                 return false;
+            }
+
+            if (this.SearchDeals > 0
+                && this.search.Evaluate(context, in deal, legal, this.SearchDeals, this.evaluator, this.simulator, this.Rng, this.cardValues))
+            {
+                return true;
             }
 
             this.evaluator.EvaluateCards(in deal, legal, this.cardValues);

@@ -112,6 +112,9 @@
         /// <summary>Gets or sets the networks' MaxRegret in "validate", in game points.</summary>
         public double MaxRegret { get; set; } = double.PositiveInfinity;
 
+        /// <summary>Gets or sets how many deals the networks' card decisions play out in "validate" (0 = none).</summary>
+        public int SearchDeals { get; set; }
+
         /// <summary>Gets or sets a value indicating whether the networks may double ("validate").</summary>
         public bool MayDouble { get; set; } = true;
 

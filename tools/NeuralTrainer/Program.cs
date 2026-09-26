@@ -69,6 +69,8 @@
                     MayDouble = settings.MayDouble,
                     Temperature = settings.Temperature,
                     MaxRegret = settings.MaxRegret,
+                    SearchDeals = settings.SearchDeals,
+                    Rng = new Random(Environment.CurrentManagedThreadId),
                 };
                 return settings.SmartBidding ? new SmartBiddingPlayer(player) : player;
             }
