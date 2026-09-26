@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="456" height="456" viewBox="0 0 456 456" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <radialGradient id="felt" cx="50%" cy="40%" r="78%">
+            <stop offset="0%" stop-color="#139A4D" />
+            <stop offset="55%" stop-color="#0C5F30" />
+            <stop offset="100%" stop-color="#073A1D" />
+        </radialGradient>
+    </defs>
+    <rect x="0" y="0" width="456" height="456" fill="url(#felt)" />
+</svg>

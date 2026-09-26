@@ -1,0 +1,106 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Belot.UI.Localization"
+             x:Class="Belot.UI.Pages.StartPage"
+             x:Name="ThePage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource FeltDark}">
+
+    <Grid>
+        <Grid.Background>
+            <RadialGradientBrush Center="0.5,0.35" Radius="0.95">
+                <GradientStop Color="{StaticResource FeltLight}" Offset="0.0" />
+                <GradientStop Color="{StaticResource FeltMid}" Offset="0.55" />
+                <GradientStop Color="{StaticResource FeltDark}" Offset="1.0" />
+            </RadialGradientBrush>
+        </Grid.Background>
+
+        <ScrollView>
+            <VerticalStackLayout Padding="24,20,24,32" Spacing="16" HorizontalOptions="Center" VerticalOptions="Start" MaximumWidthRequest="540">
+
+                <!-- Top bar: language toggle + settings -->
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                    <Button Grid.Column="1" x:Name="LangButton" Clicked="OnToggleLanguage" HeightRequest="34" MinimumWidthRequest="92" Padding="14,0"
+                            FontSize="13" FontAttributes="Bold" CornerRadius="17" BackgroundColor="#26000000"
+                            BorderColor="{StaticResource GoldAccent}" BorderWidth="1" TextColor="{StaticResource GoldHighlight}" />
+                    <Button Grid.Column="2" Text="⚙" Clicked="OnOpenSettings" HeightRequest="34" WidthRequest="40" Padding="0" FontSize="16" CornerRadius="17"
+                            BackgroundColor="#26000000" BorderColor="{StaticResource GoldAccent}" BorderWidth="1" TextColor="{StaticResource GoldHighlight}" />
+                </Grid>
+
+                <!-- Title -->
+                <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
+                    <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                        <Label Text="♠ ♥" FontSize="16" LineBreakMode="NoWrap" VerticalOptions="Center" TextColor="{StaticResource GoldAccent}" />
+                        <Label Text="{loc:Tr Start_Title}" FontSize="30" FontAttributes="Bold" CharacterSpacing="3" LineBreakMode="NoWrap" VerticalOptions="Center" TextColor="{StaticResource GoldHighlight}" />
+                        <Label Text="♦ ♣" FontSize="16" LineBreakMode="NoWrap" VerticalOptions="Center" TextColor="{StaticResource GoldAccent}" />
+                    </HorizontalStackLayout>
+                    <Label Text="{loc:Tr Start_Subtitle}" FontSize="13" HorizontalOptions="Center" TextColor="#D9CFAE" CharacterSpacing="2" />
+                </VerticalStackLayout>
+
+                <!-- Rating card (tap: statistics) -->
+                <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="#26000000" Padding="20,12">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnOpenStatistics" />
+                    </Border.GestureRecognizers>
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2" HorizontalOptions="Center">
+                            <Label x:Name="RatingCaptionLabel" FontSize="11" CharacterSpacing="2" HorizontalOptions="Center" TextColor="{StaticResource GoldAccent}" />
+                            <Label x:Name="RatingLabel" FontSize="30" FontAttributes="Bold" HorizontalOptions="Center" TextColor="{StaticResource GoldHighlight}" />
+                            <Label x:Name="RecordLabel" FontSize="11" HorizontalOptions="Center" TextColor="#B9C7B0" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
+                            <Label Text="📊" FontSize="18" HorizontalOptions="Center" />
+                            <Label Text="{loc:Tr Start_Statistics}" FontSize="10" TextColor="#D9CFAE" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <Button Text="{loc:Tr Start_HowToPlay}" Clicked="OnOpenRules" HeightRequest="44" FontSize="14" CornerRadius="12"
+                        BackgroundColor="#22000000" BorderColor="#3FE2B864" BorderWidth="1" TextColor="#EDE3C3" />
+
+                <!-- Your name -->
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="{loc:Tr Start_YourName}" FontSize="11" TextColor="{StaticResource GoldAccent}" CharacterSpacing="3" />
+                    <Entry x:Name="NameEntry" Placeholder="{loc:Tr Start_DefaultName}" TextColor="White" PlaceholderColor="#7FFFFFFF"
+                           BackgroundColor="#22000000" Unfocused="OnPlayerNameChanged" />
+                </VerticalStackLayout>
+
+                <!-- A level for each of the other three seats -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Tr Start_Partner}" FontSize="11" TextColor="{StaticResource GoldAccent}" CharacterSpacing="3" />
+                    <Grid x:Name="PartnerHost" ColumnDefinitions="*,*,*,*" ColumnSpacing="8" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Tr Start_West}" FontSize="11" TextColor="{StaticResource GoldAccent}" CharacterSpacing="3" />
+                    <Grid x:Name="WestHost" ColumnDefinitions="*,*,*,*" ColumnSpacing="8" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{loc:Tr Start_East}" FontSize="11" TextColor="{StaticResource GoldAccent}" CharacterSpacing="3" />
+                    <Grid x:Name="EastHost" ColumnDefinitions="*,*,*,*" ColumnSpacing="8" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Spacing="2">
+                    <Label x:Name="TaglineLabel" FontSize="12" TextColor="#C7D2BD" HorizontalTextAlignment="Center" />
+                    <Label x:Name="LevelRecordLabel" FontSize="11" TextColor="{StaticResource GoldHighlight}" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+
+                <Button Text="{loc:Tr Start_Play}" Clicked="OnPlay" HeightRequest="54" FontSize="18" FontAttributes="Bold" CornerRadius="14"
+                        BackgroundColor="{StaticResource GoldAccent}" TextColor="#1A1006" />
+
+                <!-- Recent games -->
+                <Grid ColumnDefinitions="*,Auto" Margin="0,6,0,0">
+                    <Label Grid.Column="0" Text="{loc:Tr Start_RecentGames}" FontSize="11" TextColor="{StaticResource GoldAccent}" CharacterSpacing="3" VerticalOptions="Center" />
+                    <Label Grid.Column="1" x:Name="SeeAllLabel" FontSize="12" TextColor="#D9CFAE" VerticalOptions="Center">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnOpenStatistics" />
+                        </Label.GestureRecognizers>
+                    </Label>
+                </Grid>
+                <Label x:Name="NoHistoryLabel" Text="{loc:Tr Start_NoHistory}" FontSize="12" TextColor="#99FFFFFF" />
+                <VerticalStackLayout x:Name="HistoryList" Spacing="6" />
+
+                <Label x:Name="FooterLabel" FontSize="10" HorizontalOptions="Center" TextColor="#80FFFFFF" Margin="0,8,0,0" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

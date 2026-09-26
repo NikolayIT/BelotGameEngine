@@ -1,0 +1,89 @@
+﻿namespace Belot.UI.Pages
+{
+    using System;
+
+    using Belot.UI.Game;
+    using Belot.UI.Localization;
+
+    using Microsoft.Maui.Controls.Shapes;
+
+    public partial class RulesPage : ContentPage
+    {
+        // (emoji, titleKey, bodyKey) per section, in reading order.
+        private static readonly (string Icon, string TitleKey, string BodyKey)[] Sections =
+        {
+            ("🂡", "Rules_Cards_Title", "Rules_Cards_Body"),
+            ("🗣️", "Rules_Bidding_Title", "Rules_Bidding_Body"),
+            ("🎴", "Rules_Play_Title", "Rules_Play_Body"),
+            ("✨", "Rules_Combinations_Title", "Rules_Combinations_Body"),
+            ("👑", "Rules_Belote_Title", "Rules_Belote_Body"),
+            ("🎯", "Rules_Scoring_Title", "Rules_Scoring_Body"),
+            ("⚖️", "Rules_Inside_Title", "Rules_Inside_Body"),
+            ("🏆", "Rules_Winning_Title", "Rules_Winning_Body"),
+        };
+
+        // A double tap on Back goes back once.
+        private readonly OneAtATime navigation = new();
+
+        public RulesPage()
+        {
+            this.InitializeComponent();
+        }
+
+        protected override void OnAppearing()
+        {
+            base.OnAppearing();
+            this.BuildSections();
+        }
+
+        private async void OnBack(object? sender, EventArgs e)
+        {
+            await this.navigation.RunAsync(() => Shell.Current.GoToAsync(".."));
+        }
+
+        // Rebuilt on every appearance so a language switch is reflected.
+        private void BuildSections()
+        {
+            var text = LocalizationManager.Instance;
+            this.SectionsHost.Clear();
+            foreach (var (icon, titleKey, bodyKey) in Sections)
+            {
+                var title = new Label
+                {
+                    TextColor = Color.FromArgb("#F4D586"),
+                    FontSize = 16,
+                    FontAttributes = FontAttributes.Bold,
+                    FormattedText = new FormattedString
+                    {
+                        Spans =
+                        {
+                            new Span { Text = icon + "  " },
+                            new Span { Text = text[titleKey] },
+                        },
+                    },
+                };
+
+                var body = new Label
+                {
+                    Text = text[bodyKey],
+                    TextColor = Color.FromArgb("#E8EFE2"),
+                    FontSize = 13.5,
+                    LineHeight = 1.3,
+                };
+
+                this.SectionsHost.Add(new Border
+                {
+                    StrokeThickness = 0,
+                    StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(14) },
+                    BackgroundColor = Color.FromArgb("#26000000"),
+                    Padding = new Thickness(16, 12),
+                    Content = new VerticalStackLayout
+                    {
+                        Spacing = 6,
+                        Children = { title, body },
+                    },
+                });
+            }
+        }
+    }
+}

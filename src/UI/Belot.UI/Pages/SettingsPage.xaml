@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:Belot.UI.Localization"
+             x:Class="Belot.UI.Pages.SettingsPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{StaticResource FeltDark}">
+
+    <Grid>
+        <Grid.Background>
+            <RadialGradientBrush Center="0.5,0.3" Radius="0.95">
+                <GradientStop Color="{StaticResource FeltLight}" Offset="0.0" />
+                <GradientStop Color="{StaticResource FeltMid}" Offset="0.55" />
+                <GradientStop Color="{StaticResource FeltDark}" Offset="1.0" />
+            </RadialGradientBrush>
+        </Grid.Background>
+
+        <ScrollView>
+            <VerticalStackLayout Padding="24,20,24,32"
+                                 Spacing="14"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Start"
+                                 MaximumWidthRequest="540">
+
+                <!-- Header -->
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                    <Button Grid.Column="0"
+                            Text="‹"
+                            Clicked="OnBack"
+                            HeightRequest="36"
+                            WidthRequest="40"
+                            Padding="0,0,0,4"
+                            FontSize="22"
+                            FontAttributes="Bold"
+                            CornerRadius="12"
+                            BackgroundColor="#26000000"
+                            BorderColor="#3FE2B864"
+                            BorderWidth="1"
+                            TextColor="{StaticResource GoldHighlight}" />
+                    <Label Grid.Column="1"
+                           Text="{loc:Tr Settings_Title}"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"
+                           TextColor="{StaticResource GoldHighlight}" />
+                </Grid>
+
+                <!-- GAMEPLAY -->
+                <Label Text="{loc:Tr Settings_Gameplay}"
+                       FontSize="11"
+                       TextColor="{StaticResource GoldAccent}"
+                       CharacterSpacing="3"
+                       Margin="0,8,0,0" />
+
+                <!-- Language -->
+                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="{loc:Tr Settings_Language}"
+                               FontSize="15"
+                               FontAttributes="Bold"
+                               TextColor="White" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                            <Button Grid.Column="0"
+                                    x:Name="LangEnButton"
+                                    Text="English"
+                                    Clicked="OnLanguageEn"
+                                    HeightRequest="40"
+                                    FontSize="13"
+                                    CornerRadius="10" />
+                            <Button Grid.Column="1"
+                                    x:Name="LangBgButton"
+                                    Text="Български"
+                                    Clicked="OnLanguageBg"
+                                    HeightRequest="40"
+                                    FontSize="13"
+                                    CornerRadius="10" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Game speed -->
+                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
+                    <VerticalStackLayout Spacing="10">
+                        <Label Text="{loc:Tr Settings_GameSpeed}"
+                               FontSize="15"
+                               FontAttributes="Bold"
+                               TextColor="White" />
+                        <Label Text="{loc:Tr Settings_GameSpeedHint}"
+                               FontSize="12"
+                               TextColor="#C7D2BD" />
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                            <Button Grid.Column="0"
+                                    x:Name="SpeedRelaxedButton"
+                                    Text="{loc:Tr Speed_Relaxed}"
+                                    Clicked="OnSpeedRelaxed"
+                                    HeightRequest="40"
+                                    FontSize="13"
+                                    CornerRadius="10" />
+                            <Button Grid.Column="1"
+                                    x:Name="SpeedNormalButton"
+                                    Text="{loc:Tr Speed_Normal}"
+                                    Clicked="OnSpeedNormal"
+                                    HeightRequest="40"
+                                    FontSize="13"
+                                    CornerRadius="10" />
+                            <Button Grid.Column="2"
+                                    x:Name="SpeedFastButton"
+                                    Text="{loc:Tr Speed_Fast}"
+                                    Clicked="OnSpeedFast"
+                                    HeightRequest="40"
+                                    FontSize="13"
+                                    CornerRadius="10" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Vibration -->
+                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="3" VerticalOptions="Center">
+                            <Label Text="{loc:Tr Settings_Haptics}"
+                                   FontSize="15"
+                                   FontAttributes="Bold"
+                                   TextColor="White" />
+                            <Label Text="{loc:Tr Settings_HapticsHint}"
+                                   FontSize="12"
+                                   TextColor="#C7D2BD" />
+                        </VerticalStackLayout>
+                        <Switch Grid.Column="1"
+                                x:Name="HapticsSwitch"
+                                Toggled="OnHapticsToggled"
+                                OnColor="{StaticResource GoldAccent}"
+                                ThumbColor="White"
+                                VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- Beginner assists -->
+                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="3" VerticalOptions="Center">
+                            <Label Text="{loc:Tr Settings_Assists}"
+                                   FontSize="15"
+                                   FontAttributes="Bold"
+                                   TextColor="White" />
+                            <Label Text="{loc:Tr Settings_AssistsHint}"
+                                   FontSize="12"
+                                   TextColor="#C7D2BD" />
+                        </VerticalStackLayout>
+                        <Switch Grid.Column="1"
+                                x:Name="AssistsSwitch"
+                                Toggled="OnAssistsToggled"
+                                OnColor="{StaticResource GoldAccent}"
+                                ThumbColor="White"
+                                VerticalOptions="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- DATA -->
+                <Label Text="{loc:Tr Settings_Data}"
+                       FontSize="11"
+                       TextColor="{StaticResource GoldAccent}"
+                       CharacterSpacing="3"
+                       Margin="0,8,0,0" />
+
+                <Button Text="{loc:Tr Settings_ResetStats}"
+                        Clicked="OnResetStats"
+                        HeightRequest="44"
+                        FontSize="14"
+                        CornerRadius="12"
+                        BackgroundColor="#33C0504D"
+                        BorderColor="#C0504D"
+                        BorderWidth="1"
+                        TextColor="#F4C7C5" />
+
+                <!-- ABOUT -->
+                <Label Text="{loc:Tr Settings_About}"
+                       FontSize="11"
+                       TextColor="{StaticResource GoldAccent}"
+                       CharacterSpacing="3"
+                       Margin="0,8,0,0" />
+
+                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="♠ ♥  SANTASE  ♦ ♣"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource GoldHighlight}" />
+                        <Label x:Name="VersionLabel"
+                               FontSize="12"
+                               TextColor="#C7D2BD" />
+                        <Label Text="{loc:Tr Settings_EngineNote}"
+                               FontSize="12"
+                               TextColor="#C7D2BD" />
+                        <Label Text="{loc:Tr Settings_OpenSource}"
+                               FontSize="13"
+                               TextColor="{StaticResource GoldHighlight}"
+                               TextDecorations="Underline">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnOpenGitHub" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

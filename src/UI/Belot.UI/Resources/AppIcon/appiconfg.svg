@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="456" height="456" viewBox="0 0 456 456" version="1.1" xmlns="http://www.w3.org/2000/svg">
+
+    <!-- Two cards fanned behind the hero card -->
+    <g transform="rotate(-16 228 400)">
+        <rect x="148" y="102" width="178" height="252" rx="16" fill="#000000" opacity="0.16" transform="translate(0,8)" />
+        <rect x="148" y="102" width="178" height="252" rx="16" fill="#ECEFF4" stroke="#CED4DE" stroke-width="2" />
+    </g>
+    <g transform="rotate(14 228 400)">
+        <rect x="148" y="102" width="178" height="252" rx="16" fill="#000000" opacity="0.16" transform="translate(0,8)" />
+        <rect x="148" y="102" width="178" height="252" rx="16" fill="#F4F6F9" stroke="#CED4DE" stroke-width="2" />
+        <g transform="translate(300,132) scale(0.7) translate(-16,-14.8)">
+            <path d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12,16-21.2C32,3.8,28.2,0,23.6,0z" fill="#E11D2A" />
+        </g>
+    </g>
+
+    <!-- Hero card: the jack of spades, the top trump -->
+    <g transform="rotate(-2 228 228)">
+        <rect x="138" y="96" width="180" height="264" rx="18" fill="#000000" opacity="0.22" transform="translate(0,9)" />
+        <rect x="138" y="96" width="180" height="264" rx="18" fill="#FFFFFF" stroke="#E2E6EC" stroke-width="2" />
+
+        <!-- Big central spade -->
+        <g fill="#15171C" transform="translate(228,178) scale(2.6) translate(-16,-16)">
+            <path transform="rotate(180 16 14.8)" d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12,16-21.2C32,3.8,28.2,0,23.6,0z" />
+            <path d="M16,19 C15.4,25 13.6,29.5 10,32 L22,32 C18.4,29.5 16.6,25 16,19 Z" />
+        </g>
+
+        <!-- "J" drawn as a stroked vector path (no font dependency) -->
+        <path d="M244,262 L244,312 C244,330 234,338 222,338 C210,338 202,330 200,320" fill="none" stroke="#0B6B34" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
+
+        <!-- Top-left corner index pip -->
+        <g fill="#15171C" transform="translate(166,128) scale(0.72) translate(-16,-16)">
+            <path transform="rotate(180 16 14.8)" d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12,16-21.2C32,3.8,28.2,0,23.6,0z" />
+            <path d="M16,19 C15.4,25 13.6,29.5 10,32 L22,32 C18.4,29.5 16.6,25 16,19 Z" />
+        </g>
+    </g>
+</svg>
