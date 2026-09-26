@@ -2,7 +2,7 @@
 {
     using System;
 
-    using Belot.Engine.Game;
+    using Belot.Engine.Cards;
     using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
@@ -10,12 +10,22 @@
      * W E
      *  S
      */
+
+    /// <summary>
+    /// Plays whole games between four <see cref="IPlayer"/>s: a thin loop over
+    /// <see cref="BelotMatch"/> that asks the seat to move for its decision and applies it. The
+    /// rules live in <see cref="BelotMatch"/>; use it directly when decisions arrive from outside
+    /// (a person at a UI, the network) instead of from an <see cref="IPlayer"/>.
+    /// </summary>
     public class BelotGame : IBelotGame
     {
-        // (roundNumber, firstToPlay, southNorthPoints, eastWestPoints, hangingPoints) => result
-        private readonly Func<int, PlayerPosition, int, int, int, RoundResult> playRound;
-
         private readonly IPlayer[] players;
+
+        private readonly Deck deck;
+
+        // (roundNumber, firstToPlay, southNorthPoints, eastWestPoints, hangingPoints) => result:
+        // rounds scripted by tests instead of played; null in real games.
+        private readonly Func<int, PlayerPosition, int, int, int, RoundResult> scriptedRounds;
 
         public BelotGame(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
             : this(southPlayer, eastPlayer, northPlayer, westPlayer, null)
@@ -34,80 +44,25 @@
         /// a game depends only on the seed and n, whatever the players do: the same seed with
         /// the teams swapped replays the same deals (a mirror match).</param>
         public BelotGame(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer, Random random)
-            : this(
-                new[] { southPlayer, eastPlayer, northPlayer, westPlayer },
-                new RoundManager(southPlayer, eastPlayer, northPlayer, westPlayer, random).PlayRound)
         {
+            this.players = new[] { southPlayer, eastPlayer, northPlayer, westPlayer };
+            this.deck = new Deck(random);
         }
 
         // Lets tests script the round results directly.
         internal BelotGame(IPlayer[] players, Func<int, PlayerPosition, int, int, int, RoundResult> playRound)
         {
             this.players = players;
-            this.playRound = playRound;
+            this.scriptedRounds = playRound;
         }
 
         public GameResult PlayGame(PlayerPosition firstToPlay = PlayerPosition.South)
         {
-            var southNorthPoints = 0;
-            var eastWestPoints = 0;
-            var firstInRound = firstToPlay;
-            var roundNumber = 1;
-            var hangingPoints = 0;
-
-            while (true)
-            {
-                var roundResult = this.playRound(
-                    roundNumber,
-                    firstInRound,
-                    southNorthPoints,
-                    eastWestPoints,
-                    hangingPoints);
-
-                southNorthPoints += roundResult.SouthNorthPoints;
-                eastWestPoints += roundResult.EastWestPoints;
-                hangingPoints = roundResult.HangingPoints;
-
-                // A team wins with 151+ and more points than the other team, on a deal in which it
-                // scored. A capot deal never ends the game ("С капо не се излиза"), and neither does
-                // a passed-out one, so after them the leader must score again in a later deal.
-                if (southNorthPoints >= 151
-                    && southNorthPoints > eastWestPoints
-                    && roundResult.SouthNorthPoints > 0
-                    && !roundResult.NoTricksForOneOfTheTeams
-                    && roundResult.Contract.Type != BidType.Pass)
-                {
-                    // Game over - south-north team wins
-                    break;
-                }
-
-                if (eastWestPoints >= 151
-                    && eastWestPoints > southNorthPoints
-                    && roundResult.EastWestPoints > 0
-                    && !roundResult.NoTricksForOneOfTheTeams
-                    && roundResult.Contract.Type != BidType.Pass)
-                {
-                    // Game over - east-west team wins
-                    break;
-                }
-
-                roundNumber++;
-                firstInRound = firstInRound.Next();
-            }
-
-            var gameResult = new GameResult
-                                 {
-                                     RoundsPlayed = roundNumber,
-                                     SouthNorthPoints = southNorthPoints,
-                                     EastWestPoints = eastWestPoints,
-                                 };
-
-            this.players[0].EndOfGame(gameResult);
-            this.players[1].EndOfGame(gameResult);
-            this.players[2].EndOfGame(gameResult);
-            this.players[3].EndOfGame(gameResult);
-
-            return gameResult;
+            // The same deck for every game of this instance, as its deals always were.
+            var match = new BelotMatch(this.players, this.deck, firstToPlay, this.scriptedRounds);
+            match.Start();
+            match.PlayWith(this.players);
+            return match.Result;
         }
     }
 }

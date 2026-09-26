@@ -4,18 +4,15 @@
     using System.Collections.Generic;
 
     using Belot.Engine.Cards;
-    using Belot.Engine.Game;
     using Belot.Engine.Players;
 
+    /// <summary>
+    /// Plays deals with <see cref="IPlayer"/>s: a loop over the step-by-step <see cref="Round"/>,
+    /// which holds the rules. Keeps one deck and one set of hands for all its deals.
+    /// </summary>
     public class RoundManager
     {
         private readonly IPlayer[] players;
-
-        private readonly ContractManager contractManager;
-
-        private readonly TricksManager tricksManager;
-
-        private readonly ScoreManager scoreManager;
 
         private readonly Deck deck;
 
@@ -38,9 +35,6 @@
         public RoundManager(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer, Random random)
         {
             this.players = new[] { southPlayer, eastPlayer, northPlayer, westPlayer };
-            this.contractManager = new ContractManager(southPlayer, eastPlayer, northPlayer, westPlayer);
-            this.tricksManager = new TricksManager(southPlayer, eastPlayer, northPlayer, westPlayer);
-            this.scoreManager = new ScoreManager();
             this.deck = new Deck(random);
             this.playerCards = new List<CardCollection>(this.players.Length);
             for (var playerIndex = 0; playerIndex < this.players.Length; playerIndex++)
@@ -56,81 +50,17 @@
             int eastWestPoints,
             int hangingPoints)
         {
-            // Initialize the cards
-            this.deck.Shuffle();
-            this.playerCards[0].Clear();
-            this.playerCards[1].Clear();
-            this.playerCards[2].Clear();
-            this.playerCards[3].Clear();
-
-            // Deal 5 cards to each player
-            for (var i = 0; i < 5; i++)
-            {
-                this.playerCards[0].Add(this.deck.GetNextCard());
-                this.playerCards[1].Add(this.deck.GetNextCard());
-                this.playerCards[2].Add(this.deck.GetNextCard());
-                this.playerCards[3].Add(this.deck.GetNextCard());
-            }
-
-            // Bidding phase
-            var contract = this.contractManager.GetContract(
+            var round = new Round(
+                this.players,
+                this.deck,
+                this.playerCards,
                 roundNumber,
                 firstToPlay,
                 southNorthPoints,
                 eastWestPoints,
-                this.playerCards,
-                out var bids);
-
-            // All pass. Hanging points stay on the table for the winner of the next played deal.
-            if (contract.Type == BidType.Pass)
-            {
-                var passResult = new RoundResult(contract) { HangingPoints = hangingPoints };
-                this.NotifyEndOfRound(passResult);
-                return passResult;
-            }
-
-            // Deal 3 more cards to each player
-            for (var i = 0; i < 3; i++)
-            {
-                this.playerCards[0].Add(this.deck.GetNextCard());
-                this.playerCards[1].Add(this.deck.GetNextCard());
-                this.playerCards[2].Add(this.deck.GetNextCard());
-                this.playerCards[3].Add(this.deck.GetNextCard());
-            }
-
-            // Play 8 tricks
-            this.tricksManager.PlayTricks(
-                roundNumber,
-                firstToPlay,
-                southNorthPoints,
-                eastWestPoints,
-                this.playerCards,
-                bids,
-                contract,
-                out var announces,
-                out var southNorthTricks,
-                out var eastWestTricks,
-                out var lastTrickWinner);
-
-            // Score points
-            var result = this.scoreManager.GetScore(
-                contract,
-                southNorthTricks,
-                eastWestTricks,
-                announces,
-                hangingPoints,
-                lastTrickWinner);
-
-            this.NotifyEndOfRound(result);
-            return result;
-        }
-
-        private void NotifyEndOfRound(RoundResult result)
-        {
-            this.players[0].EndOfRound(result);
-            this.players[1].EndOfRound(result);
-            this.players[2].EndOfRound(result);
-            this.players[3].EndOfRound(result);
+                hangingPoints);
+            PlayerDriver.Play(this.players, round);
+            return round.Result;
         }
     }
 }

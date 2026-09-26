@@ -6,6 +6,10 @@
     using Belot.Engine.Game;
     using Belot.Engine.Players;
 
+    /// <summary>
+    /// Runs the bidding of a deal with <see cref="IPlayer"/>s: a loop over the step-by-step
+    /// <see cref="Auction"/>, which holds the rules.
+    /// </summary>
     public class ContractManager
     {
         private readonly IPlayer[] players;
@@ -23,139 +27,14 @@
             IReadOnlyList<CardCollection> playerCards,
             out IList<Bid> bids)
         {
-            bids = new List<Bid>(8);
-            var consecutivePasses = 0;
-            var currentPlayerPosition = firstToPlay;
-            var contract = new Bid(currentPlayerPosition, BidType.Pass);
-            var bidContext = new PlayerGetBidContext
+            var auction = new Auction(roundNumber, firstToPlay, southNorthPoints, eastWestPoints, playerCards);
+            while (!auction.IsFinished)
             {
-                RoundNumber = roundNumber,
-                FirstToPlayInTheRound = firstToPlay,
-                EastWestPoints = eastWestPoints,
-                SouthNorthPoints = southNorthPoints,
-                Bids = bids,
-            };
-            while (true)
-            {
-                var availableBids = this.GetAvailableBids(contract, currentPlayerPosition);
-
-                BidType bid;
-                if (availableBids == BidType.Pass)
-                {
-                    // Only pass is available so we don't ask the player
-                    bid = BidType.Pass;
-                }
-                else
-                {
-                    // Prepare context
-                    bidContext.AvailableBids = availableBids;
-                    bidContext.MyCards = playerCards[currentPlayerPosition.Index()];
-                    bidContext.MyPosition = currentPlayerPosition;
-                    bidContext.CurrentContract = contract;
-
-                    // Execute GetBid()
-                    bid = this.players[currentPlayerPosition.Index()].GetBid(bidContext);
-
-                    // Validate
-                    if (bid != BidType.Pass && (bid & (bid - 1)) != 0)
-                    {
-                        throw new BelotGameException($"Invalid bid from {currentPlayerPosition} player. More than 1 flags returned.");
-                    }
-
-                    if (!availableBids.HasFlag(bid))
-                    {
-                        throw new BelotGameException($"Invalid bid from {currentPlayerPosition} player. This bid is not permitted.");
-                    }
-
-                    if (bid == BidType.Double || bid == BidType.ReDouble)
-                    {
-                        // Doubling only multiplies the contract: it stays with the declarer.
-                        contract.Type &= ~BidType.Double;
-                        contract.Type &= ~BidType.ReDouble;
-                        contract.Type |= bid;
-                    }
-                    else if (bid != BidType.Pass)
-                    {
-                        contract.Type = bid;
-                        contract.Player = currentPlayerPosition;
-                    }
-                }
-
-                bids.Add(new Bid(currentPlayerPosition, bid));
-
-                consecutivePasses = (bid == BidType.Pass) ? consecutivePasses + 1 : 0;
-                if (contract.Type == BidType.Pass && consecutivePasses == 4)
-                {
-                    break;
-                }
-
-                if (contract.Type != BidType.Pass && consecutivePasses == 3)
-                {
-                    break;
-                }
-
-                currentPlayerPosition = currentPlayerPosition.Next();
+                PlayerDriver.Bid(this.players, auction);
             }
 
-            return contract;
-        }
-
-        private BidType GetAvailableBids(
-            Bid currentContract,
-            PlayerPosition currentPlayer)
-        {
-            var cleanContract = currentContract.Type;
-            cleanContract &= ~BidType.Double;
-            cleanContract &= ~BidType.ReDouble;
-            var availableBids = BidType.Pass;
-            if (cleanContract < BidType.Clubs)
-            {
-                availableBids |= BidType.Clubs;
-            }
-
-            if (cleanContract < BidType.Diamonds)
-            {
-                availableBids |= BidType.Diamonds;
-            }
-
-            if (cleanContract < BidType.Hearts)
-            {
-                availableBids |= BidType.Hearts;
-            }
-
-            if (cleanContract < BidType.Spades)
-            {
-                availableBids |= BidType.Spades;
-            }
-
-            if (cleanContract < BidType.NoTrumps)
-            {
-                availableBids |= BidType.NoTrumps;
-            }
-
-            if (cleanContract < BidType.AllTrumps)
-            {
-                availableBids |= BidType.AllTrumps;
-            }
-
-            // The opponents of the declarer may double; then the declaring team may redouble.
-            if (currentContract.Type != BidType.Pass && !currentContract.Type.HasFlag(BidType.ReDouble))
-            {
-                var isDeclaringTeam = currentPlayer.IsInSameTeamWith(currentContract.Player);
-                if (currentContract.Type.HasFlag(BidType.Double))
-                {
-                    if (isDeclaringTeam)
-                    {
-                        availableBids |= BidType.ReDouble;
-                    }
-                }
-                else if (!isDeclaringTeam)
-                {
-                    availableBids |= BidType.Double;
-                }
-            }
-
-            return availableBids;
+            bids = auction.Bids;
+            return auction.Contract;
         }
     }
 }

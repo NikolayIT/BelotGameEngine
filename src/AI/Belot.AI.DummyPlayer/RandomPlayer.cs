@@ -1,5 +1,6 @@
 ﻿namespace Belot.AI.DummyPlayer
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -10,6 +11,8 @@
 
     public class RandomPlayer : IPlayer
     {
+        private readonly Random random;
+
         private readonly List<BidType> allBids = new List<BidType>
                                                      {
                                                          BidType.Clubs,
@@ -20,12 +23,27 @@
                                                          BidType.AllTrumps,
                                                      };
 
+        public RandomPlayer()
+            : this(null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="RandomPlayer"/> class.
+        /// </summary>
+        /// <param name="random">The random source (a seeded one replays the same choices); null
+        /// for the shared per-thread one.</param>
+        public RandomPlayer(Random random)
+        {
+            this.random = random;
+        }
+
         public BidType GetBid(PlayerGetBidContext context)
         {
-            // TODO: Replace with .NET 6 Random.Shared.Next
-            return ThreadSafeRandom.Next(0, 100) <= 75
+            var roll = this.random?.Next(0, 100) ?? ThreadSafeRandom.Next(0, 100);
+            return roll <= 75
                        ? BidType.Pass // In 75% of the cases announce Pass
-                       : this.allBids.Where(x => context.AvailableBids.HasFlag(x)).RandomElement();
+                       : this.Pick(this.allBids.Where(x => context.AvailableBids.HasFlag(x)));
         }
 
         public IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context)
@@ -35,7 +53,7 @@
 
         public PlayCardAction PlayCard(PlayerPlayCardContext context)
         {
-            return new PlayCardAction(context.AvailableCardsToPlay.RandomElement());
+            return new PlayCardAction(this.Pick(context.AvailableCardsToPlay));
         }
 
         public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)
@@ -48,6 +66,18 @@
 
         public void EndOfGame(GameResult gameResult)
         {
+        }
+
+        // A uniformly chosen item, or the default when there is none.
+        private T Pick<T>(IEnumerable<T> items)
+        {
+            if (this.random == null)
+            {
+                return items.RandomElement();
+            }
+
+            var list = items.ToList();
+            return list.Count == 0 ? default : list[this.random.Next(list.Count)];
         }
     }
 }

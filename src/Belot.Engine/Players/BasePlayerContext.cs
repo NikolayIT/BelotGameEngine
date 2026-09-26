@@ -17,6 +17,12 @@
 
         public int EastWestPoints { get; set; }
 
+        /// <summary>
+        /// Gets or sets the points hanging from earlier deals: they go to the team that wins the
+        /// next played deal (see <see cref="GameMechanics.RoundResult.HangingPoints"/>).
+        /// </summary>
+        public int HangingPoints { get; set; }
+
         public CardCollection MyCards { get; set; }
 
         public IEnumerable<Bid> Bids { get; set; }

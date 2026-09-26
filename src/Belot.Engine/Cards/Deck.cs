@@ -37,5 +37,8 @@
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Card GetNextCard() => this.listOfCards[this.currentCardIndex++];
+
+        /// <summary>The cards in the order they come off the deck since the last shuffle.</summary>
+        internal Card[] CopyOrder() => (Card[])this.listOfCards.Clone();
     }
 }
