@@ -18,13 +18,29 @@
         private readonly IPlayer[] players;
 
         public BelotGame(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
-            : this(
-                new[] { southPlayer, eastPlayer, northPlayer, westPlayer },
-                new RoundManager(southPlayer, eastPlayer, northPlayer, westPlayer).PlayRound)
+            : this(southPlayer, eastPlayer, northPlayer, westPlayer, null)
         {
         }
 
-        // Lets tests script the round results, since the deck behind RoundManager is not seedable.
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BelotGame"/> class.
+        /// </summary>
+        /// <param name="southPlayer">The South player.</param>
+        /// <param name="eastPlayer">The East player.</param>
+        /// <param name="northPlayer">The North player.</param>
+        /// <param name="westPlayer">The West player.</param>
+        /// <param name="random">The source of the deals' shuffles; null for a shared per-thread
+        /// one. Every deal shuffles the whole deck once, so with a seeded source the n-th deal of
+        /// a game depends only on the seed and n, whatever the players do: the same seed with
+        /// the teams swapped replays the same deals (a mirror match).</param>
+        public BelotGame(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer, Random random)
+            : this(
+                new[] { southPlayer, eastPlayer, northPlayer, westPlayer },
+                new RoundManager(southPlayer, eastPlayer, northPlayer, westPlayer, random).PlayRound)
+        {
+        }
+
+        // Lets tests script the round results directly.
         internal BelotGame(IPlayer[] players, Func<int, PlayerPosition, int, int, int, RoundResult> playRound)
         {
             this.players = players;

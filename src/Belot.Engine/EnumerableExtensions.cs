@@ -1,5 +1,6 @@
 ﻿namespace Belot.Engine
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -12,9 +13,17 @@
         /// </summary>
         /// <param name="array">An array to shuffle.</param>
         /// <typeparam name="T">The generic type parameter of the collection.</typeparam>
-        public static void Shuffle<T>(this T[] array)
+        public static void Shuffle<T>(this T[] array) => array.Shuffle(ThreadSafeRandom.Current);
+
+        /// <summary>
+        /// Fisher-Yates shuffle with the given random source: n - 1 draws for n items, so a
+        /// seeded source always shuffles the same way.
+        /// </summary>
+        /// <param name="array">An array to shuffle.</param>
+        /// <param name="random">The random source.</param>
+        /// <typeparam name="T">The generic type parameter of the collection.</typeparam>
+        public static void Shuffle<T>(this T[] array, Random random)
         {
-            var random = ThreadSafeRandom.Current;
             var n = array.Length;
             while (n > 1)
             {

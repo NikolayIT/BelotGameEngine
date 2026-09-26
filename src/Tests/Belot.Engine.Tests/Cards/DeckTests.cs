@@ -48,6 +48,29 @@
         }
 
         [Fact]
+        public void ASeededDeckDealsTheSameSequenceOfDecks()
+        {
+            var first = new Deck(new Random(7));
+            var second = new Deck(new Random(7));
+            var other = new Deck(new Random(8));
+            var differs = false;
+            for (var round = 0; round < 5; round++)
+            {
+                first.Shuffle();
+                second.Shuffle();
+                other.Shuffle();
+                for (var i = 0; i < 32; i++)
+                {
+                    var card = first.GetNextCard();
+                    Assert.Same(card, second.GetNextCard());
+                    differs |= card != other.GetNextCard();
+                }
+            }
+
+            Assert.True(differs);
+        }
+
+        [Fact]
         public void GetNextCardShouldThrowExceptionWhenCalled33TimesAfterShuffle()
         {
             var deck = new Deck();
