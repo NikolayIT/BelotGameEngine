@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <CodeAnalysisRuleSet>..\..\Rules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="..\..\stylecop.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="xunit" Version="2.7.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!--
+    The MAUI app's game flow and game table have no MAUI dependencies: compile them here and play
+    whole games through them. Everything MAUI stays behind ISettingsStore and IGameTableHost (the
+    converters, the preferences store and the pages are the app's own).
+  -->
+  <ItemGroup>
+    <Compile Include="..\..\UI\Belot.UI\Game\*.cs" Exclude="..\..\UI\Belot.UI\Game\PreferencesSettingsStore.cs" LinkBase="App\Game" />
+    <Compile Include="..\..\UI\Belot.UI\Localization\AppStrings.cs" Link="App\Localization\AppStrings.cs" />
+    <Compile Include="..\..\UI\Belot.UI\Localization\LocalizationManager.cs" Link="App\Localization\LocalizationManager.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\AI\Belot.AI.ClaudePlayer\Belot.AI.ClaudePlayer.csproj" />
+    <ProjectReference Include="..\..\AI\Belot.AI.DummyPlayer\Belot.AI.DummyPlayer.csproj" />
+    <ProjectReference Include="..\..\AI\Belot.AI.SmartPlayer\Belot.AI.SmartPlayer.csproj" />
+    <ProjectReference Include="..\..\Belot.Engine\Belot.Engine.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -35,18 +35,22 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
           restore-keys: ${{ runner.os }}-nuget-
 
-      # The projects are built one by one; these three cover Belot.Engine and the three AI
-      # projects through their project references.
+      # The projects are built one by one; these four cover Belot.Engine and the three AI
+      # projects through their project references. The MAUI app (src/UI/Belot.UI) needs the MAUI
+      # workloads and is not built here; Belot.UI.Tests compiles its game layer and plays whole
+      # games through it.
       - name: Build
         run: |
           dotnet build src/Tests/Belot.Engine.Tests/Belot.Engine.Tests.csproj -c Release
           dotnet build src/Tests/Belot.AI.ClaudePlayer.Tests/Belot.AI.ClaudePlayer.Tests.csproj -c Release
+          dotnet build src/Tests/Belot.UI.Tests/Belot.UI.Tests.csproj -c Release
           dotnet build src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -c Release
 
       - name: Test
         run: |
           dotnet test src/Tests/Belot.Engine.Tests/Belot.Engine.Tests.csproj -c Release --no-build --logger "trx;LogFileName=test-results.trx"
           dotnet test src/Tests/Belot.AI.ClaudePlayer.Tests/Belot.AI.ClaudePlayer.Tests.csproj -c Release --no-build --logger "trx;LogFileName=claude-test-results.trx"
+          dotnet test src/Tests/Belot.UI.Tests/Belot.UI.Tests.csproj -c Release --no-build --logger "trx;LogFileName=ui-test-results.trx"
 
       - name: Upload test results
         if: always()
