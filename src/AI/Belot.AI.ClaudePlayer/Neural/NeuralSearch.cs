@@ -1,6 +1,7 @@
 ﻿namespace Belot.AI.ClaudePlayer.Neural
 {
     using System;
+    using System.Diagnostics;
     using System.Numerics;
 
     using Belot.AI.ClaudePlayer.Search;
@@ -40,6 +41,14 @@
         public double PruneMargin { get; set; }
 
         /// <summary>
+        /// Gets or sets a time budget in milliseconds (0 = none): no new deal is started once it
+        /// is spent, so a slow device plays fewer deals (at least <see cref="MinimumDeals"/>).
+        /// </summary>
+        public int TimeLimitMilliseconds { get; set; }
+
+        public int MinimumDeals { get; set; } = 8;
+
+        /// <summary>
         /// Fills the value of every legal card (indexed by card) from the given number of deals.
         /// </summary>
         /// <returns>False when the context cannot be modelled.</returns>
@@ -68,8 +77,15 @@
             }
 
             var playing = legal;
+            var start = Stopwatch.GetTimestamp();
+            var limit = (long)this.TimeLimitMilliseconds * Stopwatch.Frequency / 1000L;
             for (var i = 0; i < deals; i++)
             {
+                if (this.TimeLimitMilliseconds > 0 && i >= this.MinimumDeals && Stopwatch.GetTimestamp() - start > limit)
+                {
+                    break;
+                }
+
                 if (i == deals / 2 && this.PruneMargin > 0)
                 {
                     playing = this.Contenders(legal, cardValues);

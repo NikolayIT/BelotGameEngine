@@ -72,6 +72,7 @@
                     SearchDeals = settings.SearchDeals,
                     SearchPriorDeals = settings.SearchPriorDeals,
                     SearchPruneMargin = settings.SearchPruneMargin,
+                    SearchTimeLimitMilliseconds = settings.SearchMilliseconds,
                     Rng = new Random(Environment.CurrentManagedThreadId),
                 };
                 return settings.Bidding switch
@@ -104,10 +105,41 @@
             Console.WriteLine($"{settings.In} vs {settings.Opponent}: {result} ({stopwatch.Elapsed})");
         }
 
+        // The time of a searched card decision: whole games of four searching players on one thread.
+        private static void BenchSearch(NeuralModels models, TrainingSettings settings)
+        {
+            var players = Enumerable.Range(0, 4).Select(seat => new ClaudePlayerNeural(models)
+            {
+                SearchDeals = settings.SearchDeals,
+                SearchPriorDeals = settings.SearchPriorDeals,
+                SearchPruneMargin = settings.SearchPruneMargin,
+                SearchTimeLimitMilliseconds = settings.SearchMilliseconds,
+                Rng = new Random(seat),
+            }).ToArray();
+            var timed = players.Select(x => new TimedPlayer(x)).ToArray();
+            for (var game = 0; game < 4; game++)
+            {
+                new Belot.Engine.BelotGame(timed[0], timed[1], timed[2], timed[3], new Random(game)).PlayGame();
+            }
+
+            var decisions = timed.Sum(x => x.Decisions);
+            var ticks = timed.Sum(x => x.Ticks);
+            Console.WriteLine(
+                $"search {settings.SearchDeals} deals (prior {settings.SearchPriorDeals}, prune {settings.SearchPruneMargin}, "
+                + $"limit {settings.SearchMilliseconds} ms): {decisions} card decisions, "
+                + $"{ticks * 1000.0 / Stopwatch.Frequency / decisions:0.0} ms a decision");
+        }
+
         // The time of a decision: whole self-play deals with the networks, no labels.
         private static void Bench(TrainingSettings settings)
         {
             var models = string.IsNullOrEmpty(settings.In) ? NeuralModels.Embedded : NeuralModels.Load(settings.In);
+            if (settings.SearchDeals > 0)
+            {
+                BenchSearch(models, settings);
+                return;
+            }
+
             var labels = settings.Deals > 0;
             var bench = new TrainingSettings
             {

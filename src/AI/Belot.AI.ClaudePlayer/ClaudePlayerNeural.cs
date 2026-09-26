@@ -85,6 +85,16 @@
         /// </summary>
         public int SearchDeals { get; set; }
 
+        /// <summary>
+        /// Gets or sets a time budget per card for the search, in milliseconds (0 = none): it plays
+        /// no new deal once the budget is spent (at least eight), so a slower device plays fewer.
+        /// </summary>
+        public int SearchTimeLimitMilliseconds
+        {
+            get => this.search.TimeLimitMilliseconds;
+            set => this.search.TimeLimitMilliseconds = value;
+        }
+
         /// <summary>Gets or sets how many deals the card network's value counts as in the search's averages.</summary>
         public double SearchPriorDeals
         {

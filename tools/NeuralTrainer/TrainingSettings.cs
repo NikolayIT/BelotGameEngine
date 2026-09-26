@@ -122,6 +122,8 @@
 
         public double SearchPruneMargin { get; set; }
 
+        public int SearchMilliseconds { get; set; }
+
         /// <summary>Gets or sets a value indicating whether the networks may double ("validate").</summary>
         public bool MayDouble { get; set; } = true;
 
