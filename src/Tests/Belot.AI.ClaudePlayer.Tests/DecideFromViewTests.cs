@@ -3,6 +3,7 @@
     using System;
     using System.Linq;
 
+    using Belot.AI.ClaudePlayer.Tests.TestHelpers;
     using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
 
@@ -25,6 +26,7 @@
                 var fromContext = Enumerable.Range(0, 4).Select(i => Claude(seed, i)).ToArray();
                 var fromView = Enumerable.Range(0, 4).Select(i => Claude(seed, i)).ToArray();
                 var smart = new SmartPlayer.SmartPlayer();
+                var neural = new ClaudePlayerNeural(RandomModels.Create(seed));
                 match.Start();
                 while (!match.IsFinished)
                 {
@@ -33,6 +35,7 @@
                     var expected = DecideFromContext(fromContext[seat.Index()], match);
                     AssertSame(expected, fromView[seat.Index()].Decide(view));
                     AssertSame(DecideFromContext(smart, match), smart.Decide(view));
+                    AssertSame(DecideFromContext(neural, match), neural.Decide(view));
                     Assert.Equal(BelotActResult.Ok, match.Act(seat, expected));
                     decisions++;
                 }

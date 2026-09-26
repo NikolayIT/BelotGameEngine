@@ -20,6 +20,10 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <!-- The trained networks (see NEURAL_NETWORK.md), built into the assembly. -->
+    <EmbeddedResource Include="Neural\Weights\*.bin" LogicalName="Belot.AI.ClaudePlayer.Neural.Weights.%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\Belot.Engine\Belot.Engine.csproj" />
     <ProjectReference Include="..\Belot.AI.SmartPlayer\Belot.AI.SmartPlayer.csproj" />
   </ItemGroup>
@@ -27,6 +31,9 @@
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>$(AssemblyName).Tests</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>NeuralTrainer</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 
