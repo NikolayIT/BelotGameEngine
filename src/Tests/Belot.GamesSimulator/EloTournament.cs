@@ -12,9 +12,10 @@
     using Belot.Engine.Players;
 
     /// <summary>
-    /// The round robin behind the MAUI app's levels (its <c>AiLevels</c>): every two levels play
-    /// pair against pair, in mirrored pairs of games (the same deals, the teams swapped, so the
-    /// cards' luck cancels), then the ratings are fit with the Bradley-Terry model (which is what
+    /// The round robin behind the MAUI app's levels (its <c>AiLevels</c>, plus ClaudePlayerIsmcts
+    /// for reference, which the app no longer uses): every two levels play pair against pair, in
+    /// mirrored pairs of games (the same deals, the teams swapped, so the cards' luck cancels),
+    /// then the ratings are fit with the Bradley-Terry model (which is what
     /// ELO's logistic 400-point scale models) and anchored so the Dummy (the app's Beginner) sits
     /// at <see cref="AnchorElo"/>. The printed numbers are pasted into the app's level list.
     /// </summary>
@@ -30,6 +31,11 @@
         // left essentially untouched.
         private const double PriorFraction = 0.01d;
 
+        // The app's Expert level (Belot.UI's AiLevels.ExpertTemperature and ExpertMaxRegret).
+        private const double ExpertTemperature = 1.5;
+
+        private const double ExpertMaxRegret = 4;
+
         /// <summary>Plays the round robin and prints the ratings.</summary>
         /// <param name="parallelism">How many games run at once.</param>
         /// <param name="fastPairs">Mirrored pairs per matchup of the fast levels.</param>
@@ -41,7 +47,13 @@
                 new Level("dummy", "DummyPlayer", () => new DummyPlayer(), isSlow: false),
                 new Level("random", "RandomPlayer", () => new RandomPlayer(), isSlow: false),
                 new Level("smart", "SmartPlayer", () => new SmartPlayer(), isSlow: false),
-                new Level("claude", "ClaudePlayerIsmcts", () => new ClaudePlayerIsmcts(), isSlow: true),
+                new Level(
+                    "expert",
+                    "Neural (loose)",
+                    () => new ClaudePlayerNeural { Temperature = ExpertTemperature, MaxRegret = ExpertMaxRegret },
+                    isSlow: false),
+                new Level("claude", "ClaudePlayerNeural", () => new ClaudePlayerNeural(), isSlow: false),
+                new Level("ismcts", "ClaudePlayerIsmcts", () => new ClaudePlayerIsmcts(), isSlow: true),
             };
 
             var n = levels.Length;

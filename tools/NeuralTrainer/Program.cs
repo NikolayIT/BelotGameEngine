@@ -64,7 +64,12 @@
             var models = string.IsNullOrEmpty(settings.In) ? NeuralModels.Embedded : NeuralModels.Load(settings.In);
             IPlayer Neural()
             {
-                var player = new ClaudePlayerNeural(models) { MayDouble = settings.MayDouble };
+                var player = new ClaudePlayerNeural(models)
+                {
+                    MayDouble = settings.MayDouble,
+                    Temperature = settings.Temperature,
+                    MaxRegret = settings.MaxRegret,
+                };
                 return settings.SmartBidding ? new SmartBiddingPlayer(player) : player;
             }
 

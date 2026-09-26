@@ -106,6 +106,12 @@
         /// <summary>Gets or sets how many labelled deals "bench" times (0 = time 20000 deals without labels).</summary>
         public int Deals { get; set; }
 
+        /// <summary>Gets or sets the networks' temperature in "validate" (0 = always the best action).</summary>
+        public double Temperature { get; set; }
+
+        /// <summary>Gets or sets the networks' MaxRegret in "validate", in game points.</summary>
+        public double MaxRegret { get; set; } = double.PositiveInfinity;
+
         /// <summary>Gets or sets a value indicating whether the networks may double ("validate").</summary>
         public bool MayDouble { get; set; } = true;
 
