@@ -1,5 +1,7 @@
 ﻿namespace Belot.Engine
 {
+    using System;
+
     using Belot.Engine.Game;
     using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
@@ -10,14 +12,23 @@
      */
     public class BelotGame : IBelotGame
     {
-        private readonly RoundManager roundManager;
+        // (roundNumber, firstToPlay, southNorthPoints, eastWestPoints, hangingPoints) => result
+        private readonly Func<int, PlayerPosition, int, int, int, RoundResult> playRound;
 
         private readonly IPlayer[] players;
 
         public BelotGame(IPlayer southPlayer, IPlayer eastPlayer, IPlayer northPlayer, IPlayer westPlayer)
+            : this(
+                new[] { southPlayer, eastPlayer, northPlayer, westPlayer },
+                new RoundManager(southPlayer, eastPlayer, northPlayer, westPlayer).PlayRound)
         {
-            this.players = new[] { southPlayer, eastPlayer, northPlayer, westPlayer };
-            this.roundManager = new RoundManager(southPlayer, eastPlayer, northPlayer, westPlayer);
+        }
+
+        // Lets tests script the round results, since the deck behind RoundManager is not seedable.
+        internal BelotGame(IPlayer[] players, Func<int, PlayerPosition, int, int, int, RoundResult> playRound)
+        {
+            this.players = players;
+            this.playRound = playRound;
         }
 
         public GameResult PlayGame(PlayerPosition firstToPlay = PlayerPosition.South)
@@ -30,7 +41,7 @@
 
             while (true)
             {
-                var roundResult = this.roundManager.PlayRound(
+                var roundResult = this.playRound(
                     roundNumber,
                     firstInRound,
                     southNorthPoints,
@@ -41,6 +52,9 @@
                 eastWestPoints += roundResult.EastWestPoints;
                 hangingPoints = roundResult.HangingPoints;
 
+                // A team wins with 151+ and more points than the other team, on a deal in which it
+                // scored. A capot deal never ends the game ("С капо не се излиза"), and neither does
+                // a passed-out one, so after them the leader must score again in a later deal.
                 if (southNorthPoints >= 151
                     && southNorthPoints > eastWestPoints
                     && roundResult.SouthNorthPoints > 0
