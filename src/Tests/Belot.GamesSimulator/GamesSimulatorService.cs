@@ -16,6 +16,9 @@
     {
         public const int LineLength = 70;
 
+        // The neural player decides in microseconds: its games against SmartPlayer are cheap.
+        private const int NeuralFastPairs = 10_000;
+
         public void Run(int parallelism)
         {
             // Warmup
@@ -60,6 +63,38 @@
             Console.WriteLine(new string('=', LineLength));
             IPlayer Candidate() => CreateClaude(budgetMilliseconds, candidate);
             IPlayer Baseline() => CreateClaude(budgetMilliseconds, baseline);
+
+            var totalStopwatch = Stopwatch.StartNew();
+            MirrorMatch("CandidateVsBaseline", Candidate, Candidate, Baseline, Baseline, pairs, parallelism);
+            Console.WriteLine($"Total tests time: {totalStopwatch.Elapsed}.");
+        }
+
+        /// <summary>
+        /// ClaudePlayerNeural (the embedded networks, or a folder of them) against SmartPlayer
+        /// (fast, so many pairs) and against ClaudePlayerIsmcts at the given budget.
+        /// </summary>
+        public void RunNeural(int parallelism, int pairs, int budgetMilliseconds, string weights)
+        {
+            Console.WriteLine($"ClaudePlayerNeural ({weights ?? "embedded networks"}), mirrored pairs of games");
+            Console.WriteLine(new string('=', LineLength));
+            IPlayer Neural() => weights == null ? new ClaudePlayerNeural() : new ClaudePlayerNeural(weights);
+            IPlayer Smart() => new SmartPlayer();
+            IPlayer Claude() => CreateClaude(budgetMilliseconds, "-");
+
+            var totalStopwatch = Stopwatch.StartNew();
+            MirrorMatch("TwoNeuralVsTwoSmart", Neural, Neural, Smart, Smart, NeuralFastPairs, parallelism);
+            MirrorMatch("NeuralAndSmartVsTwoSmart", Neural, Smart, Smart, Smart, NeuralFastPairs, parallelism);
+            MirrorMatch($"TwoNeuralVsTwoClaudeIsmcts ({budgetMilliseconds} ms)", Neural, Neural, Claude, Claude, pairs, parallelism);
+            Console.WriteLine($"Total tests time: {totalStopwatch.Elapsed}.");
+        }
+
+        /// <summary>Two sets of networks (folders, or "-" for the embedded ones) against each other.</summary>
+        public void RunNeuralAb(int parallelism, int pairs, string candidate, string baseline)
+        {
+            Console.WriteLine($"ClaudePlayerNeural [{candidate}] vs [{baseline}], mirrored pairs");
+            Console.WriteLine(new string('=', LineLength));
+            IPlayer Candidate() => candidate == "-" ? new ClaudePlayerNeural() : new ClaudePlayerNeural(candidate);
+            IPlayer Baseline() => baseline == "-" ? new ClaudePlayerNeural() : new ClaudePlayerNeural(baseline);
 
             var totalStopwatch = Stopwatch.StartNew();
             MirrorMatch("CandidateVsBaseline", Candidate, Candidate, Baseline, Baseline, pairs, parallelism);

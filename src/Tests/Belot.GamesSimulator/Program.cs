@@ -20,6 +20,11 @@
         ///   exploration constant, inf=0 no play inference, bidinf=1 deals that explain the
         ///   auction, mcbid=0 SmartPlayer's bidding, dbl=0 no doubling, margin=1.5 and deals=300
         ///   for the Monte Carlo bidding; "-" for the defaults);
+        ///   neural [pairs] [budgetMs] [weights]: ClaudePlayerNeural (the embedded networks, or a
+        ///   folder of them) against SmartPlayer (10000 pairs) and against ClaudePlayerIsmcts
+        ///   (default 200 pairs at 100 ms);
+        ///   neural-ab [pairs] [candidate] [baseline]: two folders of networks ("-" the embedded)
+        ///   against each other;
         ///   elo [fastPairs] [slowPairs]: the MAUI app's levels in a pair-vs-pair round robin
         ///   (default 20000 mirrored pairs a matchup, 150 with ISMCTS), printing the ratings to
         ///   paste into the app's level list.
@@ -49,6 +54,26 @@
                     parallelism,
                     args.Length > 1 ? int.Parse(args[1], CultureInfo.InvariantCulture) : 20_000,
                     args.Length > 2 ? int.Parse(args[2], CultureInfo.InvariantCulture) : 150);
+                return;
+            }
+
+            if (args.Length > 0 && args[0] == "neural")
+            {
+                new GamesSimulatorService().RunNeural(
+                    parallelism,
+                    args.Length > 1 ? int.Parse(args[1], CultureInfo.InvariantCulture) : 200,
+                    args.Length > 2 ? int.Parse(args[2], CultureInfo.InvariantCulture) : 100,
+                    args.Length > 3 ? args[3] : null);
+                return;
+            }
+
+            if (args.Length > 0 && args[0] == "neural-ab")
+            {
+                new GamesSimulatorService().RunNeuralAb(
+                    parallelism,
+                    args.Length > 1 ? int.Parse(args[1], CultureInfo.InvariantCulture) : 2000,
+                    args.Length > 2 ? args[2] : "-",
+                    args.Length > 3 ? args[3] : "-");
                 return;
             }
 
