@@ -5,6 +5,7 @@
 
     using Belot.UI.Game;
     using Belot.UI.Localization;
+    using Belot.UI.Scaling;
 
     public partial class SettingsPage : ContentPage
     {
@@ -28,6 +29,14 @@
 
             this.RefreshLanguageButtons();
             this.RefreshSpeedButtons();
+        }
+
+        // Sizes follow the window (see UiScale).
+        protected override void OnSizeAllocated(double width, double height)
+        {
+            base.OnSizeAllocated(width, height);
+            UiScale.Current.Update(width, height);
+            this.ContentColumn.WidthRequest = PageColumn.Width(width);
         }
 
         private static void StyleSegment(Button button, bool selected)

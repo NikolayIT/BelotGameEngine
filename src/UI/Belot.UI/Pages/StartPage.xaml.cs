@@ -7,6 +7,7 @@
 
     using Belot.UI.Game;
     using Belot.UI.Localization;
+    using Belot.UI.Scaling;
 
     using Microsoft.Maui.Controls.Shapes;
 
@@ -33,6 +34,19 @@
             this.ApplyTexts();
         }
 
+        // Sizes follow the window (see UiScale); the lists built in code are rebuilt at a new scale.
+        protected override void OnSizeAllocated(double width, double height)
+        {
+            base.OnSizeAllocated(width, height);
+            var scale = UiScale.Current.Page;
+            UiScale.Current.Update(width, height);
+            this.ContentColumn.WidthRequest = PageColumn.Width(width);
+            if (UiScale.Current.Page != scale)
+            {
+                this.ApplyTexts();
+            }
+        }
+
         private static View BuildHistoryRow(LocalizationManager text, MatchHistoryEntry entry)
         {
             var chip = new Border
@@ -40,13 +54,13 @@
                 StrokeThickness = 0,
                 StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(6) },
                 BackgroundColor = entry.Won ? Color.FromArgb("#1FA15A") : Color.FromArgb("#C0504D"),
-                Padding = new Thickness(9, 2),
+                Padding = Ui.Pad(9, 2),
                 VerticalOptions = LayoutOptions.Center,
                 Content = new Label
                 {
                     Text = entry.Won ? text["History_Win"] : text["History_Loss"],
                     TextColor = Colors.White,
-                    FontSize = 12,
+                    FontSize = Ui.Size(12),
                     FontAttributes = FontAttributes.Bold,
                 },
             };
@@ -55,7 +69,7 @@
             {
                 Text = entry.ScoreText,
                 TextColor = Colors.White,
-                FontSize = 14,
+                FontSize = Ui.Size(14),
                 FontAttributes = FontAttributes.Bold,
                 VerticalOptions = LayoutOptions.Center,
             };
@@ -64,14 +78,14 @@
             {
                 Text = text.Format("History_With", entry.PartnerName, entry.RivalsName),
                 TextColor = Color.FromArgb("#C7D2BD"),
-                FontSize = 12,
+                FontSize = Ui.Size(12),
                 VerticalOptions = LayoutOptions.Center,
                 LineBreakMode = LineBreakMode.TailTruncation,
             };
 
             var grid = new Grid
             {
-                ColumnSpacing = 12,
+                ColumnSpacing = Ui.Size(12),
                 ColumnDefinitions =
                 {
                     new ColumnDefinition(GridLength.Auto),
@@ -88,7 +102,7 @@
                 StrokeThickness = 0,
                 StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(10) },
                 BackgroundColor = Color.FromArgb("#1E000000"),
-                Padding = new Thickness(12, 8),
+                Padding = Ui.Pad(12, 8),
                 Content = grid,
             };
         }
@@ -107,25 +121,25 @@
                     StrokeThickness = selected ? 2 : 0,
                     Stroke = Color.FromArgb("#F4D586"),
                     BackgroundColor = selected ? Color.FromArgb("#40000000") : Color.FromArgb("#1E000000"),
-                    Padding = new Thickness(4, 8),
+                    Padding = Ui.Pad(4, 8),
                     Content = new VerticalStackLayout
                     {
-                        Spacing = 2,
+                        Spacing = Ui.Size(2),
                         Children =
                         {
-                            new Label { Text = level.Avatar, FontSize = 22, HorizontalOptions = LayoutOptions.Center },
+                            new Label { Text = level.Avatar, FontSize = Ui.Size(22), HorizontalOptions = LayoutOptions.Center },
                             new Label
                             {
                                 Text = level.DisplayName,
-                                FontSize = 12,
+                                FontSize = Ui.Size(12),
                                 FontAttributes = selected ? FontAttributes.Bold : FontAttributes.None,
                                 TextColor = Colors.White,
                                 HorizontalTextAlignment = TextAlignment.Center,
                                 MaxLines = 1,
                                 LineBreakMode = LineBreakMode.TailTruncation,
                             },
-                            new Label { Text = level.DifficultyStars, FontSize = 9, TextColor = Color.FromArgb("#F4D586"), HorizontalOptions = LayoutOptions.Center },
-                            new Label { Text = level.Elo.ToString(CultureInfo.InvariantCulture), FontSize = 10, TextColor = Color.FromArgb("#C7D2BD"), HorizontalOptions = LayoutOptions.Center },
+                            new Label { Text = level.DifficultyStars, FontSize = Ui.Size(9), TextColor = Color.FromArgb("#F4D586"), HorizontalOptions = LayoutOptions.Center },
+                            new Label { Text = level.Elo.ToString(CultureInfo.InvariantCulture), FontSize = Ui.Size(10), TextColor = Color.FromArgb("#C7D2BD"), HorizontalOptions = LayoutOptions.Center },
                         },
                     },
                 };

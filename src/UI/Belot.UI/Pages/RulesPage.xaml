@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Belot.UI.Localization"
+             xmlns:ui="clr-namespace:Belot.UI.Scaling"
              x:Class="Belot.UI.Pages.RulesPage"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource FeltDark}">
@@ -16,41 +17,40 @@
         </Grid.Background>
 
         <ScrollView>
-            <VerticalStackLayout Padding="24,20,24,32"
-                                 Spacing="14"
+            <VerticalStackLayout x:Name="ContentColumn" Padding="{ui:Size '24,20,24,32'}"
+                                 Spacing="{ui:Size '14'}"
                                  HorizontalOptions="Center"
-                                 VerticalOptions="Start"
-                                 MaximumWidthRequest="540">
+                                 VerticalOptions="Start">
 
                 <!-- Header -->
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{ui:Size '10'}">
                     <Button Grid.Column="0"
                             Text="‹"
                             Clicked="OnBack"
-                            HeightRequest="36"
-                            WidthRequest="40"
-                            Padding="0,0,0,4"
-                            FontSize="22"
+                            HeightRequest="{ui:Size '36'}"
+                            WidthRequest="{ui:Size '40'}"
+                            Padding="{ui:Size '0,0,0,4'}"
+                            FontSize="{ui:Size '22'}"
                             FontAttributes="Bold"
-                            CornerRadius="12"
+                            CornerRadius="{ui:Size '12'}"
                             BackgroundColor="#26000000"
                             BorderColor="#3FE2B864"
                             BorderWidth="1"
                             TextColor="{StaticResource GoldHighlight}" />
                     <Label Grid.Column="1"
                            Text="{loc:Tr Rules_Title}"
-                           FontSize="24"
+                           FontSize="{ui:Size '24'}"
                            FontAttributes="Bold"
                            VerticalOptions="Center"
                            TextColor="{StaticResource GoldHighlight}" />
                 </Grid>
 
                 <Label Text="{loc:Tr Rules_Intro}"
-                       FontSize="14"
+                       FontSize="{ui:Size '14'}"
                        TextColor="#EDE3C3"
                        LineHeight="1.25" />
 
-                <VerticalStackLayout x:Name="SectionsHost" Spacing="12" />
+                <VerticalStackLayout x:Name="SectionsHost" Spacing="{ui:Size '12'}" />
 
             </VerticalStackLayout>
         </ScrollView>

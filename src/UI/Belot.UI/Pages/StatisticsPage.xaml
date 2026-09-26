@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Belot.UI.Localization"
+             xmlns:ui="clr-namespace:Belot.UI.Scaling"
              x:Class="Belot.UI.Pages.StatisticsPage"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource FeltDark}">
@@ -16,30 +17,29 @@
         </Grid.Background>
 
         <ScrollView>
-            <VerticalStackLayout Padding="24,20,24,32"
-                                 Spacing="14"
+            <VerticalStackLayout x:Name="ContentColumn" Padding="{ui:Size '24,20,24,32'}"
+                                 Spacing="{ui:Size '14'}"
                                  HorizontalOptions="Center"
-                                 VerticalOptions="Start"
-                                 MaximumWidthRequest="540">
+                                 VerticalOptions="Start">
 
                 <!-- Header -->
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{ui:Size '10'}">
                     <Button Grid.Column="0"
                             Text="‹"
                             Clicked="OnBack"
-                            HeightRequest="36"
-                            WidthRequest="40"
-                            Padding="0,0,0,4"
-                            FontSize="22"
+                            HeightRequest="{ui:Size '36'}"
+                            WidthRequest="{ui:Size '40'}"
+                            Padding="{ui:Size '0,0,0,4'}"
+                            FontSize="{ui:Size '22'}"
                             FontAttributes="Bold"
-                            CornerRadius="12"
+                            CornerRadius="{ui:Size '12'}"
                             BackgroundColor="#26000000"
                             BorderColor="#3FE2B864"
                             BorderWidth="1"
                             TextColor="{StaticResource GoldHighlight}" />
                     <Label Grid.Column="1"
                            Text="{loc:Tr Stats_Title}"
-                           FontSize="24"
+                           FontSize="{ui:Size '24'}"
                            FontAttributes="Bold"
                            VerticalOptions="Center"
                            TextColor="{StaticResource GoldHighlight}" />
@@ -47,65 +47,65 @@
 
                 <!-- Rating tiles -->
                 <Label Text="{loc:Tr Stats_Rating}"
-                       FontSize="11"
+                       FontSize="{ui:Size '11'}"
                        TextColor="{StaticResource GoldAccent}"
                        CharacterSpacing="3"
-                       Margin="0,8,0,0" />
+                       Margin="{ui:Size '0,8,0,0'}" />
 
-                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
-                    <Border Grid.Row="0" Grid.Column="0" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
-                        <VerticalStackLayout Spacing="2">
-                            <Label Text="{loc:Tr Stats_Current}" FontSize="11" TextColor="#C7D2BD" />
-                            <Label x:Name="CurrentEloLabel" FontSize="26" FontAttributes="Bold" TextColor="{StaticResource GoldHighlight}" />
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="{ui:Size '10'}" RowSpacing="{ui:Size '10'}">
+                    <Border Grid.Row="0" Grid.Column="0" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
+                        <VerticalStackLayout Spacing="{ui:Size '2'}">
+                            <Label Text="{loc:Tr Stats_Current}" FontSize="{ui:Size '11'}" TextColor="#C7D2BD" />
+                            <Label x:Name="CurrentEloLabel" FontSize="{ui:Size '26'}" FontAttributes="Bold" TextColor="{StaticResource GoldHighlight}" />
                         </VerticalStackLayout>
                     </Border>
-                    <Border Grid.Row="0" Grid.Column="1" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
-                        <VerticalStackLayout Spacing="2">
-                            <Label Text="{loc:Tr Stats_Peak}" FontSize="11" TextColor="#C7D2BD" />
-                            <Label x:Name="PeakEloLabel" FontSize="26" FontAttributes="Bold" TextColor="{StaticResource GoldHighlight}" />
+                    <Border Grid.Row="0" Grid.Column="1" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
+                        <VerticalStackLayout Spacing="{ui:Size '2'}">
+                            <Label Text="{loc:Tr Stats_Peak}" FontSize="{ui:Size '11'}" TextColor="#C7D2BD" />
+                            <Label x:Name="PeakEloLabel" FontSize="{ui:Size '26'}" FontAttributes="Bold" TextColor="{StaticResource GoldHighlight}" />
                         </VerticalStackLayout>
                     </Border>
-                    <Border Grid.Row="1" Grid.Column="0" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
-                        <VerticalStackLayout Spacing="2">
-                            <Label Text="{loc:Tr Stats_Games}" FontSize="11" TextColor="#C7D2BD" />
-                            <Label x:Name="GamesLabel" FontSize="26" FontAttributes="Bold" TextColor="White" />
-                            <Label x:Name="WinLossLabel" FontSize="11" TextColor="#B9C7B0" />
+                    <Border Grid.Row="1" Grid.Column="0" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
+                        <VerticalStackLayout Spacing="{ui:Size '2'}">
+                            <Label Text="{loc:Tr Stats_Games}" FontSize="{ui:Size '11'}" TextColor="#C7D2BD" />
+                            <Label x:Name="GamesLabel" FontSize="{ui:Size '26'}" FontAttributes="Bold" TextColor="White" />
+                            <Label x:Name="WinLossLabel" FontSize="{ui:Size '11'}" TextColor="#B9C7B0" />
                         </VerticalStackLayout>
                     </Border>
-                    <Border Grid.Row="1" Grid.Column="1" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
-                        <VerticalStackLayout Spacing="2">
-                            <Label Text="{loc:Tr Stats_WinRate}" FontSize="11" TextColor="#C7D2BD" />
-                            <Label x:Name="WinRateLabel" FontSize="26" FontAttributes="Bold" TextColor="White" />
-                            <Label x:Name="StreakLabel" FontSize="11" TextColor="#B9C7B0" />
+                    <Border Grid.Row="1" Grid.Column="1" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
+                        <VerticalStackLayout Spacing="{ui:Size '2'}">
+                            <Label Text="{loc:Tr Stats_WinRate}" FontSize="{ui:Size '11'}" TextColor="#C7D2BD" />
+                            <Label x:Name="WinRateLabel" FontSize="{ui:Size '26'}" FontAttributes="Bold" TextColor="White" />
+                            <Label x:Name="StreakLabel" FontSize="{ui:Size '11'}" TextColor="#B9C7B0" />
                         </VerticalStackLayout>
                     </Border>
                 </Grid>
 
                 <Label x:Name="EmptyLabel"
                        Text="{loc:Tr Stats_Empty}"
-                       FontSize="13"
+                       FontSize="{ui:Size '13'}"
                        TextColor="#B9C7B0"
-                       Margin="0,6,0,0" />
+                       Margin="{ui:Size '0,6,0,0'}" />
 
                 <!-- Per-opponent results -->
                 <Label x:Name="ByLevelCaption"
                        Text="{loc:Tr Stats_ByLevel}"
-                       FontSize="11"
+                       FontSize="{ui:Size '11'}"
                        TextColor="{StaticResource GoldAccent}"
                        CharacterSpacing="3"
-                       Margin="0,8,0,0" />
+                       Margin="{ui:Size '0,8,0,0'}" />
 
-                <VerticalStackLayout x:Name="LevelListHost" Spacing="8" />
+                <VerticalStackLayout x:Name="LevelListHost" Spacing="{ui:Size '8'}" />
 
                 <!-- Full history -->
                 <Label x:Name="HistoryCaption"
                        Text="{loc:Tr Stats_HistoryHeader}"
-                       FontSize="11"
+                       FontSize="{ui:Size '11'}"
                        TextColor="{StaticResource GoldAccent}"
                        CharacterSpacing="3"
-                       Margin="0,8,0,0" />
+                       Margin="{ui:Size '0,8,0,0'}" />
 
-                <VerticalStackLayout x:Name="HistoryListHost" Spacing="6" />
+                <VerticalStackLayout x:Name="HistoryListHost" Spacing="{ui:Size '6'}" />
 
             </VerticalStackLayout>
         </ScrollView>

@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Belot.UI.Localization"
+             xmlns:ui="clr-namespace:Belot.UI.Scaling"
              x:Class="Belot.UI.Pages.SettingsPage"
              Shell.NavBarIsVisible="False"
              BackgroundColor="{StaticResource FeltDark}">
@@ -16,30 +17,29 @@
         </Grid.Background>
 
         <ScrollView>
-            <VerticalStackLayout Padding="24,20,24,32"
-                                 Spacing="14"
+            <VerticalStackLayout x:Name="ContentColumn" Padding="{ui:Size '24,20,24,32'}"
+                                 Spacing="{ui:Size '14'}"
                                  HorizontalOptions="Center"
-                                 VerticalOptions="Start"
-                                 MaximumWidthRequest="540">
+                                 VerticalOptions="Start">
 
                 <!-- Header -->
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{ui:Size '10'}">
                     <Button Grid.Column="0"
                             Text="‹"
                             Clicked="OnBack"
-                            HeightRequest="36"
-                            WidthRequest="40"
-                            Padding="0,0,0,4"
-                            FontSize="22"
+                            HeightRequest="{ui:Size '36'}"
+                            WidthRequest="{ui:Size '40'}"
+                            Padding="{ui:Size '0,0,0,4'}"
+                            FontSize="{ui:Size '22'}"
                             FontAttributes="Bold"
-                            CornerRadius="12"
+                            CornerRadius="{ui:Size '12'}"
                             BackgroundColor="#26000000"
                             BorderColor="#3FE2B864"
                             BorderWidth="1"
                             TextColor="{StaticResource GoldHighlight}" />
                     <Label Grid.Column="1"
                            Text="{loc:Tr Settings_Title}"
-                           FontSize="24"
+                           FontSize="{ui:Size '24'}"
                            FontAttributes="Bold"
                            VerticalOptions="Center"
                            TextColor="{StaticResource GoldHighlight}" />
@@ -47,83 +47,83 @@
 
                 <!-- GAMEPLAY -->
                 <Label Text="{loc:Tr Settings_Gameplay}"
-                       FontSize="11"
+                       FontSize="{ui:Size '11'}"
                        TextColor="{StaticResource GoldAccent}"
                        CharacterSpacing="3"
-                       Margin="0,8,0,0" />
+                       Margin="{ui:Size '0,8,0,0'}" />
 
                 <!-- Language -->
-                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
-                    <VerticalStackLayout Spacing="10">
+                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
+                    <VerticalStackLayout Spacing="{ui:Size '10'}">
                         <Label Text="{loc:Tr Settings_Language}"
-                               FontSize="15"
+                               FontSize="{ui:Size '15'}"
                                FontAttributes="Bold"
                                TextColor="White" />
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="{ui:Size '8'}">
                             <Button Grid.Column="0"
                                     x:Name="LangEnButton"
                                     Text="English"
                                     Clicked="OnLanguageEn"
-                                    HeightRequest="40"
-                                    FontSize="13"
-                                    CornerRadius="10" />
+                                    HeightRequest="{ui:Size '40'}"
+                                    FontSize="{ui:Size '13'}"
+                                    CornerRadius="{ui:Size '10'}" />
                             <Button Grid.Column="1"
                                     x:Name="LangBgButton"
                                     Text="Български"
                                     Clicked="OnLanguageBg"
-                                    HeightRequest="40"
-                                    FontSize="13"
-                                    CornerRadius="10" />
+                                    HeightRequest="{ui:Size '40'}"
+                                    FontSize="{ui:Size '13'}"
+                                    CornerRadius="{ui:Size '10'}" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Game speed -->
-                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
-                    <VerticalStackLayout Spacing="10">
+                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
+                    <VerticalStackLayout Spacing="{ui:Size '10'}">
                         <Label Text="{loc:Tr Settings_GameSpeed}"
-                               FontSize="15"
+                               FontSize="{ui:Size '15'}"
                                FontAttributes="Bold"
                                TextColor="White" />
                         <Label Text="{loc:Tr Settings_GameSpeedHint}"
-                               FontSize="12"
+                               FontSize="{ui:Size '12'}"
                                TextColor="#C7D2BD" />
-                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{ui:Size '8'}">
                             <Button Grid.Column="0"
                                     x:Name="SpeedRelaxedButton"
                                     Text="{loc:Tr Speed_Relaxed}"
                                     Clicked="OnSpeedRelaxed"
-                                    HeightRequest="40"
-                                    FontSize="13"
-                                    CornerRadius="10" />
+                                    HeightRequest="{ui:Size '40'}"
+                                    FontSize="{ui:Size '13'}"
+                                    CornerRadius="{ui:Size '10'}" />
                             <Button Grid.Column="1"
                                     x:Name="SpeedNormalButton"
                                     Text="{loc:Tr Speed_Normal}"
                                     Clicked="OnSpeedNormal"
-                                    HeightRequest="40"
-                                    FontSize="13"
-                                    CornerRadius="10" />
+                                    HeightRequest="{ui:Size '40'}"
+                                    FontSize="{ui:Size '13'}"
+                                    CornerRadius="{ui:Size '10'}" />
                             <Button Grid.Column="2"
                                     x:Name="SpeedFastButton"
                                     Text="{loc:Tr Speed_Fast}"
                                     Clicked="OnSpeedFast"
-                                    HeightRequest="40"
-                                    FontSize="13"
-                                    CornerRadius="10" />
+                                    HeightRequest="{ui:Size '40'}"
+                                    FontSize="{ui:Size '13'}"
+                                    CornerRadius="{ui:Size '10'}" />
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
 
                 <!-- Vibration -->
-                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                        <VerticalStackLayout Grid.Column="0" Spacing="3" VerticalOptions="Center">
+                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{ui:Size '10'}">
+                        <VerticalStackLayout Grid.Column="0" Spacing="{ui:Size '3'}" VerticalOptions="Center">
                             <Label Text="{loc:Tr Settings_Haptics}"
-                                   FontSize="15"
+                                   FontSize="{ui:Size '15'}"
                                    FontAttributes="Bold"
                                    TextColor="White" />
                             <Label Text="{loc:Tr Settings_HapticsHint}"
-                                   FontSize="12"
+                                   FontSize="{ui:Size '12'}"
                                    TextColor="#C7D2BD" />
                         </VerticalStackLayout>
                         <Switch Grid.Column="1"
@@ -136,15 +136,15 @@
                 </Border>
 
                 <!-- Beginner assists -->
-                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                        <VerticalStackLayout Grid.Column="0" Spacing="3" VerticalOptions="Center">
+                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{ui:Size '10'}">
+                        <VerticalStackLayout Grid.Column="0" Spacing="{ui:Size '3'}" VerticalOptions="Center">
                             <Label Text="{loc:Tr Settings_Assists}"
-                                   FontSize="15"
+                                   FontSize="{ui:Size '15'}"
                                    FontAttributes="Bold"
                                    TextColor="White" />
                             <Label Text="{loc:Tr Settings_AssistsHint}"
-                                   FontSize="12"
+                                   FontSize="{ui:Size '12'}"
                                    TextColor="#C7D2BD" />
                         </VerticalStackLayout>
                         <Switch Grid.Column="1"
@@ -158,16 +158,16 @@
 
                 <!-- DATA -->
                 <Label Text="{loc:Tr Settings_Data}"
-                       FontSize="11"
+                       FontSize="{ui:Size '11'}"
                        TextColor="{StaticResource GoldAccent}"
                        CharacterSpacing="3"
-                       Margin="0,8,0,0" />
+                       Margin="{ui:Size '0,8,0,0'}" />
 
                 <Button Text="{loc:Tr Settings_ResetStats}"
                         Clicked="OnResetStats"
-                        HeightRequest="44"
-                        FontSize="14"
-                        CornerRadius="12"
+                        HeightRequest="{ui:Size '44'}"
+                        FontSize="{ui:Size '14'}"
+                        CornerRadius="{ui:Size '12'}"
                         BackgroundColor="#33C0504D"
                         BorderColor="#C0504D"
                         BorderWidth="1"
@@ -175,25 +175,25 @@
 
                 <!-- ABOUT -->
                 <Label Text="{loc:Tr Settings_About}"
-                       FontSize="11"
+                       FontSize="{ui:Size '11'}"
                        TextColor="{StaticResource GoldAccent}"
                        CharacterSpacing="3"
-                       Margin="0,8,0,0" />
+                       Margin="{ui:Size '0,8,0,0'}" />
 
-                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="16,12">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="♠ ♥  SANTASE  ♦ ♣"
-                               FontSize="16"
+                <Border StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
+                    <VerticalStackLayout Spacing="{ui:Size '8'}">
+                        <Label Text="♠ ♥  BELOT  ♦ ♣"
+                               FontSize="{ui:Size '16'}"
                                FontAttributes="Bold"
                                TextColor="{StaticResource GoldHighlight}" />
                         <Label x:Name="VersionLabel"
-                               FontSize="12"
+                               FontSize="{ui:Size '12'}"
                                TextColor="#C7D2BD" />
                         <Label Text="{loc:Tr Settings_EngineNote}"
-                               FontSize="12"
+                               FontSize="{ui:Size '12'}"
                                TextColor="#C7D2BD" />
                         <Label Text="{loc:Tr Settings_OpenSource}"
-                               FontSize="13"
+                               FontSize="{ui:Size '13'}"
                                TextColor="{StaticResource GoldHighlight}"
                                TextDecorations="Underline">
                             <Label.GestureRecognizers>

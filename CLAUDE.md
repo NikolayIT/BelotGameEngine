@@ -252,6 +252,14 @@ three AI projects, so an `IPlayer` break in any of them breaks the app build too
   `LocalizationManager.cs`. MAUI sits behind two seams: `ISettingsStore` (`SettingsStore.Current`,
   MAUI `Preferences`, set first thing in `MauiProgram`) and `IGameTableHost` (UI timers, vibration,
   leaving the page; `GamePage` implements it). The value converters live in `Converters/`.
+- **Sizes follow the window**: every size in the pages (fonts, cards, gaps, buttons, paddings)
+  is a design size for a small phone written `{ui:Size n}` (the scrolling pages) or
+  `{ui:TableSize n}` (the game table), a binding to `Game/UiScale.cs` that the pages update from
+  their size: the table is designed for 360 x 640 and fits whichever side is short, the scrolling
+  pages grow with the width (views built in code use `Scaling/Ui.Size`). So a phone, a tablet, an
+  emulator at any density and a desktop window show the same picture, never small text in a big
+  empty screen. **No fixed sizes and no `OnIdiom` in the XAML** (`UiScaleTests` checks); the
+  table is capped at 600 design units wide so a landscape window keeps the seats together.
 - **Rating**: an on-device ELO (`PlayerRatingStore`, start 1000, K = 32) by the team formula:
   expected = 1 / (1 + 10^((rivals − (person + partner) / 2) / 400)), the rivals rated as the
   average of their two levels (`Lineup.RivalsElo`). The levels' ratings in `AiLevels` are pair

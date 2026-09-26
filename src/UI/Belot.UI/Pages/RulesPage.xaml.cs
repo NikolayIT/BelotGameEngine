@@ -4,6 +4,7 @@
 
     using Belot.UI.Game;
     using Belot.UI.Localization;
+    using Belot.UI.Scaling;
 
     using Microsoft.Maui.Controls.Shapes;
 
@@ -36,6 +37,19 @@
             this.BuildSections();
         }
 
+        // Sizes follow the window (see UiScale); the lists built in code are rebuilt at a new scale.
+        protected override void OnSizeAllocated(double width, double height)
+        {
+            base.OnSizeAllocated(width, height);
+            var scale = UiScale.Current.Page;
+            UiScale.Current.Update(width, height);
+            this.ContentColumn.WidthRequest = PageColumn.Width(width);
+            if (UiScale.Current.Page != scale)
+            {
+                this.BuildSections();
+            }
+        }
+
         private async void OnBack(object? sender, EventArgs e)
         {
             await this.navigation.RunAsync(() => Shell.Current.GoToAsync(".."));
@@ -51,7 +65,7 @@
                 var title = new Label
                 {
                     TextColor = Color.FromArgb("#F4D586"),
-                    FontSize = 16,
+                    FontSize = Ui.Size(16),
                     FontAttributes = FontAttributes.Bold,
                     FormattedText = new FormattedString
                     {
@@ -67,7 +81,7 @@
                 {
                     Text = text[bodyKey],
                     TextColor = Color.FromArgb("#E8EFE2"),
-                    FontSize = 13.5,
+                    FontSize = Ui.Size(13.5),
                     LineHeight = 1.3,
                 };
 
@@ -76,10 +90,10 @@
                     StrokeThickness = 0,
                     StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(14) },
                     BackgroundColor = Color.FromArgb("#26000000"),
-                    Padding = new Thickness(16, 12),
+                    Padding = Ui.Pad(16, 12),
                     Content = new VerticalStackLayout
                     {
-                        Spacing = 6,
+                        Spacing = Ui.Size(6),
                         Children = { title, body },
                     },
                 });

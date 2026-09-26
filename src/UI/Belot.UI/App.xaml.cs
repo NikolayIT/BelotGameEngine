@@ -14,11 +14,14 @@
         {
             var window = new Window(new AppShell());
 #if WINDOWS
-            // A table for four needs room; a phone-shaped window would waste the desktop.
-            window.Width = 1100;
-            window.Height = 820;
-            window.MinimumWidth = 720;
-            window.MinimumHeight = 640;
+            // The table is laid out portrait (like the phone) and scales to the window: open a tall
+            // window that fits the screen, about the proportions of a phone held upright.
+            var display = DeviceDisplay.Current.MainDisplayInfo;
+            var screenHeight = display.Density > 0 ? display.Height / display.Density : 1080;
+            window.Height = Math.Clamp(screenHeight - 120, 600, 980);
+            window.Width = Math.Round(window.Height * 0.66);
+            window.MinimumWidth = 360;
+            window.MinimumHeight = 560;
 #endif
             return window;
         }

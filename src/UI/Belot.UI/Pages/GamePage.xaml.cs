@@ -25,6 +25,9 @@
         public GamePage()
         {
             this.InitializeComponent();
+
+            // The hand's cards overlap more on a narrow screen, so all eight fit the width.
+            this.HandStack.SetBinding(StackBase.SpacingProperty, new Binding(nameof(UiScale.HandSpacing), source: UiScale.Current));
         }
 
         public string PlayerName { get; set; } = string.Empty;
@@ -101,6 +104,19 @@
 
             this.session = null;
             this.started = false;
+        }
+
+        // Everything on the table is sized for this page's size (see UiScale).
+        protected override void OnSizeAllocated(double width, double height)
+        {
+            base.OnSizeAllocated(width, height);
+            UiScale.Current.Update(width, height);
+
+            // The whole width, but never wider than a tall tablet: a wide window keeps the four seats together.
+            if (width > 0)
+            {
+                this.TableGrid.WidthRequest = Math.Min(width, UiScale.TableMaxDesignWidth * UiScale.Current.Table);
+            }
         }
 
         protected override bool OnBackButtonPressed()

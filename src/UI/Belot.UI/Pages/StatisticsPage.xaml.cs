@@ -6,6 +6,7 @@
 
     using Belot.UI.Game;
     using Belot.UI.Localization;
+    using Belot.UI.Scaling;
 
     using Microsoft.Maui.Controls.Shapes;
 
@@ -23,6 +24,19 @@
         {
             base.OnAppearing();
             this.Populate();
+        }
+
+        // Sizes follow the window (see UiScale); the lists built in code are rebuilt at a new scale.
+        protected override void OnSizeAllocated(double width, double height)
+        {
+            base.OnSizeAllocated(width, height);
+            var scale = UiScale.Current.Page;
+            UiScale.Current.Update(width, height);
+            this.ContentColumn.WidthRequest = PageColumn.Width(width);
+            if (UiScale.Current.Page != scale)
+            {
+                this.Populate();
+            }
         }
 
         private static string BuildStreakText(LocalizationManager mgr)
@@ -47,7 +61,7 @@
             var avatar = new Label
             {
                 Text = level.Avatar,
-                FontSize = 20,
+                FontSize = Ui.Size(20),
                 VerticalOptions = LayoutOptions.Center,
             };
 
@@ -55,7 +69,7 @@
             {
                 Text = level.DisplayName,
                 TextColor = Colors.White,
-                FontSize = 15,
+                FontSize = Ui.Size(15),
                 FontAttributes = FontAttributes.Bold,
             };
 
@@ -63,19 +77,19 @@
             {
                 Text = games > 0 ? mgr.Format("Stats_GamesFormat", games) : mgr["Stats_NotPlayed"],
                 TextColor = Color.FromArgb("#B9C7B0"),
-                FontSize = 11,
+                FontSize = Ui.Size(11),
             };
 
             var middle = new VerticalStackLayout
             {
-                Spacing = 2,
+                Spacing = Ui.Size(2),
                 VerticalOptions = LayoutOptions.Center,
                 Children = { name, sub },
             };
 
             var right = new VerticalStackLayout
             {
-                Spacing = 2,
+                Spacing = Ui.Size(2),
                 VerticalOptions = LayoutOptions.Center,
             };
 
@@ -85,7 +99,7 @@
                 {
                     Text = $"{wins}{mgr["History_Win"]} – {games - wins}{mgr["History_Loss"]}",
                     TextColor = Color.FromArgb("#F4D586"),
-                    FontSize = 15,
+                    FontSize = Ui.Size(15),
                     FontAttributes = FontAttributes.Bold,
                     HorizontalOptions = LayoutOptions.End,
                 });
@@ -93,14 +107,14 @@
                 {
                     Text = StatsText.WinRate(wins, games),
                     TextColor = Color.FromArgb("#B9C7B0"),
-                    FontSize = 11,
+                    FontSize = Ui.Size(11),
                     HorizontalOptions = LayoutOptions.End,
                 });
             }
 
             var grid = new Grid
             {
-                ColumnSpacing = 12,
+                ColumnSpacing = Ui.Size(12),
                 ColumnDefinitions =
                 {
                     new ColumnDefinition(GridLength.Auto),
@@ -117,7 +131,7 @@
                 StrokeThickness = 0,
                 StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(12) },
                 BackgroundColor = Color.FromArgb("#26000000"),
-                Padding = new Thickness(14, 10),
+                Padding = Ui.Pad(14, 10),
                 Content = grid,
             };
         }
@@ -129,13 +143,13 @@
                 StrokeThickness = 0,
                 StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(6) },
                 BackgroundColor = entry.Won ? Color.FromArgb("#1FA15A") : Color.FromArgb("#C0504D"),
-                Padding = new Thickness(9, 2),
+                Padding = Ui.Pad(9, 2),
                 VerticalOptions = LayoutOptions.Center,
                 Content = new Label
                 {
                     Text = entry.Won ? mgr["History_Win"] : mgr["History_Loss"],
                     TextColor = Colors.White,
-                    FontSize = 12,
+                    FontSize = Ui.Size(12),
                     FontAttributes = FontAttributes.Bold,
                 },
             };
@@ -144,7 +158,7 @@
             {
                 Text = entry.ScoreText,
                 TextColor = Colors.White,
-                FontSize = 14,
+                FontSize = Ui.Size(14),
                 FontAttributes = FontAttributes.Bold,
                 VerticalOptions = LayoutOptions.Center,
             };
@@ -153,7 +167,7 @@
             {
                 Text = mgr.Format("History_With", entry.PartnerName, entry.RivalsName),
                 TextColor = Color.FromArgb("#C7D2BD"),
-                FontSize = 13,
+                FontSize = Ui.Size(13),
                 VerticalOptions = LayoutOptions.Center,
                 LineBreakMode = LineBreakMode.TailTruncation,
             };
@@ -162,13 +176,13 @@
             {
                 Text = entry.WhenUtc.ToLocalTime().ToString("d MMM", CultureInfo.CurrentCulture),
                 TextColor = Color.FromArgb("#8FA695"),
-                FontSize = 11,
+                FontSize = Ui.Size(11),
                 VerticalOptions = LayoutOptions.Center,
             };
 
             var grid = new Grid
             {
-                ColumnSpacing = 12,
+                ColumnSpacing = Ui.Size(12),
                 ColumnDefinitions =
                 {
                     new ColumnDefinition(GridLength.Auto),
@@ -187,7 +201,7 @@
                 StrokeThickness = 0,
                 StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(10) },
                 BackgroundColor = Color.FromArgb("#1E000000"),
-                Padding = new Thickness(12, 8),
+                Padding = Ui.Pad(12, 8),
                 Content = grid,
             };
         }

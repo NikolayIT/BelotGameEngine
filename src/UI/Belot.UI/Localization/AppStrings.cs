@@ -26,7 +26,7 @@
             ["Start_SeeAll"] = "See all",
             ["Start_NoHistory"] = "No games yet. Pick your partner and rivals and play!",
             ["Start_YourRating"] = "Your rating",
-            ["Start_RecordFormat"] = "{0} games · {1} won · {2} lost",
+            ["Start_RecordFormat"] = "Games: {0} · Won: {1} · Lost: {2}",
             ["Start_NoGames"] = "Play a game to get rated",
 
             // Computer levels
@@ -107,6 +107,7 @@
             ["Game_Declare"] = "Declare",
             ["Game_DeclareNothing"] = "Don't declare",
             ["Game_BeloteBadge"] = "Belote",
+            ["Game_Dealer"] = "Dealer",
             ["Status_Thinking"] = "{0} is thinking…",
             ["Status_YourBid"] = "Your bid",
             ["Status_YourDeclaration"] = "Declare your combinations",
@@ -232,7 +233,7 @@
             ["Start_SeeAll"] = "Всички",
             ["Start_NoHistory"] = "Още няма игри. Избери партньор и противници и играй!",
             ["Start_YourRating"] = "Твоят рейтинг",
-            ["Start_RecordFormat"] = "{0} игри · {1} победи · {2} загуби",
+            ["Start_RecordFormat"] = "Игри: {0} · Победи: {1} · Загуби: {2}",
             ["Start_NoGames"] = "Изиграй игра, за да получиш рейтинг",
 
             // Computer levels
@@ -313,6 +314,7 @@
             ["Game_Declare"] = "Обяви",
             ["Game_DeclareNothing"] = "Без обява",
             ["Game_BeloteBadge"] = "Белот",
+            ["Game_Dealer"] = "Раздава",
             ["Status_Thinking"] = "{0} мисли…",
             ["Status_YourBid"] = "Твоя обява",
             ["Status_YourDeclaration"] = "Обяви комбинациите си",

@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Every size on the table is a design size for a small phone (360 x 640) scaled to the window
+    ({ui:TableSize n}, see Game/UiScale.cs), so the table looks the same on any screen and density.
+-->
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:game="clr-namespace:Belot.UI.Game"
              xmlns:conv="clr-namespace:Belot.UI.Converters"
              xmlns:loc="clr-namespace:Belot.UI.Localization"
+             xmlns:ui="clr-namespace:Belot.UI.Scaling"
              x:Class="Belot.UI.Pages.GamePage"
              x:Name="ThePage"
              x:DataType="game:GameViewModel"
@@ -12,37 +17,27 @@
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <conv:BoolToOpacityConverter x:Key="BoolToOpacity" />
-            <conv:StringNotEmptyConverter x:Key="NotEmpty" />
             <conv:HexToColorConverter x:Key="HexToColor" />
-
-            <!-- Card sizes: phone / desktop -->
-            <OnIdiom x:Key="HandCardWidth" x:TypeArguments="x:Double" Phone="62" Default="96" />
-            <OnIdiom x:Key="HandCardHeight" x:TypeArguments="x:Double" Phone="86" Default="134" />
-            <OnIdiom x:Key="HandSpacing" x:TypeArguments="x:Double" Phone="-24" Default="-34" />
-            <OnIdiom x:Key="TableCardWidth" x:TypeArguments="x:Double" Phone="62" Default="90" />
-            <OnIdiom x:Key="TableCardHeight" x:TypeArguments="x:Double" Phone="86" Default="125" />
-            <OnIdiom x:Key="BackWidth" x:TypeArguments="x:Double" Phone="30" Default="46" />
-            <OnIdiom x:Key="BackHeight" x:TypeArguments="x:Double" Phone="42" Default="64" />
-            <OnIdiom x:Key="BackSpacing" x:TypeArguments="x:Double" Phone="-20" Default="-30" />
-            <OnIdiom x:Key="SideBackWidth" x:TypeArguments="x:Double" Phone="34" Default="50" />
-            <OnIdiom x:Key="SideBackHeight" x:TypeArguments="x:Double" Phone="47" Default="70" />
-            <OnIdiom x:Key="SideBackSpacing" x:TypeArguments="x:Double" Phone="-35" Default="-50" />
-            <OnIdiom x:Key="SideColumn" x:TypeArguments="GridLength" Phone="70" Default="150" />
-            <OnIdiom x:Key="MiniWidth" x:TypeArguments="x:Double" Phone="22" Default="34" />
-            <OnIdiom x:Key="MiniHeight" x:TypeArguments="x:Double" Phone="30" Default="47" />
 
             <Style x:Key="Pill" TargetType="Border">
                 <Setter Property="StrokeShape" Value="RoundRectangle 12" />
                 <Setter Property="StrokeThickness" Value="0" />
-                <Setter Property="Padding" Value="10,4" />
+                <Setter Property="Padding" Value="{ui:TableSize '9,4'}" />
                 <Setter Property="BackgroundColor" Value="#33000000" />
             </Style>
             <Style x:Key="Bubble" TargetType="Border">
                 <Setter Property="StrokeShape" Value="RoundRectangle 10" />
                 <Setter Property="StrokeThickness" Value="0" />
-                <Setter Property="Padding" Value="8,2" />
+                <Setter Property="Padding" Value="{ui:TableSize '8,2'}" />
                 <Setter Property="BackgroundColor" Value="#F8F4E6" />
+                <Setter Property="HorizontalOptions" Value="Center" />
+            </Style>
+            <Style x:Key="DealerChip" TargetType="Border">
+                <Setter Property="StrokeShape" Value="RoundRectangle 6" />
+                <Setter Property="StrokeThickness" Value="0" />
+                <Setter Property="Padding" Value="{ui:TableSize '5,0'}" />
+                <Setter Property="BackgroundColor" Value="{StaticResource GoldAccent}" />
+                <Setter Property="VerticalOptions" Value="Center" />
                 <Setter Property="HorizontalOptions" Value="Center" />
             </Style>
             <Style x:Key="TableCard" TargetType="Border">
@@ -54,14 +49,23 @@
                     <Shadow Brush="Black" Opacity="0.6" Radius="8" Offset="2,3" />
                 </Setter>
             </Style>
+            <Style x:Key="TableCardImage" TargetType="Image">
+                <Setter Property="WidthRequest" Value="{ui:TableSize 66}" />
+                <Setter Property="HeightRequest" Value="{ui:TableSize 92}" />
+                <Setter Property="Aspect" Value="AspectFit" />
+            </Style>
+            <Style x:Key="MiniCard" TargetType="Image">
+                <Setter Property="WidthRequest" Value="{ui:TableSize 24}" />
+                <Setter Property="HeightRequest" Value="{ui:TableSize 33}" />
+            </Style>
             <Style x:Key="BidButton" TargetType="Button">
-                <Setter Property="HeightRequest" Value="46" />
-                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="HeightRequest" Value="{ui:TableSize 40}" />
+                <Setter Property="CornerRadius" Value="{ui:TableSize 10}" />
                 <Setter Property="FontAttributes" Value="Bold" />
                 <Setter Property="BackgroundColor" Value="White" />
                 <Setter Property="BorderColor" Value="#33000000" />
                 <Setter Property="BorderWidth" Value="1" />
-                <Setter Property="Padding" Value="4,0" />
+                <Setter Property="Padding" Value="{ui:TableSize '4,0'}" />
             </Style>
         </ResourceDictionary>
     </ContentPage.Resources>
@@ -75,181 +79,189 @@
             </RadialGradientBrush>
         </Grid.Background>
 
-        <!-- ===== The table ===== -->
-        <Grid Padding="8,10" RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="4">
+        <!-- ===== The table (never wider than a tall tablet: a wide window keeps the four seats together) ===== -->
+        <Grid x:Name="TableGrid" Padding="{ui:TableSize '8,8'}" RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="{ui:TableSize 4}" HorizontalOptions="Center">
 
-            <!-- Row 0: scores, hanging points, contract. Right margin keeps clear of the Menu button. -->
-            <FlexLayout Grid.Row="0" Wrap="Wrap" AlignItems="Center" Margin="0,0,58,0">
-                <Border Style="{StaticResource Pill}" Margin="0,0,6,4" BackgroundColor="{StaticResource GoldHighlight}">
-                    <Label TextColor="#1A1006" FontSize="14">
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="{loc:Tr Game_Us}" />
-                                <Span Text="  " />
-                                <Span Text="{Binding UsPointsDisplay}" FontAttributes="Bold" />
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
-                </Border>
-                <Border Style="{StaticResource Pill}" Margin="0,0,6,4" BackgroundColor="#1A1006">
-                    <Label TextColor="{StaticResource GoldHighlight}" FontSize="14">
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="{loc:Tr Game_Them}" TextColor="#D8C9A0" />
-                                <Span Text="  " />
-                                <Span Text="{Binding ThemPointsDisplay}" FontAttributes="Bold" />
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
-                </Border>
-                <Border Style="{StaticResource Pill}" Margin="0,0,6,4" IsVisible="{Binding HasHanging}">
-                    <Label TextColor="White" FontSize="12">
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="{loc:Tr Game_Hanging}" />
-                                <Span Text=" " />
-                                <Span Text="{Binding HangingPoints}" FontAttributes="Bold" />
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
-                </Border>
-                <Border Style="{StaticResource Pill}" Margin="0,0,6,4" BackgroundColor="#F8F4E6" IsVisible="{Binding HasContract}">
-                    <Label FontSize="13">
-                        <Label.FormattedText>
-                            <FormattedString>
-                                <Span Text="{Binding ContractText}" FontAttributes="Bold" TextColor="{Binding ContractColor, Converter={StaticResource HexToColor}}" />
-                                <Span Text=" · " TextColor="#6F5A2A" />
-                                <Span Text="{Binding DeclarerName}" TextColor="#1A1006" />
-                            </FormattedString>
-                        </Label.FormattedText>
-                    </Label>
-                </Border>
-            </FlexLayout>
-
-            <!-- Row 1: North, the partner -->
-            <VerticalStackLayout Grid.Row="1" Spacing="3" HorizontalOptions="Center" BindingContext="{Binding North}" x:DataType="game:SeatViewModel">
-                <Border Style="{StaticResource Pill}" Opacity="{Binding TurnOpacity}" HorizontalOptions="Center">
-                    <HorizontalStackLayout Spacing="6">
-                        <Ellipse WidthRequest="8" HeightRequest="8" Fill="{StaticResource GoldAccentBrush}" VerticalOptions="Center" IsVisible="{Binding IsToMove}" />
-                        <Label Text="{Binding Name}" TextColor="White" FontAttributes="Bold" FontSize="13" VerticalOptions="Center" />
-                        <Label Text="🂠" IsVisible="{Binding IsDealer}" TextColor="{StaticResource GoldHighlight}" FontSize="13" VerticalOptions="Center" />
-                    </HorizontalStackLayout>
-                </Border>
-                <HorizontalStackLayout Spacing="{StaticResource BackSpacing}" HorizontalOptions="Center" BindableLayout.ItemsSource="{Binding Backs}">
-                    <BindableLayout.ItemTemplate>
-                        <DataTemplate x:DataType="game:CardSlot">
-                            <Image Source="{Binding ImageSource}" WidthRequest="{StaticResource BackWidth}" HeightRequest="{StaticResource BackHeight}" Aspect="AspectFit" />
-                        </DataTemplate>
-                    </BindableLayout.ItemTemplate>
+            <!-- Row 0: the scores and the menu; under them the contract and the hanging points (the line keeps its height) -->
+            <Grid Grid.Row="0" RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="{ui:TableSize 4}">
+                <HorizontalStackLayout Grid.Row="0" Grid.Column="0" Spacing="{ui:TableSize 6}" VerticalOptions="Center">
+                    <Border Style="{StaticResource Pill}" BackgroundColor="{StaticResource GoldHighlight}">
+                        <Label TextColor="#1A1006" FontSize="{ui:TableSize 13}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span FontSize="{ui:TableSize 13}" Text="{loc:Tr Game_Us}" />
+                                    <Span FontSize="{ui:TableSize 13}" Text="  " />
+                                    <Span FontSize="{ui:TableSize 13}" Text="{Binding UsPointsDisplay}" FontAttributes="Bold" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                    </Border>
+                    <Border Style="{StaticResource Pill}" BackgroundColor="#1A1006">
+                        <Label TextColor="{StaticResource GoldHighlight}" FontSize="{ui:TableSize 13}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span FontSize="{ui:TableSize 13}" Text="{loc:Tr Game_Them}" TextColor="#D8C9A0" />
+                                    <Span FontSize="{ui:TableSize 13}" Text="  " />
+                                    <Span FontSize="{ui:TableSize 13}" Text="{Binding ThemPointsDisplay}" FontAttributes="Bold" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                    </Border>
                 </HorizontalStackLayout>
-                <Border Style="{StaticResource Bubble}" IsVisible="{Binding HasBubble}">
-                    <Label Text="{Binding BubbleText}" TextColor="#1A1006" FontSize="12" FontAttributes="Bold" />
-                </Border>
-                <Label Text="{Binding DeclaredText}" IsVisible="{Binding HasDeclared}" TextColor="#D8C9A0" FontSize="10" HorizontalOptions="Center" />
-            </VerticalStackLayout>
+                <Button Grid.Row="0" Grid.Column="1" Text="{loc:Tr Game_Menu}" Clicked="OnMenuClicked" HorizontalOptions="End" VerticalOptions="Start"
+                        HeightRequest="{ui:TableSize 34}" MinimumWidthRequest="{ui:TableSize 56}" FontSize="{ui:TableSize 13}" Padding="{ui:TableSize '10,0'}" CornerRadius="{ui:TableSize 10}"
+                        BackgroundColor="#88000000" BorderColor="#55FFFFFF" BorderWidth="1" TextColor="White" />
+                <HorizontalStackLayout Grid.Row="1" Grid.ColumnSpan="2" Spacing="{ui:TableSize 6}" MinimumHeightRequest="{ui:TableSize 28}">
+                    <Border Style="{StaticResource Pill}" BackgroundColor="#F8F4E6" IsVisible="{Binding HasContract}">
+                        <Label FontSize="{ui:TableSize 13}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span FontSize="{ui:TableSize 13}" Text="{Binding ContractText}" FontAttributes="Bold" TextColor="{Binding ContractColor, Converter={StaticResource HexToColor}}" />
+                                    <Span FontSize="{ui:TableSize 13}" Text=" · " TextColor="#6F5A2A" />
+                                    <Span FontSize="{ui:TableSize 13}" Text="{Binding DeclarerName}" TextColor="#1A1006" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                    </Border>
+                    <Border Style="{StaticResource Pill}" IsVisible="{Binding HasHanging}">
+                        <Label TextColor="White" FontSize="{ui:TableSize 12}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span FontSize="{ui:TableSize 12}" Text="{loc:Tr Game_Hanging}" />
+                                    <Span FontSize="{ui:TableSize 12}" Text=" " />
+                                    <Span FontSize="{ui:TableSize 12}" Text="{Binding HangingPoints}" FontAttributes="Bold" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                    </Border>
+                </HorizontalStackLayout>
+            </Grid>
+
+            <!-- Row 1: the last trick | North, the partner -->
+            <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*">
+                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Start" VerticalOptions="Center" Spacing="{ui:TableSize 1}" IsVisible="{Binding HasLastTrick}">
+                    <Label Text="{loc:Tr Game_LastTrick}" FontSize="{ui:TableSize 10}" TextColor="#B9C7B0" HorizontalOptions="Center" />
+                    <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,Auto,Auto" RowSpacing="{ui:TableSize -9}" ColumnSpacing="{ui:TableSize -2}">
+                        <Image Grid.Row="0" Grid.Column="1" Style="{StaticResource MiniCard}" Source="{Binding LastTrickNorth.ImageSource, FallbackValue='card_back.png'}" />
+                        <Image Grid.Row="1" Grid.Column="0" Style="{StaticResource MiniCard}" Source="{Binding LastTrickWest.ImageSource, FallbackValue='card_back.png'}" />
+                        <Image Grid.Row="1" Grid.Column="2" Style="{StaticResource MiniCard}" Source="{Binding LastTrickEast.ImageSource, FallbackValue='card_back.png'}" />
+                        <Image Grid.Row="2" Grid.Column="1" Style="{StaticResource MiniCard}" Source="{Binding LastTrickSouth.ImageSource, FallbackValue='card_back.png'}" />
+                    </Grid>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="1" Spacing="{ui:TableSize 3}" HorizontalOptions="Center" BindingContext="{Binding North}" x:DataType="game:SeatViewModel">
+                    <Border Style="{StaticResource Pill}" Opacity="{Binding TurnOpacity}" HorizontalOptions="Center">
+                        <HorizontalStackLayout Spacing="{ui:TableSize 6}">
+                            <Ellipse WidthRequest="{ui:TableSize 9}" HeightRequest="{ui:TableSize 9}" Fill="{StaticResource GoldAccentBrush}" VerticalOptions="Center" IsVisible="{Binding IsToMove}" />
+                            <Label Text="{Binding Name}" TextColor="White" FontAttributes="Bold" FontSize="{ui:TableSize 13}" VerticalOptions="Center" />
+                            <Border Style="{StaticResource DealerChip}" IsVisible="{Binding IsDealer}">
+                                <Label Text="{loc:Tr Game_Dealer}" TextColor="#1A1006" FontAttributes="Bold" FontSize="{ui:TableSize 10}" />
+                            </Border>
+                        </HorizontalStackLayout>
+                    </Border>
+                    <HorizontalStackLayout Spacing="{ui:TableSize -23}" HorizontalOptions="Center" BindableLayout.ItemsSource="{Binding Backs}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="game:CardSlot">
+                                <Image Source="{Binding ImageSource}" WidthRequest="{ui:TableSize 34}" HeightRequest="{ui:TableSize 47}" Aspect="AspectFit" />
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
+                    <Border Style="{StaticResource Bubble}" IsVisible="{Binding HasBubble}">
+                        <Label Text="{Binding BubbleText}" TextColor="#1A1006" FontSize="{ui:TableSize 13}" FontAttributes="Bold" />
+                    </Border>
+                    <Label Text="{Binding DeclaredText}" IsVisible="{Binding HasDeclared}" TextColor="#D8C9A0" FontSize="{ui:TableSize 10}" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Grid>
 
             <!-- Row 2: West | the trick | East -->
-            <Grid Grid.Row="2" ColumnSpacing="4" x:Name="MiddleRow">
+            <Grid Grid.Row="2" ColumnSpacing="{ui:TableSize 4}" x:Name="MiddleRow">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="{StaticResource SideColumn}" />
+                    <ColumnDefinition Width="{ui:TableSize 80}" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="{StaticResource SideColumn}" />
+                    <ColumnDefinition Width="{ui:TableSize 80}" />
                 </Grid.ColumnDefinitions>
 
                 <!-- West -->
-                <VerticalStackLayout Grid.Column="0" Spacing="4" VerticalOptions="Center" HorizontalOptions="Center" BindingContext="{Binding West}" x:DataType="game:SeatViewModel">
-                    <Border Style="{StaticResource Pill}" Opacity="{Binding TurnOpacity}" Padding="6,3">
-                        <VerticalStackLayout Spacing="1">
-                            <Ellipse WidthRequest="8" HeightRequest="8" Fill="{StaticResource GoldAccentBrush}" HorizontalOptions="Center" IsVisible="{Binding IsToMove}" />
-                            <Label Text="{Binding Name}" TextColor="White" FontAttributes="Bold" FontSize="12" HorizontalOptions="Center" />
-                            <Label Text="🂠" IsVisible="{Binding IsDealer}" TextColor="{StaticResource GoldHighlight}" FontSize="12" HorizontalOptions="Center" />
+                <VerticalStackLayout Grid.Column="0" Spacing="{ui:TableSize 4}" VerticalOptions="Start" HorizontalOptions="Fill" Margin="{ui:TableSize '0,6,0,0'}" BindingContext="{Binding West}" x:DataType="game:SeatViewModel">
+                    <Border Style="{StaticResource Pill}" Opacity="{Binding TurnOpacity}" Padding="{ui:TableSize '5,3'}">
+                        <VerticalStackLayout Spacing="{ui:TableSize 2}">
+                            <Ellipse WidthRequest="{ui:TableSize 9}" HeightRequest="{ui:TableSize 9}" Fill="{StaticResource GoldAccentBrush}" HorizontalOptions="Center" IsVisible="{Binding IsToMove}" />
+                            <Label Text="{Binding Name}" TextColor="White" FontAttributes="Bold" FontSize="{ui:TableSize 12}" MaxLines="2" HorizontalTextAlignment="Center" />
+                            <Border Style="{StaticResource DealerChip}" IsVisible="{Binding IsDealer}">
+                                <Label Text="{loc:Tr Game_Dealer}" TextColor="#1A1006" FontAttributes="Bold" FontSize="{ui:TableSize 10}" />
+                            </Border>
                         </VerticalStackLayout>
                     </Border>
-                    <VerticalStackLayout Spacing="{StaticResource SideBackSpacing}" HorizontalOptions="Center" BindableLayout.ItemsSource="{Binding Backs}">
+                    <Border Style="{StaticResource Bubble}" IsVisible="{Binding HasBubble}">
+                        <Label Text="{Binding BubbleText}" TextColor="#1A1006" FontSize="{ui:TableSize 13}" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                    </Border>
+                    <Label Text="{Binding DeclaredText}" IsVisible="{Binding HasDeclared}" TextColor="#D8C9A0" FontSize="{ui:TableSize 10}" HorizontalTextAlignment="Center" />
+                    <VerticalStackLayout Spacing="{ui:TableSize -40}" HorizontalOptions="Center" BindableLayout.ItemsSource="{Binding Backs}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="game:CardSlot">
-                                <Image Source="{Binding ImageSource}" WidthRequest="{StaticResource SideBackWidth}" HeightRequest="{StaticResource SideBackHeight}" Aspect="AspectFit" />
+                                <Image Source="{Binding ImageSource}" WidthRequest="{ui:TableSize 38}" HeightRequest="{ui:TableSize 53}" Aspect="AspectFit" />
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
-                    <Border Style="{StaticResource Bubble}" IsVisible="{Binding HasBubble}">
-                        <Label Text="{Binding BubbleText}" TextColor="#1A1006" FontSize="12" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                    </Border>
-                    <Label Text="{Binding DeclaredText}" IsVisible="{Binding HasDeclared}" TextColor="#D8C9A0" FontSize="10" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
 
-                <!-- The trick in progress (and the last trick in the corner) -->
-                <Grid Grid.Column="1" MinimumHeightRequest="200">
-                    <!-- Last trick: a small cross in the top-left corner -->
-                    <VerticalStackLayout HorizontalOptions="Start" VerticalOptions="Start" Spacing="1" IsVisible="{Binding HasLastTrick}">
-                        <Label Text="{loc:Tr Game_LastTrick}" FontSize="9" TextColor="#B9C7B0" HorizontalOptions="Center" />
-                        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,Auto,Auto" RowSpacing="-8" ColumnSpacing="-2">
-                            <Image Grid.Row="0" Grid.Column="1" Source="{Binding LastTrickNorth.ImageSource, FallbackValue='card_back.png'}" WidthRequest="{StaticResource MiniWidth}" HeightRequest="{StaticResource MiniHeight}" />
-                            <Image Grid.Row="1" Grid.Column="0" Source="{Binding LastTrickWest.ImageSource, FallbackValue='card_back.png'}" WidthRequest="{StaticResource MiniWidth}" HeightRequest="{StaticResource MiniHeight}" />
-                            <Image Grid.Row="1" Grid.Column="2" Source="{Binding LastTrickEast.ImageSource, FallbackValue='card_back.png'}" WidthRequest="{StaticResource MiniWidth}" HeightRequest="{StaticResource MiniHeight}" />
-                            <Image Grid.Row="2" Grid.Column="1" Source="{Binding LastTrickSouth.ImageSource, FallbackValue='card_back.png'}" WidthRequest="{StaticResource MiniWidth}" HeightRequest="{StaticResource MiniHeight}" />
-                        </Grid>
-                    </VerticalStackLayout>
-
-                    <Border x:Name="NorthPlayed" Style="{StaticResource TableCard}" TranslationY="{OnIdiom Phone=-54, Default=-80}" Rotation="-3"
+                <!-- The trick in progress -->
+                <Grid Grid.Column="1">
+                    <Border x:Name="NorthPlayed" Style="{StaticResource TableCard}" TranslationY="{ui:TableSize -56}" Rotation="-3"
                             IsVisible="{Binding North.HasPlayedCard}">
-                        <Image Source="{Binding North.PlayedCard.ImageSource, FallbackValue='card_back.png'}" WidthRequest="{StaticResource TableCardWidth}" HeightRequest="{StaticResource TableCardHeight}" Aspect="AspectFit" />
+                        <Image Style="{StaticResource TableCardImage}" Source="{Binding North.PlayedCard.ImageSource, FallbackValue='card_back.png'}" />
                     </Border>
-                    <Border x:Name="WestPlayed" Style="{StaticResource TableCard}" TranslationX="{OnIdiom Phone=-46, Default=-70}" Rotation="-6"
+                    <Border x:Name="WestPlayed" Style="{StaticResource TableCard}" TranslationX="{ui:TableSize -50}" Rotation="-6"
                             IsVisible="{Binding West.HasPlayedCard}">
-                        <Image Source="{Binding West.PlayedCard.ImageSource, FallbackValue='card_back.png'}" WidthRequest="{StaticResource TableCardWidth}" HeightRequest="{StaticResource TableCardHeight}" Aspect="AspectFit" />
+                        <Image Style="{StaticResource TableCardImage}" Source="{Binding West.PlayedCard.ImageSource, FallbackValue='card_back.png'}" />
                     </Border>
-                    <Border x:Name="EastPlayed" Style="{StaticResource TableCard}" TranslationX="{OnIdiom Phone=46, Default=70}" Rotation="5"
+                    <Border x:Name="EastPlayed" Style="{StaticResource TableCard}" TranslationX="{ui:TableSize 50}" Rotation="5"
                             IsVisible="{Binding East.HasPlayedCard}">
-                        <Image Source="{Binding East.PlayedCard.ImageSource, FallbackValue='card_back.png'}" WidthRequest="{StaticResource TableCardWidth}" HeightRequest="{StaticResource TableCardHeight}" Aspect="AspectFit" />
+                        <Image Style="{StaticResource TableCardImage}" Source="{Binding East.PlayedCard.ImageSource, FallbackValue='card_back.png'}" />
                     </Border>
-                    <Border x:Name="SouthPlayed" Style="{StaticResource TableCard}" TranslationY="{OnIdiom Phone=54, Default=80}" Rotation="3"
+                    <Border x:Name="SouthPlayed" Style="{StaticResource TableCard}" TranslationY="{ui:TableSize 56}" Rotation="3"
                             IsVisible="{Binding South.HasPlayedCard}">
-                        <Image Source="{Binding South.PlayedCard.ImageSource, FallbackValue='card_back.png'}" WidthRequest="{StaticResource TableCardWidth}" HeightRequest="{StaticResource TableCardHeight}" Aspect="AspectFit" />
-                    </Border>
-
-                    <!-- Status pill -->
-                    <Border Style="{StaticResource Pill}" BackgroundColor="#3D000000" HorizontalOptions="Center" VerticalOptions="End"
-                            IsVisible="{Binding StatusMessage, Converter={StaticResource NotEmpty}}">
-                        <Label Text="{Binding StatusMessage}" TextColor="#E6FFFFFF" FontSize="12" HorizontalTextAlignment="Center" />
+                        <Image Style="{StaticResource TableCardImage}" Source="{Binding South.PlayedCard.ImageSource, FallbackValue='card_back.png'}" />
                     </Border>
                 </Grid>
 
                 <!-- East -->
-                <VerticalStackLayout Grid.Column="2" Spacing="4" VerticalOptions="Center" HorizontalOptions="Center" BindingContext="{Binding East}" x:DataType="game:SeatViewModel">
-                    <Border Style="{StaticResource Pill}" Opacity="{Binding TurnOpacity}" Padding="6,3">
-                        <VerticalStackLayout Spacing="1">
-                            <Ellipse WidthRequest="8" HeightRequest="8" Fill="{StaticResource GoldAccentBrush}" HorizontalOptions="Center" IsVisible="{Binding IsToMove}" />
-                            <Label Text="{Binding Name}" TextColor="White" FontAttributes="Bold" FontSize="12" HorizontalOptions="Center" />
-                            <Label Text="🂠" IsVisible="{Binding IsDealer}" TextColor="{StaticResource GoldHighlight}" FontSize="12" HorizontalOptions="Center" />
+                <VerticalStackLayout Grid.Column="2" Spacing="{ui:TableSize 4}" VerticalOptions="Start" HorizontalOptions="Fill" Margin="{ui:TableSize '0,6,0,0'}" BindingContext="{Binding East}" x:DataType="game:SeatViewModel">
+                    <Border Style="{StaticResource Pill}" Opacity="{Binding TurnOpacity}" Padding="{ui:TableSize '5,3'}">
+                        <VerticalStackLayout Spacing="{ui:TableSize 2}">
+                            <Ellipse WidthRequest="{ui:TableSize 9}" HeightRequest="{ui:TableSize 9}" Fill="{StaticResource GoldAccentBrush}" HorizontalOptions="Center" IsVisible="{Binding IsToMove}" />
+                            <Label Text="{Binding Name}" TextColor="White" FontAttributes="Bold" FontSize="{ui:TableSize 12}" MaxLines="2" HorizontalTextAlignment="Center" />
+                            <Border Style="{StaticResource DealerChip}" IsVisible="{Binding IsDealer}">
+                                <Label Text="{loc:Tr Game_Dealer}" TextColor="#1A1006" FontAttributes="Bold" FontSize="{ui:TableSize 10}" />
+                            </Border>
                         </VerticalStackLayout>
                     </Border>
-                    <VerticalStackLayout Spacing="{StaticResource SideBackSpacing}" HorizontalOptions="Center" BindableLayout.ItemsSource="{Binding Backs}">
+                    <Border Style="{StaticResource Bubble}" IsVisible="{Binding HasBubble}">
+                        <Label Text="{Binding BubbleText}" TextColor="#1A1006" FontSize="{ui:TableSize 13}" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                    </Border>
+                    <Label Text="{Binding DeclaredText}" IsVisible="{Binding HasDeclared}" TextColor="#D8C9A0" FontSize="{ui:TableSize 10}" HorizontalTextAlignment="Center" />
+                    <VerticalStackLayout Spacing="{ui:TableSize -40}" HorizontalOptions="Center" BindableLayout.ItemsSource="{Binding Backs}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="game:CardSlot">
-                                <Image Source="{Binding ImageSource}" WidthRequest="{StaticResource SideBackWidth}" HeightRequest="{StaticResource SideBackHeight}" Aspect="AspectFit" />
+                                <Image Source="{Binding ImageSource}" WidthRequest="{ui:TableSize 38}" HeightRequest="{ui:TableSize 53}" Aspect="AspectFit" />
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
-                    <Border Style="{StaticResource Bubble}" IsVisible="{Binding HasBubble}">
-                        <Label Text="{Binding BubbleText}" TextColor="#1A1006" FontSize="12" FontAttributes="Bold" HorizontalTextAlignment="Center" />
-                    </Border>
-                    <Label Text="{Binding DeclaredText}" IsVisible="{Binding HasDeclared}" TextColor="#D8C9A0" FontSize="10" HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
             </Grid>
 
-            <!-- Bidding panel (over the empty South spot of the table) -->
+            <!-- Bidding panel (over the empty trick area) -->
             <Border Grid.Row="2" IsVisible="{Binding IsBidPanelVisible}" x:Name="BidPanel"
                     StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="#F8F4E6"
-                    Padding="14,10" HorizontalOptions="Center" VerticalOptions="End" WidthRequest="320">
+                    Padding="{ui:TableSize '12,8'}" HorizontalOptions="Center" VerticalOptions="End" WidthRequest="{ui:TableSize 326}">
                 <Border.Shadow>
                     <Shadow Brush="Black" Opacity="0.5" Radius="14" Offset="0,3" />
                 </Border.Shadow>
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="{loc:Tr Game_YourBid}" FontSize="15" FontAttributes="Bold" TextColor="#0B3D1A" HorizontalOptions="Center" />
-                    <Label Text="{Binding CurrentBidText}" FontSize="12" TextColor="#6F5A2A" HorizontalOptions="Center" />
-                    <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="6">
-                        <Button Grid.Column="0" BindingContext="{Binding BidOptions[0]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="♣" FontSize="26"
+                <VerticalStackLayout Spacing="{ui:TableSize 6}">
+                    <Label Text="{loc:Tr Game_YourBid}" FontSize="{ui:TableSize 15}" FontAttributes="Bold" TextColor="#0B3D1A" HorizontalOptions="Center" />
+                    <Label Text="{Binding CurrentBidText}" FontSize="{ui:TableSize 12}" TextColor="#6F5A2A" HorizontalOptions="Center" />
+                    <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="{ui:TableSize 6}">
+                        <Button Grid.Column="0" BindingContext="{Binding BidOptions[0]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="♣" FontSize="{ui:TableSize 24}"
                                 TextColor="{Binding TextColor, Converter={StaticResource HexToColor}}" IsEnabled="{Binding IsEnabled}" Opacity="{Binding Opacity}"
                                 Command="{Binding Source={x:Reference ThePage}, Path=BindingContext.BidCommand}" CommandParameter="{Binding}">
                             <Button.Triggers>
@@ -259,7 +271,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
-                        <Button Grid.Column="1" BindingContext="{Binding BidOptions[1]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="♦" FontSize="26"
+                        <Button Grid.Column="1" BindingContext="{Binding BidOptions[1]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="♦" FontSize="{ui:TableSize 24}"
                                 TextColor="{Binding TextColor, Converter={StaticResource HexToColor}}" IsEnabled="{Binding IsEnabled}" Opacity="{Binding Opacity}"
                                 Command="{Binding Source={x:Reference ThePage}, Path=BindingContext.BidCommand}" CommandParameter="{Binding}">
                             <Button.Triggers>
@@ -269,7 +281,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
-                        <Button Grid.Column="2" BindingContext="{Binding BidOptions[2]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="♥" FontSize="26"
+                        <Button Grid.Column="2" BindingContext="{Binding BidOptions[2]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="♥" FontSize="{ui:TableSize 24}"
                                 TextColor="{Binding TextColor, Converter={StaticResource HexToColor}}" IsEnabled="{Binding IsEnabled}" Opacity="{Binding Opacity}"
                                 Command="{Binding Source={x:Reference ThePage}, Path=BindingContext.BidCommand}" CommandParameter="{Binding}">
                             <Button.Triggers>
@@ -279,7 +291,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
-                        <Button Grid.Column="3" BindingContext="{Binding BidOptions[3]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="♠" FontSize="26"
+                        <Button Grid.Column="3" BindingContext="{Binding BidOptions[3]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="♠" FontSize="{ui:TableSize 24}"
                                 TextColor="{Binding TextColor, Converter={StaticResource HexToColor}}" IsEnabled="{Binding IsEnabled}" Opacity="{Binding Opacity}"
                                 Command="{Binding Source={x:Reference ThePage}, Path=BindingContext.BidCommand}" CommandParameter="{Binding}">
                             <Button.Triggers>
@@ -290,8 +302,8 @@
                             </Button.Triggers>
                         </Button>
                     </Grid>
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="6">
-                        <Button Grid.Column="0" BindingContext="{Binding BidOptions[4]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="{Binding Text}" FontSize="14"
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="{ui:TableSize 6}">
+                        <Button Grid.Column="0" BindingContext="{Binding BidOptions[4]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="{Binding Text}" FontSize="{ui:TableSize 15}"
                                 TextColor="#1A1006" IsEnabled="{Binding IsEnabled}" Opacity="{Binding Opacity}"
                                 Command="{Binding Source={x:Reference ThePage}, Path=BindingContext.BidCommand}" CommandParameter="{Binding}">
                             <Button.Triggers>
@@ -301,7 +313,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
-                        <Button Grid.Column="1" BindingContext="{Binding BidOptions[5]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="{Binding Text}" FontSize="14"
+                        <Button Grid.Column="1" BindingContext="{Binding BidOptions[5]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="{Binding Text}" FontSize="{ui:TableSize 15}"
                                 TextColor="#1A1006" IsEnabled="{Binding IsEnabled}" Opacity="{Binding Opacity}"
                                 Command="{Binding Source={x:Reference ThePage}, Path=BindingContext.BidCommand}" CommandParameter="{Binding}">
                             <Button.Triggers>
@@ -312,8 +324,8 @@
                             </Button.Triggers>
                         </Button>
                     </Grid>
-                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6">
-                        <Button Grid.Column="0" BindingContext="{Binding BidOptions[6]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="{Binding Text}" FontSize="13"
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{ui:TableSize 6}">
+                        <Button Grid.Column="0" BindingContext="{Binding BidOptions[6]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="{Binding Text}" FontSize="{ui:TableSize 14}"
                                 TextColor="#8A1C1C" IsVisible="{Binding IsVisible}" IsEnabled="{Binding IsEnabled}"
                                 Command="{Binding Source={x:Reference ThePage}, Path=BindingContext.BidCommand}" CommandParameter="{Binding}">
                             <Button.Triggers>
@@ -323,7 +335,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
-                        <Button Grid.Column="1" BindingContext="{Binding BidOptions[7]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="{Binding Text}" FontSize="13"
+                        <Button Grid.Column="1" BindingContext="{Binding BidOptions[7]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="{Binding Text}" FontSize="{ui:TableSize 14}"
                                 TextColor="#8A1C1C" IsVisible="{Binding IsVisible}" IsEnabled="{Binding IsEnabled}"
                                 Command="{Binding Source={x:Reference ThePage}, Path=BindingContext.BidCommand}" CommandParameter="{Binding}">
                             <Button.Triggers>
@@ -333,7 +345,7 @@
                                 </DataTrigger>
                             </Button.Triggers>
                         </Button>
-                        <Button Grid.Column="2" BindingContext="{Binding BidOptions[8]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="{Binding Text}" FontSize="15"
+                        <Button Grid.Column="2" BindingContext="{Binding BidOptions[8]}" x:DataType="game:BidOption" Style="{StaticResource BidButton}" Text="{Binding Text}" FontSize="{ui:TableSize 16}"
                                 BackgroundColor="{StaticResource GoldAccent}" TextColor="#1A1006" IsEnabled="{Binding IsEnabled}"
                                 Command="{Binding Source={x:Reference ThePage}, Path=BindingContext.BidCommand}" CommandParameter="{Binding}">
                             <Button.Triggers>
@@ -350,16 +362,16 @@
             <!-- Declaration panel -->
             <Border Grid.Row="2" IsVisible="{Binding IsAnnouncePanelVisible}" x:Name="AnnouncePanel"
                     StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="#F8F4E6"
-                    Padding="14,10" HorizontalOptions="Center" VerticalOptions="End" WidthRequest="320">
+                    Padding="{ui:TableSize '12,8'}" HorizontalOptions="Center" VerticalOptions="End" WidthRequest="{ui:TableSize 326}">
                 <Border.Shadow>
                     <Shadow Brush="Black" Opacity="0.5" Radius="14" Offset="0,3" />
                 </Border.Shadow>
-                <VerticalStackLayout Spacing="6">
-                    <Label Text="{loc:Tr Game_YourCombinations}" FontSize="15" FontAttributes="Bold" TextColor="#0B3D1A" HorizontalOptions="Center" />
-                    <VerticalStackLayout Spacing="4" BindableLayout.ItemsSource="{Binding AnnounceOptions}">
+                <VerticalStackLayout Spacing="{ui:TableSize 6}">
+                    <Label Text="{loc:Tr Game_YourCombinations}" FontSize="{ui:TableSize 16}" FontAttributes="Bold" TextColor="#0B3D1A" HorizontalOptions="Center" />
+                    <VerticalStackLayout Spacing="{ui:TableSize 4}" BindableLayout.ItemsSource="{Binding AnnounceOptions}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="game:AnnounceOption">
-                                <Border StrokeShape="RoundRectangle 8" StrokeThickness="0" BackgroundColor="#14000000" Padding="10,6">
+                                <Border StrokeShape="RoundRectangle 8" StrokeThickness="0" BackgroundColor="#14000000" Padding="{ui:TableSize '10,6'}">
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsHinted}" Value="True">
                                             <Setter Property="Stroke" Value="{StaticResource GoldAccent}" />
@@ -369,44 +381,47 @@
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding Source={x:Reference ThePage}, Path=BindingContext.ToggleAnnounceCommand}" CommandParameter="{Binding}" />
                                     </Border.GestureRecognizers>
-                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                                        <Label Grid.Column="0" Text="{Binding Mark}" FontSize="20" TextColor="#0B3D1A" VerticalOptions="Center" />
-                                        <Label Grid.Column="1" Text="{Binding Text}" FontSize="14" TextColor="#1A1006" VerticalOptions="Center" />
-                                        <Label Grid.Column="2" Text="{Binding Points}" FontSize="14" FontAttributes="Bold" TextColor="#6F5A2A" VerticalOptions="Center" />
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{ui:TableSize 10}">
+                                        <Label Grid.Column="0" Text="{Binding Mark}" FontSize="{ui:TableSize 20}" TextColor="#0B3D1A" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="{Binding Text}" FontSize="{ui:TableSize 15}" TextColor="#1A1006" VerticalOptions="Center" />
+                                        <Label Grid.Column="2" Text="{Binding Points}" FontSize="{ui:TableSize 15}" FontAttributes="Bold" TextColor="#6F5A2A" VerticalOptions="Center" />
                                     </Grid>
                                 </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
-                    <Button Text="{Binding DeclareButtonText}" Command="{Binding DeclareCommand}" HeightRequest="44" CornerRadius="10"
-                            FontAttributes="Bold" BackgroundColor="{StaticResource GoldAccent}" TextColor="#1A1006" />
+                    <Button Text="{Binding DeclareButtonText}" Command="{Binding DeclareCommand}" HeightRequest="{ui:TableSize 40}" CornerRadius="{ui:TableSize 10}"
+                            FontSize="{ui:TableSize 16}" FontAttributes="Bold" BackgroundColor="{StaticResource GoldAccent}" TextColor="#1A1006" />
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Row 3: South, the person -->
-            <Border Grid.Row="3" Style="{StaticResource Pill}" Padding="12,6" BindingContext="{Binding South}" x:DataType="game:SeatViewModel" Opacity="{Binding TurnOpacity}">
-                <Grid ColumnDefinitions="Auto,Auto,Auto,*" ColumnSpacing="8">
-                    <Ellipse Grid.Column="0" WidthRequest="10" HeightRequest="10" Fill="{StaticResource GoldAccentBrush}" VerticalOptions="Center" IsVisible="{Binding IsToMove}" />
-                    <Label Grid.Column="1" Text="{Binding Name}" TextColor="White" FontAttributes="Bold" FontSize="14" VerticalOptions="Center" />
-                    <Label Grid.Column="2" Text="🂠" IsVisible="{Binding IsDealer}" TextColor="{StaticResource GoldHighlight}" FontSize="13" VerticalOptions="Center" />
-                    <HorizontalStackLayout Grid.Column="3" Spacing="6" HorizontalOptions="End" VerticalOptions="Center">
-                        <Border Style="{StaticResource Bubble}" IsVisible="{Binding HasBubble}">
-                            <Label Text="{Binding BubbleText}" TextColor="#1A1006" FontSize="12" FontAttributes="Bold" />
+            <!-- Row 3: South, the person, with the table's status and the hint button -->
+            <Border Grid.Row="3" Style="{StaticResource Pill}" Padding="{ui:TableSize '12,4,5,4'}">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{ui:TableSize 8}" MinimumHeightRequest="{ui:TableSize 32}">
+                    <HorizontalStackLayout Grid.Column="0" Spacing="{ui:TableSize 7}" VerticalOptions="Center" BindingContext="{Binding South}" x:DataType="game:SeatViewModel" Opacity="{Binding TurnOpacity}">
+                        <Ellipse WidthRequest="{ui:TableSize 10}" HeightRequest="{ui:TableSize 10}" Fill="{StaticResource GoldAccentBrush}" VerticalOptions="Center" IsVisible="{Binding IsToMove}" />
+                        <Label Text="{Binding Name}" TextColor="White" FontAttributes="Bold" FontSize="{ui:TableSize 14}" VerticalOptions="Center" />
+                        <Border Style="{StaticResource DealerChip}" IsVisible="{Binding IsDealer}">
+                            <Label Text="{loc:Tr Game_Dealer}" TextColor="#1A1006" FontAttributes="Bold" FontSize="{ui:TableSize 10}" />
                         </Border>
-                        <Label Text="{Binding DeclaredText}" IsVisible="{Binding HasDeclared}" TextColor="#D8C9A0" FontSize="10" VerticalOptions="Center" />
+                        <Border Style="{StaticResource Bubble}" IsVisible="{Binding HasBubble}" VerticalOptions="Center">
+                            <Label Text="{Binding BubbleText}" TextColor="#1A1006" FontSize="{ui:TableSize 13}" FontAttributes="Bold" />
+                        </Border>
+                        <Label Text="{Binding DeclaredText}" IsVisible="{Binding HasDeclared}" TextColor="#D8C9A0" FontSize="{ui:TableSize 10}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
+                    <Label Grid.Column="1" Text="{Binding StatusMessage}" TextColor="#E6FFFFFF" FontSize="{ui:TableSize 12}"
+                           HorizontalOptions="Center" VerticalOptions="Center" HorizontalTextAlignment="Center" LineBreakMode="TailTruncation" MaxLines="1" />
+                    <Button Grid.Column="2" Text="{loc:Tr Game_Hint}" Command="{Binding HintCommand}" IsVisible="{Binding IsHintVisible}"
+                            VerticalOptions="Center" HeightRequest="{ui:TableSize 32}" FontSize="{ui:TableSize 12}" FontAttributes="Bold" Padding="{ui:TableSize '12,0'}"
+                            CornerRadius="{ui:TableSize 10}" BackgroundColor="#26FFFFFF" BorderColor="{StaticResource GoldAccent}" BorderWidth="1" TextColor="{StaticResource GoldHighlight}" />
                 </Grid>
             </Border>
-            <Button Grid.Row="3" Text="{loc:Tr Game_Hint}" Command="{Binding HintCommand}" IsVisible="{Binding IsHintVisible}"
-                    HorizontalOptions="End" VerticalOptions="Center" HeightRequest="32" FontSize="12" FontAttributes="Bold" Padding="12,0" Margin="0,0,6,0"
-                    CornerRadius="10" BackgroundColor="#26FFFFFF" BorderColor="{StaticResource GoldAccent}" BorderWidth="1" TextColor="{StaticResource GoldHighlight}" />
 
-            <!-- Row 4: my hand -->
-            <HorizontalStackLayout Grid.Row="4" Spacing="{StaticResource HandSpacing}" HorizontalOptions="Center" BindableLayout.ItemsSource="{Binding MyHand}">
+            <!-- Row 4: my hand (the gap follows the width, so eight cards always fit) -->
+            <HorizontalStackLayout Grid.Row="4" x:Name="HandStack" HorizontalOptions="Center" Margin="{ui:TableSize '0,2,0,2'}" BindableLayout.ItemsSource="{Binding MyHand}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="game:CardSlot">
-                        <Border StrokeThickness="0" Stroke="Transparent" StrokeShape="RoundRectangle 6" BackgroundColor="Transparent"
-                                Opacity="{Binding IsPlayable, Converter={StaticResource BoolToOpacity}}">
+                        <Border StrokeThickness="0" Stroke="Transparent" StrokeShape="RoundRectangle 6" BackgroundColor="Transparent">
                             <Border.Triggers>
                                 <DataTrigger TargetType="Border" Binding="{Binding IsHinted}" Value="True">
                                     <Setter Property="Stroke" Value="{StaticResource GoldHighlight}" />
@@ -417,10 +432,12 @@
                                 <Shadow Brush="Black" Opacity="0.6" Radius="8" Offset="2,3" />
                             </Border.Shadow>
                             <Grid>
-                                <Image Source="{Binding ImageSource}" WidthRequest="{StaticResource HandCardWidth}" HeightRequest="{StaticResource HandCardHeight}" Aspect="AspectFit" />
+                                <Image Source="{Binding ImageSource}" WidthRequest="{ui:TableSize 70}" HeightRequest="{ui:TableSize 98}" Aspect="AspectFit" />
+                                <!-- A card that may not be played now is shaded (not faded: the hand overlaps) -->
+                                <BoxView Color="#8C0B1A10" CornerRadius="{ui:TableSize 5}" IsVisible="{Binding IsDimmed}" InputTransparent="True" />
                                 <Border IsVisible="{Binding HasBadge}" StrokeShape="RoundRectangle 6" StrokeThickness="0" BackgroundColor="{StaticResource GoldHighlight}"
-                                        Padding="4,1" HorizontalOptions="Start" VerticalOptions="End" Margin="3,0,0,4">
-                                    <Label Text="{Binding BadgeText}" TextColor="#1A1006" FontSize="9" FontAttributes="Bold" />
+                                        Padding="{ui:TableSize '4,1'}" HorizontalOptions="Start" VerticalOptions="End" Margin="{ui:TableSize '3,0,0,5'}">
+                                    <Label Text="{Binding BadgeText}" TextColor="#1A1006" FontSize="{ui:TableSize 10}" FontAttributes="Bold" />
                                 </Border>
                             </Grid>
                             <Border.GestureRecognizers>
@@ -432,88 +449,88 @@
             </HorizontalStackLayout>
         </Grid>
 
-        <!-- ===== Menu button ===== -->
-        <Button Text="{loc:Tr Game_Menu}" Clicked="OnMenuClicked" HorizontalOptions="End" VerticalOptions="Start" Margin="0,10,10,0"
-                HeightRequest="36" WidthRequest="52" FontSize="12" Padding="0" CornerRadius="10"
-                BackgroundColor="#88000000" BorderColor="#55FFFFFF" BorderWidth="1" TextColor="White" />
-
         <!-- ===== Toast ===== -->
         <Border x:Name="ToastBorder" IsVisible="{Binding IsToastVisible}" StrokeShape="RoundRectangle 16" Stroke="#1A1006" StrokeThickness="2"
-                BackgroundColor="{StaticResource GoldHighlight}" Padding="26,14" HorizontalOptions="Center" VerticalOptions="Center" MaximumWidthRequest="420"
+                BackgroundColor="{StaticResource GoldHighlight}" Padding="{ui:TableSize '26,14'}" HorizontalOptions="Center" VerticalOptions="Center" MaximumWidthRequest="{ui:TableSize 420}"
                 InputTransparent="True">
             <Border.Shadow>
                 <Shadow Brush="Black" Opacity="0.7" Radius="20" Offset="0,4" />
             </Border.Shadow>
-            <Label Text="{Binding ToastMessage}" TextColor="#1A1006" FontAttributes="Bold" FontSize="22" HorizontalTextAlignment="Center" />
+            <Label Text="{Binding ToastMessage}" TextColor="#1A1006" FontAttributes="Bold" FontSize="{ui:TableSize 22}" HorizontalTextAlignment="Center" />
         </Border>
 
         <!-- ===== End of a deal ===== -->
         <Grid x:Name="RoundOverlayRoot" IsVisible="{Binding IsRoundOverlayVisible}" BackgroundColor="#D9000000">
             <ScrollView VerticalOptions="Center">
-                <Border StrokeShape="RoundRectangle 18" StrokeThickness="0" BackgroundColor="#F8F4E6" Padding="22,20" Margin="16"
-                        HorizontalOptions="Center" VerticalOptions="Center" MaximumWidthRequest="420" BindingContext="{Binding RoundResult}" x:DataType="game:RoundResultModel">
-                    <VerticalStackLayout Spacing="12">
-                        <Label Text="{Binding Icon}" FontSize="44" HorizontalOptions="Center" />
-                        <Label Text="{Binding Title}" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" HorizontalTextAlignment="Center" TextColor="#0B3D1A" />
-                        <Label Text="{Binding ContractLine}" FontSize="14" HorizontalOptions="Center" TextColor="#6F5A2A" />
-                        <Border IsVisible="{Binding IsCapot}" StrokeShape="RoundRectangle 8" StrokeThickness="0" BackgroundColor="#C0504D" Padding="12,3" HorizontalOptions="Center">
-                            <Label Text="{loc:Tr Round_CapotBadge}" TextColor="White" FontAttributes="Bold" FontSize="14" />
+                <Border StrokeShape="RoundRectangle 18" StrokeThickness="0" BackgroundColor="#F8F4E6" Padding="{ui:TableSize '22,20'}" Margin="{ui:TableSize 16}"
+                        HorizontalOptions="Center" VerticalOptions="Center" MaximumWidthRequest="{ui:TableSize 420}" BindingContext="{Binding RoundResult}" x:DataType="game:RoundResultModel">
+                    <VerticalStackLayout Spacing="{ui:TableSize 12}">
+                        <Label Text="{Binding Icon}" FontSize="{ui:TableSize 44}" HorizontalOptions="Center" />
+                        <Label Text="{Binding Title}" FontSize="{ui:TableSize 24}" FontAttributes="Bold" HorizontalOptions="Center" HorizontalTextAlignment="Center" TextColor="#0B3D1A" />
+                        <Label Text="{Binding ContractLine}" FontSize="{ui:TableSize 14}" HorizontalOptions="Center" HorizontalTextAlignment="Center" TextColor="#6F5A2A" />
+                        <Border IsVisible="{Binding IsCapot}" StrokeShape="RoundRectangle 8" StrokeThickness="0" BackgroundColor="#C0504D" Padding="{ui:TableSize '12,3'}" HorizontalOptions="Center">
+                            <Label Text="{loc:Tr Round_CapotBadge}" TextColor="White" FontAttributes="Bold" FontSize="{ui:TableSize 14}" />
                         </Border>
 
-                        <Border IsVisible="{Binding IsPlayed}" StrokeShape="RoundRectangle 12" StrokeThickness="0" BackgroundColor="#0B3D1A" Padding="14,10">
-                            <Grid ColumnDefinitions="*,70,70" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
-                                <Label Grid.Row="0" Grid.Column="1" Text="{loc:Tr Game_Us}" TextColor="#E2B864" FontAttributes="Bold" HorizontalOptions="Center" />
-                                <Label Grid.Row="0" Grid.Column="2" Text="{loc:Tr Game_Them}" TextColor="#E2B864" FontAttributes="Bold" HorizontalOptions="Center" />
-                                <Label Grid.Row="1" Grid.Column="0" Text="{loc:Tr Round_Cards}" TextColor="#C7D2BD" FontSize="13" />
-                                <Label Grid.Row="1" Grid.Column="1" Text="{Binding UsCards}" TextColor="White" HorizontalOptions="Center" />
-                                <Label Grid.Row="1" Grid.Column="2" Text="{Binding ThemCards}" TextColor="White" HorizontalOptions="Center" />
-                                <Label Grid.Row="2" Grid.Column="0" Text="{loc:Tr Round_Combinations}" TextColor="#C7D2BD" FontSize="13" />
-                                <Label Grid.Row="2" Grid.Column="1" Text="{Binding UsCombinations}" TextColor="White" HorizontalOptions="Center" />
-                                <Label Grid.Row="2" Grid.Column="2" Text="{Binding ThemCombinations}" TextColor="White" HorizontalOptions="Center" />
-                                <Label Grid.Row="3" Grid.Column="0" Text="{loc:Tr Round_Capot}" TextColor="#C7D2BD" FontSize="13" />
-                                <Label Grid.Row="3" Grid.Column="1" Text="{Binding UsCapot}" TextColor="White" HorizontalOptions="Center" />
-                                <Label Grid.Row="3" Grid.Column="2" Text="{Binding ThemCapot}" TextColor="White" HorizontalOptions="Center" />
-                                <Label Grid.Row="4" Grid.Column="0" Text="{loc:Tr Round_InDeal}" TextColor="#E2B864" FontSize="13" FontAttributes="Bold" />
-                                <Label Grid.Row="4" Grid.Column="1" Text="{Binding UsInDeal}" TextColor="{StaticResource GoldHighlight}" FontAttributes="Bold" HorizontalOptions="Center" />
-                                <Label Grid.Row="4" Grid.Column="2" Text="{Binding ThemInDeal}" TextColor="{StaticResource GoldHighlight}" FontAttributes="Bold" HorizontalOptions="Center" />
-                                <Label Grid.Row="5" Grid.Column="0" Text="{loc:Tr Round_GamePoints}" TextColor="#E2B864" FontSize="13" FontAttributes="Bold" />
-                                <Label Grid.Row="5" Grid.Column="1" Text="{Binding UsAwarded}" TextColor="{StaticResource GoldHighlight}" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center" />
-                                <Label Grid.Row="5" Grid.Column="2" Text="{Binding ThemAwarded}" TextColor="{StaticResource GoldHighlight}" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center" />
+                        <Border IsVisible="{Binding IsPlayed}" StrokeShape="RoundRectangle 12" StrokeThickness="0" BackgroundColor="#0B3D1A" Padding="{ui:TableSize '14,10'}">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{ui:TableSize 4}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="{ui:TableSize 72}" />
+                                    <ColumnDefinition Width="{ui:TableSize 72}" />
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Row="0" Grid.Column="1" Text="{loc:Tr Game_Us}" FontSize="{ui:TableSize 14}" TextColor="#E2B864" FontAttributes="Bold" HorizontalOptions="Center" />
+                                <Label Grid.Row="0" Grid.Column="2" Text="{loc:Tr Game_Them}" FontSize="{ui:TableSize 14}" TextColor="#E2B864" FontAttributes="Bold" HorizontalOptions="Center" />
+                                <Label Grid.Row="1" Grid.Column="0" Text="{loc:Tr Round_Cards}" TextColor="#C7D2BD" FontSize="{ui:TableSize 13}" />
+                                <Label Grid.Row="1" Grid.Column="1" Text="{Binding UsCards}" FontSize="{ui:TableSize 15}" TextColor="White" HorizontalOptions="Center" />
+                                <Label Grid.Row="1" Grid.Column="2" Text="{Binding ThemCards}" FontSize="{ui:TableSize 15}" TextColor="White" HorizontalOptions="Center" />
+                                <Label Grid.Row="2" Grid.Column="0" Text="{loc:Tr Round_Combinations}" TextColor="#C7D2BD" FontSize="{ui:TableSize 13}" />
+                                <Label Grid.Row="2" Grid.Column="1" Text="{Binding UsCombinations}" FontSize="{ui:TableSize 15}" TextColor="White" HorizontalOptions="Center" />
+                                <Label Grid.Row="2" Grid.Column="2" Text="{Binding ThemCombinations}" FontSize="{ui:TableSize 15}" TextColor="White" HorizontalOptions="Center" />
+                                <Label Grid.Row="3" Grid.Column="0" Text="{loc:Tr Round_Capot}" TextColor="#C7D2BD" FontSize="{ui:TableSize 13}" />
+                                <Label Grid.Row="3" Grid.Column="1" Text="{Binding UsCapot}" FontSize="{ui:TableSize 15}" TextColor="White" HorizontalOptions="Center" />
+                                <Label Grid.Row="3" Grid.Column="2" Text="{Binding ThemCapot}" FontSize="{ui:TableSize 15}" TextColor="White" HorizontalOptions="Center" />
+                                <Label Grid.Row="4" Grid.Column="0" Text="{loc:Tr Round_InDeal}" TextColor="#E2B864" FontSize="{ui:TableSize 13}" FontAttributes="Bold" />
+                                <Label Grid.Row="4" Grid.Column="1" Text="{Binding UsInDeal}" FontSize="{ui:TableSize 15}" TextColor="{StaticResource GoldHighlight}" FontAttributes="Bold" HorizontalOptions="Center" />
+                                <Label Grid.Row="4" Grid.Column="2" Text="{Binding ThemInDeal}" FontSize="{ui:TableSize 15}" TextColor="{StaticResource GoldHighlight}" FontAttributes="Bold" HorizontalOptions="Center" />
+                                <Label Grid.Row="5" Grid.Column="0" Text="{loc:Tr Round_GamePoints}" TextColor="#E2B864" FontSize="{ui:TableSize 13}" FontAttributes="Bold" />
+                                <Label Grid.Row="5" Grid.Column="1" Text="{Binding UsAwarded}" TextColor="{StaticResource GoldHighlight}" FontAttributes="Bold" FontSize="{ui:TableSize 18}" HorizontalOptions="Center" />
+                                <Label Grid.Row="5" Grid.Column="2" Text="{Binding ThemAwarded}" TextColor="{StaticResource GoldHighlight}" FontAttributes="Bold" FontSize="{ui:TableSize 18}" HorizontalOptions="Center" />
                             </Grid>
                         </Border>
 
-                        <VerticalStackLayout IsVisible="{Binding HasCombinations}" Spacing="2">
-                            <Label FontSize="12" TextColor="#1A1006" HorizontalTextAlignment="Center" IsVisible="{Binding HasUsCombinations}">
+                        <VerticalStackLayout IsVisible="{Binding HasCombinations}" Spacing="{ui:TableSize 2}">
+                            <Label FontSize="{ui:TableSize 13}" TextColor="#1A1006" HorizontalTextAlignment="Center" IsVisible="{Binding HasUsCombinations}">
                                 <Label.FormattedText>
                                     <FormattedString>
-                                        <Span Text="{loc:Tr Game_Us}" FontAttributes="Bold" />
-                                        <Span Text=": " />
-                                        <Span Text="{Binding UsCombinationsText}" />
+                                        <Span FontSize="{ui:TableSize 13}" Text="{loc:Tr Game_Us}" FontAttributes="Bold" />
+                                        <Span FontSize="{ui:TableSize 13}" Text=": " />
+                                        <Span FontSize="{ui:TableSize 13}" Text="{Binding UsCombinationsText}" />
                                     </FormattedString>
                                 </Label.FormattedText>
                             </Label>
-                            <Label FontSize="12" TextColor="#1A1006" HorizontalTextAlignment="Center" IsVisible="{Binding HasThemCombinations}">
+                            <Label FontSize="{ui:TableSize 13}" TextColor="#1A1006" HorizontalTextAlignment="Center" IsVisible="{Binding HasThemCombinations}">
                                 <Label.FormattedText>
                                     <FormattedString>
-                                        <Span Text="{loc:Tr Game_Them}" FontAttributes="Bold" />
-                                        <Span Text=": " />
-                                        <Span Text="{Binding ThemCombinationsText}" />
+                                        <Span FontSize="{ui:TableSize 13}" Text="{loc:Tr Game_Them}" FontAttributes="Bold" />
+                                        <Span FontSize="{ui:TableSize 13}" Text=": " />
+                                        <Span FontSize="{ui:TableSize 13}" Text="{Binding ThemCombinationsText}" />
                                     </FormattedString>
                                 </Label.FormattedText>
                             </Label>
                         </VerticalStackLayout>
 
-                        <Label Text="{Binding HangingText}" IsVisible="{Binding HasHanging}" FontSize="13" TextColor="#6F5A2A" HorizontalOptions="Center" HorizontalTextAlignment="Center" />
+                        <Label Text="{Binding HangingText}" IsVisible="{Binding HasHanging}" FontSize="{ui:TableSize 13}" TextColor="#6F5A2A" HorizontalOptions="Center" HorizontalTextAlignment="Center" />
 
-                        <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="{StaticResource GoldAccent}" Padding="16,6">
-                            <VerticalStackLayout Spacing="0">
-                                <Label Text="{loc:Tr Round_Score}" FontSize="11" CharacterSpacing="2" HorizontalOptions="Center" TextColor="#7A5C20" />
-                                <Label HorizontalOptions="Center" TextColor="#1A1006" FontSize="22" FontAttributes="Bold">
+                        <Border StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="{StaticResource GoldAccent}" Padding="{ui:TableSize '16,6'}">
+                            <VerticalStackLayout>
+                                <Label Text="{loc:Tr Round_Score}" FontSize="{ui:TableSize 11}" CharacterSpacing="2" HorizontalOptions="Center" TextColor="#7A5C20" />
+                                <Label HorizontalOptions="Center" TextColor="#1A1006" FontSize="{ui:TableSize 24}" FontAttributes="Bold">
                                     <Label.FormattedText>
                                         <FormattedString>
-                                            <Span Text="{Binding UsTotal}" />
-                                            <Span Text="  –  " />
-                                            <Span Text="{Binding ThemTotal}" />
+                                            <Span FontSize="{ui:TableSize 24}" Text="{Binding UsTotal}" />
+                                            <Span FontSize="{ui:TableSize 24}" Text="  –  " />
+                                            <Span FontSize="{ui:TableSize 24}" Text="{Binding ThemTotal}" />
                                         </FormattedString>
                                     </Label.FormattedText>
                                 </Label>
@@ -521,7 +538,7 @@
                         </Border>
 
                         <Button Text="{loc:Tr Common_Continue}" Command="{Binding Source={x:Reference ThePage}, Path=BindingContext.RoundOverlayContinueCommand}"
-                                BackgroundColor="{StaticResource GoldAccent}" TextColor="#1A1006" FontAttributes="Bold" FontSize="17" HeightRequest="50" CornerRadius="12" />
+                                BackgroundColor="{StaticResource GoldAccent}" TextColor="#1A1006" FontAttributes="Bold" FontSize="{ui:TableSize 17}" HeightRequest="{ui:TableSize 50}" CornerRadius="{ui:TableSize 12}" />
                     </VerticalStackLayout>
                 </Border>
             </ScrollView>
@@ -529,33 +546,33 @@
 
         <!-- ===== End of the game ===== -->
         <Grid x:Name="GameOverlayRoot" IsVisible="{Binding IsGameOverlayVisible}" BackgroundColor="#E5000000">
-            <Border StrokeShape="RoundRectangle 22" StrokeThickness="0" BackgroundColor="#F8F4E6" Padding="28,26" Margin="16"
-                    HorizontalOptions="Center" VerticalOptions="Center" MaximumWidthRequest="420">
+            <Border StrokeShape="RoundRectangle 22" StrokeThickness="0" BackgroundColor="#F8F4E6" Padding="{ui:TableSize '28,26'}" Margin="{ui:TableSize 16}"
+                    HorizontalOptions="Center" VerticalOptions="Center" MaximumWidthRequest="{ui:TableSize 420}">
                 <Border.Shadow>
                     <Shadow Brush="Black" Opacity="0.7" Radius="24" Offset="0,4" />
                 </Border.Shadow>
-                <VerticalStackLayout Spacing="16">
-                    <Label Text="{Binding GameOverlayIcon}" FontSize="52" HorizontalOptions="Center" />
-                    <Label Text="{Binding GameOverlayTitle}" FontSize="30" FontAttributes="Bold" HorizontalOptions="Center" TextColor="#0B3D1A" />
-                    <Label Text="{Binding GameOverlayBody}" FontSize="20" FontAttributes="Bold" HorizontalOptions="Center" HorizontalTextAlignment="Center" TextColor="#1A1006" />
-                    <Border IsVisible="{Binding IsRatingChangeVisible}" StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#0B3D1A" Padding="16,10">
-                        <Label Text="{Binding RatingChangeText}" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center" HorizontalTextAlignment="Center" TextColor="{StaticResource GoldHighlight}" />
+                <VerticalStackLayout Spacing="{ui:TableSize 16}">
+                    <Label Text="{Binding GameOverlayIcon}" FontSize="{ui:TableSize 52}" HorizontalOptions="Center" />
+                    <Label Text="{Binding GameOverlayTitle}" FontSize="{ui:TableSize 30}" FontAttributes="Bold" HorizontalOptions="Center" HorizontalTextAlignment="Center" TextColor="#0B3D1A" />
+                    <Label Text="{Binding GameOverlayBody}" FontSize="{ui:TableSize 20}" FontAttributes="Bold" HorizontalOptions="Center" HorizontalTextAlignment="Center" TextColor="#1A1006" />
+                    <Border IsVisible="{Binding IsRatingChangeVisible}" StrokeShape="RoundRectangle 10" StrokeThickness="0" BackgroundColor="#0B3D1A" Padding="{ui:TableSize '16,10'}">
+                        <Label Text="{Binding RatingChangeText}" FontSize="{ui:TableSize 16}" FontAttributes="Bold" HorizontalOptions="Center" HorizontalTextAlignment="Center" TextColor="{StaticResource GoldHighlight}" />
                     </Border>
-                    <Border IsVisible="{Binding HasMatchHistory}" StrokeShape="RoundRectangle 8" StrokeThickness="0" BackgroundColor="#22000000" Padding="12,5" HorizontalOptions="Center">
-                        <Label FontSize="13" TextColor="#0B3D1A" FontAttributes="Bold">
+                    <Border IsVisible="{Binding HasMatchHistory}" StrokeShape="RoundRectangle 8" StrokeThickness="0" BackgroundColor="#22000000" Padding="{ui:TableSize '12,5'}" HorizontalOptions="Center">
+                        <Label FontSize="{ui:TableSize 14}" TextColor="#0B3D1A" FontAttributes="Bold">
                             <Label.FormattedText>
                                 <FormattedString>
-                                    <Span Text="{loc:Tr Common_Series}" />
-                                    <Span Text="  " />
-                                    <Span Text="{Binding MatchScoreText}" />
+                                    <Span FontSize="{ui:TableSize 14}" Text="{loc:Tr Common_Series}" />
+                                    <Span FontSize="{ui:TableSize 14}" Text="  " />
+                                    <Span FontSize="{ui:TableSize 14}" Text="{Binding MatchScoreText}" />
                                 </FormattedString>
                             </Label.FormattedText>
                         </Label>
                     </Border>
                     <Button Text="{loc:Tr GameOver_PlayAgain}" Command="{Binding PlayAgainCommand}" BackgroundColor="{StaticResource GoldAccent}" TextColor="#1A1006"
-                            FontAttributes="Bold" FontSize="17" HeightRequest="50" CornerRadius="12" />
+                            FontAttributes="Bold" FontSize="{ui:TableSize 17}" HeightRequest="{ui:TableSize 50}" CornerRadius="{ui:TableSize 12}" />
                     <Button Text="{loc:Tr GameOver_BackToMenu}" Command="{Binding LeaveCommand}" BackgroundColor="Transparent" BorderColor="{StaticResource FeltMid}" BorderWidth="1"
-                            TextColor="{StaticResource FeltMid}" FontAttributes="Bold" FontSize="15" HeightRequest="46" CornerRadius="12" />
+                            TextColor="{StaticResource FeltMid}" FontAttributes="Bold" FontSize="{ui:TableSize 15}" HeightRequest="{ui:TableSize 46}" CornerRadius="{ui:TableSize 12}" />
                 </VerticalStackLayout>
             </Border>
         </Grid>
