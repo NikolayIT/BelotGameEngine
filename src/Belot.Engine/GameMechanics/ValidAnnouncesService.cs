@@ -44,6 +44,15 @@
                     : Card.GetCard(playedCard.Suit, CardType.Queen));
         }
 
+        /// <summary>
+        /// The combinations the player may declare: the carres, then the sequences of the cards
+        /// outside them, then - when a carre card also belongs to a sequence - that sequence as
+        /// the alternative. A card may take part in only one combination and the player chooses
+        /// (hit.bg §Премии), so of the declarations sharing a card only the first one counts:
+        /// declaring the whole list keeps the carre.
+        /// </summary>
+        /// <param name="playerCards">The player's hand.</param>
+        /// <returns>The combinations, carres first.</returns>
         public IList<Announce> GetAvailableAnnounces(CardCollection playerCards)
         {
             var combinations = new List<Announce>(2);
@@ -57,29 +66,45 @@
 
             // Four of a kind: a type present in all four suits (sevens and eights don't count).
             var fourOfAKinds = clubs & diamonds & hearts & spades & 0b11111100u;
-            while (fourOfAKinds != 0)
+            var remaining = fourOfAKinds;
+            while (remaining != 0)
             {
-                var type = (CardType)BitIndexOfLowestSetBit(fourOfAKinds);
-                fourOfAKinds &= fourOfAKinds - 1;
+                var type = (CardType)BitIndexOfLowestSetBit(remaining);
+                remaining &= remaining - 1;
                 var announceType = type == CardType.Jack ? AnnounceType.FourJacks :
                                    type == CardType.Nine ? AnnounceType.FourNines : AnnounceType.FourOfAKind;
                 combinations.Add(new Announce(announceType, Card.GetCard(CardSuit.Spade, type)));
-
-                // A card may take part in only one combination, so remove the four cards
-                // from the bytes used for the sequence detection below.
-                var withoutType = ~(1u << (int)type);
-                clubs &= withoutType;
-                diamonds &= withoutType;
-                hearts &= withoutType;
-                spades &= withoutType;
             }
 
-            FindSequentialAnnounces(combinations, CardSuit.Club, clubs);
-            FindSequentialAnnounces(combinations, CardSuit.Diamond, diamonds);
-            FindSequentialAnnounces(combinations, CardSuit.Heart, hearts);
-            FindSequentialAnnounces(combinations, CardSuit.Spade, spades);
+            // The sequences of the cards the carres leave free.
+            var free = ~fourOfAKinds;
+            FindSequentialAnnounces(combinations, CardSuit.Club, clubs & free, 0);
+            FindSequentialAnnounces(combinations, CardSuit.Diamond, diamonds & free, 0);
+            FindSequentialAnnounces(combinations, CardSuit.Heart, hearts & free, 0);
+            FindSequentialAnnounces(combinations, CardSuit.Spade, spades & free, 0);
+
+            // The sequences through a carre card, which the player may declare instead of it.
+            if (fourOfAKinds != 0)
+            {
+                FindSequentialAnnounces(combinations, CardSuit.Club, clubs, fourOfAKinds);
+                FindSequentialAnnounces(combinations, CardSuit.Diamond, diamonds, fourOfAKinds);
+                FindSequentialAnnounces(combinations, CardSuit.Heart, hearts, fourOfAKinds);
+                FindSequentialAnnounces(combinations, CardSuit.Spade, spades, fourOfAKinds);
+            }
+
             return combinations;
         }
+
+        /// <summary>
+        /// Whether two combinations use a common card, in which case only one of them may be
+        /// declared. The belote never excludes anything: its king and queen may also be part of
+        /// a sequence or a carre.
+        /// </summary>
+        /// <param name="first">A combination.</param>
+        /// <param name="second">Another combination.</param>
+        /// <returns>True when a card belongs to both.</returns>
+        public bool HaveCommonCards(Announce first, Announce second) =>
+            (GetCardsBitMask(first) & GetCardsBitMask(second)) != 0;
 
         public void UpdateActiveAnnounces(IList<Announce> announces)
         {
@@ -158,7 +183,35 @@
             }
         }
 
-        private static void FindSequentialAnnounces(ICollection<Announce> combinations, CardSuit suit, uint suitBits)
+        // The cards of a combination as a CardCollection bitmask (none for the belote).
+        internal static uint GetCardsBitMask(Announce announce)
+        {
+            var type = (int)announce.Card.Type;
+            switch (announce.Type)
+            {
+                case AnnounceType.Belot:
+                    return 0;
+                case AnnounceType.FourOfAKind:
+                case AnnounceType.FourNines:
+                case AnnounceType.FourJacks:
+                    return 0x01010101u << type;
+                default:
+                    // SequenceOf3 … SequenceOf8, identified by the top card.
+                    var length = announce.Type - AnnounceType.SequenceOf3 + 3;
+                    var lowest = type - length + 1;
+                    if (lowest < 0)
+                    {
+                        throw new BelotGameException($"Invalid announce {announce.Type} to {announce.Card}.");
+                    }
+
+                    return ((1u << length) - 1) << (lowest + ((int)announce.Card.Suit * 8));
+            }
+        }
+
+        // Adds the runs of 3+ cards in the suit; with requiredTypes set, only the runs that
+        // contain one of those card types. Five or more cards in a row are one quint (100),
+        // the whole suit included.
+        private static void FindSequentialAnnounces(ICollection<Announce> combinations, CardSuit suit, uint suitBits, uint requiredTypes)
         {
             if (suitBits == 0)
             {
@@ -176,30 +229,11 @@
                     continue;
                 }
 
-                switch (runLength)
+                var runTypes = ((1u << runLength) - 1) << (type - runLength);
+                if (runLength >= 3 && (requiredTypes == 0 || (runTypes & requiredTypes) != 0))
                 {
-                    case 3:
-                        combinations.Add(new Announce(AnnounceType.SequenceOf3, Card.GetCard(suit, (CardType)(type - 1))));
-                        break;
-                    case 4:
-                        combinations.Add(new Announce(AnnounceType.SequenceOf4, Card.GetCard(suit, (CardType)(type - 1))));
-                        break;
-                    case 5:
-                        combinations.Add(new Announce(AnnounceType.SequenceOf5, Card.GetCard(suit, (CardType)(type - 1))));
-                        break;
-                    case 6:
-                        combinations.Add(new Announce(AnnounceType.SequenceOf6, Card.GetCard(suit, (CardType)(type - 1))));
-                        break;
-                    case 7:
-                        combinations.Add(new Announce(AnnounceType.SequenceOf7, Card.GetCard(suit, (CardType)(type - 1))));
-                        break;
-                    case 8:
-                        // A whole suit is declared as a quint on the top five cards plus a
-                        // tierce on 9-8-7: a card may take part in only one combination, so
-                        // the leftover tierce tops at the nine.
-                        combinations.Add(new Announce(AnnounceType.SequenceOf8, Card.GetCard(suit, CardType.Ace)));
-                        combinations.Add(new Announce(AnnounceType.SequenceOf3, Card.GetCard(suit, CardType.Nine)));
-                        break;
+                    var announceType = (AnnounceType)((int)AnnounceType.SequenceOf3 + runLength - 3);
+                    combinations.Add(new Announce(announceType, Card.GetCard(suit, (CardType)(type - 1))));
                 }
 
                 runLength = 0;

@@ -128,24 +128,24 @@ namespace Belot.Engine.Tests.GameMechanics
                 C(CardSuit.Spade, CardType.Nine),
                 C(CardSuit.Spade, CardType.Eight));
             var east = new ScriptedPlayer(
-                C(CardSuit.Club, CardType.Seven),
                 C(CardSuit.Club, CardType.Eight),
                 C(CardSuit.Club, CardType.Nine),
                 C(CardSuit.Club, CardType.Ten),
                 C(CardSuit.Club, CardType.Jack),
                 C(CardSuit.Club, CardType.Queen),
-                C(CardSuit.Club, CardType.King));
+                C(CardSuit.Club, CardType.King),
+                C(CardSuit.Club, CardType.Ace));
             var north = new ScriptedPlayer(
                 C(CardSuit.Diamond, CardType.Seven),
                 C(CardSuit.Diamond, CardType.Eight),
                 C(CardSuit.Diamond, CardType.Nine),
-                C(CardSuit.Diamond, CardType.Ten),
                 C(CardSuit.Diamond, CardType.Jack),
                 C(CardSuit.Diamond, CardType.Queen),
-                C(CardSuit.Diamond, CardType.King))
+                C(CardSuit.Diamond, CardType.King),
+                C(CardSuit.Diamond, CardType.Ace))
             {
-                // Holds the whole diamond suit => two available announces. Returns the
-                // AvailableAnnounces list itself, like all shipped players do.
+                // Holds 7-8-9 and J-Q-K-A of diamonds => two available announces (a tierce and
+                // a quarte). Returns the AvailableAnnounces list itself, like all shipped players do.
                 ReturnAvailableAnnounces = true,
             };
             var west = new ScriptedPlayer(
@@ -165,8 +165,20 @@ namespace Belot.Engine.Tests.GameMechanics
                     C(CardSuit.Spade, CardType.Jack), C(CardSuit.Spade, CardType.Ace),
                     C(CardSuit.Heart, CardType.Seven), C(CardSuit.Heart, CardType.Eight),
                 },
-                AllOfSuit(CardSuit.Club),
-                AllOfSuit(CardSuit.Diamond),
+                new CardCollection
+                {
+                    C(CardSuit.Club, CardType.Eight), C(CardSuit.Club, CardType.Nine),
+                    C(CardSuit.Club, CardType.Ten), C(CardSuit.Club, CardType.Jack),
+                    C(CardSuit.Club, CardType.Queen), C(CardSuit.Club, CardType.King),
+                    C(CardSuit.Club, CardType.Ace), C(CardSuit.Diamond, CardType.Ten),
+                },
+                new CardCollection
+                {
+                    C(CardSuit.Diamond, CardType.Seven), C(CardSuit.Diamond, CardType.Eight),
+                    C(CardSuit.Diamond, CardType.Nine), C(CardSuit.Diamond, CardType.Jack),
+                    C(CardSuit.Diamond, CardType.Queen), C(CardSuit.Diamond, CardType.King),
+                    C(CardSuit.Diamond, CardType.Ace), C(CardSuit.Club, CardType.Seven),
+                },
                 new CardCollection
                 {
                     C(CardSuit.Spade, CardType.King), C(CardSuit.Spade, CardType.Queen),
@@ -190,7 +202,7 @@ namespace Belot.Engine.Tests.GameMechanics
                 out _,
                 out _);
 
-            // North announced everything available (the whole-suit run: sequence of 8 + tierce).
+            // North announced everything available: the tierce to the nine and the quarte to the ace.
             Assert.Equal(
                 2,
                 announces.Count(x => x.Player == PlayerPosition.North && x.Type != AnnounceType.Belot));
@@ -376,20 +388,9 @@ namespace Belot.Engine.Tests.GameMechanics
             Assert.False(announces[1].IsActive);
         }
 
-        // An 8-card suit is declared as a quint (top 5 cards) plus a tierce of the remaining
-        // 9-8-7 (hit.bg §Премии: a card may take part in only one combination). The engine
-        // labels the extra tierce with the ACE as its top card, which both reuses a card of the
-        // quint and makes the tierce unbeatable in the sequence contest.
-        [Fact]
-        public void EightCardSuitMustOfferTheLeftoverTierceToTheNine()
-        {
-            var combinations = new ValidAnnouncesService().GetAvailableAnnounces(AllOfSuit(CardSuit.Spade));
-
-            Assert.Contains(
-                combinations,
-                x => x.Type == AnnounceType.SequenceOf3 && x.Card == C(CardSuit.Spade, CardType.Nine));
-        }
-
+        // (The audit's F7 test, "an 8-card suit is a quint plus a tierce to the nine", was
+        // retired in September 2026: five or more cards in a row are one quint, so the whole
+        // suit is a single quint of 100 - see CombinationChoiceTests.)
         private static Card C(CardSuit suit, CardType type) => Card.GetCard(suit, type);
 
         private static CardCollection AllOfSuit(CardSuit suit)

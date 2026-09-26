@@ -99,29 +99,37 @@
                             var playerAnnounces =
                                 this.players[currentPlayer.Index()].GetAnnounces(announceContext).ToArray();
 
-                            // Validate
+                            // Validate. A card may take part in only one combination, so of the
+                            // declarations sharing a card (a carre and a sequence through one of its
+                            // cards, or a repeated one) only the first counts.
+                            var declaredCards = 0u;
                             for (var i = 0; i < playerAnnounces.Length; i++)
                             {
                                 var playerAnnounce = playerAnnounces[i];
-                                Announce availableAnnounce = null;
+                                var isAvailable = false;
                                 for (var j = 0; j < availableAnnounces.Count; j++)
                                 {
                                     if (availableAnnounces[j].Type == playerAnnounce.Type
                                         && availableAnnounces[j].Card == playerAnnounce.Card)
                                     {
-                                        availableAnnounce = availableAnnounces[j];
+                                        isAvailable = true;
                                         break;
                                     }
                                 }
 
-                                if (availableAnnounce == null)
+                                if (!isAvailable)
                                 {
                                     // Invalid announce
                                     continue;
                                 }
 
-                                availableAnnounces.Remove(availableAnnounce);
+                                var cards = ValidAnnouncesService.GetCardsBitMask(playerAnnounce);
+                                if ((declaredCards & cards) != 0)
+                                {
+                                    continue;
+                                }
 
+                                declaredCards |= cards;
                                 playerAnnounce.Player = currentPlayer;
                                 announces.Add(playerAnnounce);
                             }

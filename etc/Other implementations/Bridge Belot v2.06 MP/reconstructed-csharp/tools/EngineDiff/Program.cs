@@ -3,7 +3,9 @@
 // 2001 belot.exe (BelotV2.Rules):
 //   1) the legal-card set offered to the player,
 //   2) the trick winner,
-//   3) per-hand announce detection (normalized; the 8-card-run representation differs by design).
+//   3) per-hand announce detection (normalized), as registered for a player that declares
+//      everything offered: the 2001 game always gives a shared card to the carre, which is
+//      what declaring the whole list does (the alternative sequences come after the carre).
 using System.Reflection;
 using System.Text;
 
@@ -65,22 +67,22 @@ for (int deal = 0; deal < deals; deal++)
             }
         }
 
-        // 3) Announce detection comparison (skip NT: not announceable; skip whole-suit hands:
-        //    the engines represent the 8-card run differently by design).
+        // 3) Announce detection comparison (skip NT: not announceable).
         if (ourContract != BidType.NoTrumps)
         {
             for (int s = 0; s < 4; s++)
             {
-                bool wholeSuit = Card.AllSuits.Any(suit => ourHands[s].GetCount(x => x.Suit == suit) == 8);
-                if (wholeSuit)
+                announceChecks++;
+                var declared = new List<Announce>();
+                foreach (Announce offered in announcesService.GetAvailableAnnounces(ourHands[s]))
                 {
-                    continue;
+                    if (declared.All(x => !announcesService.HaveCommonCards(x, offered)))
+                    {
+                        declared.Add(offered);
+                    }
                 }
 
-                announceChecks++;
-                var ourSet = ourHands[s].Count == 8
-                    ? announcesService.GetAvailableAnnounces(ourHands[s]).Select(NormalizeOurs).OrderBy(x => x).ToList()
-                    : new List<string>();
+                var ourSet = declared.Select(NormalizeOurs).OrderBy(x => x).ToList();
                 var v2Set = V2.Announces.Detect(v2Hands[s], s, v2Contract).Select(NormalizeV2).OrderBy(x => x).ToList();
                 if (!ourSet.SequenceEqual(v2Set))
                 {
@@ -155,7 +157,7 @@ void Report(string message)
 string HandString(CardCollection hand) => string.Join(" ", hand.Select(x => x.ToString()));
 
 // Normalizations: compare announces as (kind, top rank), suit-insensitive, quinte length-insensitive
-// (the 2001 game folds 5..8-card runs into one "quinte to X"; whole-suit hands are skipped above).
+// (both engines fold 5..8-card runs into one "quinte to X").
 string NormalizeOurs(Announce a)
 {
     string s = a.ToString();

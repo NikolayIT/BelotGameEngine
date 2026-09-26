@@ -50,10 +50,10 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
-            Assert.Contains(
-                combinations,
-                x => x.Type == AnnounceType.FourNines && x.Card == Card.GetCard(CardSuit.Spade, CardType.Nine));
+            // The 7-8-9 of spades is offered as the alternative to the carre (they share the 9♠).
+            Assert.Equal(2, combinations.Count);
+            Assert.True(combinations[0].Type == AnnounceType.FourNines && combinations[0].Card == Card.GetCard(CardSuit.Spade, CardType.Nine));
+            Assert.True(combinations[1].Type == AnnounceType.SequenceOf3 && combinations[1].Card == Card.GetCard(CardSuit.Spade, CardType.Nine));
         }
 
         [Fact]
@@ -146,10 +146,10 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
-            Assert.Contains(
-                combinations,
-                x => x.Type == AnnounceType.FourOfAKind && x.Card == Card.GetCard(CardSuit.Spade, CardType.King));
+            // J-Q-K of spades is offered as the alternative to the carre (they share the K♠).
+            Assert.Equal(2, combinations.Count);
+            Assert.True(combinations[0].Type == AnnounceType.FourOfAKind && combinations[0].Card == Card.GetCard(CardSuit.Spade, CardType.King));
+            Assert.True(combinations[1].Type == AnnounceType.SequenceOf3 && combinations[1].Card == Card.GetCard(CardSuit.Spade, CardType.King));
         }
 
         [Fact]
@@ -439,13 +439,10 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(2, combinations.Count);
-            Assert.Contains(
-                combinations,
-                x => x.Type == AnnounceType.SequenceOf8 && x.Card == Card.GetCard(CardSuit.Spade, CardType.Ace));
-            Assert.Contains(
-                combinations,
-                x => x.Type == AnnounceType.SequenceOf3 && x.Card == Card.GetCard(CardSuit.Spade, CardType.Nine));
+            // Five or more cards in a row are one quint: the whole suit is worth 100, no more.
+            var combination = Assert.Single(combinations);
+            Assert.Equal(AnnounceType.SequenceOf8, combination.Type);
+            Assert.Equal(Card.GetCard(CardSuit.Spade, CardType.Ace), combination.Card);
         }
 
         [Fact]
@@ -532,8 +529,9 @@
         [Fact]
         public void FourNinesConsumeTheNineOfTheSequence()
         {
-            // A card takes part in only one combination: the nines go to the carre, and the
-            // leftover 7-8 spades are no longer a sequence.
+            // A card takes part in only one combination: with the nines in the carre, the
+            // leftover 7-8 and 10-J of spades are no sequences. The quint 7-J through the nine of
+            // spades is offered only as the alternative to the carre.
             var validAnnouncesService = new ValidAnnouncesService();
             var hand = new CardCollection
                            {
@@ -549,8 +547,10 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Single(combinations);
-            Assert.Contains(combinations, x => x.Type == AnnounceType.FourNines);
+            Assert.Equal(2, combinations.Count);
+            Assert.Equal(AnnounceType.FourNines, combinations[0].Type);
+            Assert.True(combinations[1].Type == AnnounceType.SequenceOf5 && combinations[1].Card == Card.GetCard(CardSuit.Spade, CardType.Jack));
+            Assert.True(validAnnouncesService.HaveCommonCards(combinations[0], combinations[1]));
         }
 
         [Fact]
@@ -661,13 +661,12 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(2, combinations.Count);
-            Assert.Contains(
-                combinations,
-                x => x.Type == AnnounceType.FourOfAKind && x.Card == Card.GetCard(CardSuit.Spade, CardType.King));
-            Assert.Contains(
-                combinations,
-                x => x.Type == AnnounceType.SequenceOf4 && x.Card == Card.GetCard(CardSuit.Diamond, CardType.Queen));
+            // The carre plus the quarte of the free diamonds, or instead the quint 9-K♦ through
+            // the king of diamonds.
+            Assert.Equal(3, combinations.Count);
+            Assert.True(combinations[0].Type == AnnounceType.FourOfAKind && combinations[0].Card == Card.GetCard(CardSuit.Spade, CardType.King));
+            Assert.True(combinations[1].Type == AnnounceType.SequenceOf4 && combinations[1].Card == Card.GetCard(CardSuit.Diamond, CardType.Queen));
+            Assert.True(combinations[2].Type == AnnounceType.SequenceOf5 && combinations[2].Card == Card.GetCard(CardSuit.Diamond, CardType.King));
         }
     }
 }
