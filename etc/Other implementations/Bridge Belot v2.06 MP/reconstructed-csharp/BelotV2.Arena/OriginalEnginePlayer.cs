@@ -134,9 +134,9 @@ namespace BelotArena
         }
 
         /// <summary>
-        /// The declarer is NOT CurrentContract.Player: the engine overwrites that with the
-        /// doubler's seat when someone doubles. It is the seat of the last actual contract bid.
-        /// A few of the original's branches key on it, so it has to be right.
+        /// The declarer is the seat of the last actual contract bid (a double or redouble keeps
+        /// it, and so does CurrentContract.Player). A few of the original's branches key on it,
+        /// so it has to be right.
         /// </summary>
         private static V2.Contract BuildContract(PlayerPlayCardContext context)
         {

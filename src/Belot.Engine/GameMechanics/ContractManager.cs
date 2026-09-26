@@ -69,10 +69,10 @@
 
                     if (bid == BidType.Double || bid == BidType.ReDouble)
                     {
+                        // Doubling only multiplies the contract: it stays with the declarer.
                         contract.Type &= ~BidType.Double;
                         contract.Type &= ~BidType.ReDouble;
                         contract.Type |= bid;
-                        contract.Player = currentPlayerPosition;
                     }
                     else if (bid != BidType.Pass)
                     {
@@ -138,16 +138,18 @@
                 availableBids |= BidType.AllTrumps;
             }
 
-            if (!currentPlayer.IsInSameTeamWith(currentContract.Player) && currentContract.Type != BidType.Pass)
+            // The opponents of the declarer may double; then the declaring team may redouble.
+            if (currentContract.Type != BidType.Pass && !currentContract.Type.HasFlag(BidType.ReDouble))
             {
+                var isDeclaringTeam = currentPlayer.IsInSameTeamWith(currentContract.Player);
                 if (currentContract.Type.HasFlag(BidType.Double))
                 {
-                    availableBids |= BidType.ReDouble;
+                    if (isDeclaringTeam)
+                    {
+                        availableBids |= BidType.ReDouble;
+                    }
                 }
-                else if (currentContract.Type.HasFlag(BidType.ReDouble))
-                {
-                }
-                else
+                else if (!isDeclaringTeam)
                 {
                     availableBids |= BidType.Double;
                 }

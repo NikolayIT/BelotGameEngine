@@ -308,6 +308,14 @@
                 new[] { BidType.Pass },
                 new[] { BidType.Pass },
             },
+            new object[]
+            {
+                // Redoubling by the doubler's teammate: only the declaring team may redouble.
+                new[] { BidType.Hearts },
+                new[] { BidType.Double },
+                new[] { BidType.Pass },
+                new[] { BidType.ReDouble },
+            },
         };
 
         [Theory]
@@ -407,6 +415,70 @@
                 Assert.Equal(expected[i].Item1, bids[i].Player);
                 Assert.Equal(expected[i].Item2, bids[i].Type);
             }
+        }
+
+        [Fact]
+        public void DoubleKeepsTheDeclarerAsTheContractPlayer()
+        {
+            // A double only multiplies the contract: it still belongs to the team that named it,
+            // and everything downstream (the players' contexts, the round result) reads the
+            // declarer from contract.Player.
+            var contractManager = new ContractManager(
+                new FakePlayer(BidType.Hearts),
+                new FakePlayer(BidType.Double),
+                new FakePlayer(BidType.Pass),
+                new FakePlayer(BidType.Pass));
+
+            var contract = contractManager.GetContract(1, PlayerPosition.South, 0, 0, EmptyHands(), out _);
+
+            Assert.Equal(BidType.Hearts | BidType.Double, contract.Type);
+            Assert.Equal(PlayerPosition.South, contract.Player);
+        }
+
+        [Fact]
+        public void RedoubleByTheDeclarersPartnerKeepsTheDeclarer()
+        {
+            var contractManager = new ContractManager(
+                new FakePlayer(BidType.Hearts),
+                new FakePlayer(BidType.Double),
+                new FakePlayer(BidType.ReDouble),
+                new FakePlayer(BidType.Pass));
+
+            var contract = contractManager.GetContract(1, PlayerPosition.South, 0, 0, EmptyHands(), out _);
+
+            Assert.Equal(BidType.Hearts | BidType.ReDouble, contract.Type);
+            Assert.Equal(PlayerPosition.South, contract.Player);
+        }
+
+        [Fact]
+        public void BiddersAfterADoubleSeeTheDeclarerInTheCurrentContract()
+        {
+            // South names Clubs and East doubles; North and West, asked next, must see South as
+            // the owner of the doubled contract (North may redouble it, West may not).
+            var north = BidMock(BidType.Pass);
+            var west = BidMock(BidType.Pass);
+            var seen = new List<(PlayerPosition Bidder, PlayerPosition ContractPlayer, BidType Available)>();
+            foreach (var player in new[] { north, west })
+            {
+                player.Setup(x => x.GetBid(It.IsAny<PlayerGetBidContext>()))
+                    .Callback<PlayerGetBidContext>(c => seen.Add((c.MyPosition, c.CurrentContract.Player, c.AvailableBids)))
+                    .Returns(BidType.Pass);
+            }
+
+            var contractManager = new ContractManager(
+                new FakePlayer(BidType.Clubs),
+                new FakePlayer(BidType.Double),
+                north.Object,
+                west.Object);
+            contractManager.GetContract(1, PlayerPosition.South, 0, 0, EmptyHands(), out _);
+
+            Assert.Equal(2, seen.Count);
+            Assert.All(seen, x => Assert.Equal(PlayerPosition.South, x.ContractPlayer));
+            Assert.Equal(PlayerPosition.North, seen[0].Bidder);
+            Assert.True(seen[0].Available.HasFlag(BidType.ReDouble));
+            Assert.Equal(PlayerPosition.West, seen[1].Bidder);
+            Assert.False(seen[1].Available.HasFlag(BidType.ReDouble));
+            Assert.False(seen[1].Available.HasFlag(BidType.Double));
         }
 
         [Theory]
