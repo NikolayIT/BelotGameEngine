@@ -69,36 +69,61 @@ against `SmartPlayerPreviousVersion`, which **downloads the committed `master` v
 
 ## Engine architecture
 
-Everything flows through the `IPlayer` interface (`Belot.Engine/Players/IPlayer.cs`). The engine
-drives the game and calls players via six callbacks: `GetBid`, `GetAnnounces`, `PlayCard`,
-`EndOfTrick`, `EndOfRound`, `EndOfGame`. **To add an AI or a UI, implement `IPlayer`** — the engine
-owns all rules and state; players only make decisions.
+A game can be driven two ways, both over the same rules:
 
-Control flow, outer to inner:
+- **Pull, with `IPlayer`s** (`Belot.Engine/Players/IPlayer.cs`): `BelotGame.PlayGame(firstToPlay)`
+  asks the players through six callbacks (`GetBid`, `GetAnnounces`, `PlayCard` decide;
+  `EndOfTrick`, `EndOfRound`, `EndOfGame` inform) until a team wins. This is what the simulator,
+  the bots' tests and the console UI use. **To add an AI, implement `IPlayer`.**
+- **Push, with `GameMechanics/BelotMatch`** (modelled on the Santase engine's `SantaseMatch`):
+  `Start()`, then read `ToMove` and `Decision` (`Bid`, `Announce` or `PlayCard`), give that seat
+  `CreateBidContext()` / `CreateAnnouncesContext()` / `CreatePlayCardContext()` (copies) and pass
+  its answer to `Act(seat, BelotAction.Bid(...) / Declare(...) / PlayCard(...))`. The match plays
+  forward (passes for a seat that can only pass, plays a forced card, finishes the trick, scores the
+  deal, deals the next) up to the next decision and never waits for anybody, so a UI or a server
+  holds no thread while a person thinks. `Act` returns `BelotActResult` (`Ok`, `InvalidAction`,
+  `NotYourTurn`, `MatchFinished`) and changes nothing unless `Ok`; `Validate` answers the same
+  without acting; `Stop()` ends a match early (no winner). Optional per-seat `IPlayer` observers get
+  the informing callbacks in the usual order. **UIs should be built on this, not on `BelotGame`
+  with blocking players.**
+- **Views and records** (plain models, public setters, no engine internals): `GetView(seat)`
+  returns a `BelotSeatView` with what that seat may see (its hand, its options, card counts, the
+  auction, the tricks, the last trick, earlier deals' results); another seat's declared combination
+  shows its type but not its cards until the deal is over (belotes show: their card was played in
+  the open). `view.CreateBidContext()` and the others rebuild the exact contexts, so
+  `player.Decide(view)` (`PlayerViewExtensions`) asks any bot that decides from its context (all of
+  them here) with the view alone. `GetRecord()` / `GetFinalView()` (after the match or a stop)
+  give every deal in full: the deck order, the auction, the declarations with their cards and
+  whether they scored, the tricks and the results. They need `BelotMatchOptions.RecordHistory` (on
+  by default; `BelotGame` turns it off).
 
-- `BelotGame.PlayGame(firstToPlay)` — loops rounds until a team reaches ≥151 points (with the
-  capot/contract guards in the win check) and returns a `GameResult`. `new BelotGame(..., Random)`
-  seeds the deals: every deal shuffles the whole deck once, so the n-th deal depends only on the
-  seed and n, and the same seed with the teams swapped replays the same deals (a mirror match).
-- `GameMechanics/RoundManager.PlayRound(...)` — deals 5 cards, runs bidding, deals 3 more, plays
-  the tricks, scores. Owns the `Deck` and the four players' `CardCollection`s.
-- `GameMechanics/ContractManager.GetContract(...)` — the bidding loop (suit ladder, no-trumps,
-  all-trumps, double/redouble) until three consecutive passes.
-- `GameMechanics/TricksManager.PlayTricks(...)` — 8 tricks. Handles announces (trick 1, resolved in
-  trick 2 via `ValidAnnouncesService.UpdateActiveAnnounces`), Belote, trick winners, and
-  accumulating each team's won cards.
-- `GameMechanics/ScoreManager.GetScore(...)` — full scoring: no-trumps doubling, last-10, capot
-  (+90), double/redouble coefficients, hanging points, and the suit/all-trumps **rounding** rules
-  (`RoundPoints`).
+Inside, one deal is a step-by-step state machine, `GameMechanics/Round` (internal): deal 5 each,
+`Auction` (the bidding, until three passes after a bid or four without), deal 3 more,
+`TrickPlay` (the 8 tricks: the combinations asked for in trick 1 and resolved before trick 2 by
+`ValidAnnouncesService.UpdateActiveAnnounces`, belotes, trick winners, the cards each team wins)
+and `ScoreManager.GetScore` (no-trumps doubling, last 10, capot +90, double/redouble, hanging
+points, the **rounding** rules). `BelotMatch` strings deals together and applies the end-of-game
+rule. `BelotGame`, `RoundManager.PlayRound`, `ContractManager.GetContract` and
+`TricksManager.PlayTricks` are thin loops over these machines (`PlayerDriver` asks the `IPlayer`
+and applies its answer; an illegal card or bid from a bot throws `BelotGameException`). On that
+path the players get the live context objects (tests rely on it, and the simulator avoids the
+copies); `BelotMatch` hands out copies. The rewrite onto the state machines was checked with a
+harness that played 31,000 seeded games (SmartPlayers, ClaudePlayerIsmcts and a random bot that
+bids, doubles, declares bogus combinations and claims belotes at random) before and after and
+hashed every callback with its arguments: identical. Do the same for any change to the flow.
 
-Decisions returned by players are **always validated** by the engine; an illegal card or bid throws
-`BelotGameException`. Rule logic lives in stateless services under `GameMechanics/`:
-`ValidCardsService` (follow-suit / must-trump / must-overtrump → returns the legal `CardCollection`;
-if only one card is legal the engine auto-plays it), `TrickWinnerService`, `ValidAnnouncesService`.
+`new BelotGame(..., Random)` (and `BelotMatchOptions.Random`) seeds the deals: every deal shuffles
+the whole deck once, so the n-th deal depends only on the seed and n, and the same seed with the
+teams swapped replays the same deals (a mirror match).
+
+Rule logic lives in stateless services under `GameMechanics/`: `ValidCardsService` (follow-suit /
+must-trump / must-overtrump → returns the legal `CardCollection`; if only one card is legal the
+engine plays it itself, without a belote), `TrickWinnerService`, `ValidAnnouncesService`.
 
 Player callbacks receive context objects that all extend `BasePlayerContext`
 (`PlayerGetBidContext`, `PlayerGetAnnouncesContext`, `PlayerPlayCardContext`) carrying the player's
-hand, the bids, the current contract, and the trick/round history.
+hand, the bids, the current contract, the game score and the hanging points, and the trick/round
+history.
 
 ## Performance is the primary design constraint
 
@@ -154,8 +179,8 @@ games (+375 ELO, +64 points a game), and one of it with a SmartPlayer partner wi
   points carried in included), mapped to [0, 1]; the partner's nodes maximise it, the opponents'
   minimise it. The most visited card is played.
 - **It keeps no state between decisions**: `Search/RoundKnowledge` rebuilds everything from the
-  `PlayerPlayCardContext` (only the hanging points come from `EndOfRound`), so a player can be
-  created for any position.
+  context (the hanging points included), so a player can be created for any position and decides
+  the same from a `BelotSeatView` (`DecideFromViewTests`).
 - **What the play shows** (`RoundKnowledge`): not following shows a void; in all trumps, or with
   trumps led, following below the best card shows nothing higher; in a suit contract not trumping
   while an opponent holds the trick shows no trumps, and not overtrumping shows no higher trump;
