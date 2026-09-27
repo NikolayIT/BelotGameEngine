@@ -265,6 +265,9 @@ pairs: **the networks alone tie ClaudePlayerIsmcts (100 ms)**, 50.2% ± 1.3% of 
   `distill --teacher neural --in <folder> --search-deals 100 --card-label-chance 1` records
   the stronger sampled-world teacher for `fit --in <warm-start>`. Empty data preserves the
   corresponding warm-start model. These options have not yet produced promoted weights.
+  Optional `tools/NeuralTrainer/Gpu/fit.py` fits the same sample format with CUDA PyTorch
+  and exports the existing BNN1 format. It is training-only; see its README for the
+  isolated environment, reproducible commands, checks and limitations.
   See `etc/NeuralResearch.md` for the broader research review and experiment rationale.
 - **Timing**: the September 27 trainer fixes warmup counting in `bench` and separately times
   warmed card callbacks through the engine. The frozen networks measured 18.5 us/card in

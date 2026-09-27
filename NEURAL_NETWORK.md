@@ -448,3 +448,37 @@ Tests verify legal-action masking and point units in diagnostics, use of indepen
 validation samples, complete per-epoch checkpoints, expansion parity before and after
 16-bit export, refusal of shrinking/mismatched layer counts, and learning through the
 new units. The full ClaudePlayer suite has 69 passing tests and builds without warnings.
+
+### Optional CUDA fitter and first search-teacher fits
+
+`tools/NeuralTrainer/Gpu/fit.py` is a training-only PyTorch implementation of the same
+masked ordinary/centred Huber objectives. It reads the existing sparse samples and
+writes checked-header BNN1 files for the unchanged managed runtime. See its
+[README](tools/NeuralTrainer/Gpu/README.md) for the isolated Python 3.12/CUDA setup,
+reproduction commands, limits, and tests. The global CPU-only Python installation
+is unchanged. Seven Python tests cover formats, gradients, masks, diagnostics, and
+partial batches/empty-contract preservation. C# successfully loaded an exported
+model; diagnostics on 307 real decisions matched Python to 0.001 point.
+
+A synthetic 47,500-sample fitting epoch took 0.66-0.76 seconds on the RTX 2080 SUPER,
+versus approximately 2 seconds in the eight-learner C# fitter. Both measurements ran
+during teacher collection; they establish a useful training option, not a controlled
+hardware benchmark. GPU fitting is faster enough to compare more settings cheaply.
+
+The first periodic search-100 dataset contains roughly 100,000 labelled card decisions.
+These pilots use the same data, seed 401, batch 1024, 12 epochs, learning rate 5e-5
+(1.5e-5 for the last four epochs), and frozen bidding. The wider warm start uses
+640/384/192 units; others use the shipped 512/256/128 shape.
+
+| Search-teacher student | vs frozen baseline, seed 29 | Fit evidence |
+|---|---|---|
+| Ordinary Huber, epoch 12 | 47.7% +/- 0.2 pp, 20,000 games, -3.5 points/game, -16 ELO | All-trumps validation RMSE fell from 8.329 to 4.275 points, but teacher regret only from 0.666 to 0.650 |
+| Centred Huber, value weight 0.05, epoch 12 | 48.7% +/- 0.5 pp, 4,000 games, -2.3 points/game, -9 ELO | All-trumps teacher regret 0.604 points |
+| Wider, centred Huber, epoch 12 | 48.0% +/- 0.5 pp, 4,000 games, -3.1 points/game, -14 ELO | No capacity gain in this pilot |
+
+All uncertainties are one standard error across mirrored pairs. These students fail
+the first promotion gate. Lower fitting error does not establish stronger decisions.
+The default random sample validation split shares games with training; separately
+seeded search-teacher validation games and the full 2,000-game training dataset are
+being collected. Pure action-difference loss is also under test. No weights or app
+levels have changed.
