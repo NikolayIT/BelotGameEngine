@@ -67,6 +67,13 @@ Two data options are experimental:
   whether learning a new common value under sampled worlds disrupts the useful
   pretrained representation. Validation still uses the original teacher labels.
 
+`--minimum-teacher-regret 2` is a separate experimental filter: use search targets
+only where the teacher values its best action at least two game points above the
+warm start's chosen action. Elsewhere, use the warm start's own Q-values as
+preservation targets. It is applied before optional mean anchoring. This threshold
+is a hypothesis about suppressing noisy small action differences, not a statistical
+confidence bound. Held-out validation labels remain untouched.
+
 `--validation-data <prefix>` uses a separately collected dataset. Without it,
 5% of samples are held out at random. That split can share games with training
 and is only a fitting diagnostic. Promotion requires independent whole-game

@@ -601,3 +601,10 @@ frozen bidding, then four epochs at learning rate 1e-5. See the GPU README for
 reproduction. This is not yet evidence of improved play. The 75-test C# suite
 and 17 Python tests pass; they include a direct check that removing all hidden
 hands changes ownership labels without changing any policy input.
+
+A further search-target pilot will use a two-point minimum teacher regret: keep
+the teacher labels only where its best card exceeds the warm start's choice by
+at least two points, and preserve the warm start's Q-values elsewhere. This tests
+whether changing small, noisy preferences causes the earlier regression. It is
+not a confidence interval on the search estimates. The fitter's tests cover the
+threshold, legal-action masking and preservation of the original validation data.

@@ -30,7 +30,7 @@ class FitTests(unittest.TestCase):
             args = Namespace(input=str(source), data=str(root / "data"), validation_data="",
                              out=str(output), epochs=2, batch=1024, learning_rate=0.001,
                              card_value_weight=0.05, policy_temperature=0, residual_sizes="",
-                             suit_augmentation=False, anchor_mean=False, device="cpu", seed=7)
+                             suit_augmentation=False, anchor_mean=False, minimum_teacher_regret=0, device="cpu", seed=7)
             with contextlib.redirect_stdout(io.StringIO()):
                 fit.run(args)
             for name in ("bid", "notrumps", "alltrumps"):
@@ -197,6 +197,26 @@ class FitTests(unittest.TestCase):
         torch.testing.assert_close(anchored[:, :3].mean(1), model(x)[:, :3].mean(1))
         torch.testing.assert_close(anchored[:, 0] - anchored[:, 2], y[:, 0] - y[:, 2])
         self.assertTrue(torch.equal(anchored[~mask], y[~mask]))
+        self.assertTrue(torch.equal(y, original))
+
+    def test_teacher_filter_keeps_large_mistakes_and_anchors_other_positions(self):
+        model = fit.Network(1, 1, (600, 32))
+        with torch.no_grad():
+            model.layers[0].weight.zero_()
+            model.layers[0].bias.zero_()
+            model.layers[0].bias[0] = 1
+        x = torch.zeros(2, 600)
+        y = torch.zeros(2, 32)
+        y[:, 1] = torch.tensor([0.2, 0.01])
+        y[:, 31] = 100  # An illegal output must not affect the threshold.
+        mask = torch.zeros(2, 32, dtype=torch.bool)
+        mask[:, :2] = True
+        original = y.clone()
+        with contextlib.redirect_stdout(io.StringIO()):
+            _, filtered, _ = fit.filter_teacher_targets(model, (x, y, mask), 2, 2, 'cpu')
+        torch.testing.assert_close(filtered[0], y[0])
+        torch.testing.assert_close(filtered[1, :2], model(x)[1, :2])
+        torch.testing.assert_close(filtered[~mask], y[~mask])
         self.assertTrue(torch.equal(y, original))
 
     def test_diagnostics_use_legal_actions_and_game_points(self):

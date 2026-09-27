@@ -271,6 +271,25 @@ def diagnostics(model, data, slots, batch, device, value_weight, policy_temperat
                 optimal_choices=best / max(1, len(slots)))
 
 
+@torch.no_grad()
+def filter_teacher_targets(model, data, minimum_regret, batch, device):
+    """Keep the initial policy's targets unless the teacher reports a material mistake."""
+    x, y, mask = data
+    filtered = y.clone()
+    trusted = 0
+    for start in range(0, len(x), batch):
+        features, target, legal = (tensor[start:start + batch].to(device) for tensor in data)
+        prediction = model(features)
+        chosen = prediction.masked_fill(~legal, -torch.inf).argmax(1)
+        regret = target.masked_fill(~legal, -torch.inf).max(1).values - target.gather(1, chosen[:, None]).squeeze(1)
+        use_teacher = regret * VALUE_SCALE >= minimum_regret
+        trusted += int(use_teacher.sum())
+        replacement = torch.where(use_teacher[:, None], target, prediction)
+        filtered[start:start + batch] = torch.where(legal, replacement, target).cpu()
+    print(json.dumps(dict(teacher_positions=trusted, total_positions=len(x), minimum_teacher_regret=minimum_regret)), flush=True)
+    return x, filtered, mask
+
+
 def run(args):
     disable_power_throttling()
     torch.set_num_threads(2)
@@ -318,6 +337,8 @@ def run(args):
         weight = -1 if tag == 0 else args.card_value_weight
         temperature = 0 if tag == 0 else args.policy_temperature
         print(name, "initial", json.dumps(diagnostics(model, validation_data, validation, args.batch, device, weight, temperature)), flush=True)
+        if tag != 0 and args.minimum_teacher_regret > 0:
+            data = filter_teacher_targets(model, data, args.minimum_teacher_regret, args.batch, device)
         if tag != 0 and args.anchor_mean:
             # Validation keeps the original teacher targets, including their mean values.
             data = anchor_targets(model, data, args.batch, device)
@@ -378,6 +399,8 @@ if __name__ == "__main__":
                         help="Permute suits only when the observed auction remains unchanged")
     parser.add_argument("--anchor-mean", action="store_true",
                         help="Keep teacher action differences but anchor the mean target to the warm start")
+    parser.add_argument("--minimum-teacher-regret", type=float, default=0,
+                        help="Keep warm-start targets where the teacher values its chosen action less than this many points above the student's")
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cuda")
     parser.add_argument("--seed", type=int, default=401)
     arguments = parser.parse_args()
@@ -385,4 +408,6 @@ if __name__ == "__main__":
         parser.error("epochs, batch and learning-rate must be positive")
     if arguments.policy_temperature < 0 or (arguments.policy_temperature > 0 and arguments.card_value_weight < 0):
         parser.error("policy-temperature needs a nonnegative card-value-weight")
+    if arguments.minimum_teacher_regret < 0:
+        parser.error("minimum-teacher-regret must be nonnegative")
     run(arguments)
