@@ -47,7 +47,7 @@
 
         public string Tagline => LocalizationManager.Instance[this.taglineKey];
 
-        /// <summary>Gets the difficulty, 1 to 4, for the stars and the difficulty label.</summary>
+        /// <summary>Gets the difficulty, 1 to 5, for the stars and the difficulty label.</summary>
         public int Difficulty { get; }
 
         public int Elo { get; }
@@ -55,9 +55,9 @@
         public Func<IPlayer> Factory { get; }
 
         public string DifficultyStars =>
-            new string('★', Math.Clamp(this.Difficulty, 0, 4)) + new string('☆', 4 - Math.Clamp(this.Difficulty, 0, 4));
+            new string('★', Math.Clamp(this.Difficulty, 0, 5)) + new string('☆', 5 - Math.Clamp(this.Difficulty, 0, 5));
 
-        public string DifficultyLabel => LocalizationManager.Instance[$"Diff_{Math.Clamp(this.Difficulty, 1, 4)}"];
+        public string DifficultyLabel => LocalizationManager.Instance[$"Diff_{Math.Clamp(this.Difficulty, 1, 5)}"];
 
         public string EloText => $"ELO {this.Elo}";
 

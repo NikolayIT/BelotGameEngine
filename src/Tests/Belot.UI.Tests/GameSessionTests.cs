@@ -37,7 +37,8 @@
         [InlineData("random", "random", "random", 3)]
         [InlineData("dummy", "smart", "random", 3)]
         [InlineData("smart", "dummy", "smart", 3)]
-        [InlineData("claude", "smart", "dummy", 1)]
+        [InlineData("claude", "smart", "dummy", 3)]
+        [InlineData("expert", "claude", "expert", 3)]
         public void GamesAtEveryLevelShouldBeWhatTheEnginePlayed(string partner, string west, string east, int games) => UiThread.Run(async () =>
         {
             var lineup = new Lineup(AiLevels.ById(partner), AiLevels.ById(west), AiLevels.ById(east));

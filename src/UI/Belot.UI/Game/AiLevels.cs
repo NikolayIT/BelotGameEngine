@@ -10,14 +10,47 @@
 
     public static class AiLevels
     {
+        /// <summary>
+        /// The Expert is the networks alone, played a little loose: it takes a card or bid worth d
+        /// game points less than the best e^(-d / T) times as often, never one worse than the best
+        /// by more than MaxRegret points (see ClaudePlayerNeural).
+        /// </summary>
+        public const double ExpertTemperature = 1.25;
+
+        public const double ExpertMaxRegret = 4;
+
+        /// <summary>
+        /// The Master plays each legal card out in this many deals of the unseen cards, with the
+        /// networks for every seat (ClaudePlayerNeural.SearchDeals): about 50 ms a card on a
+        /// desktop, and never more than <see cref="MasterMilliseconds"/> on a slow phone.
+        /// </summary>
+        public const int MasterSearchDeals = 100;
+
+        public const int MasterMilliseconds = 400;
+
         // Pair ratings (two of a level against two of another) from the `elo` simulator round
         // robin, anchored at Dummy = 1200. Re-run that suite and update these if the players change.
         public static IReadOnlyList<AiLevel> All { get; } = new[]
         {
-            new AiLevel("random", "🎲", "Level_Random_Name", "Level_Random_Tag", 1, 634, () => new RandomPlayer()),
+            new AiLevel("random", "🎲", "Level_Random_Name", "Level_Random_Tag", 1, 660, () => new RandomPlayer()),
             new AiLevel("dummy", "🙂", "Level_Dummy_Name", "Level_Dummy_Tag", 2, 1200, () => new DummyPlayer()),
-            new AiLevel("smart", "🃏", "Level_Smart_Name", "Level_Smart_Tag", 3, 1536, () => new SmartPlayer()),
-            new AiLevel("claude", "👑", "Level_Claude_Name", "Level_Claude_Tag", 4, 1886, () => new ClaudePlayerIsmcts()),
+            new AiLevel("smart", "🃏", "Level_Smart_Name", "Level_Smart_Tag", 3, 1462, () => new SmartPlayer()),
+            new AiLevel(
+                "expert",
+                "🎓",
+                "Level_Expert_Name",
+                "Level_Expert_Tag",
+                4,
+                1554,
+                () => new ClaudePlayerNeural { Temperature = ExpertTemperature, MaxRegret = ExpertMaxRegret }),
+            new AiLevel(
+                "claude",
+                "👑",
+                "Level_Claude_Name",
+                "Level_Claude_Tag",
+                5,
+                1771,
+                () => new ClaudePlayerNeural { SearchDeals = MasterSearchDeals, SearchTimeLimitMilliseconds = MasterMilliseconds }),
         };
 
         /// <summary>The level with this id, or the Smart one for an unknown id.</summary>

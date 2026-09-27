@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Belot.UI.Localization"
@@ -70,15 +70,15 @@
                 <!-- A level for each of the other three seats -->
                 <VerticalStackLayout Spacing="{ui:Size '8'}">
                     <Label Text="{loc:Tr Start_Partner}" FontSize="{ui:Size '11'}" TextColor="{StaticResource GoldAccent}" CharacterSpacing="3" />
-                    <Grid x:Name="PartnerHost" ColumnDefinitions="*,*,*,*" ColumnSpacing="{ui:Size '8'}" />
+                    <Grid x:Name="PartnerHost" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="{ui:Size '6'}" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Spacing="{ui:Size '8'}">
                     <Label Text="{loc:Tr Start_West}" FontSize="{ui:Size '11'}" TextColor="{StaticResource GoldAccent}" CharacterSpacing="3" />
-                    <Grid x:Name="WestHost" ColumnDefinitions="*,*,*,*" ColumnSpacing="{ui:Size '8'}" />
+                    <Grid x:Name="WestHost" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="{ui:Size '6'}" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Spacing="{ui:Size '8'}">
                     <Label Text="{loc:Tr Start_East}" FontSize="{ui:Size '11'}" TextColor="{StaticResource GoldAccent}" CharacterSpacing="3" />
-                    <Grid x:Name="EastHost" ColumnDefinitions="*,*,*,*" ColumnSpacing="{ui:Size '8'}" />
+                    <Grid x:Name="EastHost" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="{ui:Size '6'}" />
                 </VerticalStackLayout>
                 <VerticalStackLayout Spacing="{ui:Size '2'}">
                     <Label x:Name="TaglineLabel" FontSize="{ui:Size '12'}" TextColor="#C7D2BD" HorizontalTextAlignment="Center" />

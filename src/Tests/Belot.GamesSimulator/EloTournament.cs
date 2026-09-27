@@ -31,10 +31,14 @@
         // left essentially untouched.
         private const double PriorFraction = 0.01d;
 
-        // The app's Expert level (Belot.UI's AiLevels.ExpertTemperature and ExpertMaxRegret).
-        private const double ExpertTemperature = 1.5;
+        // The app's Expert and Master levels (Belot.UI's AiLevels).
+        private const double ExpertTemperature = 1.25;
 
         private const double ExpertMaxRegret = 4;
+
+        private const int MasterSearchDeals = 100;
+
+        private const int MasterMilliseconds = 400;
 
         /// <summary>Plays the round robin and prints the ratings.</summary>
         /// <param name="parallelism">How many games run at once.</param>
@@ -52,7 +56,11 @@
                     "Neural (loose)",
                     () => new ClaudePlayerNeural { Temperature = ExpertTemperature, MaxRegret = ExpertMaxRegret },
                     isSlow: false),
-                new Level("claude", "ClaudePlayerNeural", () => new ClaudePlayerNeural(), isSlow: false),
+                new Level(
+                    "claude",
+                    "Neural + search",
+                    () => new ClaudePlayerNeural { SearchDeals = MasterSearchDeals, SearchTimeLimitMilliseconds = MasterMilliseconds },
+                    isSlow: true),
                 new Level("ismcts", "ClaudePlayerIsmcts", () => new ClaudePlayerIsmcts(), isSlow: true),
             };
 

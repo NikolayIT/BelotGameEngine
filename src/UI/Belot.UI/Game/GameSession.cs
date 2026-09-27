@@ -159,7 +159,7 @@
                 bots[seat.Index()] = this.createBot(seat) ?? throw new InvalidOperationException($"No player for {seat}.");
             }
 
-            this.hintPlayer = this.hintFactory?.Invoke() ?? new ClaudePlayerIsmcts();
+            this.hintPlayer = this.hintFactory?.Invoke() ?? new ClaudePlayerNeural();
             this.hinting = Task.CompletedTask;
             var game = new BelotMatch(new BelotMatchOptions
             {
