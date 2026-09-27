@@ -152,15 +152,15 @@
 
                 if (now >= nextEvaluation)
                 {
-                    var score = this.Evaluate(++evaluations);
+                    var (score, evaluated) = this.Evaluate(++evaluations);
                     if (score > best)
                     {
                         best = score;
                         sinceBest = 0;
-                        this.current.Save(Path.Combine(this.settings.Out, "best"));
+                        evaluated.Save(Path.Combine(this.settings.Out, "best"));
                         this.Log($"new best ({score:0.000}), saved to {Path.Combine(this.settings.Out, "best")}");
                     }
-                    else if (this.settings.Patience > 0 && ++sinceBest >= this.settings.Patience)
+                    else if (!double.IsNaN(score) && this.settings.Patience > 0 && ++sinceBest >= this.settings.Patience)
                     {
                         this.Log($"no new best in {sinceBest} evaluations: stopping");
                         break;
@@ -233,7 +233,8 @@
                         workers[tag],
                         (float)this.LearningRate(),
                         (float)this.settings.MaxNorm,
-                        (float)this.settings.Huber);
+                        (float)this.settings.Huber,
+                        tag == NeuralModels.BidTag ? -1 : (float)this.settings.CardValueWeight);
                     this.losses[tag] = this.trained[tag] == 0 ? loss : (0.98 * this.losses[tag]) + (0.02 * loss);
                     this.trained[tag] += batches[tag].Count;
                     Interlocked.Increment(ref this.steps);
@@ -267,15 +268,21 @@
             return this.settings.LearningRate + ((this.settings.FinalLearningRate - this.settings.LearningRate) * progress);
         }
 
-        private double Evaluate(int index)
+        private (double Score, NeuralModels Models) Evaluate(int index)
         {
             var models = this.current;
             var folder = Path.Combine(this.settings.Out, index.ToString("0000", CultureInfo.InvariantCulture));
             models.Save(folder);
             var stopwatch = Stopwatch.StartNew();
             var (smart, ismcts) = Measure(models, this.settings, 1_000_000 + (index * 10_000));
+            if (smart == null && ismcts == null)
+            {
+                this.Log($"checkpoint {index} ({folder}): evaluation disabled");
+                return (double.NaN, models);
+            }
+
             this.Log($"evaluation {index} ({folder}, {stopwatch.Elapsed:mm\\:ss}): vs SmartPlayer {smart}; vs ISMCTS {this.settings.IsmctsMilliseconds} ms {ismcts}");
-            return ismcts?.Score ?? smart?.Score ?? 0;
+            return (ismcts?.Score ?? smart?.Score ?? 0, models);
         }
 
         private void Status()

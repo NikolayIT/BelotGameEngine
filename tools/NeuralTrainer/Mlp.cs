@@ -11,7 +11,8 @@
     /// A trainable copy of a network (<see cref="NeuralNetwork"/>'s shape and input-major
     /// weights, ReLU hidden layers, a linear output). It learns a value per action: the loss is
     /// the Huber loss over the labelled outputs of each sample only (the actions whose value
-    /// was measured), minimised with Adam. The gradients are summed over the batch by several
+    /// was measured), optionally separating the common value from action differences, and
+    /// minimised with Adam. The gradients are summed over the batch by several
     /// threads (<see cref="MlpWorker"/>), each over its share of the samples.
     /// </summary>
     internal sealed class Mlp
@@ -95,7 +96,7 @@
 
         /// <summary>One step of Adam on the batch.</summary>
         /// <returns>The batch's mean loss per labelled output.</returns>
-        public double Train(Batch batch, MlpWorker[] workers, float learningRate, float maxNorm, float huber)
+        public double Train(Batch batch, MlpWorker[] workers, float learningRate, float maxNorm, float huber, float valueWeight = -1)
         {
             var labels = 0;
             for (var i = 0; i < batch.Count; i++)
@@ -118,7 +119,7 @@
                     worker.Clear();
                     for (var sample = w; sample < batch.Count; sample += workers.Length)
                     {
-                        worker.Accumulate(this, batch, sample, scale, huber);
+                        worker.Accumulate(this, batch, sample, scale, huber, valueWeight);
                     }
                 });
 
@@ -181,14 +182,14 @@
         }
 
         /// <summary>The mean loss per labelled output, without learning.</summary>
-        public double Loss(Batch batch, MlpWorker worker, float huber)
+        public double Loss(Batch batch, MlpWorker worker, float huber, float valueWeight = -1)
         {
             worker.Clear();
             var labels = 0;
             for (var sample = 0; sample < batch.Count; sample++)
             {
                 labels += BitOperations.PopCount(batch.Masks[sample]);
-                worker.Evaluate(this, batch, sample, huber);
+                worker.Evaluate(this, batch, sample, huber, valueWeight);
             }
 
             return labels == 0 ? 0 : worker.Loss / labels;

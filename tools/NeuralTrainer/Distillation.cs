@@ -13,9 +13,9 @@
     using Belot.Engine.Players;
 
     /// <summary>
-    /// The trainer's first two commands. "distill" plays whole games of four ClaudePlayerIsmcts
-    /// (<see cref="DistillPlayer"/>) and saves what their searches found; "fit" trains new
-    /// networks on those samples (the start the self-play training improves on).
+    /// The trainer's supervised commands. "distill" records searches from ClaudePlayerIsmcts
+    /// or the neural search teacher; "fit" trains new networks or refines a warm start on those
+    /// samples. Neural search records cards only, preserving the warm start's bidding network.
     /// </summary>
     internal static class Distillation
     {
@@ -23,6 +23,15 @@
 
         public static void Record(TrainingSettings settings)
         {
+            if (settings.Teacher != "ismcts" && settings.Teacher != "neural")
+            {
+                throw new ArgumentException("--teacher must be ismcts or neural.", nameof(settings));
+            }
+
+            var models = settings.Teacher == "neural"
+                ? (string.IsNullOrEmpty(settings.In) ? NeuralModels.Embedded : NeuralModels.Load(settings.In))
+                : null;
+            Console.WriteLine($"distill: {settings}");
             var directory = Path.GetDirectoryName(Path.GetFullPath(settings.Data));
             Directory.CreateDirectory(directory);
             var buffers = Enumerable.Range(0, 4)
@@ -30,8 +39,11 @@
                     Math.Max(1000, settings.Games * (tag == 0 ? 100 : 300)),
                     tag == 0 ? FeatureEncoder.BidOutputs : FeatureEncoder.CardOutputs))
                 .ToArray();
+            var playerSeed = settings.Seed * 1000;
             using var players = new ThreadLocal<IPlayer[]>(() => Enumerable.Range(0, 4)
-                .Select(seat => (IPlayer)new DistillPlayer(new ClaudePlayerIsmcts { TimeLimitMilliseconds = settings.Milliseconds }, buffers))
+                .Select(seat => models == null
+                    ? (IPlayer)new DistillPlayer(new ClaudePlayerIsmcts { TimeLimitMilliseconds = settings.Milliseconds }, buffers)
+                    : new SearchDistillPlayer(models, buffers, settings, Interlocked.Increment(ref playerSeed)))
                 .ToArray());
             var stopwatch = Stopwatch.StartNew();
             var lastSave = Stopwatch.StartNew();
@@ -75,6 +87,17 @@
             {
                 var buffer = SampleBuffer.Load($"{settings.Data}.{Names[tag]}.samples");
                 var count = buffer.Count;
+                if (count == 0)
+                {
+                    if (string.IsNullOrEmpty(settings.In))
+                    {
+                        throw new InvalidOperationException($"{Names[tag]} has no samples; supply --in to preserve a trained network.");
+                    }
+
+                    Console.WriteLine($"{Names[tag]}: no samples; keeping the input network unchanged.");
+                    continue;
+                }
+
                 var slots = Enumerable.Range(0, count).OrderBy(_ => random.Next()).ToArray();
                 var validation = slots.Take(Math.Max(1, count / 20)).ToArray();
                 var training = slots.Skip(validation.Length).ToArray();
@@ -89,10 +112,10 @@
                     var rate = (float)(settings.FitLearningRate * (epoch > settings.Epochs * 0.7 ? 0.3 : 1));
                     var loss = 0.0;
                     var batches = 0;
-                    for (var start = 0; start + settings.Batch <= training.Length; start += settings.Batch)
+                    for (var start = 0; start < training.Length; start += settings.Batch)
                     {
-                        buffer.Take(batch, training.AsSpan(start, settings.Batch));
-                        loss += network.Train(batch, workers, rate, (float)settings.MaxNorm, (float)settings.Huber);
+                        buffer.Take(batch, training.AsSpan(start, Math.Min(settings.Batch, training.Length - start)));
+                        loss += network.Train(batch, workers, rate, (float)settings.MaxNorm, (float)settings.Huber, tag == NeuralModels.BidTag ? -1 : (float)settings.CardValueWeight);
                         batches++;
                     }
 
@@ -106,7 +129,7 @@
                 var labelled = Labelled(buffer, batch);
                 for (var output = 0; output < buffer.Outputs; output++)
                 {
-                    if ((labelled & (1u << output)) == 0)
+                    if (string.IsNullOrEmpty(settings.In) && (labelled & (1u << output)) == 0)
                     {
                         var last = network.Layers - 1;
                         var weights = network.Weights(last);
@@ -132,7 +155,7 @@
             for (var start = 0; start < validation.Length; start += batch.Capacity)
             {
                 buffer.Take(batch, validation.AsSpan(start, Math.Min(batch.Capacity, validation.Length - start)));
-                loss += network.Loss(batch, worker, (float)settings.Huber);
+                loss += network.Loss(batch, worker, (float)settings.Huber, network.Tag == NeuralModels.BidTag ? -1 : (float)settings.CardValueWeight);
                 batches++;
             }
 

@@ -59,12 +59,12 @@
         }
 
         /// <summary>Adds the sample's loss and gradients (scaled).</summary>
-        public void Accumulate(Mlp network, Batch batch, int sample, float scale, float huber)
+        public void Accumulate(Mlp network, Batch batch, int sample, float scale, float huber, float valueWeight = -1)
         {
             this.Forward(network, batch, sample);
             var last = this.sizes.Length - 2;
             var delta = this.deltas[last];
-            this.LossAndDelta(batch, sample, huber, scale, delta);
+            this.LossAndDelta(batch, sample, huber, scale, delta, valueWeight);
             for (var layer = last; layer >= 0; layer--)
             {
                 var outputs = this.sizes[layer + 1];
@@ -96,10 +96,10 @@
         }
 
         /// <summary>Adds the sample's loss only.</summary>
-        public void Evaluate(Mlp network, Batch batch, int sample, float huber)
+        public void Evaluate(Mlp network, Batch batch, int sample, float huber, float valueWeight = -1)
         {
             this.Forward(network, batch, sample);
-            this.LossAndDelta(batch, sample, huber, 0, this.deltas[this.sizes.Length - 2]);
+            this.LossAndDelta(batch, sample, huber, 0, this.deltas[this.sizes.Length - 2], valueWeight);
         }
 
         private static void Axpy(Span<float> target, ReadOnlySpan<float> source, float factor)
@@ -177,32 +177,18 @@
             }
         }
 
-        // The Huber loss of the labelled outputs and its gradient (0 for the others).
-        private void LossAndDelta(Batch batch, int sample, float huber, float scale, float[] delta)
+        // The selected action-value loss and its gradient (0 for unlabelled outputs).
+        private void LossAndDelta(Batch batch, int sample, float huber, float scale, float[] delta, float valueWeight)
         {
             var output = this.outputs[this.sizes.Length - 2];
             var labels = batch.Labels.AsSpan(sample * batch.Outputs, batch.Outputs);
             var mask = batch.Masks[sample];
-            Array.Clear(delta);
-            var loss = 0.0;
+            this.Loss += ActionValueLoss.Evaluate(output, labels, mask, huber, valueWeight, delta);
             for (var rest = mask; rest != 0; rest &= rest - 1)
             {
                 var o = BitOperations.TrailingZeroCount(rest);
-                var error = output[o] - labels[o];
-                var size = Math.Abs(error);
-                if (size <= huber)
-                {
-                    loss += 0.5 * error * error;
-                    delta[o] = error * scale;
-                }
-                else
-                {
-                    loss += huber * (size - (0.5 * huber));
-                    delta[o] = Math.Sign(error) * huber * scale;
-                }
+                delta[o] *= scale;
             }
-
-            this.Loss += loss;
         }
     }
 }

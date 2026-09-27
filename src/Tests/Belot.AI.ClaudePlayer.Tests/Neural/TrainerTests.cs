@@ -11,8 +11,12 @@
     public class TrainerTests
     {
         // Every gradient the workers sum is the loss's derivative, measured by nudging the weight.
-        [Fact]
-        public void TheGradientsAreTheLossDerivatives()
+        [Theory]
+        [InlineData(-1f)]
+        [InlineData(0f)]
+        [InlineData(0.05f)]
+        [InlineData(1f)]
+        public void TheGradientsAreTheLossDerivatives(float valueWeight)
         {
             var random = new Random(1);
             var sizes = new[] { 30, 12, 8, 5 };
@@ -23,7 +27,7 @@
             worker.Clear();
             for (var sample = 0; sample < batch.Count; sample++)
             {
-                worker.Accumulate(network, batch, sample, 1, Huber);
+                worker.Accumulate(network, batch, sample, 1, Huber, valueWeight);
             }
 
             var checkedWeights = 0;
@@ -36,9 +40,9 @@
                     var saved = parameters[i];
                     const float Step = 1e-3f;
                     parameters[i] = saved + Step;
-                    var up = network.Loss(batch, new MlpWorker(sizes), Huber);
+                    var up = network.Loss(batch, new MlpWorker(sizes), Huber, valueWeight);
                     parameters[i] = saved - Step;
-                    var down = network.Loss(batch, new MlpWorker(sizes), Huber);
+                    var down = network.Loss(batch, new MlpWorker(sizes), Huber, valueWeight);
                     parameters[i] = saved;
 
                     // Loss is per label; the worker's gradients are summed (scale 1).

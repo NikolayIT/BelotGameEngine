@@ -292,3 +292,108 @@ In `src/Tests/Belot.AI.ClaudePlayer.Tests/Neural/`:
 - `TrainerTests`: the trainer's gradients equal the loss's numerical derivatives, and it learns
   a simple target.
 - `DecideFromViewTests` also checks the neural player decides the same from a seat's view.
+
+## 12. September 27 improvement experiments (in progress)
+
+The fixed reference is the shipped weights at `544708e` (weights introduced in `8a0da0e`),
+copied to `artifacts/neural-20260927/baseline/` with SHA-256 hashes before experimentation.
+No candidate is promoted merely because training loss or a same-lineage match improved.
+Final promotion requires a fresh match of at least 1,000 games against ISMCTS at 100 ms,
+with the lower end of a two-sided 95% interval above 50%, plus a significant win against
+the frozen reference. Report standard errors over independent mirrored pairs, not over
+the individual games. Development and final evaluation use different deal seeds.
+
+### Research and experiment order
+
+- [Expert Iteration (Anthony, Tian and Barber, 2017)](https://arxiv.org/abs/1705.08439)
+  alternates search and learning from its decisions. The measured strength of our
+  100-deal neural search makes it a directly available teacher. Search labels must use
+  only the acting seat's information, with identical sampled deals for all legal cards.
+- [Dueling networks (Wang et al., 2016)](https://proceedings.mlr.press/v48/wangf16.html)
+  separate a state's value from action advantages. Our first experiment applies that
+  distinction to the **loss**, leaving the runtime network unchanged. This is a local
+  hypothesis inspired by the paper, not an implementation of its architecture.
+- [PerfectDou (Yang et al., 2022)](https://arxiv.org/abs/2203.16406) uses privileged
+  information in a training critic while its deployed policy sees only its information
+  set. Our all-action true-deal rollouts already supply training-only outcomes; a new
+  privileged critic is a larger change to consider if simpler variance reduction fails.
+- [DouZero (Zha et al., 2021)](https://proceedings.mlr.press/v139/zha21a.html) demonstrates
+  deep Monte Carlo self-play at scale. Its success does not establish that our current
+  absolute-value loss is suitable for Belot's much smaller differences between moves.
+- [Weight averaging (Izmailov et al., 2018)](https://arxiv.org/abs/1803.05407) motivated a
+  cheap check of averaging the last three old checkpoints' card weights. Our declining-rate
+  checkpoints are not the paper's SWA training schedule; any benefit needs measurement.
+
+For one sample, let `e[a] = Q[a] - target[a]`, and `m` be its mean over **labelled legal
+actions only**. The experimental loss is
+`sum Huber(e[a] - m) + actionCount * valueWeight * Huber(m)`.
+The shared part of deal luck is removed before the action losses are clipped. The common
+value term retains absolute point calibration. Its exact gradient includes subtracting
+the mean of the centred Huber derivatives; treating `m` as a constant is incorrect.
+`--card-value-weight -1` retains the original independent Huber loss; `0.05` is the first
+candidate. Bidding remains on the original loss. No feature layout or weight format changes.
+
+First compare equal-duration continuations from the frozen weights, with bidding frozen,
+using the original and centred losses. Evaluate both against the reference and ISMCTS.
+Then use the evidence to choose longer self-play or distillation of the search teacher.
+Architectural changes and a new training stack are deferred until those measurements
+identify a reason to pay their implementation and inference costs.
+
+### Measurement corrections
+
+The old `bench` denominator included warmup decisions while its timer excluded warmup,
+understating the mean by about 9%. It also timed bids and self-play bookkeeping together
+with cards. The corrected command excludes warmup and separately reports actual card
+callbacks through the engine on one thread. The historical 8.6 us number above remains
+the historical measurement, not an engine-callback timing. The untouched baseline binary
+reported 9.1 us by that old method on this run; corrected timings will be used for candidates.
+
+Training now saves the snapshot it actually evaluated as `best/`. Previously the learner
+could publish a newer snapshot during evaluation, and that unmeasured snapshot was saved.
+
+Experiment artifacts and full command logs live in `artifacts/neural-20260927/` (ignored).
+The final results and reproduction commands will be recorded here after the runs finish.
+
+### Reproduced baseline
+
+| Measurement | Frozen shipped networks |
+|---|---|
+| ISMCTS, 100 ms, 400 games (seed 27) | 49.5% +/- 2.2 percentage points (1 sigma), -3.4 points/game, -3 ELO |
+| SmartPlayer, 20,000 games (seed 28) | 86.8% +/- 0.2 percentage points (1 sigma), +57.3 points/game, +326 ELO |
+| Corrected self-play benchmark | 11.3 us/decision (518,891 measured decisions, excludes warmup) |
+| Engine card callbacks on one thread | 18.5 us/card (21,336 decisions across 100 games, excludes 20 warmup games) |
+
+Initial rejects (all uncertainty is one standard error over mirrored pairs):
+
+| Candidate | vs frozen baseline, 20,000 games, seed 29 | Other evidence |
+|---|---|---|
+| Old loss, 5-minute continuation | 49.6% +/- 0.2 pp, -0.5 points/game, -3 ELO | No improvement |
+| Old loss, 15-minute continuation | 49.6% +/- 0.2 pp, -0.3 points/game, -2 ELO | 86.6% +/- 0.2 pp vs Smart, 20,000 games, +57.1 points/game, +324 ELO |
+| Mean card weights of run3/0010, run3/0011 and final; final bidding kept | 50.1% +/- 0.2 pp, +0.1 points/game, +1 ELO | Tie; fails the first promotion gate |
+
+The 15-minute control processed 498,266 deals and 16,478 optimiser batches. Its settings
+were `--learning-rate 1e-5 --final-learning-rate 2e-6 --actors 12 --learners 8 --batch 1024
+--replay 2 --capacity 1000000 --bid-capacity 1000 --warmup 20000 --card-label-chance 1
+--bid-label-chance 0 --bid-exploration 0 --card-value-weight -1 --evaluate-minutes 5
+--smart-pairs 0 --ismcts-pairs 0 --pool-minutes 5 --seed 371 --hours 0.25`.
+The centred-loss pilot changes only `--card-value-weight 0.05` and the output folder.
+
+The baseline ISMCTS match used the untouched binary copy. The corrected benchmark is a
+different measurement from the historical 8.6 us/decision; compare new candidates against
+the corrected baseline, not against the historical number.
+
+### Search distillation tooling
+
+`distill --teacher neural --in <teacher-folder> --search-deals 100 --card-label-chance 1`
+records plain fixed-deal neural search. Every labelled decision plays the best teacher
+card, with the same tie-break as the public player. At unlabelled decisions it plays the
+fast teacher networks. The teacher receives only the engine's seat context. Its values
+are recorded for every legal action with the ordinary layout-1 encoder and sample format.
+Bidding stays fixed; `fit --in <warm-start>` preserves any network with no samples, and
+refuses to leave a random network in its place when no warm start was supplied.
+Fitting includes the final partial batch, and retains warm-start values of unlabelled
+actions. New random networks still initialise unlabelled actions pessimistically.
+
+Tests cover centred-loss gradients through every network layer, output gradients on both
+sides of Huber clipping, cancellation of common deal offsets, absolute-value calibration,
+empty and single-action masks, and exact search-label/feature parity through a whole game.

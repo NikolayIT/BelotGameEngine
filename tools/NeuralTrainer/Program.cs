@@ -4,6 +4,7 @@
     using System.Diagnostics;
     using System.Globalization;
     using System.Linq;
+    using System.Text;
 
     using Belot.AI.ClaudePlayer;
     using Belot.AI.ClaudePlayer.Neural;
@@ -25,6 +26,7 @@
     {
         public static int Main(string[] args)
         {
+            Console.OutputEncoding = new UTF8Encoding(false);
             if (args.Length == 0)
             {
                 Console.WriteLine("Commands: distill, fit, train, validate, bench (see Program.cs and NEURAL_NETWORK.md).");

@@ -43,6 +43,12 @@
         /// <summary>Gets or sets where the loss turns from squared to linear, in units of 26 game points.</summary>
         public double Huber { get; set; } = 1.0;
 
+        /// <summary>
+        /// Gets or sets the common value loss weight for cards (-1 = independent Huber losses;
+        /// 0 or more = centred action losses plus this weight on the mean error).
+        /// </summary>
+        public double CardValueWeight { get; set; } = -1;
+
         /// <summary>Gets or sets how many times, on average, a sample is learned from.</summary>
         public double Replay { get; set; } = 4;
 
@@ -90,6 +96,9 @@
 
         /// <summary>Gets or sets the sample files' path prefix ("distill" and "fit").</summary>
         public string Data { get; set; } = "data/distill";
+
+        /// <summary>Gets or sets the distillation teacher: ismcts, or neural with SearchDeals sampled worlds.</summary>
+        public string Teacher { get; set; } = "ismcts";
 
         /// <summary>Gets or sets how many games of ClaudePlayerIsmcts "distill" records.</summary>
         public int Games { get; set; } = 3000;
