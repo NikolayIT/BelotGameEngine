@@ -3,8 +3,8 @@
 `ClaudePlayerNeural` plays Belot with four small neural networks trained by reinforcement
 learning in self-play. It values **every action open to it** (each bid, each legal card) in game
 points and can be made weaker on purpose by sometimes taking a nearly best action. The
-strongest validated fast configuration retains those networks and adds bounded endgame
-search, averaging **31.1 microseconds per card** in the latest idle engine benchmark.
+strongest validated fast configuration uses a PPO-improved all-trump network with bounded
+endgame search, averaging **27.6 microseconds per card** in the latest idle engine benchmark.
 
 This document explains what it is, how it is trained, how to reproduce and improve it, and how
 to keep it working.
@@ -14,13 +14,15 @@ one standard error across mirrored pairs of whole games):
 
 | Opponent | Win rate | Games | Elo difference |
 |---|---|---|---|
-| ClaudePlayerIsmcts, 100 ms/card | **53.45% +/- .942 pp** | **2,000** | +24 +/- 7 |
-| Frozen original networks | **54.65% +/- .168 pp** | 20,000 | +32 +/- 1 |
-| SmartPlayer | **89.74% +/- .206 pp** | 20,000 | +377 +/- 4 |
+| ClaudePlayerIsmcts, 100 ms/card | **54.100% +/- 1.386 pp** | **1,000** | +29 +/- 10 |
+| Previous bounded fast profile | **50.620% +/- .187 pp** | 20,000 | +4 +/- 1 |
+| SmartPlayer | **89.835% +/- .205 pp** | 20,000 | +379 +/- 4 |
 
-The independent ISMCTS 95% interval is **[51.605%, 55.295%]**, passing the
-predeclared promotion gate. This is a search improvement, not improved neural
-weights. All four embedded files are unchanged (2,974,830 bytes total). Enable it with:
+The independent ISMCTS 95% interval is **[51.384%, 56.816%]**, passing the
+predeclared promotion gate. PPO changes only `alltrumps.bin`; bidding, suit and
+no-trump weights remain unchanged. All four files still total 2,974,830 bytes.
+The PPO gain is small: about +4 Elo against the preceding fast profile.
+Enable the validated fast configuration with:
 
 ```csharp
 new ClaudePlayerNeural
@@ -32,13 +34,18 @@ new ClaudePlayerNeural
 };
 ```
 
-The default constructor still uses networks alone. The endgame configuration
+The default constructor still uses networks alone: **50.000% +/- .978 pp in
+2,000 games** against ISMCTS100, at **15.2 us/card**. It has not established a
+search-free win against ISMCTS. Against the original pure networks, the selected
+PPO weights score 50.628% +/- .135 pp in 40,000 held-out games. The endgame configuration
 solves all publicly consistent endings within its world limit, using perfect
 information inside each hypothetical world. It assumes the bots' declare-all
 policy; a withheld own meld, no fitting world, or overflow causes a fallback.
 See [the implementation note](ENDGAME_EXPERIMENT.md) for these limits. Hints use
 this fast profile. Expert uses temperature 1.5 and MaxRegret 4; Master retains
-100-deal search with a 400-ms budget after a separate comparison.
+100-deal search with a 400-ms budget. The latest Master-versus-fast check gives
+51.500% +/- 1.099 pp in 1,000 games: a higher point estimate, with an inconclusive
+95% interval. See section 14 for the PPO controls, limitations and reproduction.
 
 **Earlier measurements** (September 2026, mirrored pairs, i7-12700K):
 
@@ -951,7 +958,7 @@ not affect declare-all bot games, as the replay and repeated matches verify.
 
 ## 13. Final app calibration and verification
 
-The final `elo 20000 60` run completed in **21:36** on an otherwise idle i7-12700K:
+The pre-PPO `elo 20000 60` run completed in **21:36** on an otherwise idle i7-12700K:
 **241,080 whole games**, 20,000 mirrored pairs per fast matchup and 60 per matchup
 involving Master or ISMCTS. Expert uses the fast endgame profile at temperature 1.5,
 MaxRegret 4. Master uses SearchDeals 100, a 400-ms budget, and no endgames.
@@ -1046,7 +1053,7 @@ retained for reproduction; none replaces the embedded weights.
 
 ## 14. PPO with a training-only helper (September 27)
 
-After pushing the preceding work at `e89185b`, the next experiment implements
+After pushing the preceding work at `e89185b`, the next experiment implemented
 on-policy PPO with a privileged critic, inspired by
 [PerfectDou](https://arxiv.org/html/2203.16406). The policy still sees only the
 original 600 public inputs. Three separate 696-256-128-1 helper networks also see
@@ -1198,8 +1205,17 @@ these variable timings do not establish an architectural speed gain. Both
 profiles remain below the 50-us limit in the idle confirmation.
 
 The candidate with Master search (100 worlds, 400-ms cap) measured **56.20
-ms/card**, 669 choices in four whole games after warmup. Its separate strength
-comparisons against the new fast profile and original Master are pending.
+ms/card**, 669 choices in four whole games after warmup. Against the new bounded
+fast profile it scored **51.500% +/- 1.099 pp in 1,000 games**, seed 577,
+95% [49.346%, 53.654%], +4.9 points/game, +10 +/- 8 Elo. This is the higher
+point estimate, but does not establish a search advantage at 95% confidence.
+Against the original Master with the same 100-world/400-ms settings, it scored
+**50.000% +/- 1.184 pp in 1,000 games**, seed 587, 95% [47.679%, 52.321%],
++.3 point/game, +0 +/- 8 Elo. This finds no significant change; it is not an
+equivalence proof. Master keeps its existing settings, which have the higher
+current point estimate against the fast profile and previously beat the original
+fast profile at 53.1% +/- 1.255 pp in 1,000 games. The new comparison alone does
+not establish that Master needs search.
 
 Final ISMCTS100 checks were fixed before their results: 2,000 games without
 search (seed 563), plus 1,000 games for the existing bounded fast profile
@@ -1208,8 +1224,48 @@ declaration constraints, and at most 90 worlds for a three-trick decision.
 The bounded fast profile **passes the promotion gate**: its 95% interval is above
 50%, its gain over the previous fast profile is confirmed, and its idle card
 benchmark is below 50 us. This is a result for PPO plus bounded endgames; the
-pure network still ties ISMCTS. The embedded weights and app ratings are still
-unchanged while the Master comparisons complete.
+pure network still ties ISMCTS. The selected all-trump file is now embedded.
+A rebuilt-assembly check against the selected folder gave identical play over
+2,000 mirrored games (50% with zero observed pair error and equal total points);
+this checks export/embedding parity, not playing strength.
+
+### App calibration after PPO promotion
+
+`elo 20000 60` ran with the newly embedded weights in **20:55**, over **241,080
+whole games**. The simulator was built separately in Release, then its UTF-16LE
+output was piped through `iconv -f UTF-16LE -t UTF-8`. Pair-rating errors below
+are one standard deviation from 1,000 shared-seed mirrored-pair bootstrap samples;
+Dummy is the fixed anchor.
+
+| Player / app level | Pair Elo +/- 1 sigma | Games |
+|---|---|---|
+| ClaudePlayerIsmcts, reference | 1762 +/- 20.9 | 600 |
+| Master, search 100 / 400-ms cap | 1760 +/- 23.1 | 600 |
+| Expert, bounded endgames, T=1.5 / MaxRegret=4 | 1600 +/- 2.2 | 120,240 |
+| Skilled / SmartPlayer | 1466 +/- 1.7 | 120,240 |
+| Beginner / DummyPlayer | 1200 (fixed) | 120,240 |
+| RandomPlayer | 656 +/- 3.1 | 120,240 |
+
+The ratings are copied to `AiLevels.cs`. **Expert keeps temperature 1.5 and
+MaxRegret 4**: its measured strength remains between Skilled and Master. Relevant
+direct matchups from the same tournament are:
+
+| First player / opponent | First player's win rate +/- 1 sigma | Games |
+|---|---|---|
+| Skilled / Expert | 25.843% +/- .202 pp | 40,000 |
+| Expert / Master | 35.000% +/- 4.168 pp | 120 |
+| Expert / ISMCTS100 | 32.500% +/- 3.910 pp | 120 |
+| Master / ISMCTS100 | 50.000% +/- 3.565 pp | 120 |
+
+Master's fitted rating has a wide error bar and Expert is a changed opponent.
+The dedicated 1,000-game old-versus-new Master match above is the direct test of
+that weight change; the change in fitted rating alone does not show a regression.
+The bounded fast profile's 1,000-game ISMCTS result remains the promotion test.
+Post-promotion verification passes: **741 engine tests, 97 AI tests and 72 UI
+tests**, with no failures or skips. Both requested Windows and Android app
+builds complete with **zero warnings and zero errors**. The PPO tooling's final
+source revision also passes **28 Python tests**, including gradients, data
+validation, actor export parity and reproducible resume.
 
 Full experiment settings, follow-ups and reproduction commands are in
 [PPO_EXPERIMENT.md](PPO_EXPERIMENT.md) and

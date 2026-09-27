@@ -2,8 +2,8 @@
 
 ## Fixed design and first comparison
 
-Starting point: master e89185b, pushed to origin before this experiment. Runtime
-networks, 600 policy inputs, bidding weights and BNN1 exports are unchanged.
+Starting point: master e89185b, pushed to origin before this experiment. Inference
+architecture, 600 policy inputs, bidding weights and the BNN1 format stay unchanged.
 Development evaluation uses greedy card choices with both search options
 disabled. Final confirmation also checks the app's existing bounded fast profile.
 
@@ -80,8 +80,8 @@ Directly comparing the two fixed endpoints on seed 541 gave the private helper
 **49.795% +/- .182 pp in 20,000 games**, 95% interval [49.437%, 50.153%],
 +.1 point/game. This also fails to establish a playing benefit from hidden hands.
 
-The public endpoint has a small positive result against the original, but neither
-run has passed the required ISMCTS gate. No weights or app levels are promoted.
+The public endpoint had a small positive result against the original, but neither
+initial run passed the required ISMCTS gate. Neither initial export was promoted.
 Training took 307.9 seconds for the private run and 721.3 seconds for the public
 run, excluding Python startup and the final evaluation. The latter overlapped
 other tests/evaluations, so these times are not a controlled throughput comparison.
@@ -176,9 +176,28 @@ gate. Against SmartPlayer it scored **89.835% +/- .205 pp in 20,000 games**,
 endgames; they do not establish a pure-network win against ISMCTS.
 
 Master with the selected weights measured 56.20 ms/card (669 choices in four
-games). Two predeclared 1,000-game comparisons now check it against the new fast
+games). Two predeclared 1,000-game comparisons checked it against the new fast
 profile (seed 577) and original Master (seed 587), both at 100 search worlds and
-a 400-ms cap. Weights and app levels remain unchanged until those checks finish.
+a 400-ms cap. The first finished at **51.500% +/- 1.099 pp in 1,000 games**,
+95% [49.346%, 53.654%], +4.9 points/game. Its higher point estimate does not
+establish a search advantage at 95% confidence. Against the original Master,
+the candidate scored **50.000% +/- 1.184 pp in 1,000 games**, 95%
+[47.679%, 52.321%], +.3 point/game. No significant change was found; this does
+not prove equivalence. Master retains its existing 100-world/400-ms settings.
+
+The selected `alltrumps.bin` is now embedded after passing the fast-profile gate.
+The rebuilt assembly and selected folder produced identical outcomes over 2,000
+mirrored games, including equal point totals. The other three files are byte
+identical to the frozen original. App recalibration (`elo 20000 60`, 241,080
+games, 20:55) gives Random 656 +/- 3.1, Beginner 1200 (fixed), Skilled 1466 +/-
+1.7, Expert 1600 +/- 2.2, Master 1760 +/- 23.1, and ISMCTS 1762 +/- 20.9.
+The first four played 120,240 games each; Master and ISMCTS played 600 each.
+Errors are one shared-seed bootstrap standard deviation. Ratings are copied to
+`AiLevels.cs`; Expert keeps temperature 1.5 and MaxRegret 4 because it remains
+between Skilled and Master. Post-promotion checks pass: 741 engine tests, 97 AI
+tests and 72 UI tests; both Windows and Android app builds finish with zero
+warnings or errors. The PPO tooling's final source revision passes 28 Python
+tests.
 
 The evidence supports a small PPO gain in the all-trump policy. It does not show
 that larger helpers help, nor that private inputs beat a matched public helper.

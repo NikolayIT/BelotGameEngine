@@ -235,16 +235,22 @@ games (+375 ELO, +64 points a game), and one of it with a SmartPlayer partner wi
 ## ClaudePlayerNeural design (the app's Master)
 
 `AI/Belot.AI.ClaudePlayer/ClaudePlayerNeural.cs` and `Neural/`; the full story (inputs, training,
-results, reproduction, promotion) is `NEURAL_NETWORK.md`. The original networks tie
-ClaudePlayerIsmcts (100 ms). The validated fast configuration adds bounded endgames:
+results, reproduction, promotion) is `NEURAL_NETWORK.md`. The PPO-updated all-trump
+network, with the original other three networks, still ties ClaudePlayerIsmcts
+(100 ms): 50.000% +/- .978 pp in 2,000 games. The validated fast configuration adds bounded endgames:
 `UseEndgameSearch = true`, `EndgameUseDeclarations = true`, `EndgameTricks = 3`,
-`EndgameThreeTrickWorldLimit = 90`. It scores **53.45% +/- .942 pp over 2,000 games**
-against ISMCTS, 95% interval [51.605%, 55.295%], and **54.65% +/- .168 pp over
-20,000 games** against the frozen networks. The latest idle mean is **31.1 us/card**.
-The weights and default constructor behavior are unchanged. Master retains
-100-deal search with a 400-ms budget: it beat the fast profile at 53.1% +/-
-1.255 pp over 1,000 games. Adding endgames to Master scored 52.8% +/- 1.667 pp
-over 500 games, an inconclusive result, so that combination remains unpromoted.
+`EndgameThreeTrickWorldLimit = 90`. It scores **54.100% +/- 1.386 pp over 1,000 games**
+against ISMCTS, 95% interval [51.384%, 56.816%], and **50.620% +/- .187 pp over
+20,000 games** against the previous fast profile (about +4 Elo). The latest idle
+means are **27.6 us/card** for this profile and **15.2 us** for networks alone.
+Only `alltrumps.bin` changed; total weights remain 2,974,830 bytes. The default
+constructor still uses networks alone. Master retains 100-deal search with a
+400-ms budget, measured at 56.20 ms/card. It scores 51.500% +/- 1.099 pp against
+the new fast profile and 50.000% +/- 1.184 pp against the original Master, each
+over 1,000 games. The former is the higher point estimate but its 95% interval
+includes 50%; the latter finds no significant change. Earlier, adding endgames
+to Master scored 52.8% +/- 1.667 pp over 500 games, also inconclusive, so that
+combination remains unpromoted.
 
 - **Four multilayer perceptrons value every action in game points** (the team's points from the
   deal minus the other team's, hanging points included): a bidding network (97 inputs → pass, the
@@ -261,7 +267,7 @@ over 500 games, an inconclusive result, so that combination remains unpromoted.
   replays 400 random matches both ways: change a rule and it fails** (with
   `SimulatorAgreesWithEngineTests`). The inputs come only from what the seat may know
   (`PlayInference`, shared with ISMCTS's `RoundKnowledge`, is what the play showed).
-- **Training** (`tools/NeuralTrainer`, pure C#, CPU): distil ClaudePlayerIsmcts's searches into a
+- **Original training** (`tools/NeuralTrainer`, C#, CPU): distil ClaudePlayerIsmcts's searches into a
   warm start, then self-play reinforcement learning where every action of a labelled decision is
   played out in the true deal by all four seats' networks (Monte Carlo policy iteration, the
   actions sharing the deal's luck). Run the trainer from a copy of its binaries (`-o`) when you
@@ -298,11 +304,14 @@ over 500 games, an inconclusive result, so that combination remains unpromoted.
   control in the initial experiment. The pure policy still ties ISMCTS100:
   50.000% +/- .978 pp in 2,000 games. Its latest idle timing is 15.2 us/card,
   or 27.6 us with bounded endgames. That fast profile passes the ISMCTS gate at
-  54.100% +/- 1.386 pp in 1,000 games (95% [51.384%, 56.816%]); Master checks
-  are pending before embedding its all-trump weights and recalibrating the app.
+  54.100% +/- 1.386 pp in 1,000 games (95% [51.384%, 56.816%]). Its all-trump
+  weights are embedded; the other three files remain original. App ratings were
+  recalibrated with these weights. Post-promotion checks pass: 741 engine,
+  97 AI and 72 UI tests; Windows and Android builds have zero warnings or errors.
+  The PPO tooling also passes all 28 Python tests.
   See `PPO_EXPERIMENT.md` and `NEURAL_NETWORK.md` section 14 for results and commands.
   Search-teacher students have not earned promotion. A separate bounded-endgame
-  implementation (`Neural/EndgameSearch`) keeps the original networks and averages
+  implementation (`Neural/EndgameSearch`) was first tested with the original networks and averages
   perfect-information endings over publicly consistent hands. Its eight-world
   three-trick variant scored 52.4% +/- 1.4 pp against ISMCTS over 1,000 games;
   the 95% interval includes 50%, so it was not promoted. The 90-world variant
@@ -371,12 +380,14 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   average of their two levels (`Lineup.RivalsElo`). The levels' ratings in `AiLevels` are pair
   ratings from the simulator's `elo` suite (`EloTournament`: two of a level against two of
   another in mirrored pairs, a Bradley-Terry fit anchored at Dummy = 1200; ClaudePlayerIsmcts
-  plays too, for reference). Latest run (September 27, 2026, `elo 20000 60`, 21:36, 241,080 games): Random
-  660 +/- 3.1, Beginner 1200 (fixed anchor), Skilled 1464 +/- 1.7, Expert 1575 +/- 2.1,
-  Master 1799 +/- 26.4, and ClaudePlayerIsmcts 1770 +/- 26.7. Errors are one standard
+  plays too, for reference). Latest run (September 27, 2026, PPO weights, `elo 20000 60`,
+  20:55, 241,080 games): Random 656 +/- 3.1, Beginner 1200 (fixed anchor),
+  Skilled 1466 +/- 1.7, Expert 1600 +/- 2.2, Master 1760 +/- 23.1, and
+  ClaudePlayerIsmcts 1762 +/- 20.9. Errors are one standard
   deviation from 1,000 shared-seed mirrored-pair bootstrap samples. Fast levels each played
   120,240 games; Master and ISMCTS each played 600 (120 per matchup). Re-run the suite
-  and re-paste ratings if the players change.
+  and re-paste ratings if the players change. Expert retains temperature 1.5 /
+  MaxRegret 4 after this check: its measured rating lies between Skilled and Master.
 - **`src/Tests/Belot.UI.Tests`** compiles those files and plays whole games on a UI-like
   single-threaded `SynchronizationContext`: `ActReplayTests` (every act of 300 engine matches
   replays into exactly `GetRecord()`), `GameSessionTests` (every level, the table's event order,
