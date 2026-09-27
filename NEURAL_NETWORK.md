@@ -566,3 +566,38 @@ reduced the regression, but these fits have not recovered the teacher's gain.
 The next collection holds search at 100 worlds and uses fast-network trajectories
 (`--teacher-play-chance 0`, 1,000 games, seed 8371) to separate target noise from
 the trajectory change in the earlier search-10 experiment.
+
+### Shared card head and auxiliary card-location supervision
+
+A shared correction head was tested on branch `neural-shared-card-head`, commit
+`9983543`. It freezes the existing MLP and shares a 32-unit correction function
+across cards, reading pretrained final features, a card's 16 existing input
+planes, rank and suit embeddings. It adds 5,057 parameters per card network.
+The branch includes checked version-2 weight files and managed inference, but
+is not merged into the production runtime.
+
+On the full search100 dataset, mean-anchored centred targets, learning rate .001
+(then .0003), 36 epochs, batch 1024 and seed 401, it scored 48.1% +/- .5 pp at
+epoch 4, 47.9% +/- .5 at epoch 12, 47.3% +/- .5 at epoch 24 and 47.1% +/- .5 at
+epoch 36 against the frozen player. Each is 4,000 mirrored games, seed 29. The
+final difference was -3.6 points/game, -20 Elo. It fails the first promotion
+gate. The branch passed 76 C# and 16 Python tests, including independent scalar
+inference, finite-difference gradients, frozen base and file corruption checks.
+Exported C#/Python diagnostics on all 22,213 independent validation positions
+agreed to 0.001 point. No inference-speed claim or ISMCTS gain is made for it.
+
+The next experiment uses true-card locations as an auxiliary training objective,
+inspired by the Skat and DouZero+ evidence in the research review. It differs from
+DouZero+: predictions do not become explicit policy inputs. A training-only head
+shares the final hidden representation with Q-values, learns the relative owner
+of unseen cards, and is discarded when exporting the original MLP. A matched
+zero-weight control uses identical data, warmup and Q training. Thus inference
+architecture, inputs, point units and feature layout stay unchanged.
+
+`record-selfplay` records frozen-baseline Monte Carlo Q targets and a separate
+checked ownership sidecar. The planned comparison uses 100,000 training deals
+(seed 3931) and 5,000 independent validation deals (seed 2931), 3% card exploration,
+frozen bidding, then four epochs at learning rate 1e-5. See the GPU README for
+reproduction. This is not yet evidence of improved play. The 75-test C# suite
+and 17 Python tests pass; they include a direct check that removing all hidden
+hands changes ownership labels without changing any policy input.

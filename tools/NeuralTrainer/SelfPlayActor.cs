@@ -165,7 +165,8 @@
             }
 
             var count = FeatureEncoder.EncodeCard(in deal, legal, this.indices, this.featureValues);
-            if (buffer.Add(this.indices.AsSpan(0, count), this.featureValues.AsSpan(0, count), this.labels, mask))
+            var owners = buffer.TracksOwners ? CardOwnership.Encode(in deal) : 0;
+            if (buffer.Add(this.indices.AsSpan(0, count), this.featureValues.AsSpan(0, count), this.labels, mask, owners))
             {
                 this.CardSamples++;
             }

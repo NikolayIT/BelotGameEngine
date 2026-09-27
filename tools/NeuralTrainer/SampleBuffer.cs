@@ -23,10 +23,11 @@
         private readonly byte[] featureCounts;
         private readonly Half[] labels;
         private readonly uint[] masks;
+        private readonly ulong[] owners;
         private long written;
         private long dropped;
 
-        public SampleBuffer(int capacity, int outputs)
+        public SampleBuffer(int capacity, int outputs, bool trackOwners = false)
         {
             this.Capacity = capacity;
             this.Outputs = outputs;
@@ -35,11 +36,14 @@
             this.featureCounts = new byte[capacity];
             this.labels = new Half[(long)capacity * outputs];
             this.masks = new uint[capacity];
+            this.owners = trackOwners ? new ulong[capacity] : null;
         }
 
         public int Capacity { get; }
 
         public int Outputs { get; }
+
+        public bool TracksOwners => this.owners != null;
 
         /// <summary>Gets how many samples were ever added.</summary>
         public long Written => Interlocked.Read(ref this.written);
@@ -85,7 +89,7 @@
         }
 
         /// <summary>Adds a sample; false (and dropped) when it has too many non-zero inputs.</summary>
-        public bool Add(ReadOnlySpan<int> sampleIndices, ReadOnlySpan<float> sampleValues, ReadOnlySpan<float> sampleLabels, uint mask)
+        public bool Add(ReadOnlySpan<int> sampleIndices, ReadOnlySpan<float> sampleValues, ReadOnlySpan<float> sampleLabels, uint mask, ulong cardOwners = 0)
         {
             if (sampleIndices.Length > MaxFeatures || mask == 0)
             {
@@ -111,6 +115,11 @@
                 }
 
                 this.masks[slot] = mask;
+                if (this.owners != null)
+                {
+                    this.owners[slot] = cardOwners;
+                }
+
                 Interlocked.Increment(ref this.written);
             }
 
@@ -172,6 +181,19 @@
                         {
                             writer.Write(this.labels[((long)slot * this.Outputs) + o]);
                         }
+                    }
+                }
+
+                if (this.owners != null)
+                {
+                    using var ownerWriter = new BinaryWriter(File.Create(path + ".owners"));
+                    ownerWriter.Write(0x314F5042); // BPO1: aligned training-only ownership labels.
+                    ownerWriter.Write(Belot.AI.ClaudePlayer.Neural.FeatureEncoder.LayoutVersion);
+                    ownerWriter.Write(this.Outputs);
+                    ownerWriter.Write(count);
+                    for (var slot = 0; slot < count; slot++)
+                    {
+                        ownerWriter.Write(this.owners[slot]);
                     }
                 }
             }

@@ -142,3 +142,33 @@ managed inference, 27 with eager CUDA, and 17 with graphs on one actor. A separa
 four-actor run collected 4,183 positions in 76 seconds across 20 games. These
 are training-throughput pilots during other collection work, not app latency
 measurements or proof of universal floating-point equivalence.
+
+## Auxiliary card-location experiment
+
+`record-selfplay` freezes the supplied networks and records the existing true-deal
+Monte Carlo action targets, plus a separate `.samples.owners` training-label file.
+The two-bit owner for each rotated card is relative to the deciding seat; zero
+marks own/played cards, excluded from the auxiliary loss. The sidecar has a BPO1
+magic, feature layout, output count, sample count and one uint64 per sample. It
+uses exactly the same buffer slots as the ordinary samples. Overflow is refused.
+
+```powershell
+dotnet artifacts/trainer/NeuralTrainer.dll record-selfplay --in artifacts/baseline --deals 100000 --threads 10 --capacity 1500000 --card-label-chance 1 --bid-label-chance 0 --bid-exploration 0 --card-exploration .03 --seed 3931 --data artifacts/belief-train/data
+dotnet artifacts/trainer/NeuralTrainer.dll record-selfplay --in artifacts/baseline --deals 5000 --threads 10 --capacity 100000 --card-label-chance 1 --bid-label-chance 0 --bid-exploration 0 --card-exploration .03 --seed 2931 --data artifacts/belief-validation/data
+artifacts/torch-env/Scripts/python.exe tools/NeuralTrainer/Gpu/fit_belief.py --in artifacts/baseline --data artifacts/belief-train/data --validation-data artifacts/belief-validation/data --out artifacts/belief-student --belief-weight .01 --epochs 4 --learning-rate 1e-5
+```
+
+Run the matched control with `--belief-weight 0`. Both runs warm up a random
+128-to-96 ownership head for one pass while keeping the playing network frozen,
+then jointly fit action values and per-card three-seat cross-entropy. Data stays
+in CPU memory and batches move to CUDA, avoiding whole-dataset GPU allocation.
+The auxiliary head is discarded on export. Policy inputs, inference cost, file
+layout and point-valued outputs remain unchanged; ownership labels never enter
+the policy's input tensor. This tests shared representation learning, unlike
+DouZero+'s explicit predicted-hand inputs, and requires measured playing gains.
+
+Tests cover ownership rotation through complete deals, removal of hidden hands
+without changing any policy input, sidecar alignment after ring wraparound,
+malformed sidecars, finite-difference loss gradients, masked own/played cards,
+frozen warmup parameters and policy-only export. No feature-layout bump is needed
+because the input encoding is unchanged.
