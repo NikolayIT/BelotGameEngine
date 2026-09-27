@@ -11,6 +11,9 @@
   </PropertyGroup>
   <ItemGroup>
     <AdditionalFiles Include="..\..\stylecop.json" />
+    <!-- Share the trainer's background-throttling opt-out for timed ISMCTS matches. -->
+    <Compile Include="..\..\..\tools\NeuralTrainer\PowerThrottling.cs" Link="PowerThrottling.cs" />
+    <Compile Include="..\..\..\tools\NeuralTrainer\NativeMethods.cs" Link="NativeMethods.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.9.2" />

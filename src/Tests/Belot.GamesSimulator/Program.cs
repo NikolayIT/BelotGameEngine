@@ -6,6 +6,8 @@
     using System.Text;
     using System.Threading;
 
+    using Belot.NeuralTrainer;
+
     public static class Program
     {
         public const int LineLength = 70;
@@ -36,6 +38,7 @@
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.RealTime;
             Console.OutputEncoding = Encoding.Unicode;
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+            PowerThrottling.Disable();
             Console.WriteLine(new string('=', LineLength));
             Console.WriteLine("Belot Games Simulator");
 #if DEBUG
