@@ -23,14 +23,6 @@
     {
         private const double AnchorElo = 1200d;
 
-        // ELO is Bradley-Terry on a base-10, 400-point scale: gap = 400 * log10(strength ratio).
-        private const double EloPerDecade = 400d;
-
-        // A 50/50 prior worth this fraction of each matchup's games keeps a blow-out (the Master
-        // against Random wins nearly every game) from giving an infinite gap; close matchups are
-        // left essentially untouched.
-        private const double PriorFraction = 0.01d;
-
         // The app's Expert and Master levels (Belot.UI's AiLevels).
         private const double ExpertTemperature = 1.25;
 
@@ -67,6 +59,7 @@
             var n = levels.Length;
             var wins = new double[n, n];
             var games = new double[n, n];
+            var pairScores = new double[n * n][];
             Console.WriteLine($"ELO round robin of the app's levels, pair vs pair: {fastPairs} mirrored pairs a matchup ({slowPairs} with ISMCTS)");
             Console.WriteLine(new string('=', Program.LineLength));
 
@@ -77,18 +70,22 @@
                 {
                     var pairs = levels[i].IsSlow || levels[j].IsSlow ? slowPairs : fastPairs;
                     var stopwatch = Stopwatch.StartNew();
-                    var winsI = PlayMirroredPairs(levels[i].Create, levels[j].Create, pairs, parallelism);
+                    var (winsI, scores) = PlayMirroredPairs(levels[i].Create, levels[j].Create, pairs, parallelism);
+                    pairScores[(i * n) + j] = scores;
+                    var sigma = EloStatistics.StandardError(scores);
                     var played = pairs * 2;
                     wins[i, j] += winsI;
                     wins[j, i] += played - winsI;
                     games[i, j] += played;
                     games[j, i] += played;
                     Console.WriteLine(
-                        $"  {levels[i].Name,-20} {winsI,6} - {played - winsI,-6} {levels[j].Name,-20} ({100.0 * winsI / played,5:0.0}% | {stopwatch.Elapsed:hh\\:mm\\:ss\\.f})");
+                        $"  {levels[i].Name,-20} {winsI,6} - {played - winsI,-6} {levels[j].Name,-20} "
+                        + $"({100.0 * winsI / played,5:0.0}% +/- {100 * sigma:0.000} pp; {played} games | {stopwatch.Elapsed:hh\\:mm\\:ss\\.f})");
                 }
             }
 
-            var ratings = FitElo(wins, games, n);
+            var ratings = EloStatistics.Fit(wins, games, n, AnchorElo);
+            var errors = EloStatistics.BootstrapErrors(pairScores, n, 1000, 63841, AnchorElo);
             var order = new int[n];
             for (var i = 0; i < n; i++)
             {
@@ -100,16 +97,24 @@
             Console.WriteLine($"Pair ratings (anchor {levels[0].Name} = {AnchorElo:0}), total time {total.Elapsed:hh\\:mm\\:ss}:");
             foreach (var i in order)
             {
-                Console.WriteLine($"  {levels[i].Id,-8} {levels[i].Name,-20} {(int)Math.Round(ratings[i]),6}");
+                var played = 0d;
+                for (var j = 0; j < n; j++)
+                {
+                    played += games[i, j];
+                }
+
+                Console.WriteLine($"  {levels[i].Id,-8} {levels[i].Name,-20} {ratings[i],6:0} +/- {errors[i]:0.0} ({played:0} games)");
             }
 
+            Console.WriteLine("Rating errors: 1 sigma from 1,000 shared-seed mirrored-pair bootstrap samples; anchor fixed.");
             Console.WriteLine(new string('=', Program.LineLength));
         }
 
-        // Two of level A against two of level B; returns A's wins out of 2 * pairs games.
-        private static int PlayMirroredPairs(Func<IPlayer> levelA, Func<IPlayer> levelB, int pairs, int parallelism)
+        // Two of level A against two of level B. The independent units for uncertainty are pairs.
+        private static (int Wins, double[] Scores) PlayMirroredPairs(Func<IPlayer> levelA, Func<IPlayer> levelB, int pairs, int parallelism)
         {
-            var players = new ThreadLocal<IPlayer[]>(() => new[] { levelA(), levelA(), levelB(), levelB() });
+            using var players = new ThreadLocal<IPlayer[]>(() => new[] { levelA(), levelA(), levelB(), levelB() });
+            var pairScores = new double[pairs];
             var winsA = 0;
             Parallel.For(
                 0,
@@ -122,85 +127,10 @@
                     var first = new BelotGame(p[0], p[2], p[1], p[3], new Random(i)).PlayGame(firstToPlay);
                     var second = new BelotGame(p[2], p[0], p[3], p[1], new Random(i)).PlayGame(firstToPlay);
                     var won = (first.Winner == PlayerPosition.SouthNorthTeam ? 1 : 0) + (second.Winner == PlayerPosition.EastWestTeam ? 1 : 0);
+                    pairScores[i] = won / 2.0;
                     Interlocked.Add(ref winsA, won);
                 });
-            return winsA;
-        }
-
-        // Bradley-Terry strengths by the minorization-maximization iteration, on the ELO scale,
-        // shifted so the anchor (index 0) sits at AnchorElo.
-        private static double[] FitElo(double[,] wins, double[,] games, int n)
-        {
-            var winsWithPrior = new double[n, n];
-            var gamesWithPrior = new double[n, n];
-            for (var i = 0; i < n; i++)
-            {
-                for (var j = 0; j < n; j++)
-                {
-                    if (i != j)
-                    {
-                        var prior = PriorFraction * games[i, j];
-                        winsWithPrior[i, j] = wins[i, j] + (0.5 * prior);
-                        gamesWithPrior[i, j] = games[i, j] + prior;
-                    }
-                }
-            }
-
-            var strength = new double[n];
-            Array.Fill(strength, 1d);
-            for (var iteration = 0; iteration < 10000; iteration++)
-            {
-                var next = new double[n];
-                for (var i = 0; i < n; i++)
-                {
-                    double totalWins = 0, denominator = 0;
-                    for (var j = 0; j < n; j++)
-                    {
-                        if (i != j)
-                        {
-                            totalWins += winsWithPrior[i, j];
-                            denominator += gamesWithPrior[i, j] / (strength[i] + strength[j]);
-                        }
-                    }
-
-                    next[i] = denominator > 0 ? totalWins / denominator : strength[i];
-                }
-
-                // Geometric mean 1 keeps the iteration stable.
-                var logSum = 0d;
-                for (var i = 0; i < n; i++)
-                {
-                    logSum += Math.Log(next[i]);
-                }
-
-                var scale = Math.Exp(-logSum / n);
-                var maxDelta = 0d;
-                for (var i = 0; i < n; i++)
-                {
-                    next[i] *= scale;
-                    maxDelta = Math.Max(maxDelta, Math.Abs(next[i] - strength[i]));
-                    strength[i] = next[i];
-                }
-
-                if (maxDelta < 1e-12)
-                {
-                    break;
-                }
-            }
-
-            var ratings = new double[n];
-            for (var i = 0; i < n; i++)
-            {
-                ratings[i] = EloPerDecade * Math.Log10(strength[i]);
-            }
-
-            var shift = AnchorElo - ratings[0];
-            for (var i = 0; i < n; i++)
-            {
-                ratings[i] += shift;
-            }
-
-            return ratings;
+            return (winsA, pairScores);
         }
 
         private sealed class Level

@@ -11,6 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <AdditionalFiles Include="..\..\stylecop.json" />
+    <Compile Include="..\Belot.GamesSimulator\EloStatistics.cs" Link="Statistics\EloStatistics.cs" />
   </ItemGroup>
 
   <ItemGroup>
