@@ -728,3 +728,63 @@ See `ENDGAME_EXPERIMENT.md` on that branch for implementation and commands.
 Next tests will vary the bounded three-trick world count and fit endgame targets
 while retaining the original network's targets elsewhere. No app level changes
 are justified by the current evidence.
+
+The next sweep added a configurable three-trick world limit (branch `ede8ba8`).
+Every two-trick world is still included. Development results against the frozen
+network, seed 29, 20,000 mirrored games per row:
+
+| Three-trick world limit | Win rate, one standard error | Points/game | Elo |
+|---|---|---|---|
+| 8 | 53.0% +/- .1 pp | +4.5 | +21 |
+| 32 | 53.8% +/- .2 pp | +5.6 | +27 |
+| 64 | 54.5% +/- .2 pp | +6.5 | +31 |
+| 90 | 54.7% +/- .2 pp | +6.9 | +33 |
+
+The 90-world version scored **89.7% +/- .2 pp against SmartPlayer over 20,000
+games** (seed 197, +63.5 points/game, +377 Elo). It has not yet passed an
+independent ISMCTS gate. The earlier 52.4% ISMCTS result is for eight worlds.
+
+Timing varied substantially between the first sweep and three subsequent
+interleaved runs, all with training/builds stopped. Keep both measurements;
+the cause of the difference is not established. Each entry uses 100 games after
+20 warmup games; these are mean times per non-forced engine card callback:
+
+| Configuration | First sweep, us/card | Three repeated runs, us/card | Decisions per run |
+|---|---|---|---|
+| Frozen network | 28.3 | 14.9, 14.0, 13.6 | 21,336 |
+| 32 worlds | 31.0 | 21.6, 18.2, 18.8 | 21,377 |
+| 64 worlds | Not measured | 28.0, 29.0, 28.0 | 21,317 |
+| 90 worlds | 54.9 | 26.0, 25.7, 26.1 | 21,380 |
+
+The 90-world teacher collected 2,132,215 card positions from 10,000 whole games
+in 24 seconds (seed 120001), retaining original network Q targets wherever
+the endgame does not apply. It plays the fast student's chosen cards. A separate
+250-game collection (seed 220001) supplies 53,821 validation positions. Training
+is now inexpensive enough to test a larger dataset; the CUDA fitter's optional
+`--stream-data` keeps it in CPU memory and transfers batches to the GPU.
+Eighteen Python tests pass, including identical exported weights between resident
+and streamed data on CPU and CUDA. The endgame branch passes 84 C# tests.
+
+```powershell
+dotnet artifacts/neural-20260927/endgame-tune-bin/NeuralTrainer.dll distill --teacher endgame --in artifacts/neural-20260927/baseline --endgame-declarations true --endgame-tricks 3 --endgame-worlds 90 --card-label-chance 1 --teacher-play-chance 0 --games 10000 --threads 12 --seed 120001 --data artifacts/neural-20260927/endgame-teacher90/data
+dotnet artifacts/neural-20260927/endgame-tune-bin/NeuralTrainer.dll distill --teacher endgame --in artifacts/neural-20260927/baseline --endgame-declarations true --endgame-tricks 3 --endgame-worlds 90 --card-label-chance 1 --teacher-play-chance 0 --games 250 --threads 12 --seed 220001 --data artifacts/neural-20260927/endgame-teacher90-validation/data
+artifacts/neural-20260927/torch-env/Scripts/python.exe tools/NeuralTrainer/Gpu/fit.py --in artifacts/neural-20260927/baseline --data artifacts/neural-20260927/endgame-teacher90/data --validation-data artifacts/neural-20260927/endgame-teacher90-validation/data --out artifacts/neural-20260927/endgame-teacher90/student-1e-5 --epochs 12 --batch 1024 --learning-rate 1e-5 --card-value-weight .05 --anchor-mean --stream-data --seed 2401
+```
+
+The matched second fit uses learning rate `5e-5`. Epochs 4 and 12 will be
+screened against the frozen player before any independent ISMCTS test.
+
+The `1e-5` student scored 50.0% +/- .2 pp at epoch 4 and 50.3% +/- .2 pp at
+epoch 12 against the frozen player (20,000 games each, seed 29). Epoch 12 was
++0.5 points/game, +2 Elo. This does not recover the endgame teacher's gain.
+
+A matched depth candidate inserts two identity-initialised 128-unit ReLU layers
+before each card output: 600-512-256-128-128-128-32, total files 3,172,998 bytes
+versus the original 2,974,830. Bidding, features, format and managed runtime stay
+the same. `Gpu/deepen.py` and its tests implement the transformation described in
+the research review. Before fitting, C# diagnostics on all 53,821 validation
+positions match the original at printed precision, and 20,000 mirrored games
+against the original give exactly 50.0% +/- 0.0 pp and zero point difference.
+Twenty Python tests pass, including export equivalence and learning gradients
+in the inserted layers. The deeper `5e-5` fit uses the same data, epochs and seed
+as the ordinary student; strength and idle timing results are pending.
