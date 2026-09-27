@@ -297,11 +297,12 @@ over 500 games, an inconclusive result, so that combination remains unpromoted.
   See `etc/NeuralResearch.md` for the broader research review and experiment rationale.
 - **Timing**: the September 27 trainer fixes warmup counting in `bench` and separately times
   warmed card callbacks through the engine. The frozen networks measured 18.5 us/card in
-  that check; the historical 8.6 us figure above used a different, slightly biased measure.
+  that check; the historical 8.6 us figure in `NEURAL_NETWORK.md` used a different, slightly biased measure.
   Use the corrected benchmark for new comparisons.
 - **`SearchDeals`** plays each legal card out in N deals of the unseen cards (dealt like ISMCTS's,
   `WorldSampler`) with the networks for every seat and averages: +121 ELO over the networks alone
-  at 100 deals; 10 deals is worse than none. `SearchTimeLimitMilliseconds` caps it on slow phones.
+  at 100 deals; 10 deals is worse than none. `SearchTimeLimitMilliseconds` limits sampled
+  deals on slow phones, with its budget checked between complete deals after at least eight.
 - **Changing the inputs** (`FeatureEncoder`): bump `LayoutVersion` and retrain. **Lesson**: judge
   a change against ClaudePlayerIsmcts, not only against earlier networks, whose head-to-head gains
   overstated the real ones several times over.
@@ -354,10 +355,12 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   average of their two levels (`Lineup.RivalsElo`). The levels' ratings in `AiLevels` are pair
   ratings from the simulator's `elo` suite (`EloTournament`: two of a level against two of
   another in mirrored pairs, a Bradley-Terry fit anchored at Dummy = 1200; ClaudePlayerIsmcts
-  plays too, for reference). Latest run (September 27, 2026, `elo 20000 60`, 38 minutes): Random
-  660, Beginner 1200, Skilled 1462, Expert 1554, Master 1771, and ClaudePlayerIsmcts 1733. The
-  matchups with the slow players are only 120 games, so their ratings are ±30 or so. Re-run it
-  and re-paste them if the players change.
+  plays too, for reference). Latest run (September 27, 2026, `elo 20000 60`, 21:36, 241,080 games): Random
+  660 +/- 3.1, Beginner 1200 (fixed anchor), Skilled 1464 +/- 1.7, Expert 1575 +/- 2.1,
+  Master 1799 +/- 26.4, and ClaudePlayerIsmcts 1770 +/- 26.7. Errors are one standard
+  deviation from 1,000 shared-seed mirrored-pair bootstrap samples. Fast levels each played
+  120,240 games; Master and ISMCTS each played 600 (120 per matchup). Re-run the suite
+  and re-paste ratings if the players change.
 - **`src/Tests/Belot.UI.Tests`** compiles those files and plays whole games on a UI-like
   single-threaded `SynchronizationContext`: `ActReplayTests` (every act of 300 engine matches
   replays into exactly `GetRecord()`), `GameSessionTests` (every level, the table's event order,

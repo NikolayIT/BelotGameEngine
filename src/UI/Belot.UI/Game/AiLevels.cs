@@ -30,19 +30,20 @@
         public const int MasterMilliseconds = 400;
 
         // Pair ratings (two of a level against two of another) from the `elo` simulator round
-        // robin, anchored at Dummy = 1200. Re-run that suite and update these if the players change.
+        // robin, anchored at Dummy = 1200 (September 27, 2026, elo 20000 60).
+        // Re-run that suite and update these if the players change; uncertainty is in NEURAL_NETWORK.md.
         public static IReadOnlyList<AiLevel> All { get; } = new[]
         {
             new AiLevel("random", "🎲", "Level_Random_Name", "Level_Random_Tag", 1, 660, () => new RandomPlayer()),
             new AiLevel("dummy", "🙂", "Level_Dummy_Name", "Level_Dummy_Tag", 2, 1200, () => new DummyPlayer()),
-            new AiLevel("smart", "🃏", "Level_Smart_Name", "Level_Smart_Tag", 3, 1462, () => new SmartPlayer()),
+            new AiLevel("smart", "🃏", "Level_Smart_Name", "Level_Smart_Tag", 3, 1464, () => new SmartPlayer()),
             new AiLevel(
                 "expert",
                 "🎓",
                 "Level_Expert_Name",
                 "Level_Expert_Tag",
                 4,
-                1554,
+                1575,
                 CreateExpertPlayer),
             new AiLevel(
                 "claude",
@@ -50,7 +51,7 @@
                 "Level_Claude_Name",
                 "Level_Claude_Tag",
                 5,
-                1771,
+                1799,
                 () => new ClaudePlayerNeural { SearchDeals = MasterSearchDeals, SearchTimeLimitMilliseconds = MasterMilliseconds }),
         };
 

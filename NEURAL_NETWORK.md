@@ -165,12 +165,13 @@ of the tuning record (§10).
 
 ## 6. Speed
 
-A decision is one forward pass over the sparse inputs: the first layer sums only the weight rows
+Network evaluation uses one forward pass over the sparse inputs: the first layer sums only the weight rows
 of the non-zero inputs (≈60–120 of 600), the hidden layers skip the units the ReLU zeroed, and
 the rows are added a SIMD vector of outputs at a time (Santase's layout: weights transposed,
-four vector accumulators). **About 10 µs a decision** on one desktop core (a whole deal of
-self-play, 32 cards and the auction, in about 0.3 ms), against 100 ms for ClaudePlayerIsmcts: four
-orders of magnitude.
+four vector accumulators). The latest warmed engine-card benchmark measured **16.2 us/card**
+for networks alone and **31.1 us/card** for the promoted bounded-endgame profile, each on one
+desktop core over 100 games. ISMCTS uses 100 ms/card. Older self-play timings include bidding
+and omit some engine-context work; use the corrected engine-card benchmark for comparisons.
 
 ## 7. Training
 
@@ -915,7 +916,8 @@ Expert calibration against SmartPlayer, 20,000 games per row, seed 311, MaxRegre
 
 Choose **1.5**: it keeps Expert close to its previous difficulty while remaining
 above Skilled. Against the unrestricted fast profile it scores **26.465% +/-
-.276 pp**, -178 +/- 2 Elo, over 20,000 independent games (seed 313). Hints use the unrestricted fast profile. The final app round robin is reported below.
+.276 pp**, -178 +/- 2 Elo, over 20,000 independent games (seed 313). Hints use the
+unrestricted fast profile. The final app round robin is reported below.
 
 The predeclared Master selection compared the existing search against fast endgames
 over 1,000 games (seed 397), then the combined search/endgame profile against the
@@ -945,3 +947,99 @@ dotnet artifacts/neural-20260927/promoted-bin/NeuralTrainer.dll bench --in artif
 The final ISMCTS match used the pre-integration `endgame-final-bin` build. The
 integrated command above is its reproduction; the added own-meld fallback does
 not affect declare-all bot games, as the replay and repeated matches verify.
+
+
+## 13. Final app calibration and verification
+
+The final `elo 20000 60` run completed in **21:36** on an otherwise idle i7-12700K:
+**241,080 whole games**, 20,000 mirrored pairs per fast matchup and 60 per matchup
+involving Master or ISMCTS. Expert uses the fast endgame profile at temperature 1.5,
+MaxRegret 4. Master uses SearchDeals 100, a 400-ms budget, and no endgames.
+
+| App level / reference | Fitted Elo +/- 1 sigma | Games involving this level |
+|---|---|---|
+| Master | **1799 +/- 26.4** | 600 |
+| ClaudePlayerIsmcts, 100 ms | 1770 +/- 26.7 | 600 |
+| Expert | **1575 +/- 2.1** | 120,240 |
+| Skilled / SmartPlayer | **1464 +/- 1.7** | 120,240 |
+| Beginner / DummyPlayer | 1200 (fixed anchor) | 120,240 |
+| RandomPlayer | **660 +/- 3.1** | 120,240 |
+
+These are the ratings in `AiLevels.cs`. They use the existing Bradley-Terry fit
+and 1% fifty-fifty prior. The new uncertainty calculation uses 1,000 bootstrap
+replicates of complete mirrored pairs, sharing sampled seed indexes across matchups
+and preserving the common 60-pair and additional fast-pair strata. Counts in the
+rating table overlap because each game involves two levels. The anchor has no
+sampling error by definition. Expert remains between Skilled and Master.
+
+Every matchup is recorded below; uncertainties are empirical standard errors across
+mirrored pairs. A zero observed error in a small blowout sample does not establish
+a zero underlying chance of a different outcome.
+
+| First player | Second player | First player's win rate +/- 1 sigma | Games |
+|---|---|---|---|
+| Beginner | Random | 97.335% +/- .080 pp | 40,000 |
+| Beginner | Skilled | 11.748% +/- .156 pp | 40,000 |
+| Beginner | Expert | 14.650% +/- .171 pp | 40,000 |
+| Beginner | Master | .833% +/- .833 pp | 120 |
+| Beginner | ISMCTS | .000% +/- .000 pp | 120 |
+| Random | Skilled | .663% +/- .040 pp | 40,000 |
+| Random | Expert | .973% +/- .049 pp | 40,000 |
+| Random | Master | .000% +/- .000 pp | 120 |
+| Random | ISMCTS | .833% +/- .833 pp | 120 |
+| Skilled | Expert | 28.723% +/- .208 pp | 40,000 |
+| Skilled | Master | 10.833% +/- 2.682 pp | 120 |
+| Skilled | ISMCTS | 14.167% +/- 3.165 pp | 120 |
+| Expert | Master | 25.000% +/- 3.465 pp | 120 |
+| Expert | ISMCTS | 25.833% +/- 3.661 pp | 120 |
+| Master | ISMCTS | 55.000% +/- 4.065 pp | 120 |
+
+The 120-game Master/ISMCTS result is too small to establish their ordering by
+itself. The independent fast-player promotion remains the 2,000-game ISMCTS match
+in section 12; this rating run does not replace or enlarge that sample.
+
+Build a separate simulator copy to keep its output unlocked during long runs:
+
+```powershell
+dotnet build src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -c Release -o artifacts/neural-20260927/elo-final-bin
+cmd.exe /d /c 'dotnet artifacts/neural-20260927/elo-final-bin/Belot.GamesSimulator.dll elo 20000 60 2> artifacts/neural-20260927/final-elo.err | "C:\Program Files\Git\usr\bin\iconv.exe" -f UTF-16LE -t UTF-8 > artifacts/neural-20260927/final-elo.log'
+```
+
+The equivalent direct command is `dotnet run -c Release --project
+src/Tests/Belot.GamesSimulator -- elo 20000 60`, with the same UTF-16LE conversion.
+The simulator now opts out of Windows background power throttling, matching the
+trainer. Original binary weights remain unchanged: the promoted configuration
+uses them as its normal policy and fallback.
+
+
+Final verification after integration and rating changes:
+
+| Check | Result |
+|---|---|
+| Engine tests | 741 passed |
+| ClaudePlayer / trainer tests | 94 passed |
+| UI tests with final level settings | 72 passed |
+| GPU tooling Python tests | 20 passed |
+| Release trainer and simulator builds | Zero warnings/errors |
+| Windows app build | Zero warnings/errors |
+| Android app build | Zero warnings/errors |
+
+The C# test builds also report no analyzer warnings. Existing engine-test warnings
+were corrected in test assertions, names and file encoding; production engine
+sources and the NuGet engine API are unchanged. All changed C# files use UTF-8 BOM
+and CRLF. No app was installed or deployed.
+
+```powershell
+dotnet test src/Tests/Belot.Engine.Tests/Belot.Engine.Tests.csproj
+dotnet test src/Tests/Belot.AI.ClaudePlayer.Tests/Belot.AI.ClaudePlayer.Tests.csproj
+dotnet test src/Tests/Belot.UI.Tests/Belot.UI.Tests.csproj
+artifacts/neural-20260927/torch-env/Scripts/python.exe -m unittest discover -s tools/NeuralTrainer/Gpu -p "test_*.py"
+dotnet build src/UI/Belot.UI/Belot.UI.csproj -f net10.0-windows10.0.19041.0
+dotnet build src/UI/Belot.UI/Belot.UI.csproj -f net10.0-android
+```
+
+Local logs and test reports are under `artifacts/neural-20260927/`: the final
+`final-engine-clean-tests`, `final-ai-tests`, `final-rated-ui-tests`,
+`final-python-tests`, `final-windows-build`, `final-android-build`, and `final-elo`
+logs. Training data, failed candidates and isolated experimental branches are
+retained for reproduction; none replaces the embedded weights.
