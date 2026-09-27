@@ -161,8 +161,24 @@ def action_loss(prediction, target, mask, value_weight=-1.0, huber=1.0):
     return loss / mask.sum().clamp_min(1)
 
 
+def fitting_loss(prediction, target, mask, value_weight=-1.0, policy_temperature=0.0):
+    """Optional policy distillation, retaining a separately calibrated mean Q value."""
+    if policy_temperature <= 0:
+        return action_loss(prediction, target, mask, value_weight)
+    temperature = policy_temperature / VALUE_SCALE
+    teacher_log = torch.log_softmax((target / temperature).masked_fill(~mask, -torch.inf), dim=1)
+    student_log = torch.log_softmax((prediction / temperature).masked_fill(~mask, -torch.inf), dim=1)
+    # Clear masked log probabilities before multiplying: 0 * (-inf - -inf) is NaN.
+    divergence = (teacher_log.exp() * (teacher_log.masked_fill(~mask, 0)
+                                      - student_log.masked_fill(~mask, 0))).sum(1)
+    count = mask.sum(1)
+    mean = ((prediction - target) * mask).sum(1) / count
+    common_loss = torch.where(mean.abs() <= 1, 0.5 * mean.square(), mean.abs() - 0.5)
+    return ((temperature ** 2 * divergence + value_weight * common_loss) * count).sum() / count.sum()
+
+
 @torch.no_grad()
-def diagnostics(model, data, slots, batch, device, value_weight):
+def diagnostics(model, data, slots, batch, device, value_weight, policy_temperature=0.0):
     totals = np.zeros(6, np.float64)
     for start in range(0, len(slots), batch):
         selection = slots[start:start + batch]
@@ -177,7 +193,7 @@ def diagnostics(model, data, slots, batch, device, value_weight):
             float((error.square() * mask).sum()),
             float(((error - mean).square() * mask).sum()),
             float(regret.sum()), float((regret == 0).sum()), float(labels),
-            float(action_loss(prediction, y, mask, value_weight)) * float(labels),
+            float(fitting_loss(prediction, y, mask, value_weight, policy_temperature)) * float(labels),
         ])
     square, centred, regret, best, labels, loss = totals
     return dict(samples=len(slots), loss=loss / max(1, labels),
@@ -229,7 +245,8 @@ def run(args):
         if not len(training) or not len(validation):
             raise ValueError(f"{name}: need non-empty training and validation sets")
         weight = -1 if tag == 0 else args.card_value_weight
-        print(name, "initial", json.dumps(diagnostics(model, validation_data, validation, args.batch, device, weight)), flush=True)
+        temperature = 0 if tag == 0 else args.policy_temperature
+        print(name, "initial", json.dumps(diagnostics(model, validation_data, validation, args.batch, device, weight, temperature)), flush=True)
         optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
         # Only one contract's data is resident on the GPU at once.
         device_data = tuple(tensor.to(device) for tensor in data)
@@ -245,7 +262,7 @@ def run(args):
                 selection = order[start:start + args.batch]
                 x, y, mask = (tensor[selection] for tensor in device_data)
                 optimizer.zero_grad(set_to_none=True)
-                loss = action_loss(model(x), y, mask, weight)
+                loss = fitting_loss(model(x), y, mask, weight, temperature)
                 loss.backward()
                 nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 optimizer.step()
@@ -255,7 +272,7 @@ def run(args):
             if device.type == "cuda":
                 torch.cuda.synchronize()
             elapsed = time.perf_counter() - started
-            metrics = diagnostics(model, validation_data, validation, args.batch, device, weight)
+            metrics = diagnostics(model, validation_data, validation, args.batch, device, weight, temperature)
             print(name, "epoch", epoch, json.dumps(dict(seconds=elapsed, rate=rate,
                   train_loss=train_loss / label_count, validation=metrics)), flush=True)
             write_network(model, output / f"epoch-{epoch:03}" / (name + ".bin"))
@@ -276,9 +293,13 @@ if __name__ == "__main__":
     parser.add_argument("--batch", type=int, default=1024)
     parser.add_argument("--learning-rate", type=float, default=5e-5)
     parser.add_argument("--card-value-weight", type=float, default=-1)
+    parser.add_argument("--policy-temperature", type=float, default=0,
+                        help="Positive game-point temperature replaces advantage Huber with policy KL")
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cuda")
     parser.add_argument("--seed", type=int, default=401)
     arguments = parser.parse_args()
     if arguments.epochs < 1 or arguments.batch < 1 or arguments.learning_rate <= 0:
         parser.error("epochs, batch and learning-rate must be positive")
+    if arguments.policy_temperature < 0 or (arguments.policy_temperature > 0 and arguments.card_value_weight < 0):
+        parser.error("policy-temperature needs a nonnegative card-value-weight")
     run(arguments)

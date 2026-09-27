@@ -38,6 +38,15 @@ The learning rate drops to 30% for the final 30% of epochs. Adam and norm clippi
 are PyTorch implementations; their floating-point updates are not expected to
 match the C# optimiser bit for bit.
 
+Experimental `--policy-temperature 2 --card-value-weight 0.01` replaces the
+advantage regression term with KL divergence between teacher and student
+softmaxes over legal actions. Temperature is in game points. Both softmaxes
+use that temperature, and the loss is scaled by its square in network units;
+this preserves point-scaled outputs. The weighted Huber error of the mean Q
+value remains. This is a variant of policy distillation, not an exact
+reproduction of Rusu et al.'s teacher-only temperature. The default is zero
+(disabled); first pilot results did not improve playing strength.
+
 `--validation-data <prefix>` uses a separately collected dataset. Without it,
 5% of samples are held out at random. That split can share games with training
 and is only a fitting diagnostic. Promotion requires independent whole-game
@@ -59,7 +68,8 @@ updating this tool and its checks alongside the C# loader.
 
 Unit tests cover input-major weight layout, exact half-weight round trips,
 malformed files, sparse samples, finite-difference loss gradients, common-offset
-cancellation, and legal-action diagnostics in game points.
+cancellation, policy-distillation gradients, partial batches and empty-contract
+preservation, and legal-action diagnostics in game points.
 
 On September 27, 2026, exported weights loaded in the C# trainer. On 307 real
 labelled decisions, C# and Python agreed to the C# log's precision (0.001 point)

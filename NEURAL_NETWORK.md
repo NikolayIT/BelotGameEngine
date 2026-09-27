@@ -475,10 +475,13 @@ These pilots use the same data, seed 401, batch 1024, 12 epochs, learning rate 5
 | Ordinary Huber, epoch 12 | 47.7% +/- 0.2 pp, 20,000 games, -3.5 points/game, -16 ELO | All-trumps validation RMSE fell from 8.329 to 4.275 points, but teacher regret only from 0.666 to 0.650 |
 | Centred Huber, value weight 0.05, epoch 12 | 48.7% +/- 0.5 pp, 4,000 games, -2.3 points/game, -9 ELO | All-trumps teacher regret 0.604 points |
 | Wider, centred Huber, epoch 12 | 48.0% +/- 0.5 pp, 4,000 games, -3.1 points/game, -14 ELO | No capacity gain in this pilot |
+| Pure action differences, value weight 0, epoch 12 | 48.2% +/- 0.5 pp, 4,000 games, -2.7 points/game, -12 ELO | Removing mean-value learning does not rescue the pilot |
+| Policy KL, temperature 2 points, mean-value weight 0.01, epoch 12 | 48.1% +/- 0.5 pp, 4,000 games, -3.3 points/game, -13 ELO | All-trumps teacher regret 0.642 points; no strength gain |
 
 All uncertainties are one standard error across mirrored pairs. These students fail
 the first promotion gate. Lower fitting error does not establish stronger decisions.
 The default random sample validation split shares games with training; separately
 seeded search-teacher validation games and the full 2,000-game training dataset are
-being collected. Pure action-difference loss is also under test. No weights or app
+being collected. The GPU fitter has eight passing tests, including finite-difference
+policy-KL gradients, illegal-action masking, and offset invariance. No weights or app
 levels have changed.

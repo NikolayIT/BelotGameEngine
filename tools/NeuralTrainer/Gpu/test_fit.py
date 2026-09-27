@@ -29,7 +29,7 @@ class FitTests(unittest.TestCase):
                 (root / ("data." + name + ".samples")).write_bytes(header + (record * 2 if tag == 1 else b""))
             args = Namespace(input=str(source), data=str(root / "data"), validation_data="",
                              out=str(output), epochs=2, batch=1024, learning_rate=0.001,
-                             card_value_weight=0.05, device="cpu", seed=7)
+                             card_value_weight=0.05, policy_temperature=0, device="cpu", seed=7)
             with contextlib.redirect_stdout(io.StringIO()):
                 fit.run(args)
             for name in ("bid", "notrumps", "alltrumps"):
@@ -120,6 +120,21 @@ class FitTests(unittest.TestCase):
         loss.backward()
         self.assertEqual(float(loss.detach()), 0)
         self.assertTrue(torch.all(prediction.grad == 0))
+
+    def test_policy_distillation_gradients_masks_and_common_offset(self):
+        prediction = torch.tensor([[0.2, -0.1, 99.0], [0.3, 10.0, 0.1]], dtype=torch.double, requires_grad=True)
+        target = torch.tensor([[0.1, 0.2, -10.0], [0.4, -99.0, 0.2]], dtype=torch.double)
+        mask = torch.tensor([[True, True, False], [True, False, True]])
+        for weight in (0, 0.05):
+            self.assertTrue(torch.autograd.gradcheck(
+                lambda x: fit.fitting_loss(x, target, mask, weight, 2), (prediction,)))
+        loss = fit.fitting_loss(prediction, target, mask, 0, 2)
+        gradient, = torch.autograd.grad(loss, prediction)
+        self.assertTrue(torch.all(gradient[~mask] == 0))
+        self.assertAlmostEqual(float(loss.detach()),
+                               float(fit.fitting_loss(prediction + 100, target - 30, mask, 0, 2).detach()), places=10)
+        equal = fit.fitting_loss(target + 1, target, mask, 0, 2)
+        self.assertAlmostEqual(float(equal), 0, places=10)
 
     def test_diagnostics_use_legal_actions_and_game_points(self):
         model = fit.Network(1, 1, (600, 32))
