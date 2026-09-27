@@ -146,6 +146,60 @@
         }
 
         [Fact]
+        public void AWithheldOwnDeclarationFallsBackWithoutValuingAnUndeclaredMeld()
+        {
+            var checkedPositions = 0;
+            var simulator = new BelotSimulator();
+            var search = new EndgameSearch { UseDeclarations = true, Tricks = 3, ThreeTrickWorldLimit = 90 };
+            var smart = new SmartPlayer.SmartPlayer();
+            for (var seed = 0; seed < 4; seed++)
+            {
+                var withheldRound = -1;
+                var match = new BelotMatch(new BelotMatchOptions { Random = new Random(seed + 421) });
+                match.Start();
+                while (!match.IsFinished)
+                {
+                    var seat = match.ToMove;
+                    if (match.Decision == BelotDecision.Bid)
+                    {
+                        match.Act(seat, BelotAction.Bid(smart.GetBid(match.CreateBidContext())));
+                    }
+                    else if (match.Decision == BelotDecision.Announce)
+                    {
+                        var context = match.CreateAnnouncesContext();
+                        if (seat.Index() == 0 && context.AvailableAnnounces.Count > 0)
+                        {
+                            withheldRound = context.RoundNumber;
+                            match.Act(seat, BelotAction.Declare(Array.Empty<Announce>()));
+                        }
+                        else
+                        {
+                            match.Act(seat, BelotAction.Declare(smart.GetAnnounces(context)));
+                        }
+                    }
+                    else
+                    {
+                        var context = match.CreatePlayCardContext();
+                        Assert.True(NeuralDeal.FromPlayContext(context, simulator, out var deal));
+                        if (seat.Index() == 0 && context.RoundNumber == withheldRound && deal.Play.TricksPlayed >= 5)
+                        {
+                            var legal = NeuralDeal.ToMask(context.AvailableCardsToPlay);
+                            var values = Enumerable.Repeat(9f, 32).ToArray();
+                            Assert.False(search.Evaluate(context, in deal, legal, simulator, values));
+                            Assert.All(values, value => Assert.Equal(9f, value));
+                            checkedPositions++;
+                        }
+
+                        var action = smart.PlayCard(context);
+                        match.Act(seat, BelotAction.PlayCard(action.Card, action.Belote));
+                    }
+                }
+            }
+
+            Assert.True(checkedPositions > 0);
+        }
+
+        [Fact]
         public void PublicEndgameHorizonIsBounded()
         {
             var player = new ClaudePlayerNeural();

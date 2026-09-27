@@ -88,8 +88,8 @@
         public int SearchDeals { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to enumerate and solve the final two tricks
-        /// when every announcement rank is known. Disabled by default; values use perfect-
+        /// Gets or sets a value indicating whether to enumerate and solve bounded endings
+        /// within <see cref="EndgameTricks"/> tricks. Disabled by default; values use perfect-
         /// information continuations in every rule-consistent hidden deal.
         /// </summary>
         public bool UseEndgameSearch { get; set; }

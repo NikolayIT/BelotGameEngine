@@ -21,6 +21,8 @@
         {
             var decisions = 0;
             var endgames = 0L;
+            var narrowEndgames = 0L;
+            var wideEndgames = 0L;
             for (var seed = 0; seed < 2; seed++)
             {
                 var match = new BelotMatch(new BelotMatchOptions { Random = new Random(seed) });
@@ -30,6 +32,13 @@
                 var neural = new ClaudePlayerNeural(RandomModels.Create(seed));
                 var endgame = new ClaudePlayerNeural(RandomModels.Create(seed)) { UseEndgameSearch = true };
                 var declaredEndgame = new ClaudePlayerNeural(RandomModels.Create(seed)) { UseEndgameSearch = true, EndgameUseDeclarations = true, EndgameTricks = 3 };
+                var wideEndgame = new ClaudePlayerNeural(RandomModels.Create(seed))
+                {
+                    UseEndgameSearch = true,
+                    EndgameUseDeclarations = true,
+                    EndgameTricks = 3,
+                    EndgameThreeTrickWorldLimit = 90,
+                };
                 match.Start();
                 while (!match.IsFinished)
                 {
@@ -41,15 +50,19 @@
                     AssertSame(DecideFromContext(neural, match), neural.Decide(view));
                     AssertSame(DecideFromContext(endgame, match), endgame.Decide(view));
                     AssertSame(DecideFromContext(declaredEndgame, match), declaredEndgame.Decide(view));
+                    AssertSame(DecideFromContext(wideEndgame, match), wideEndgame.Decide(view));
                     Assert.Equal(BelotActResult.Ok, match.Act(seat, expected));
                     decisions++;
                 }
 
                 endgames += endgame.EndgameDecisions;
+                narrowEndgames += declaredEndgame.EndgameDecisions;
+                wideEndgames += wideEndgame.EndgameDecisions;
             }
 
             Assert.True(decisions > 300);
             Assert.True(endgames > 0);
+            Assert.True(wideEndgames > narrowEndgames);
         }
 
         private static ClaudePlayerIsmcts Claude(int seed, int seat) =>

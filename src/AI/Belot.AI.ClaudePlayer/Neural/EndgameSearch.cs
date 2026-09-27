@@ -4,6 +4,7 @@
     using System.Numerics;
 
     using Belot.AI.ClaudePlayer.Search;
+    using Belot.Engine.Game;
     using Belot.Engine.Players;
 
     /// <summary>
@@ -59,6 +60,22 @@
                 {
                     return false;
                 }
+            }
+
+            // RoundKnowledge reconstructs our melds under the bot's declare-all policy.
+            // A hint can be requested for a human who withheld one: do not score it anyway.
+            var observedOwn = 0u;
+            foreach (var announce in context.Announces)
+            {
+                if (announce.Player.Index() == this.knowledge.Me && announce.Type != AnnounceType.Belot)
+                {
+                    observedOwn += 1u << (2 * (int)announce.Type);
+                }
+            }
+
+            if (observedOwn != this.declaredCounts[this.knowledge.Me])
+            {
+                return false;
             }
 
             if (!this.UseDeclarations)
