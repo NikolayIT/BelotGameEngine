@@ -270,6 +270,9 @@ pairs: **the networks alone tie ClaudePlayerIsmcts (100 ms)**, 50.2% ± 1.3% of 
   Optional `tools/NeuralTrainer/Gpu/fit.py` fits the same sample format with CUDA PyTorch
   and exports the existing BNN1 format. It is training-only; see its README for the
   isolated environment, reproducible commands, checks and limitations.
+  Its optional `Gpu/serve.py` server accelerates batched search-label collection
+  (`--teacher neural-gpu`); simulation and seat features remain in C#, and worker
+  connections verify the weight hashes. This is also training-only.
   See `etc/NeuralResearch.md` for the broader research review and experiment rationale.
 - **Timing**: the September 27 trainer fixes warmup counting in `bench` and separately times
   warmed card callbacks through the engine. The frozen networks measured 18.5 us/card in

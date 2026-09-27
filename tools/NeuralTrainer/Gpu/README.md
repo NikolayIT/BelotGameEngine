@@ -86,3 +86,47 @@ optimal actions. A 47,500-sample synthetic fitting epoch took 0.66-0.76 seconds
 on CUDA versus approximately 2 seconds in C# with eight learners. Both ran
 during teacher collection; this is a throughput pilot, not a player-strength
 result or an isolated hardware benchmark.
+
+## Batched search-label collection
+
+The optional server batches inference for search rollouts. C# still samples
+worlds, encodes each deciding seat's public information, applies legal moves,
+and scores deals. The server receives layout-1 features and returns independent
+card choices. It binds only to loopback and checks SHA-256 hashes of all four
+weight files when a worker connects.
+
+```powershell
+artifacts/torch-env/Scripts/python.exe tools/NeuralTrainer/Gpu/serve.py --in artifacts/baseline --port 18731 --graphs
+```
+
+Run the copied trainer while that server is running:
+
+```powershell
+dotnet artifacts/trainer/NeuralTrainer.dll distill --teacher neural-gpu --in artifacts/baseline --gpu-port 18731 --search-deals 100 --teacher-play-chance 0 --card-label-chance 1 --games 2000 --threads 4 --seed 1732 --data artifacts/gpu-teacher/data
+```
+
+`--teacher neural-batch` uses managed inference with the same batched simulation
+algorithm. `--gpu-verify true` additionally checks every GPU choice against C#
+and reports mismatches and their point-value gaps; use it for small verification
+runs. It refuses a disagreement above 0.01 game points. Normal collection skips
+that extra CPU work. The original `--teacher neural` path remains available.
+GPU requests are limited to 4,096 rollout positions; 100 worlds and eight root
+cards require at most 800 positions.
+
+`--graphs` captures static batches rounded up to powers of two, reducing kernel
+launch overhead. Input/output buffers stay alive and a lock prevents concurrent
+capture or buffer reuse. Unused padded rows do not affect real rows. This follows
+the [PyTorch 2.9 CUDA graph constraints](https://docs.pytorch.org/docs/2.9/notes/cuda.html#cuda-graphs).
+Without `--graphs`, the server uses ordinary eager execution. Twelve Python
+tests cover the fitter, binary transport, hash rejection, legality, physical
+tie-breaking after suit rotation, and graph/eager agreement across changing
+batch sizes (the CUDA test is skipped if no GPU is available).
+
+Managed batched search matched the original search's action values exactly in
+the whole-game C# tests. A GPU check matched all 96,585 managed rollout choices.
+Across two identical games, all 416 stored feature/label records matched C#
+exactly, with both eager CUDA and CUDA graphs. Collection took 55 seconds with
+managed inference, 27 with eager CUDA, and 17 with graphs on one actor. A separate
+four-actor run collected 4,183 positions in 76 seconds across 20 games. These
+are training-throughput pilots during other collection work, not app latency
+measurements or proof of universal floating-point equivalence.

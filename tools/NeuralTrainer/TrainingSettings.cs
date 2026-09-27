@@ -109,6 +109,12 @@
         /// <summary>Gets or sets how often a labelled neural-teacher decision is played by the teacher (0 = student trajectories).</summary>
         public double TeacherPlayChance { get; set; } = 1;
 
+        /// <summary>Gets or sets the loopback port of the optional training-only GPU inference server.</summary>
+        public int GpuPort { get; set; } = 18731;
+
+        /// <summary>Gets or sets whether every GPU rollout choice is checked against managed inference.</summary>
+        public bool GpuVerify { get; set; }
+
         /// <summary>Gets or sets how many games of ClaudePlayerIsmcts "distill" records.</summary>
         public int Games { get; set; } = 3000;
 

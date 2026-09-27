@@ -23,12 +23,17 @@
 
         public static void Record(TrainingSettings settings)
         {
-            if (settings.Teacher != "ismcts" && settings.Teacher != "neural")
+            if (settings.Teacher != "ismcts" && settings.Teacher != "neural" && settings.Teacher != "neural-batch" && settings.Teacher != "neural-gpu")
             {
-                throw new ArgumentException("--teacher must be ismcts or neural.", nameof(settings));
+                throw new ArgumentException("--teacher must be ismcts, neural, neural-batch or neural-gpu.", nameof(settings));
             }
 
-            var models = settings.Teacher == "neural"
+            if (settings.Teacher == "neural-gpu" && string.IsNullOrEmpty(settings.In))
+            {
+                throw new ArgumentException("The GPU teacher requires --in so its weight hashes can be checked.", nameof(settings));
+            }
+
+            var models = settings.Teacher != "ismcts"
                 ? (string.IsNullOrEmpty(settings.In) ? NeuralModels.Embedded : NeuralModels.Load(settings.In))
                 : null;
             Console.WriteLine($"distill: {settings}");
@@ -40,40 +45,58 @@
                     tag == 0 ? FeatureEncoder.BidOutputs : FeatureEncoder.CardOutputs))
                 .ToArray();
             var playerSeed = settings.Seed * 1000;
+            using var policies = new ThreadLocal<IBatchedCardPolicy>(
+                () => settings.Teacher switch
+                {
+                    "neural-gpu" => new GpuCardPolicy(settings.In, settings.GpuPort, settings.GpuVerify ? models : null),
+                    "neural-batch" => new ManagedBatchedCardPolicy(models),
+                    _ => null,
+                },
+                trackAllValues: true);
             using var players = new ThreadLocal<IPlayer[]>(() => Enumerable.Range(0, 4)
                 .Select(seat => models == null
                     ? (IPlayer)new DistillPlayer(new ClaudePlayerIsmcts { TimeLimitMilliseconds = settings.Milliseconds }, buffers)
-                    : new SearchDistillPlayer(models, buffers, settings, Interlocked.Increment(ref playerSeed)))
+                    : new SearchDistillPlayer(models, buffers, settings, Interlocked.Increment(ref playerSeed), policies.Value))
                 .ToArray());
             var stopwatch = Stopwatch.StartNew();
             var lastSave = Stopwatch.StartNew();
             var done = 0;
-            Parallel.For(
-                0,
-                settings.Games,
-                new ParallelOptions { MaxDegreeOfParallelism = settings.Threads },
-                i =>
-                {
-                    var p = players.Value;
-                    new BelotGame(p[0], p[1], p[2], p[3], new Random(settings.Seed + i)).PlayGame((PlayerPosition)(1 << (i % 4)));
-                    var finished = Interlocked.Increment(ref done);
-                    if (finished % 50 == 0)
+            try
+            {
+                Parallel.For(
+                    0,
+                    settings.Games,
+                    new ParallelOptions { MaxDegreeOfParallelism = settings.Threads },
+                    i =>
                     {
-                        Console.WriteLine($"{stopwatch.Elapsed:hh\\:mm\\:ss} {finished} games: {Counts(buffers)}");
-                    }
-
-                    if (lastSave.Elapsed > TimeSpan.FromMinutes(15))
-                    {
-                        lock (lastSave)
+                        var p = players.Value;
+                        new BelotGame(p[0], p[1], p[2], p[3], new Random(settings.Seed + i)).PlayGame((PlayerPosition)(1 << (i % 4)));
+                        var finished = Interlocked.Increment(ref done);
+                        if (finished % 50 == 0)
                         {
-                            if (lastSave.Elapsed > TimeSpan.FromMinutes(15))
+                            Console.WriteLine($"{stopwatch.Elapsed:hh\\:mm\\:ss} {finished} games: {Counts(buffers)}");
+                        }
+
+                        if (lastSave.Elapsed > TimeSpan.FromMinutes(15))
+                        {
+                            lock (lastSave)
                             {
-                                Save(buffers, settings.Data);
-                                lastSave.Restart();
+                                if (lastSave.Elapsed > TimeSpan.FromMinutes(15))
+                                {
+                                    Save(buffers, settings.Data);
+                                    lastSave.Restart();
+                                }
                             }
                         }
-                    }
-                });
+                    });
+            }
+            finally
+            {
+                foreach (var policy in policies.Values.OfType<IDisposable>())
+                {
+                    policy.Dispose();
+                }
+            }
 
             Save(buffers, settings.Data);
             Console.WriteLine($"{stopwatch.Elapsed:hh\\:mm\\:ss} done: {Counts(buffers)}");

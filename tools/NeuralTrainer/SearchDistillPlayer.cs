@@ -2,11 +2,13 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Numerics;
 
     using Belot.AI.ClaudePlayer;
     using Belot.AI.ClaudePlayer.Neural;
     using Belot.AI.ClaudePlayer.Search;
     using Belot.Engine;
+    using Belot.Engine.Cards;
     using Belot.Engine.Game;
     using Belot.Engine.GameMechanics;
     using Belot.Engine.Players;
@@ -25,12 +27,14 @@
         private readonly Random random;
         private readonly double labelChance;
         private readonly double teacherPlayChance;
+        private readonly BatchedNeuralSearch batched;
         private readonly BelotSimulator simulator = new BelotSimulator();
         private readonly int[] indices = new int[FeatureEncoder.MaxActive];
         private readonly float[] values = new float[FeatureEncoder.MaxActive];
         private readonly float[] labels = new float[FeatureEncoder.CardOutputs];
+        private readonly float[] cardValues = new float[FeatureEncoder.CardOutputs];
 
-        public SearchDistillPlayer(NeuralModels models, SampleBuffer[] buffers, TrainingSettings settings, int seed)
+        public SearchDistillPlayer(NeuralModels models, SampleBuffer[] buffers, TrainingSettings settings, int seed, IBatchedCardPolicy policy = null)
         {
             if (settings.SearchDeals <= 0)
             {
@@ -52,6 +56,7 @@
             this.random = new Random(seed ^ 0x5EED);
             this.labelChance = settings.CardLabelChance;
             this.teacherPlayChance = settings.TeacherPlayChance;
+            this.batched = policy == null ? null : new BatchedNeuralSearch(policy);
         }
 
         public BidType GetBid(PlayerGetBidContext context) => this.student.GetBid(context);
@@ -65,33 +70,38 @@
                 return this.student.PlayCard(context);
             }
 
-            var scores = this.teacher.EvaluateCards(context);
             if (!NeuralDeal.FromPlayContext(context, this.simulator, out var deal))
             {
                 throw new InvalidOperationException("Cannot encode a search-teacher decision.");
             }
 
             var legal = NeuralDeal.ToMask(context.AvailableCardsToPlay);
+            if (this.batched == null || !this.batched.Evaluate(
+                    context, in deal, legal, this.teacher.SearchDeals, this.simulator, this.teacher.Rng, this.cardValues))
+            {
+                foreach (var score in this.teacher.EvaluateCards(context))
+                {
+                    this.cardValues[score.Card.GetHashCode()] = (float)score.Value;
+                }
+            }
+
             var rotation = FeatureEncoder.Rotation(deal.Kind);
             var mask = 0u;
-            var chosen = scores[0].Card;
+            var chosen = NeuralEvaluator.Best(this.cardValues, legal);
             Array.Clear(this.labels);
-            foreach (var score in scores)
+            for (var rest = legal; rest != 0; rest &= rest - 1)
             {
-                var output = FeatureEncoder.ToNetwork(score.Card.GetHashCode(), rotation);
-                this.labels[output] = (float)(score.Value / NeuralEvaluator.ValueScale);
+                var card = BitOperations.TrailingZeroCount(rest);
+                var output = FeatureEncoder.ToNetwork(card, rotation);
+                this.labels[output] = this.cardValues[card] / NeuralEvaluator.ValueScale;
                 mask |= 1u << output;
-                if (score.Value == scores[0].Value && score.Card.GetHashCode() < chosen.GetHashCode())
-                {
-                    chosen = score.Card;
-                }
             }
 
             var features = FeatureEncoder.EncodeCard(in deal, legal, this.indices, this.values);
             this.buffers[1 + FeatureEncoder.CardNetwork(deal.Kind)].Add(
                 this.indices.AsSpan(0, features), this.values.AsSpan(0, features), this.labels, mask);
             return this.teacherPlayChance >= 1 || (this.teacherPlayChance > 0 && this.random.NextDouble() < this.teacherPlayChance)
-                ? new PlayCardAction(chosen)
+                ? new PlayCardAction(Card.AllCards[chosen])
                 : this.student.PlayCard(context);
         }
 

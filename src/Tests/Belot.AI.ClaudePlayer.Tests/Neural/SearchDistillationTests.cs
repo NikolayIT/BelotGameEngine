@@ -28,6 +28,8 @@
             var simulator = new BelotSimulator();
             var indices = new int[FeatureEncoder.MaxActive];
             var values = new float[FeatureEncoder.MaxActive];
+            var batched = new BatchedNeuralSearch(new ManagedBatchedCardPolicy(models));
+            var batchedValues = new float[FeatureEncoder.CardOutputs];
             var checkedSamples = 0;
             match.Start();
             while (!match.IsFinished)
@@ -52,6 +54,7 @@
                     Assert.Equal(teacherPlayChance == 1 ? expected.Card : new ClaudePlayerNeural(models).PlayCard(context).Card, chosen.Card);
                     Assert.True(NeuralDeal.FromPlayContext(context, simulator, out var deal));
                     var legal = NeuralDeal.ToMask(context.AvailableCardsToPlay);
+                    Assert.True(batched.Evaluate(context, in deal, legal, 3, simulator, new Random(checkedSamples), batchedValues));
                     var rotation = FeatureEncoder.Rotation(deal.Kind);
                     var buffer = buffers[1 + FeatureEncoder.CardNetwork(deal.Kind)];
                     var sample = new Batch(1, 32);
@@ -59,6 +62,7 @@
                     var mask = 0u;
                     foreach (var score in scores)
                     {
+                        Assert.Equal((float)score.Value, batchedValues[score.Card.GetHashCode()]);
                         var output = FeatureEncoder.ToNetwork(score.Card.GetHashCode(), rotation);
                         mask |= 1u << output;
                         Assert.Equal((float)(Half)(score.Value / NeuralEvaluator.ValueScale), sample.Labels[output]);

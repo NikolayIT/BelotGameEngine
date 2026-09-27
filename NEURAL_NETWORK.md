@@ -508,3 +508,26 @@ at the same collection cost. It does not deploy the already-known weak search-10
 action selector. This is an experiment, not evidence of a gain. The expanded
 73-test ClaudePlayer suite verifies both trajectory modes against public search
 values and seat features, including refusal of invalid play probabilities.
+
+The direct teacher recheck scored **62.0% +/- 2.8 pp against the frozen fast
+player over 200 games** (seed 48173, +19.0 points/game, +85 ELO). Fixed 100-world
+search ran without a time cap; the independent opponent was the fast network.
+The unsuccessful students therefore do not invalidate the stronger teacher.
+
+The first student-trajectory/search-10 fit used 212,814 labelled decisions from
+1,000 games, with the independent 100-game search-100 dataset for validation.
+At learning rate 5e-5, centred loss weight 0.05, it scored 48.7% +/- 0.5 pp at
+epoch 4, 48.4% +/- 0.5 pp at epoch 12, and 47.6% +/- 0.5 pp at epoch 24 against
+the frozen player (4,000 games each). It is not promoted. More diverse states
+alone did not rescue this small-data experiment.
+
+Search collection now has an optional training-only GPU backend: `--teacher
+neural-gpu`, with `Gpu/serve.py` serving the same frozen networks on loopback.
+It advances independent rollouts together, preserving the C# simulator and
+seat encoder. Managed batch values match the original search in the whole-game
+tests; CUDA matched 96,585 rollout choices and all 416 records from two paired
+collection runs. One-actor collection took 55 seconds in C#, 27 on eager CUDA,
+and 17 with CUDA graphs; a four-actor pilot collected 4,183 positions in 76 seconds.
+The machine was also collecting the larger CPU dataset, so these are throughput
+pilots. See the [GPU README](tools/NeuralTrainer/Gpu/README.md) for commands,
+protocol checks and numerical limits. The app has no GPU or Python dependency.
