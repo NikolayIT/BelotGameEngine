@@ -545,4 +545,24 @@ while retaining the teacher's action differences. It tests preservation of the
 useful value representation when the teacher samples hidden hands differently
 from the true-deal training distribution. Fourteen Python tests pass, including
 augmentation/auction consistency and exact preservation of teacher action gaps
-under mean anchoring. Results of that target check are still pending.
+under mean anchoring. On the 30-minute dataset the anchored fit scored
+48.2% +/- 0.5 pp over 4,000 games at epoch 24 (-2.6 points/game, -13 ELO).
+
+The completed 2,000-game teacher dataset contains 431,684 positions: 149,554 suit,
+75,404 no-trumps and 206,726 all-trumps. Collection took 1:17:40. The separately
+seeded 100-game validation dataset contains 22,213 positions and is excluded from
+training. Two matched 24-epoch fits use every training record, learning rate
+5e-5 (1.5e-5 in the last eight epochs), centred loss weight 0.05, batch 1024 and
+seed 401. Bidding remains frozen.
+
+| Full-data fit | Epoch 4 | Epoch 12 | Epoch 24 |
+|---|---|---|---|
+| Centred targets | 48.9% +/- 0.2 pp | 48.5% +/- 0.2 pp | 48.4% +/- 0.2 pp |
+| Mean-anchored targets | 49.2% +/- 0.2 pp | 49.1% +/- 0.2 pp | 49.1% +/- 0.2 pp |
+
+Each cell is 20,000 games against the frozen network, seed 29, one standard
+error across mirrored pairs. Neither passes the first gate. More teacher data
+reduced the regression, but these fits have not recovered the teacher's gain.
+The next collection holds search at 100 worlds and uses fast-network trajectories
+(`--teacher-play-chance 0`, 1,000 games, seed 8371) to separate target noise from
+the trajectory change in the earlier search-10 experiment.
