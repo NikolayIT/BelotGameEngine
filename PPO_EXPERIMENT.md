@@ -108,8 +108,9 @@ a final candidate must receive a new seed for confirmation.
 
 The lambda-.5 checkpoint after 32 updates scored **50.465% +/- .208 pp in
 20,000 games**, 95% interval [50.057%, 50.873%], +.4 point/game (seed 523).
-The planned continuation to 64 updates is still being evaluated. This small gain
-against the original does not establish a gain against ISMCTS.
+After 64 updates it scored **50.450% +/- .218 pp in 20,000 games**, 95% interval
+[50.023%, 50.877%], +.6 point/game (seed 523). This small gain against the original
+does not establish a gain against ISMCTS.
 
 A separate capacity test will use a 696-512-256-128-1 privileged helper, while
 retaining the original actor, temperature 1, LR 1e-6 and lambda 1. It will train
@@ -117,6 +118,15 @@ retaining the original actor, temperature 1, LR 1e-6 and lambda 1. It will train
 budget comparison. This tests the helper's capacity without increasing deployed
 weights or inference work. `--critic-sizes` configures only this discarded helper;
 resume refuses an architecture mismatch.
+
+Contract checks from the GAE-64 endpoint replace only one card file at a time,
+retaining the other original networks. On 20,000 games each, seed 523: all trumps
+50.610% +/- .179 pp; no trumps 49.945% +/- .129 pp; suits 49.515% +/- .136 pp.
+The all-trump variant's fresh seed-547 check gave 50.370% +/- .187 pp in 20,000
+games, 95% [50.003%, 50.737%]. This small positive signal motivates a fixed
+continuation of GAE from 64 to 128 updates and another all-trump-only export.
+That continuation will first use seed 523 for comparison, then a new confirmation
+seed after candidate selection. It does not authorize promotion without ISMCTS.
 
 ## Sources
 

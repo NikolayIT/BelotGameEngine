@@ -1109,12 +1109,27 @@ from the first run. These are
 | Actor LR 1e-5 | 50.090% +/- .230 pp | 20,000 | [49.640%, 50.540%] | +.1 |
 | Temperature .25 | 50.265% +/- .171 pp | 20,000 | [49.929%, 50.601%] | +.7 |
 | GAE lambda .5, 32 updates | 50.465% +/- .208 pp | 20,000 | [50.057%, 50.873%] | +.4 |
+| GAE lambda .5, 64 updates | 50.450% +/- .218 pp | 20,000 | [50.023%, 50.877%] | +.6 |
 
 The higher LR changed roughly 4-10% of greedy choices per early update versus
-about 1% at LR 1e-6, without a corresponding strength gain. The next test changes
-GAE lambda to .5 to use intermediate helper predictions and runs 64 updates,
-with a comparison checkpoint at 32. The seed-523 results inform this experiment
-selection; any final candidate needs a fresh confirmation seed.
+about 1% at LR 1e-6, without a corresponding strength gain. GAE lambda .5 uses
+intermediate helper predictions. Doubling its update count did not show a further
+whole-model gain. The seed-523 results inform experiment selection; a final
+candidate needs a fresh confirmation seed.
+
+Replacing just one contract network with its GAE-64 version exposed opposing
+effects. Other card networks and bidding stayed at the original weights:
+
+| Changed network | Win rate +/- 1 sigma vs original | Games | Seed | Points/game |
+|---|---|---|---|---|
+| All trumps | 50.610% +/- .179 pp | 20,000 | 523 | +.9 |
+| No trumps | 49.945% +/- .129 pp | 20,000 | 523 | +.1 |
+| Suit contracts | 49.515% +/- .136 pp | 20,000 | 523 | -.6 |
+| All trumps, fresh confirmation | 50.370% +/- .187 pp | 20,000 | 547 | +.6 |
+
+The all-trump-only confirmation has a 95% interval of [50.003%, 50.737%]: a
+small gain, close to the significance threshold. These are separate whole-game
+matches; contract effects do not add linearly. No ISMCTS result is implied.
 
 Full experiment settings, follow-ups and reproduction commands are in
 [PPO_EXPERIMENT.md](PPO_EXPERIMENT.md) and
