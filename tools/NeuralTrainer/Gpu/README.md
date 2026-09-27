@@ -55,6 +55,18 @@ that the original parameters stay fixed, and equivalence after merging/export.
 This increases file size and inference work; benchmark before promotion. The
 first limited-data pilot overfit and became substantially weaker.
 
+Two data options are experimental:
+
+- `--suit-augmentation` permutes all 16 card planes and their labels/masks together.
+  It fixes trumps in suit contracts and only changes positions whose auction has
+  no bid in an affected suit. Scalar auction features remain unchanged. This
+  avoids inventing illegal auction histories; the learned teacher itself need
+  not be perfectly symmetric, so strength still requires measurement.
+- `--anchor-mean` keeps each teacher action difference but shifts the training
+  targets to the warm-start network's mean value over legal actions. This tests
+  whether learning a new common value under sampled worlds disrupts the useful
+  pretrained representation. Validation still uses the original teacher labels.
+
 `--validation-data <prefix>` uses a separately collected dataset. Without it,
 5% of samples are held out at random. That split can share games with training
 and is only a fitting diagnostic. Promotion requires independent whole-game

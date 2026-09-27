@@ -29,7 +29,8 @@ class FitTests(unittest.TestCase):
                 (root / ("data." + name + ".samples")).write_bytes(header + (record * 2 if tag == 1 else b""))
             args = Namespace(input=str(source), data=str(root / "data"), validation_data="",
                              out=str(output), epochs=2, batch=1024, learning_rate=0.001,
-                             card_value_weight=0.05, policy_temperature=0, residual_sizes="", device="cpu", seed=7)
+                             card_value_weight=0.05, policy_temperature=0, residual_sizes="",
+                             suit_augmentation=False, anchor_mean=False, device="cpu", seed=7)
             with contextlib.redirect_stdout(io.StringIO()):
                 fit.run(args)
             for name in ("bid", "notrumps", "alltrumps"):
@@ -160,6 +161,43 @@ class FitTests(unittest.TestCase):
                                float(fit.fitting_loss(prediction + 100, target - 30, mask, 0, 2).detach()), places=10)
         equal = fit.fitting_loss(target + 1, target, mask, 0, 2)
         self.assertAlmostEqual(float(equal), 0, places=10)
+
+    def test_suit_augmentation_keeps_auction_and_moves_every_card_plane(self):
+        for tag in (1, 2, 3):
+            features = torch.zeros(64, 600)
+            features[:, :512] = torch.arange(512)
+            features[:, 580:] = 0.5
+            target = torch.arange(32).float().repeat(64, 1)
+            mask = (target.long() % 3) == 0
+            maps = fit.suit_maps(tag, "cpu")
+            torch.manual_seed(9)
+            x, y, m = fit.augment_suits(features, target, mask, tag, maps)
+            torch.testing.assert_close(x[:, 512:], features[:, 512:])
+            for plane in range(16):
+                torch.testing.assert_close(x[:, 32 * plane:32 * (plane + 1)], y + 32 * plane)
+            self.assertTrue(torch.equal(m, (y.long() % 3) == 0))
+            self.assertFalse(torch.equal(x, features))
+            if tag == 1:
+                torch.testing.assert_close(y[:, :8], target[:, :8])
+            # A bid in an affected suit disables permutation for that position.
+            features[:, 535] = 1
+            x, y, m = fit.augment_suits(features, target, mask, tag, maps)
+            self.assertTrue(torch.equal(x, features))
+            self.assertTrue(torch.equal(y, target))
+            self.assertTrue(torch.equal(m, mask))
+
+    def test_mean_anchor_preserves_action_gaps_and_original_validation_labels(self):
+        model = fit.Network(1, 1, (600, 32))
+        x = torch.randn(3, 600)
+        y = torch.randn(3, 32)
+        mask = torch.zeros(3, 32, dtype=torch.bool)
+        mask[:, :3] = True
+        original = y.clone()
+        _, anchored, _ = fit.anchor_targets(model, (x, y, mask), 2, "cpu")
+        torch.testing.assert_close(anchored[:, :3].mean(1), model(x)[:, :3].mean(1))
+        torch.testing.assert_close(anchored[:, 0] - anchored[:, 2], y[:, 0] - y[:, 2])
+        self.assertTrue(torch.equal(anchored[~mask], y[~mask]))
+        self.assertTrue(torch.equal(y, original))
 
     def test_diagnostics_use_legal_actions_and_game_points(self):
         model = fit.Network(1, 1, (600, 32))

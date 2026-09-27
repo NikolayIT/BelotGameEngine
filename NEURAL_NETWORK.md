@@ -531,3 +531,18 @@ and 17 with CUDA graphs; a four-actor pilot collected 4,183 positions in 76 seco
 The machine was also collecting the larger CPU dataset, so these are throughput
 pilots. See the [GPU README](tools/NeuralTrainer/Gpu/README.md) for commands,
 protocol checks and numerical limits. The app has no GPU or Python dependency.
+
+Suit augmentation is restricted to positions without bids in any permuted suit
+(and fixes the trump slot). It maps every card plane, output and legal mask
+together, preserving the observed auction. On the 30-minute dataset, with the
+independent validation prefix and 24 epochs, it scored 48.0% +/- 0.5 pp against
+the frozen player over 4,000 games (-2.6 points/game, -14 ELO). It is not a gain.
+This fit used all training records; the earlier default holdout used 95%, so
+their difference is not an isolated estimate of the augmentation effect.
+
+The next target check anchors each position's mean Q target to the warm start
+while retaining the teacher's action differences. It tests preservation of the
+useful value representation when the teacher samples hidden hands differently
+from the true-deal training distribution. Fourteen Python tests pass, including
+augmentation/auction consistency and exact preservation of teacher action gaps
+under mean anchoring. Results of that target check are still pending.

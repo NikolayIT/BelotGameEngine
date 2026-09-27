@@ -3,6 +3,7 @@
 import argparse
 import ctypes
 import hashlib
+import itertools
 import json
 import os
 from pathlib import Path
@@ -216,6 +217,34 @@ def fitting_loss(prediction, target, mask, value_weight=-1.0, policy_temperature
     return ((temperature ** 2 * divergence + value_weight * common_loss) * count).sum() / count.sum()
 
 
+def suit_maps(tag, device):
+    permutations = [order for order in itertools.permutations(range(4)) if tag != 1 or order[0] == 0]
+    return torch.tensor([[8 * suit + rank for suit in order for rank in range(8)] for order in permutations], device=device)
+
+
+def augment_suits(features, target, mask, tag, maps):
+    """Permute card suits only when no affected suit appeared in the auction."""
+    forbidden_bids = [534 + 8 * seat + suit for seat in range(4) for suit in range(1 if tag == 1 else 0, 4)]
+    eligible = (features[:, forbidden_bids] == 0).all(1)
+    choices = torch.randint(len(maps), (len(features),), device=features.device)
+    mapping = maps[torch.where(eligible, choices, 0)]  # map 0 is the identity
+    planes = features[:, :512].reshape(-1, 16, 32)
+    changed = planes.gather(2, mapping[:, None, :].expand(-1, 16, -1)).flatten(1)
+    return torch.cat((changed, features[:, 512:]), dim=1), target.gather(1, mapping), mask.gather(1, mapping)
+
+
+@torch.no_grad()
+def anchor_targets(model, data, batch, device):
+    """Keep teacher action differences, but retain the warm start's mean point value."""
+    anchored = data[1].clone()
+    for start in range(0, len(anchored), batch):
+        x, y, mask = (tensor[start:start + batch].to(device) for tensor in data)
+        prediction = model(x)
+        shift = ((prediction - y) * mask).sum(1, keepdim=True) / mask.sum(1, keepdim=True)
+        anchored[start:start + batch] = (y + shift * mask).cpu()
+    return data[0], anchored, data[2]
+
+
 @torch.no_grad()
 def diagnostics(model, data, slots, batch, device, value_weight, policy_temperature=0.0):
     totals = np.zeros(6, np.float64)
@@ -289,9 +318,13 @@ def run(args):
         weight = -1 if tag == 0 else args.card_value_weight
         temperature = 0 if tag == 0 else args.policy_temperature
         print(name, "initial", json.dumps(diagnostics(model, validation_data, validation, args.batch, device, weight, temperature)), flush=True)
+        if tag != 0 and args.anchor_mean:
+            # Validation keeps the original teacher targets, including their mean values.
+            data = anchor_targets(model, data, args.batch, device)
         optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
         # Only one contract's data is resident on the GPU at once.
         device_data = tuple(tensor.to(device) for tensor in data)
+        maps = suit_maps(tag, device) if tag != 0 and args.suit_augmentation else None
         for epoch in range(1, args.epochs + 1):
             rate = args.learning_rate * (0.3 if epoch > args.epochs * 0.7 else 1)
             optimizer.param_groups[0]["lr"] = rate
@@ -303,6 +336,8 @@ def run(args):
             for start in range(0, len(order), args.batch):
                 selection = order[start:start + args.batch]
                 x, y, mask = (tensor[selection] for tensor in device_data)
+                if maps is not None:
+                    x, y, mask = augment_suits(x, y, mask, tag, maps)
                 optimizer.zero_grad(set_to_none=True)
                 loss = fitting_loss(model(x), y, mask, weight, temperature)
                 loss.backward()
@@ -339,6 +374,10 @@ if __name__ == "__main__":
                         help="Positive game-point temperature replaces advantage Huber with policy KL")
     parser.add_argument("--residual-sizes", default="",
                         help="Freeze the input network and learn an additive branch, e.g. 128,64,64")
+    parser.add_argument("--suit-augmentation", action="store_true",
+                        help="Permute suits only when the observed auction remains unchanged")
+    parser.add_argument("--anchor-mean", action="store_true",
+                        help="Keep teacher action differences but anchor the mean target to the warm start")
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cuda")
     parser.add_argument("--seed", type=int, default=401)
     arguments = parser.parse_args()
