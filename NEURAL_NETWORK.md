@@ -295,6 +295,28 @@ In `src/Tests/Belot.AI.ClaudePlayer.Tests/Neural/`:
 
 ## 12. September 27 improvement experiments (in progress)
 
+### Short research note
+
+The [primary-paper review](etc/NeuralResearch.md) covers search distillation,
+hidden-card inference, partnership learning, privileged critics and compact network
+designs. Its recommendations were tested against the frozen shipped player;
+independent ISMCTS matches remain the promotion gate.
+
+- **Better targets:** centred Monte Carlo loss, search-100 labels, policy KL,
+  mean anchoring, suit augmentation and student trajectories produced ties or
+  regressions. More accurate value prediction did not reliably improve decisions.
+- **Architecture and information:** wider and residual models, a shared card head,
+  ordered public history and auxiliary card-location supervision did not produce
+  a promotable student in these pilots. Two added identity-initialised layers
+  preserved the warm start, but their trained student scored only 50.4% +/- .2 pp
+  against it over 20,000 games. These pilots do not rule out longer training or PPO.
+- **Fast endgames:** public-hand enumeration plus bounded double-dummy continuations
+  is the strongest fast candidate. With up to 90 worlds in the final three tricks,
+  it scored 54.65% +/- .168 pp against the frozen player and 89.7% +/- .2 pp against
+  SmartPlayer, each over 20,000 games, at 32.3 us/card in the latest idle benchmark.
+  Its separate 2,000-game ISMCTS confirmation is running. This candidate uses the
+  original neural weights; it has not yet earned promotion.
+
 The fixed reference is the shipped weights at `544708e` (weights introduced in `8a0da0e`),
 copied to `artifacts/neural-20260927/baseline/` with SHA-256 hashes before experimentation.
 No candidate is promoted merely because training loss or a same-lineage match improved.
