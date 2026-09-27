@@ -265,6 +265,8 @@ pairs: **the networks alone tie ClaudePlayerIsmcts (100 ms)**, 50.2% ± 1.3% of 
   `distill --teacher neural --in <folder> --search-deals 100 --card-label-chance 1` records
   the stronger sampled-world teacher for `fit --in <warm-start>`. Empty data preserves the
   corresponding warm-start model. These options have not yet produced promoted weights.
+  `--teacher-play-chance 0` labels positions with search while the fast student plays
+  them; the default 1 plays the teacher at labelled decisions.
   Optional `tools/NeuralTrainer/Gpu/fit.py` fits the same sample format with CUDA PyTorch
   and exports the existing BNN1 format. It is training-only; see its README for the
   isolated environment, reproducible commands, checks and limitations.

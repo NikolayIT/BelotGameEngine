@@ -106,6 +106,9 @@
         /// <summary>Gets or sets the distillation teacher: ismcts, or neural with SearchDeals sampled worlds.</summary>
         public string Teacher { get; set; } = "ismcts";
 
+        /// <summary>Gets or sets how often a labelled neural-teacher decision is played by the teacher (0 = student trajectories).</summary>
+        public double TeacherPlayChance { get; set; } = 1;
+
         /// <summary>Gets or sets how many games of ClaudePlayerIsmcts "distill" records.</summary>
         public int Games { get; set; } = 3000;
 

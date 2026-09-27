@@ -498,3 +498,13 @@ and merged/exported prediction checks. More parameters alone have not helped.
 
 At this stage the Engine (741), UI (71), and prior ClaudePlayer (69) tests passed.
 The Windows and Android app builds both completed with zero warnings and errors.
+
+`distill --teacher neural --teacher-play-chance 0` records the same public search
+values but lets the fast student choose the played card. The default remains 1
+(play the teacher at labelled decisions). This separates label generation from
+the policy generating positions. The next experiment uses 10 sampled worlds per
+position on student trajectories: noisier targets permit more distinct positions
+at the same collection cost. It does not deploy the already-known weak search-10
+action selector. This is an experiment, not evidence of a gain. The expanded
+73-test ClaudePlayer suite verifies both trajectory modes against public search
+values and seat features, including refusal of invalid play probabilities.

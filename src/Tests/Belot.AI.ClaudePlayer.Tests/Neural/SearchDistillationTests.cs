@@ -15,11 +15,13 @@
 
     public class SearchDistillationTests
     {
-        [Fact]
-        public void RecordsExactlyThePublicSearchValuesAndSeatFeatures()
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        public void RecordsExactlyThePublicSearchValuesAndSeatFeatures(double teacherPlayChance)
         {
             var models = RandomModels.Create(27);
-            var settings = new TrainingSettings { SearchDeals = 3, CardLabelChance = 1 };
+            var settings = new TrainingSettings { SearchDeals = 3, CardLabelChance = 1, TeacherPlayChance = teacherPlayChance };
             var buffers = Enumerable.Range(0, 4).Select(tag => new SampleBuffer(1000, tag == 0 ? 9 : 32)).ToArray();
             var match = new BelotMatch(new BelotMatchOptions { Random = new Random(28) });
             var ordinary = new SmartPlayer.SmartPlayer();
@@ -47,7 +49,7 @@
                     var scores = teacher.EvaluateCards(context);
                     var chosen = recorder.PlayCard(context);
                     var expected = scores.OrderByDescending(x => x.Value).ThenBy(x => x.Card.GetHashCode()).First();
-                    Assert.Equal(expected.Card, chosen.Card);
+                    Assert.Equal(teacherPlayChance == 1 ? expected.Card : new ClaudePlayerNeural(models).PlayCard(context).Card, chosen.Card);
                     Assert.True(NeuralDeal.FromPlayContext(context, simulator, out var deal));
                     var legal = NeuralDeal.ToMask(context.AvailableCardsToPlay);
                     var rotation = FeatureEncoder.Rotation(deal.Kind);
@@ -222,6 +224,16 @@
         public void SearchTeacherRequiresPositiveDealCount()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => new SearchDistillPlayer(RandomModels.Create(30), null, new TrainingSettings(), 1));
+        }
+
+        [Theory]
+        [InlineData(-0.1)]
+        [InlineData(1.1)]
+        [InlineData(double.NaN)]
+        public void SearchTeacherRefusesInvalidPlayChance(double chance)
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => new SearchDistillPlayer(
+                RandomModels.Create(30), null, new TrainingSettings { SearchDeals = 1, TeacherPlayChance = chance }, 1));
         }
     }
 }

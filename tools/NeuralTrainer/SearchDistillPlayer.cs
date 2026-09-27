@@ -14,7 +14,8 @@
     /// <summary>
     /// Records the neural search's values for every legal card. The teacher samples unseen
     /// hands from the player's context, exactly as it does in the app; engine truth is never
-    /// passed to the teacher or encoder. Unlabelled decisions use the fast student.
+    /// passed to the teacher or encoder. Unlabelled decisions use the fast student; labelled
+    /// decisions can also follow the student, to collect labels on the student's trajectories.
     /// </summary>
     internal sealed class SearchDistillPlayer : IPlayer
     {
@@ -23,6 +24,7 @@
         private readonly SampleBuffer[] buffers;
         private readonly Random random;
         private readonly double labelChance;
+        private readonly double teacherPlayChance;
         private readonly BelotSimulator simulator = new BelotSimulator();
         private readonly int[] indices = new int[FeatureEncoder.MaxActive];
         private readonly float[] values = new float[FeatureEncoder.MaxActive];
@@ -35,6 +37,11 @@
                 throw new ArgumentOutOfRangeException(nameof(settings), "A neural search teacher needs --search-deals above zero.");
             }
 
+            if (!double.IsFinite(settings.TeacherPlayChance) || settings.TeacherPlayChance < 0 || settings.TeacherPlayChance > 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(settings), "Teacher play chance must be between zero and one.");
+            }
+
             this.teacher = new ClaudePlayerNeural(models)
             {
                 SearchDeals = settings.SearchDeals,
@@ -44,6 +51,7 @@
             this.buffers = buffers;
             this.random = new Random(seed ^ 0x5EED);
             this.labelChance = settings.CardLabelChance;
+            this.teacherPlayChance = settings.TeacherPlayChance;
         }
 
         public BidType GetBid(PlayerGetBidContext context) => this.student.GetBid(context);
@@ -82,7 +90,9 @@
             var features = FeatureEncoder.EncodeCard(in deal, legal, this.indices, this.values);
             this.buffers[1 + FeatureEncoder.CardNetwork(deal.Kind)].Add(
                 this.indices.AsSpan(0, features), this.values.AsSpan(0, features), this.labels, mask);
-            return new PlayCardAction(chosen);
+            return this.teacherPlayChance >= 1 || (this.teacherPlayChance > 0 && this.random.NextDouble() < this.teacherPlayChance)
+                ? new PlayCardAction(chosen)
+                : this.student.PlayCard(context);
         }
 
         public void EndOfTrick(IEnumerable<PlayCardAction> trickActions)
