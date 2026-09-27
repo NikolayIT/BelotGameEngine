@@ -2,14 +2,44 @@
 
 `ClaudePlayerNeural` plays Belot with four small neural networks trained by reinforcement
 learning in self-play. It values **every action open to it** (each bid, each legal card) in game
-points, decides in about **10 microseconds** instead of ClaudePlayerIsmcts's 100 milliseconds,
-and can be made weaker on purpose by sometimes taking an action that is nearly as good as the
-best.
+points and can be made weaker on purpose by sometimes taking a nearly best action. The
+strongest validated fast configuration retains those networks and adds bounded endgame
+search, averaging **31.1 microseconds per card** in the latest idle engine benchmark.
 
 This document explains what it is, how it is trained, how to reproduce and improve it, and how
 to keep it working.
 
-**Results** (September 2026, mirrored pairs of whole games, i7-12700K):
+**Validated fast configuration, September 27, 2026** (i7-12700K; uncertainties are
+one standard error across mirrored pairs of whole games):
+
+| Opponent | Win rate | Games | Elo difference |
+|---|---|---|---|
+| ClaudePlayerIsmcts, 100 ms/card | **53.45% +/- .942 pp** | **2,000** | +24 +/- 7 |
+| Frozen original networks | **54.65% +/- .168 pp** | 20,000 | +32 +/- 1 |
+| SmartPlayer | **89.74% +/- .206 pp** | 20,000 | +377 +/- 4 |
+
+The independent ISMCTS 95% interval is **[51.605%, 55.295%]**, passing the
+predeclared promotion gate. This is a search improvement, not improved neural
+weights. All four embedded files are unchanged (2,974,830 bytes total). Enable it with:
+
+```csharp
+new ClaudePlayerNeural
+{
+    UseEndgameSearch = true,
+    EndgameUseDeclarations = true,
+    EndgameTricks = 3,
+    EndgameThreeTrickWorldLimit = 90,
+};
+```
+
+The default constructor still uses networks alone. The endgame configuration
+solves all publicly consistent endings within its world limit, using perfect
+information inside each hypothetical world. It assumes the bots' declare-all
+policy; a withheld own meld, no fitting world, or overflow causes a fallback.
+See [the implementation note](ENDGAME_EXPERIMENT.md) for these limits. App
+calibration and the Master comparison are in progress.
+
+**Earlier measurements** (September 2026, mirrored pairs, i7-12700K):
 
 | Player | vs ClaudePlayerIsmcts (100 ms) | vs SmartPlayer | Time per card |
 |---|---|---|---|
@@ -17,8 +47,9 @@ to keep it working.
 | Networks + 100-deal search (`SearchDeals = 100`) | **55.0% ± 2.2%** (400 games, +5.6 points a game) | | 51 ms |
 | ClaudePlayerIsmcts, for scale | | 89.7% ± 1.7% (300 games, +375 ELO) | 100 ms |
 
-The networks alone play as well as ClaudePlayerIsmcts about 10,000 times faster; with a small
-search on top (half ISMCTS's time) they beat it. The app's round robin (`elo`, pair ratings
+The historical 8.6-us figure uses the older mixed decision benchmark. Corrected
+engine-card timing is reported in section 12; these timings are not interchangeable.
+The preceding app round robin (`elo`, pair ratings
 anchored at Dummy = 1200): networks + search 1771, ClaudePlayerIsmcts 1733, the networks played
 loose (the app's Expert) 1554, SmartPlayer 1462, DummyPlayer 1200, RandomPlayer 660.
 
@@ -45,7 +76,8 @@ against itself:
   close to it (see §5). The same values can show a person how good their move was.
 - **Pure managed C#**, no libraries, like the Santase engine's neural player: the inference is a
   few hundred lines over `float[]` and `System.Numerics.Vector<float>`, so it runs on Android
-  (MAUI) unchanged; the trainer is C# too, CPU only, using every core.
+  (MAUI) unchanged. Training can use the C# CPU trainer or the optional CUDA
+  PyTorch tooling; no Python or native training dependency ships in the player.
 
 ## 2. Where everything lives
 
@@ -314,8 +346,9 @@ independent ISMCTS matches remain the promotion gate.
   is the strongest fast candidate. With up to 90 worlds in the final three tricks,
   it scored 54.65% +/- .168 pp against the frozen player and 89.7% +/- .2 pp against
   SmartPlayer, each over 20,000 games, at 32.3 us/card in the latest idle benchmark.
-  Its separate 2,000-game ISMCTS confirmation is running. This candidate uses the
-  original neural weights; it has not yet earned promotion.
+  Its separate 2,000-game ISMCTS confirmation scored 53.45% +/- .942 pp,
+  95% interval [51.605%, 55.295%], passing promotion. It uses the original neural
+  weights. The integrated build measured 31.1 us/card after the hint-context fix.
 
 The fixed reference is the shipped weights at `544708e` (weights introduced in `8a0da0e`),
 copied to `artifacts/neural-20260927/baseline/` with SHA-256 hashes before experimentation.
@@ -827,7 +860,9 @@ The fixed 90-world configuration's fresh baseline comparison at seed 293 scored
 54.65% +/- .168 pp over 20,000 games, 95% interval [54.320%, 54.980%], +6.7
 points/game, +32 +/- 1 Elo. A predeclared **2,000-game** ISMCTS100 confirmation
 uses that same separate seed range and 10 threads, with other heavy work stopped.
-It is pending. Trainer match summaries now expose the precise normal interval
+It completed at **53.45% +/- .942 pp**, 95% interval **[51.605%, 55.295%]**,
++5.3 points/game, **+24 +/- 7 Elo**, in 39:08. This passes the predeclared gate.
+Trainer match summaries now expose the precise normal interval
 and the delta-method Elo standard error, with four new tests (88 C# tests total
 on branch `53fa698`). Promotion uses the interval rather than a rounded sigma.
 
@@ -836,3 +871,65 @@ The existing 100-deal search player scored 54.5% +/- 2.5 pp against the fast
 +31 Elo). This fixed-sample comparison used no time cap and ran alongside
 training. It suggests a remaining search gain, but its 95% interval includes
 50%; a larger comparison is needed before claiming that advantage as established.
+
+### Integration and app calibration
+
+The optional endgame implementation is integrated into `master`. It adds no native
+runtime dependency or weight bytes. A review found a hint-specific edge case:
+`RoundKnowledge` reconstructs the deciding seat's melds under the bot's declare-all
+policy. The endgame evaluator now falls back when that conflicts with the seat's
+actual declarations. This preserves hints for a human who withheld a meld.
+
+The integrated build passes **94 AI/trainer tests**, including 90-world
+engine/view parity, withheld-meld fallback, and five Elo-statistics tests. The
+Release trainer and simulator builds have zero warnings/errors. Re-recording the
+250-game validation corpus produces identical features and half-precision labels
+for all **53,821 positions**. Repeating the baseline and Smart comparisons on the
+same seeds gives the same outcomes; these repetitions are not added to game counts.
+The precise Smart result is **89.74% +/- .206 pp**, 95% interval
+[89.337%, 90.143%], **+377 +/- 4 Elo**, over 20,000 games.
+
+Idle engine benchmarks after integration:
+
+| Profile | Mean us/card | Decisions | Measured games |
+|---|---|---|---|
+| Original network | 16.2 | 21,336 | 100 |
+| Fast, 90-world endgames | 31.1 | 21,380 | 100 |
+| Search 100, 400-ms cap | 62,081.0 | 672 | 4 |
+| Search 100 plus endgames, 400-ms cap | 60,869.0 | 707 | 4 |
+
+Warmups are excluded (20 games for fast profiles, one for search). Endgames handled
+4,996 fast decisions and 175 combined-search decisions. The small four-game search
+timing difference alone does not establish an advantage for the combined profile.
+
+Expert calibration against SmartPlayer, 20,000 games per row, seed 311, MaxRegret 4:
+
+| Expert profile | Temperature | Win rate | Elo difference |
+|---|---|---|---|
+| Previous networks-only Expert | 1.25 | 69.845% +/- .298 pp | +146 +/- 2 |
+| New fast profile | 1.0 | 78.425% +/- .269 pp | +224 +/- 3 |
+| New fast profile | 1.25 | 74.750% +/- .283 pp | +189 +/- 3 |
+| New fast profile | **1.5** | **70.920% +/- .294 pp** | **+155 +/- 2** |
+
+Choose **1.5**: it keeps Expert close to its previous difficulty while remaining
+above Skilled. Against the unrestricted fast profile it scores **26.465% +/-
+.276 pp**, -178 +/- 2 Elo, over 20,000 independent games (seed 313). The app's
+round robin will verify its position between Skilled and Master. Hints use the
+unrestricted fast profile.
+
+Master selection is predeclared: compare the existing search against fast endgames
+over 1,000 games (seed 397), then the combined search/endgame profile against the
+existing search over 500 games (seed 401). Both use 100 sampled deals, the app's
+400-ms cap, 10 threads, and no other heavy work. Keep the existing Master unless
+the combined profile's independent 95% interval lies above 50%. These matches are
+running; their outcomes will determine the app configuration before `elo 20000 60`.
+
+```powershell
+dotnet artifacts/neural-20260927/promoted-bin/NeuralTrainer.dll validate --in artifacts/neural-20260927/baseline --opponent ismcts:100 --endgame true --endgame-declarations true --endgame-tricks 3 --endgame-worlds 90 --pairs 1000 --threads 10 --seed 293
+dotnet artifacts/neural-20260927/promoted-bin/NeuralTrainer.dll validate --in artifacts/neural-20260927/baseline --opponent smart --endgame true --endgame-declarations true --endgame-tricks 3 --endgame-worlds 90 --pairs 10000 --threads 16 --seed 197
+dotnet artifacts/neural-20260927/promoted-bin/NeuralTrainer.dll bench --in artifacts/neural-20260927/baseline --endgame true --endgame-declarations true --endgame-tricks 3 --endgame-worlds 90
+```
+
+The final ISMCTS match used the pre-integration `endgame-final-bin` build. The
+integrated command above is its reproduction; the added own-meld fallback does
+not affect declare-all bot games, as the replay and repeated matches verify.

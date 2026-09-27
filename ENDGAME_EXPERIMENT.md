@@ -1,6 +1,6 @@
-# Bounded endgame search (not promoted)
+# Bounded endgame search
 
-The experimental player keeps the original networks and adds optional, deterministic
+The player keeps the original networks and adds optional, deterministic
 PIMC search near the end of a deal. It enumerates hands consistent with the deciding
 seat's observations, solves each fully known ending by partnership alpha-beta, and
 averages every legal action's game-point result. Future choices within each world
@@ -19,7 +19,23 @@ remaining cards plus public played cards. Its declaration types/counts must matc
 the observed declarations, as must any known ranks. Actual ranks in that hypothetical
 hand resolve the announcement score. This is a policy assumption: a human who
 withholds a declaration can make it inaccurate. If no worlds fit, normal evaluation
-is used. Without this option, unresolved announcement ranks cause a fallback.
+is used. A withheld own meld also causes a fallback, which matters when evaluating
+a human's hint context. Without this option, unresolved announcement ranks cause a fallback.
+
+## Validated fast configuration
+
+Set `UseEndgameSearch = true`, `EndgameUseDeclarations = true`, `EndgameTricks = 3`
+and `EndgameThreeTrickWorldLimit = 90`. The default constructor remains unchanged.
+This configuration passed the independent promotion gate: **53.45% +/- .942 pp**
+against ISMCTS at 100 ms/card over **2,000 games**, 95% interval
+**[51.605%, 55.295%]**, +24 +/- 7 Elo. Against the frozen networks it scored
+**54.65% +/- .168 pp over 20,000 games**, +32 +/- 1 Elo. Against SmartPlayer it
+scored **89.74% +/- .206 pp over 20,000 games**, +377 +/- 4 Elo.
+
+The latest integrated idle benchmark is **31.1 us/card** over 21,380 decisions
+in 100 games, after 20 warmup games. The endgame path handled 4,996 decisions.
+The unchanged four weight files total 2,974,830 bytes. Full results, variability
+and reproduction commands are in [NEURAL_NETWORK.md](NEURAL_NETWORK.md#12-september-27-improvement-experiments-in-progress).
 
 ## Development measurements
 
@@ -52,12 +68,13 @@ dotnet artifacts/neural-20260927/endgame-three-bin/NeuralTrainer.dll validate --
 dotnet artifacts/neural-20260927/endgame-three-bin/NeuralTrainer.dll bench --in artifacts/neural-20260927/baseline --endgame true --endgame-declarations true --endgame-tricks 3
 ```
 
-Verification: 88 C# tests pass, Release build zero warnings/errors. Tests compare
+Verification: 94 C# tests pass after integration, Release build zero warnings/errors. Tests compare
 alpha-beta against exhaustive play across all contracts, doubled/redoubled deals,
 hanging points and both teams; compare world enumeration and every action value
 against independent ternary assignments; check three-trick overflow fallback and
 bounded settings; alter all secret hands without changing values; and verify exact
-engine/seat-view parity with both endgame modes. All inference is managed C#.
+engine/seat-view parity including the 90-world profile and a withheld-own-meld hint
+fallback. All inference is managed C#.
 
 ## Distillation experiment
 
@@ -65,8 +82,10 @@ engine/seat-view parity with both endgame modes. All inference is managed C#.
 --endgame-tricks 3 --card-label-chance 1 --teacher-play-chance 0` records the
 bounded endgame's values where it applies and the original network's values
 elsewhere. It records every legal action and preserves bidding. Student
-trajectories isolate target changes from changed play. This tests whether the
-endgame gain can be learned without runtime search; it is not yet a measured gain.
+trajectories isolate target changes from changed play. Fitting 2.13 million positions
+for 12 epochs, with two learning rates and extra identity-initialised depth, scored
+only 50.3-50.4% +/- .2 pp against the original network over 20,000 games per student.
+The neural weights remain unchanged.
 Use separately seeded validation games and the GPU fitter's `--anchor-mean` to
 preserve the original mean values while learning the teacher's action differences.
 

@@ -235,10 +235,14 @@ games (+375 ELO, +64 points a game), and one of it with a SmartPlayer partner wi
 ## ClaudePlayerNeural design (the app's Master)
 
 `AI/Belot.AI.ClaudePlayer/ClaudePlayerNeural.cs` and `Neural/`; the full story (inputs, training,
-results, reproduction, promotion) is `NEURAL_NETWORK.md`. Measured September 2026 in mirrored
-pairs: **the networks alone tie ClaudePlayerIsmcts (100 ms)**, 50.2% ± 1.3% of 1,000 games, at
-8.6 µs a decision (86.2% against SmartPlayer); **with `SearchDeals = 100` they beat it**, 55.0% ±
-2.2% of 400 games, at ~51 ms a card.
+results, reproduction, promotion) is `NEURAL_NETWORK.md`. The original networks tie
+ClaudePlayerIsmcts (100 ms). The validated fast configuration adds bounded endgames:
+`UseEndgameSearch = true`, `EndgameUseDeclarations = true`, `EndgameTricks = 3`,
+`EndgameThreeTrickWorldLimit = 90`. It scores **53.45% +/- .942 pp over 2,000 games**
+against ISMCTS, 95% interval [51.605%, 55.295%], and **54.65% +/- .168 pp over
+20,000 games** against the frozen networks. The latest idle mean is **31.1 us/card**.
+The weights and default constructor behavior are unchanged. Master search and app
+calibration are still being measured.
 
 - **Four multilayer perceptrons value every action in game points** (the team's points from the
   deal minus the other team's, hanging points included): a bidding network (97 inputs → pass, the
@@ -280,10 +284,14 @@ pairs: **the networks alone tie ClaudePlayerIsmcts (100 ms)**, 50.2% ± 1.3% of 
   the baseline; .1 weight regressed. An isolated layout-2 public-history prototype
   also tied with Q-only fitting and regressed with .1-weight ownership loss.
   Search-teacher students have not earned promotion. A separate bounded-endgame
-  candidate (`neural-bounded-endgame`) keeps the original networks, averages
-  perfect-information endings over publicly consistent hands, and measured
-  25.0 us/card. It scored 52.4% +/- 1.4 pp against ISMCTS over 1,000 games;
-  the 95% interval includes 50%, so it is not promoted.
+  implementation (`Neural/EndgameSearch`) keeps the original networks and averages
+  perfect-information endings over publicly consistent hands. Its eight-world
+  three-trick variant scored 52.4% +/- 1.4 pp against ISMCTS over 1,000 games;
+  the 95% interval includes 50%, so it was not promoted. The 90-world variant
+  scores 54.65% +/- .168 pp against the frozen network over 20,000 games at
+  31.1 us/card in the latest idle benchmark. Its 2,000-game ISMCTS confirmation
+  passed at 53.45% +/- .942 pp. Fitting 2.13 million endgame-teacher positions, including a
+  function-preserving deeper MLP, has not produced stronger neural weights.
   See `etc/NeuralResearch.md` for the broader research review and experiment rationale.
 - **Timing**: the September 27 trainer fixes warmup counting in `bench` and separately times
   warmed card callbacks through the engine. The frozen networks measured 18.5 us/card in

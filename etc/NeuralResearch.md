@@ -52,7 +52,7 @@ training labels or critic inputs, never inputs to the deployed seat policy.
 | Source | Evidence inspected | Consequence for this engine |
 |---|---|---|
 | [DouRN, Chen et al., 2024](https://arxiv.org/html/2403.14102) | Added residual depth improves results against DouZero, reaching roughly 57% in the deepest experiment after 462 hours. Simply replacing layers with residual blocks is near a tie. | Depth is an experiment, not an automatic upgrade. Compare under equal data and time budgets, and measure managed C# latency before a long run. |
-| [Net2Net, Chen et al., ICLR 2016](https://arxiv.org/html/1511.05641) | Sections 2.4 and 3.3 insert identity ReLU layers, preserving the initial function and accelerating deeper-model training on ImageNet. | Tests extra depth while retaining the warm start; our late-game teacher experiment adds two 128-unit layers. Its initial equivalence is verified, but its playing benefit remains to be measured. |
+| [Net2Net, Chen et al., ICLR 2016](https://arxiv.org/html/1511.05641) | Sections 2.4 and 3.3 insert identity ReLU layers, preserving the initial function and accelerating deeper-model training on ImageNet. | Tests extra depth while retaining the warm start; our late-game teacher experiment adds two 128-unit layers. Initial equivalence is verified. After fitting, it scores only 50.4% +/- .2 pp against the original over 20,000 games, which is not a useful improvement. |
 | [ScrofaZero architecture ablation](https://arxiv.org/html/2102.07495) | Its 24-layer fully connected network outperforms the 16-layer variant, while ResNet-18 is weaker. These models have roughly 9-11 million parameters. | Evidence is mixed on architecture family and outside our few-MB budget. Compact MLP/history designs deserve a fair test before a large residual or attention network. |
 | [Reevaluating Policy Gradient Methods, Rudolph et al., ICLR 2026](https://www.mit.edu/~gfarina/2026/iclr26_reevaluating/iclr26_reevaluating.pdf) | Compares seven algorithms on five games, with more than 7,000 runs and exact exploitability. Tuned PPO/PPG/MMD compete strongly with specialised methods. Entropy choices matter greatly; the authors explicitly limit their conclusions to their benchmarks and tuning conditions. | PPO with a training-only privileged critic is a serious replacement option. Do not dismiss it based on older weak PPO baselines, or import its entropy coefficient without accounting for reward scale. |
 | [ReBeL, Brown et al., 2020](https://arxiv.org/html/2007.13544) | Learns values over public beliefs and solves subgames with CFR or fictitious play. Section 4 explains why imperfect-information leaf values depend on the strategy/beliefs. Its theoretical and empirical results are for two-player zero-sum games. | A single ordinary state value plugged into PUCT is not a principled substitute. Belot's two partners have separate private information; treating the team as one player with both hands would cheat. A full ReBeL conversion is a large research project, not the next latency-conscious experiment. |
@@ -131,6 +131,18 @@ at 25 us/card, retaining the original weights. Against ISMCTS it scored 52.4% +/
 1.4 pp over 1,000 games, so the 95% interval includes 50% and promotion is refused.
 Its declaration model assumes the bots'
 policy of declaring every combination. Its future actions know each sampled world,
-so this is approximate imperfect-information search. A subsequent student experiment
-will fit these inexpensive endgame targets while retaining the warm start's targets
-elsewhere; it will be judged by the same match gate.
+so this is approximate imperfect-information search.
+
+Increasing the three-trick cap to 90 worlds produces a stronger fast candidate:
+54.65% +/- .168 pp against the frozen network and 89.7% +/- .2 pp against SmartPlayer,
+each over 20,000 games. The latest idle benchmark is 32.3 us/card; timing varied
+between runs, including one 54.9-us result. Its independent 2,000-game ISMCTS match
+scored 53.45% +/- .942 pp, with a 95% interval of [51.605%, 55.295%], passing the
+predeclared promotion gate. The integrated build measured 31.1 us/card.
+
+The inexpensive endgame teacher supplied 2.13 million positions on student
+trajectories, with independent validation games. Twelve-epoch fits at two learning
+rates and with extra identity-initialised depth scored only 50.3-50.4% against the
+frozen network over 20,000 games per student (standard errors .2 pp). These networks
+remain unpromoted. The measured improvement is in the bounded search configuration;
+we have not established an improvement in the neural weights.
