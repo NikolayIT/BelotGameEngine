@@ -158,6 +158,19 @@ network arithmetic; this reduces GPU storage without further rounding the inputs
 Both modes use the same sample order, loss and export format; tests compare exported weights, including CUDA when
 available. Host-memory streaming trades transfer time for a bounded GPU footprint.
 
+## Function-preserving depth
+
+`deepen.py --in <folder> --out <deeper-folder> --layers 2` inserts two identity
+ReLU layers before each card network's output. The original hidden activations
+are nonnegative, so the initial function is preserved. Bidding is copied unchanged.
+The shipped shape becomes 600-512-256-128-128-128-32, adding 198,168 bytes across
+the three exported files. The existing managed loader and BNN1 format handle it.
+
+This applies [Net2DeeperNet](https://arxiv.org/html/1511.05641), not a residual
+architecture. It tests depth without discarding the warm start. Tests check exact
+prediction/export parity, gradients through new layers and invalid depth. Match
+strength and idle latency must be measured after fitting; deeper is not assumed better.
+
 ## Auxiliary card-location experiment
 
 `record-selfplay` freezes the supplied networks and records the existing true-deal
