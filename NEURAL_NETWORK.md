@@ -1,0 +1,294 @@
+# The Belot Neural Player
+
+`ClaudePlayerNeural` plays Belot with four small neural networks trained by reinforcement
+learning in self-play. It values **every action open to it** (each bid, each legal card) in game
+points, decides in about **10 microseconds** instead of ClaudePlayerIsmcts's 100 milliseconds,
+and can be made weaker on purpose by sometimes taking an action that is nearly as good as the
+best.
+
+This document explains what it is, how it is trained, how to reproduce and improve it, and how
+to keep it working.
+
+**Results** (September 2026, mirrored pairs of whole games, i7-12700K):
+
+| Player | vs ClaudePlayerIsmcts (100 ms) | vs SmartPlayer | Time per card |
+|---|---|---|---|
+| Networks alone | **50.2% ± 1.3%** (1,000 games, −2.2 points a game) | 86.2% ± 0.2% (20,000 games, +319 ELO) | **8.6 µs** |
+| Networks + 100-deal search (`SearchDeals = 100`) | **55.0% ± 2.2%** (400 games, +5.6 points a game) | | 51 ms |
+| ClaudePlayerIsmcts, for scale | | 89.7% ± 1.7% (300 games, +375 ELO) | 100 ms |
+
+The networks alone play as well as ClaudePlayerIsmcts about 10,000 times faster; with a small
+search on top (half ISMCTS's time) they beat it. The app's round robin (`elo`, pair ratings
+anchored at Dummy = 1200): networks + search 1771, ClaudePlayerIsmcts 1733, the networks played
+loose (the app's Expert) 1554, SmartPlayer 1462, DummyPlayer 1200, RandomPlayer 660.
+
+---
+
+## 1. The idea
+
+The strongest player before it, `ClaudePlayerIsmcts`, searches every card: it deals the unseen
+cards thousands of times and plays each deal out with a greedy rule that sees all four hands. Its
+limit is that rule (more search time does not help), and it costs 100 ms a card on a desktop,
+more on a phone.
+
+The neural player learns instead what every action is worth, from millions of deals it plays
+against itself:
+
+- **One network per job**: a *bidding* network (5 cards, the auction so far → the value of pass,
+  the six contracts, double and redouble) and a *card* network for each kind of contract:
+  the suits (with the trump suit always turned to the front, so one network plays all four suit
+  contracts), no trumps, and all trumps. Declarations are not a network's job: the player
+  declares everything it is offered (as ClaudePlayerIsmcts does), and every belote.
+- **Values, not just a choice**: each output is the game points the player's team gets from the
+  deal minus the other team's (the hanging points it wins included) if it takes that action and
+  everybody plays on as the networks would. The player takes the best; a weaker level takes one
+  close to it (see §5). The same values can show a person how good their move was.
+- **Pure managed C#**, no libraries, like the Santase engine's neural player: the inference is a
+  few hundred lines over `float[]` and `System.Numerics.Vector<float>`, so it runs on Android
+  (MAUI) unchanged; the trainer is C# too, CPU only, using every core.
+
+## 2. Where everything lives
+
+| Path | Role |
+|---|---|
+| `src/AI/Belot.AI.ClaudePlayer/ClaudePlayerNeural.cs` | The player: `GetBid`, `PlayCard`, `EvaluateBids`, `EvaluateCards`, `Temperature`, `MaxRegret`, `MayDouble`. |
+| `src/AI/Belot.AI.ClaudePlayer/Neural/NeuralDeal.cs` | A deal as a seat follows it (the auction, declarations, cards played, what the play showed). Built from the engine's contexts, or played whole in self-play. |
+| `src/AI/Belot.AI.ClaudePlayer/Neural/FeatureEncoder.cs` | What a seat knows → the networks' sparse inputs. The layout is in its header comment. |
+| `src/AI/Belot.AI.ClaudePlayer/Neural/NeuralNetwork.cs` | The multilayer perceptron (inference) and its file format. |
+| `src/AI/Belot.AI.ClaudePlayer/Neural/NeuralModels.cs` | The four networks; the trained ones are embedded from `Neural/Weights/*.bin`. |
+| `src/AI/Belot.AI.ClaudePlayer/Neural/NeuralEvaluator.cs` | Features → forward pass → a value per legal action. |
+| `src/AI/Belot.AI.ClaudePlayer/Search/PlayInference.cs` | What a played card shows about the hand (shared with ClaudePlayerIsmcts). |
+| `tools/NeuralTrainer/` | The trainer (not in `src/Belot.sln`; the ClaudePlayer tests reference it, so CI builds it). |
+| `src/Tests/Belot.AI.ClaudePlayer.Tests/Neural/` | The tests (§11). |
+
+## 3. The networks
+
+Each is a multilayer perceptron with ReLU hidden layers and a linear output:
+
+| Network | Layers | Parameters |
+|---|---|---|
+| bid | 97 → 256 → 128 → 9 | 59 k |
+| trump (all four suit contracts) | 600 → 512 → 256 → 128 → 32 | 476 k |
+| no trumps | 600 → 512 → 256 → 128 → 32 | 476 k |
+| all trumps | 600 → 512 → 256 → 128 → 32 | 476 k |
+
+The sizes are data, not constants: the file of a network carries them, and the trainer takes
+`--sizes 512,256,128 --bid-sizes 256,128` for new networks. An output is a value in units of 26
+game points (`NeuralEvaluator.ValueScale`); the player multiplies it back.
+
+**The file** (`NeuralNetwork.Write`/`Read`): the magic `BNN1`, the version, the network's tag (0
+bid, 1 trump, 2 no trumps, 3 all trumps) and feature layout, the layer sizes, then each layer's
+weights (input-major: the outputs of one input side by side) and biases as 16-bit floats, so the
+four networks take about 3 MB. `NeuralModels` refuses a file whose tag, layout or input/output
+size does not match the code: there is no silent random fallback.
+
+## 4. The inputs
+
+Everything a seat may know and nothing else. `FeatureEncoder` writes a sparse list (the index
+and value of every non-zero input); most inputs are card planes of 32 (a card's index is
+`suit * 8 + type`, types from the seven to the ace). Seats are relative to the one deciding:
+itself, the next to play, the partner, the previous.
+
+**Card networks (600 inputs):** planes for the hand, the legal cards, the cards each seat played
+in the earlier tricks, the card each other seat played to this trick, the card holding the
+trick, the unseen cards each other seat *cannot* hold (the play showed it: `PlayInference`,
+the same rules ClaudePlayerIsmcts samples by) and those it *surely* holds (a belote's partner
+card, four jacks or nines); then the trick number, the position in it, who holds it, the
+declarer, the doubling, each seat's bids and passes, each seat's declared kinds of combination,
+the points so far for each team, the points in this trick, the tricks taken, and the hanging
+points. In a suit contract the suits are turned so the trump suit comes first (the outputs are
+turned back), so a deal in hearts and the same deal in spades look the same.
+
+**Bidding network (97 inputs):** the five cards, the seat's place in the auction, each seat's
+bids and passes, the contract so far with its declarer and doubling, the bids open, the hanging
+points, and how long the auction has been.
+
+A seat's inputs are the same whether the deal is followed from the engine's context or played in
+self-play (`SelfPlayAgreesWithEngineTests` checks it at every decision of 400 random matches);
+built from a context, the deal does not even contain the other hands, so nothing hidden can
+leak in.
+
+## 5. Choosing, and playing weaker on purpose
+
+`EvaluateCards(context)` and `EvaluateBids(context)` return every legal action with its value,
+best first. `PlayCard`/`GetBid` take:
+
+- with `Temperature = 0` (the default): the best;
+- with a `Temperature` T > 0 (in game points): an action worth d points less than the best is
+  taken e^(−d/T) times as often, and never one worse than the best by more than `MaxRegret`
+  points. So the player sometimes takes the second best when it is close, and never blunders
+  badly, which is what the app's weaker levels need.
+
+`MayDouble = false` keeps it from doubling and redoubling.
+
+**`SearchDeals`** (0 by default) adds a small search on top of the card networks: every legal card
+is played out in N deals of the unseen cards, dealt as ClaudePlayerIsmcts deals them (respecting
+what the play has shown), with the networks deciding for every seat from what that seat can see,
+and valued by the average result (all cards on the same deals). With 100 deals it beats the
+networks alone by +121 ELO and ClaudePlayerIsmcts by 55% at about 51 ms a card.
+`SearchTimeLimitMilliseconds` stops starting new deals once a budget is spent (at least eight
+deals), so a slow phone plays fewer. `SearchPriorDeals` and `SearchPruneMargin` are the experiments
+of the tuning record (§10).
+
+## 6. Speed
+
+A decision is one forward pass over the sparse inputs: the first layer sums only the weight rows
+of the non-zero inputs (≈60–120 of 600), the hidden layers skip the units the ReLU zeroed, and
+the rows are added a SIMD vector of outputs at a time (Santase's layout: weights transposed,
+four vector accumulators). **About 10 µs a decision** on one desktop core (a whole deal of
+self-play, 32 cards and the auction, in about 0.3 ms), against 100 ms for ClaudePlayerIsmcts: four
+orders of magnitude.
+
+## 7. Training
+
+```
+ ClaudePlayerIsmcts games       fit (supervised)          self-play reinforcement learning
+ (distill: what its searches ─▶ networks that value  ─▶  (train: every action rolled out in the
+  found at every decision)      actions like it          true deal by the current networks)
+```
+
+### Stage A: distilling ClaudePlayerIsmcts (the warm start)
+
+`distill` plays whole games of four ClaudePlayerIsmcts (50 ms a card) and records, at every
+decision with a choice, the inputs the neural player would see and what the search found: the
+average result of each card it tried at the root (`GetRootValues`) and of each bid it weighed
+(`GetBidValues`), in game points. `fit` trains new networks on those samples (Huber loss over the
+labelled outputs, Adam). An output the samples never labelled (ClaudePlayerIsmcts does not
+double) starts at a lost deal, so the warm start never doubles at random.
+
+2,500 games (33 minutes on 18 threads) gave 606 k card and 184 k bid samples; fitting takes two
+minutes.
+
+### Stage B: self-play with every action rolled out
+
+`train` improves the networks by Monte Carlo policy iteration. Actor threads play deals on card
+masks (`NeuralDeal`, the engine's rules: `SelfPlayAgreesWithEngineTests`). At a labelled decision
+**every action open to the seat is tried**: the deal is copied, the action taken, and the rest of
+the deal played out by every seat's networks, each deciding from what it can see, **in this very
+deal**; the label of the action is the game points its team then gets minus the other team's.
+Then the deal goes on with the best action (or, 3% of the time, a random one, to see other
+positions).
+
+- The labels are unbiased values of the current play, with no player seeing hidden cards (unlike
+  ClaudePlayerIsmcts's greedy rollouts, which see all four hands).
+- A decision gives 2–8 labels instead of the single noisy result of plain Deep Monte Carlo
+  (DouZero). Only about 1% of a Belot deal's outcome is in the players' hands; the rest is the
+  cards, which is why one-label-per-decision learning has failed for Belot elsewhere. Here all
+  the actions of a decision share the deal, so the luck of the cards cancels out of their
+  differences.
+- Bids are labelled the same way: the auction goes on with the networks, the last three cards
+  are dealt as the deck says, and the deal is played out.
+- A learner thread trains the four networks on the newest samples (each used about twice) and
+  hands the actors fresh copies every 10 seconds: better networks make better labels.
+- 30% of the deals put one team's seats in the hands of an earlier copy from a pool (a snapshot
+  every 20 minutes), so the networks do not only learn to beat themselves.
+- Every 30 minutes the networks are saved and measured through the engine in mirrored games
+  against SmartPlayer and ClaudePlayerIsmcts (20 ms); the best is kept in `best/`.
+
+Throughput on an i7-12700K (12 actor threads, 8 learner threads): about 440 fully labelled deals
+a second.
+
+**The night of the first training** (September 26–27, 2026), against the fixed warm start in
+10,000-game mirrored matches (1σ ≈ 3 ELO):
+
+| Stage | Time | vs warm start | vs SmartPlayer | vs ISMCTS 100 ms |
+|---|---|---|---|---|
+| Warm start (Stage A) | 35 min | — | 76.6% (+206) | 37.0% ± 2.3% (300 games) |
+| Self-play, learning rate 1e-4 (run2) | 3 h, 4.6 M deals | +103 | 84% | 36.0% ± 2.8% (200 games) |
+| Self-play, rate 5e-5 → 5e-6 (run3) | 6 h, 11.9 M deals | **+150** | 86.2% | **50.2% ± 1.3%** (1,000 games) |
+
+About 16.5 million self-play deals: 270 million labelled card decisions and 30 million bids.
+The gains against the warm start (and against SmartPlayer) did not show against ClaudePlayerIsmcts
+at the constant learning rate; the falling rate did (+47 ELO against the warm start, 36% → 50%
+against ISMCTS). Judge a change against ISMCTS, not only against earlier networks: gains measured
+against one's own lineage overstate the real ones.
+
+## 8. Reproduction
+
+From `tools/NeuralTrainer`, in Release:
+
+```powershell
+dotnet build -c Release
+dotnet bin/Release/net10.0/NeuralTrainer.dll distill --data data/distill --games 2500 --milliseconds 50 --threads 18
+dotnet bin/Release/net10.0/NeuralTrainer.dll fit --data data/distill --out checkpoints/distilled --epochs 10 --batch 256 --learners 16
+dotnet bin/Release/net10.0/NeuralTrainer.dll train --in checkpoints/distilled --out checkpoints/run2 --hours 3 --bid-label-chance 0.3 --card-label-chance 1 --replay 2
+dotnet bin/Release/net10.0/NeuralTrainer.dll train --in checkpoints/run2/0005 --out checkpoints/run3 --hours 6 --learning-rate 5e-5 --final-learning-rate 5e-6 --bid-label-chance 0.3 --card-label-chance 1 --replay 2 --capacity 3000000
+dotnet bin/Release/net10.0/NeuralTrainer.dll validate --in checkpoints/run3/final --opponent ismcts:100 --pairs 500 --threads 10
+dotnet bin/Release/net10.0/NeuralTrainer.dll validate --in checkpoints/run3/final --opponent ismcts:100 --search-deals 100 --pairs 200 --threads 10
+dotnet bin/Release/net10.0/NeuralTrainer.dll bench --in checkpoints/run3/final
+dotnet bin/Release/net10.0/NeuralTrainer.dll bench --in checkpoints/run3/final --search-deals 100
+```
+
+Every setting of `TrainingSettings` can be given as `--name value`. `validate --opponent` takes
+`smart`, `ismcts:<ms>` or a folder of networks; `--smart-bidding true` lets SmartPlayer bid for
+the networks (to judge the card play alone); `bench --deals N --threads T` times labelled
+self-play.
+
+## 9. Promotion
+
+The trainer never touches the shipped networks. To ship a checkpoint:
+
+1. Compare it with the shipped ones and with ClaudePlayerIsmcts, with the machine otherwise idle:
+   `dotnet run -c Release --project src/Tests/Belot.GamesSimulator -- neural-ab 5000 <folder> -`
+   and `-- neural 500 100 <folder>` (1σ ≈ 1.6 pp at 1,000 games against ISMCTS).
+2. Copy its four `.bin` files over `src/AI/Belot.AI.ClaudePlayer/Neural/Weights/`.
+3. Rebuild, run the ClaudePlayer tests, re-run the simulator's `elo` suite and paste the
+   ratings into the app's `Game/AiLevels.cs`.
+
+## 10. Maintenance
+
+**Change the rules in the engine** and `SimulatorAgreesWithEngineTests` and
+`SelfPlayAgreesWithEngineTests` tell you to change the simulator and `NeuralDeal`; then retrain
+(the networks learned the old game).
+
+**Change the inputs** (`FeatureEncoder`): bump `FeatureEncoder.LayoutVersion`, retrain from
+Stage A (the old files will be refused), and update §4.
+
+**Troubleshooting:**
+
+| Symptom | Cause / fix |
+|---|---|
+| `InvalidOperationException: The network … is not embedded` | `Neural/Weights/*.bin` missing from the build: they are `EmbeddedResource`s of Belot.AI.ClaudePlayer. |
+| `InvalidDataException` on loading | The file's tag, layout or sizes do not match the code: retrain, or restore the matching files. |
+| Training several times slower than `bench` suggests | Windows throttles a background console process (EcoQoS); the trainer opts out at start. |
+| The networks double wildly | An output that was never trained (see Stage A); `fit` starts such outputs at a lost deal. |
+
+**Tuning record** (don't re-try the rejects blindly):
+
+- The distilled warm start has no values for double and redouble (ISMCTS does not double): left
+  untrained they were chosen at random and the networks lost 34% to SmartPlayer; `fit` now starts
+  them at a lost deal (76.6%).
+- Labelling every bid (every bid option played out as a whole deal) took 80% of the actors' time:
+  bids are labelled at 30% of the decisions, cards at 100%.
+- Windows' power throttling of a background console made a run 7× slower (the trainer opts out).
+- A constant learning rate of 1e-4 plateaued (+103 against the warm start, no gain against
+  ISMCTS); falling linearly from 5e-5 to 5e-6 over six hours gave +47 more and parity with ISMCTS.
+- The search: 10 deals is worse than the networks alone (−28 ELO: its averages are noisier than
+  their values), 30 deals +49, 100 deals +121. Counting the network's value as 5 deals and
+  dropping cards 4 points behind after half the deals: +69 with 40 deals, +96 with 100 (plain
+  100 is better).
+- Against ISMCTS the gap was in the card play, not the bidding: letting ISMCTS bid for the
+  networks changed their points a game by less than one.
+
+**Next steps** that look promising: distil the search (a few dozen deals a decision) into the
+networks (expert iteration); wider networks (the loss had flattened); longer runs at a falling
+rate.
+
+## 11. Tests
+
+In `src/Tests/Belot.AI.ClaudePlayer.Tests/Neural/`:
+
+- `SelfPlayAgreesWithEngineTests`: 400 random matches (random bids with doubles, declarations,
+  cards, belotes sometimes kept back) replayed into self-play deals: the same bids and cards on
+  offer at every decision, the same declarations and scores, the same hanging points, and the
+  same network inputs as built from the engine's context and from the seat's view.
+- `FeatureEncoderTests`: a deal in one suit and the same deal in another look the same; the
+  outputs map back to the cards and bids.
+- `NeuralNetworkTests`: the SIMD, sparse forward pass equals a plain reference; the 16-bit file
+  round-trips; broken or mismatched files are refused.
+- `ClaudePlayerNeuralTests`: whole games at every seat without a fallback; every legal action
+  valued once, best first, and the best taken; the temperature picks nearly-as-good actions,
+  never beyond `MaxRegret`, repeatably with a seed.
+- `TrainerTests`: the trainer's gradients equal the loss's numerical derivatives, and it learns
+  a simple target.
+- `DecideFromViewTests` also checks the neural player decides the same from a seat's view.

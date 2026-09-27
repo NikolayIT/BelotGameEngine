@@ -6,12 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A C# engine for **Belot** (Bridge-Belote), a 4-player (2v2) 32-card trick-taking game. The
 core engine ships as the `BelotGameEngine` NuGet package. The repository's real purpose is to
-**evolve card-playing AIs and measure each change in ELO**. There are two: the hand-written
+**evolve card-playing AIs and measure each change in ELO**. There are three: the hand-written
 `SmartPlayer`, measured against its previously committed version (see "The ELO benchmark
-workflow" below, the single most important thing to understand about it), and the much stronger
-search player `ClaudePlayerIsmcts` (see "ClaudePlayerIsmcts design"), measured in mirrored
-matches. People play them in the MAUI app for Android and Windows (see "The MAUI app"). The full
-rules are in `etc/Rules.md`.
+workflow" below, the single most important thing to understand about it), the much stronger
+search player `ClaudePlayerIsmcts` (see "ClaudePlayerIsmcts design"), and the neural player
+`ClaudePlayerNeural`, trained by reinforcement learning in self-play (see "ClaudePlayerNeural
+design" and `NEURAL_NETWORK.md`), measured in mirrored matches. People play them in the MAUI app
+for Android and Windows (see "The MAUI app"). The full rules are in `etc/Rules.md`.
 
 ## Commands
 
@@ -38,9 +39,19 @@ dotnet test src/Tests/Belot.AI.ClaudePlayer.Tests/Belot.AI.ClaudePlayer.Tests.cs
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- claude 100 100
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- claude-ab 200 30 c=0.3 -
 
-# The app's four levels in a pair-vs-pair round robin, printing the ratings for Game/AiLevels.cs:
-# elo [fast pairs] [pairs with ISMCTS] (defaults 20000 and 150, ≈16 minutes)
+# ClaudePlayerNeural (the embedded networks, or a folder of them) against SmartPlayer and
+# ClaudePlayerIsmcts: neural [pairs] [ms] [folder]; two sets of networks: neural-ab [pairs] [a] [b]
+dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- neural 500 100
+dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- neural-ab 5000 <folder> -
+
+# The app's levels (and ISMCTS for reference) in a pair-vs-pair round robin, printing the ratings
+# for Game/AiLevels.cs: elo [fast pairs] [pairs with the slow levels] (defaults 20000 and 150).
+# The simulator writes UTF-16 to the console: pipe it through iconv -f UTF-16LE to grep it.
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- elo
+
+# Train the neural player's networks (tools/NeuralTrainer, not in the sln; see NEURAL_NETWORK.md):
+# distill | fit | train | validate | bench, every setting as --name value
+dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- validate --in <folder> --opponent ismcts:100
 
 # The MAUI app (needs the MAUI workloads): run it on Windows, or build it for Android
 dotnet build src/UI/Belot.UI/Belot.UI.csproj -f net10.0-windows10.0.19041.0 -t:Run
@@ -221,14 +232,52 @@ games (+375 ELO, +64 points a game), and one of it with a SmartPlayer partner wi
   30 ms: 49%, and 84% vs 86.5% against SmartPlayer): the greedy rollout's judgement, not the
   number of deals searched, is the limit, so that is where the next gains are.
 
+## ClaudePlayerNeural design (the app's Master)
+
+`AI/Belot.AI.ClaudePlayer/ClaudePlayerNeural.cs` and `Neural/`; the full story (inputs, training,
+results, reproduction, promotion) is `NEURAL_NETWORK.md`. Measured September 2026 in mirrored
+pairs: **the networks alone tie ClaudePlayerIsmcts (100 ms)**, 50.2% ± 1.3% of 1,000 games, at
+8.6 µs a decision (86.2% against SmartPlayer); **with `SearchDeals = 100` they beat it**, 55.0% ±
+2.2% of 400 games, at ~51 ms a card.
+
+- **Four multilayer perceptrons value every action in game points** (the team's points from the
+  deal minus the other team's, hanging points included): a bidding network (97 inputs → pass, the
+  six contracts, double, redouble) and a card network per kind of contract (600 inputs → 32
+  cards): the suits (turned so the trump suit comes first, so one network plays all four), no
+  trumps, all trumps. It takes the best; `Temperature`/`MaxRegret` make it take a nearly-as-good
+  action (the app's Expert), `EvaluateCards`/`EvaluateBids` return every value. Declarations: all
+  offered, like ISMCTS. The networks are embedded from `Neural/Weights/*.bin` (16-bit floats, a
+  header with the tag, feature layout and sizes, refused on a mismatch; `.gitattributes` marks
+  them binary).
+- **`Neural/NeuralDeal`** follows a deal as a seat sees it: built from the engine's contexts (so a
+  `BelotSeatView` works too) or played whole in self-play on card masks (the auction, the
+  declarations, the tricks and the score, on `BelotSimulator`). **`SelfPlayAgreesWithEngineTests`
+  replays 400 random matches both ways: change a rule and it fails** (with
+  `SimulatorAgreesWithEngineTests`). The inputs come only from what the seat may know
+  (`PlayInference`, shared with ISMCTS's `RoundKnowledge`, is what the play showed).
+- **Training** (`tools/NeuralTrainer`, pure C#, CPU): distil ClaudePlayerIsmcts's searches into a
+  warm start, then self-play reinforcement learning where every action of a labelled decision is
+  played out in the true deal by all four seats' networks (Monte Carlo policy iteration, the
+  actions sharing the deal's luck). Run the trainer from a copy of its binaries (`-o`) when you
+  want to build meanwhile: a running trainer locks its `bin`, which the ClaudePlayer tests build.
+- **`SearchDeals`** plays each legal card out in N deals of the unseen cards (dealt like ISMCTS's,
+  `WorldSampler`) with the networks for every seat and averages: +121 ELO over the networks alone
+  at 100 deals; 10 deals is worse than none. `SearchTimeLimitMilliseconds` caps it on slow phones.
+- **Changing the inputs** (`FeatureEncoder`): bump `LayoutVersion` and retrain. **Lesson**: judge
+  a change against ClaudePlayerIsmcts, not only against earlier networks, whose head-to-head gains
+  overstated the real ones several times over.
+
 ## The MAUI app (`src/UI/Belot.UI`)
 
 Android and Windows (`net10.0-android`; `net10.0-windows10.0.19041.0` only when building on
 Windows), modelled file for file on the Santase engine's `Santase.UI`. The person plays South and
 picks the level of each other seat separately: the partner (North) and the rivals West (on the
 left) and East (on the right), from `Game/AiLevels.cs`: Random (`RandomPlayer`), Beginner
-(`DummyPlayer`), Skilled (`SmartPlayer`), Master (`ClaudePlayerIsmcts`). The app references the
-three AI projects, so an `IPlayer` break in any of them breaks the app build too.
+(`DummyPlayer`), Skilled (`SmartPlayer`), Expert (`ClaudePlayerNeural` played loose,
+`Temperature` 1.25, `MaxRegret` 4) and Master (`ClaudePlayerNeural` with `SearchDeals` 100,
+at most 400 ms a card). The hints are the networks alone (instant). The Master keeps the id
+`claude` it had as ClaudePlayerIsmcts, so people's history and records carry over. The app
+references the three AI projects, so an `IPlayer` break in any of them breaks the app build too.
 
 - **The game is one async flow on the UI thread, never a thread of its own.** `Game/GameSession.cs`
   drives a `BelotMatch`: the person's decision is an awaited `TaskCompletionSource`, registered
@@ -264,10 +313,11 @@ three AI projects, so an `IPlayer` break in any of them breaks the app build too
   expected = 1 / (1 + 10^((rivals − (person + partner) / 2) / 400)), the rivals rated as the
   average of their two levels (`Lineup.RivalsElo`). The levels' ratings in `AiLevels` are pair
   ratings from the simulator's `elo` suite (`EloTournament`: two of a level against two of
-  another in mirrored pairs, a Bradley-Terry fit anchored at Dummy = 1200). Latest run
-  (September 2026, 16 minutes): Random 634, Beginner 1200, Skilled 1536, Master 1886 (two
-  SmartPlayers took 34 of 300 games from two ClaudePlayerIsmcts). Re-run it and re-paste them if
-  the players change.
+  another in mirrored pairs, a Bradley-Terry fit anchored at Dummy = 1200; ClaudePlayerIsmcts
+  plays too, for reference). Latest run (September 27, 2026, `elo 20000 60`, 38 minutes): Random
+  660, Beginner 1200, Skilled 1462, Expert 1554, Master 1771, and ClaudePlayerIsmcts 1733. The
+  matchups with the slow players are only 120 games, so their ratings are ±30 or so. Re-run it
+  and re-paste them if the players change.
 - **`src/Tests/Belot.UI.Tests`** compiles those files and plays whole games on a UI-like
   single-threaded `SynchronizationContext`: `ActReplayTests` (every act of 300 engine matches
   replays into exactly `GetRecord()`), `GameSessionTests` (every level, the table's event order,
