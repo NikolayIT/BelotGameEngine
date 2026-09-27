@@ -26,7 +26,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
+            Assert.Single(combinations);
             Assert.Contains(
                 combinations,
                 x => x.Type == AnnounceType.FourJacks && x.Card == Card.GetCard(CardSuit.Spade, CardType.Jack));
@@ -74,7 +74,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
+            Assert.Single(combinations);
             Assert.Contains(
                 combinations,
                 x => x.Type == AnnounceType.FourOfAKind && x.Card == Card.GetCard(CardSuit.Spade, CardType.Ace));
@@ -98,7 +98,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
+            Assert.Single(combinations);
             Assert.Contains(
                 combinations,
                 x => x.Type == AnnounceType.FourOfAKind && x.Card == Card.GetCard(CardSuit.Spade, CardType.Ten));
@@ -122,7 +122,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
+            Assert.Single(combinations);
             Assert.Contains(
                 combinations,
                 x => x.Type == AnnounceType.FourOfAKind && x.Card == Card.GetCard(CardSuit.Spade, CardType.Queen));
@@ -197,7 +197,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(0, combinations.Count);
+            Assert.Empty(combinations);
             Assert.DoesNotContain(combinations, x => x.Type == AnnounceType.FourOfAKind);
         }
 
@@ -219,7 +219,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(0, combinations.Count);
+            Assert.Empty(combinations);
             Assert.DoesNotContain(combinations, x => x.Type == AnnounceType.FourOfAKind);
         }
 
@@ -242,7 +242,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
+            Assert.Single(combinations);
             Assert.Contains(
                 combinations,
                 x => x.Type == AnnounceType.SequenceOf3 && x.Card == Card.GetCard(CardSuit.Club, CardType.Nine));
@@ -267,7 +267,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
+            Assert.Single(combinations);
             Assert.Contains(
                 combinations,
                 x => x.Type == AnnounceType.SequenceOf4 && x.Card == Card.GetCard(CardSuit.Diamond, CardType.Ace));
@@ -292,7 +292,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
+            Assert.Single(combinations);
             Assert.Contains(
                 combinations,
                 x => x.Type == AnnounceType.SequenceOf4 && x.Card == Card.GetCard(CardSuit.Spade, CardType.Ten));
@@ -316,7 +316,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
+            Assert.Single(combinations);
             Assert.Contains(
                 combinations,
                 x => x.Type == AnnounceType.SequenceOf5 && x.Card == Card.GetCard(CardSuit.Heart, CardType.King));
@@ -341,7 +341,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
+            Assert.Single(combinations);
             Assert.Contains(
                 combinations,
                 x => x.Type == AnnounceType.SequenceOf5 && x.Card == Card.GetCard(CardSuit.Heart, CardType.Jack));
@@ -365,7 +365,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
+            Assert.Single(combinations);
             Assert.Contains(
                 combinations,
                 x => x.Type == AnnounceType.SequenceOf6 && x.Card == Card.GetCard(CardSuit.Diamond, CardType.King));
@@ -391,7 +391,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
+            Assert.Single(combinations);
             Assert.Contains(
                 combinations,
                 x => x.Type == AnnounceType.SequenceOf6 && x.Card == Card.GetCard(CardSuit.Club, CardType.Queen));
@@ -415,7 +415,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(1, combinations.Count);
+            Assert.Single(combinations);
             Assert.Contains(
                 combinations,
                 x => x.Type == AnnounceType.SequenceOf7 && x.Card == Card.GetCard(CardSuit.Club, CardType.King));
@@ -640,7 +640,7 @@
 
             var combinations = validAnnouncesService.GetAvailableAnnounces(hand);
 
-            Assert.Equal(0, combinations.Count);
+            Assert.Empty(combinations);
         }
 
         [Fact]

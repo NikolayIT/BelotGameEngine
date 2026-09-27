@@ -1,4 +1,4 @@
-namespace Belot.Engine.Tests.FakeObjects
+﻿namespace Belot.Engine.Tests.FakeObjects
 {
     using System.Collections.Generic;
 

@@ -1,4 +1,4 @@
-namespace Belot.Engine.Tests.GameMechanics
+﻿namespace Belot.Engine.Tests.GameMechanics
 {
     using System.Collections.Generic;
     using System.Linq;

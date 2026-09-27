@@ -1,4 +1,4 @@
-namespace Belot.Engine.Tests.Players
+﻿namespace Belot.Engine.Tests.Players
 {
     using Belot.Engine.Players;
 

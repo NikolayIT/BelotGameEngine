@@ -1,4 +1,4 @@
-namespace Belot.Engine.Tests.GameMechanics
+﻿namespace Belot.Engine.Tests.GameMechanics
 {
     using System;
     using System.Collections.Generic;
@@ -87,17 +87,17 @@ namespace Belot.Engine.Tests.GameMechanics
                 Assert.Equal(4, trick.Count);
                 Assert.Equal(expectedLeader, trick[0].Player);
 
-                var soFar = new List<PlayCardAction>(4);
+                var trickPlays = new List<PlayCardAction>(4);
                 foreach (var (player, card) in trick)
                 {
                     var hand = replayHands[player.Index()];
-                    var valid = validCardsService.GetValidCards(hand, contractType, soFar);
+                    var valid = validCardsService.GetValidCards(hand, contractType, trickPlays);
                     Assert.Contains(card, valid);
                     hand.Remove(card);
-                    soFar.Add(new PlayCardAction(card) { Player = player });
+                    trickPlays.Add(new PlayCardAction(card) { Player = player });
                 }
 
-                trickWinner = trickWinnerService.GetWinner(contract, soFar);
+                trickWinner = trickWinnerService.GetWinner(contract, trickPlays);
                 var winnerPile = trickWinner == PlayerPosition.South || trickWinner == PlayerPosition.North
                                      ? southNorthTricks
                                      : eastWestTricks;
@@ -149,11 +149,11 @@ namespace Belot.Engine.Tests.GameMechanics
                 score.SouthNorthTotalInRoundPoints + score.EastWestTotalInRoundPoints);
 
             // 5) Board conservation, by outcome branch (contracts here are undoubled).
-            var snTotal = score.SouthNorthTotalInRoundPoints;
-            var ewTotal = score.EastWestTotalInRoundPoints;
+            var southNorthTotal = score.SouthNorthTotalInRoundPoints;
+            var eastWestTotal = score.EastWestTotalInRoundPoints;
             var declarerIsSouthNorth = declarer == PlayerPosition.South || declarer == PlayerPosition.North;
-            var declarerTotal = declarerIsSouthNorth ? snTotal : ewTotal;
-            var defenderTotal = declarerIsSouthNorth ? ewTotal : snTotal;
+            var declarerTotal = declarerIsSouthNorth ? southNorthTotal : eastWestTotal;
+            var defenderTotal = declarerIsSouthNorth ? eastWestTotal : southNorthTotal;
             var declarerBoard = declarerIsSouthNorth ? score.SouthNorthPoints : score.EastWestPoints;
             var defenderBoard = declarerIsSouthNorth ? score.EastWestPoints : score.SouthNorthPoints;
 
@@ -161,7 +161,7 @@ namespace Belot.Engine.Tests.GameMechanics
             {
                 // Inside: the defenders record everything, plus what was hanging.
                 Assert.Equal(0, declarerBoard);
-                Assert.Equal((int)Math.Round((snTotal + ewTotal) / 10.0) + hangingIn, defenderBoard);
+                Assert.Equal((int)Math.Round((southNorthTotal + eastWestTotal) / 10.0) + hangingIn, defenderBoard);
                 Assert.Equal(0, score.HangingPoints);
             }
             else if (declarerTotal == defenderTotal)

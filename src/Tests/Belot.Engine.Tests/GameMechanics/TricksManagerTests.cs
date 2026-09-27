@@ -422,7 +422,7 @@
             Assert.Equal(0, north.AnnounceAsksCount);
             Assert.Equal(0, west.AnnounceAsksCount);
             Assert.Equal(32, southNorthTricks.Count);
-            Assert.Equal(0, eastWestTricks.Count);
+            Assert.Empty(eastWestTricks);
             Assert.Equal(PlayerPosition.South, lastTrickWinner);
         }
 
