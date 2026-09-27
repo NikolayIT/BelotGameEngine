@@ -123,10 +123,12 @@ regresses. These are short pilot results, not evidence against history or learne
 beliefs in general. A longer online run or explicit belief-conditioned policy would
 test different hypotheses. PPO with a privileged critic remains unimplemented.
 
-A compact alternative from the PIMC literature is now under independent evaluation:
+A compact alternative from the PIMC literature has completed its first independent evaluation:
 solve the final two tricks, and three-trick positions with at most eight publicly
 consistent worlds. It gains about three percentage points against the frozen network
-at 25 us/card, retaining the original weights. Its declaration model assumes the bots'
+at 25 us/card, retaining the original weights. Against ISMCTS it scored 52.4% +/-
+1.4 pp over 1,000 games, so the 95% interval includes 50% and promotion is refused.
+Its declaration model assumes the bots'
 policy of declaring every combination. Its future actions know each sampled world,
 so this is approximate imperfect-information search. A subsequent student experiment
 will fit these inexpensive endgame targets while retaining the warm start's targets

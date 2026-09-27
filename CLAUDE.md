@@ -282,7 +282,8 @@ pairs: **the networks alone tie ClaudePlayerIsmcts (100 ms)**, 50.2% ± 1.3% of 
   Search-teacher students have not earned promotion. A separate bounded-endgame
   candidate (`neural-bounded-endgame`) keeps the original networks, averages
   perfect-information endings over publicly consistent hands, and measured
-  25.0 us/card. Its independent ISMCTS promotion evaluation is pending.
+  25.0 us/card. It scored 52.4% +/- 1.4 pp against ISMCTS over 1,000 games;
+  the 95% interval includes 50%, so it is not promoted.
   See `etc/NeuralResearch.md` for the broader research review and experiment rationale.
 - **Timing**: the September 27 trainer fixes warmup counting in `bench` and separately times
   warmed card callbacks through the engine. The frozen networks measured 18.5 us/card in

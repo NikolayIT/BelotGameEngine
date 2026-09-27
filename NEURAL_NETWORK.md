@@ -706,7 +706,10 @@ Independent baseline checks of the fixed three-trick candidate scored
 these ranges are distinct. The latter seed wraps to starting RNG seed 277147232
 under the current unchecked C# arithmetic. The seed-97 ISMCTS run was interrupted
 before any score was reported; its replacement uses 500 pairs at seed 1000000007.
-The independent ISMCTS promotion result is pending.
+The completed independent match scored **52.4% +/- 1.4 pp against ISMCTS at
+100 ms over 1,000 games**, +2.7 points/game, +17 Elo (20:52, 10 threads, no
+concurrent training or builds). The approximate 95% interval is 49.7-55.1%, so
+this candidate **does not pass the promotion gate**. It remains experimental.
 
 Idle engine benchmarks after 20 warmup games, then 100 measured games:
 
@@ -722,3 +725,6 @@ not improved. Eighty C# tests pass on the branch, including alpha-beta versus
 exhaustive play, independent world enumeration, hidden-hand independence,
 three-trick overflow fallback, scoring variants and engine/view parity.
 See `ENDGAME_EXPERIMENT.md` on that branch for implementation and commands.
+Next tests will vary the bounded three-trick world count and fit endgame targets
+while retaining the original network's targets elsewhere. No app level changes
+are justified by the current evidence.
