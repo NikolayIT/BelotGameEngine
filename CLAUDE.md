@@ -285,6 +285,13 @@ over 500 games, an inconclusive result, so that combination remains unpromoted.
   Hidden cards are labels only, never policy inputs. The .01-weight pilot tied
   the baseline; .1 weight regressed. An isolated layout-2 public-history prototype
   also tied with Q-only fitting and regressed with .1-weight ownership loss.
+  `record-ppo` and `Gpu/ppo.py` now support on-policy PPO with a separate helper
+  critic. The critic sees the other hands during training; the original 600-input
+  actor does not. A public-only helper is the control. Actor outputs retain Q
+  units through return regression, and exports use the existing BNN1 format.
+  Float32 BNF1 snapshots preserve collection/update probability parity; BPP1
+  records keep public inputs, private labels and same-seat trajectories separate.
+  See `PPO_EXPERIMENT.md` and `NEURAL_NETWORK.md` section 14 for results and commands.
   Search-teacher students have not earned promotion. A separate bounded-endgame
   implementation (`Neural/EndgameSearch`) keeps the original networks and averages
   perfect-information endings over publicly consistent hands. Its eight-world

@@ -39,8 +39,8 @@ seat trajectories, sparse records and hidden-input separation.
 First fixed comparison: privileged versus public helper, each with 12 warmup
 batches and 32 PPO batches of 8192 deals, 12 actor threads, temperature 1,
 actor LR 1e-6, critic LR 3e-4, three epochs each, minibatch 2048, clipping .2,
-entropy .001, Q regression weight 1, KL stop .01, seed4401. Checkpoints every
-four batches are screened in 4000 games versus the original networks (seed521).
+entropy .001, Q regression weight 1, KL stop .01, seed 4401. Checkpoints every
+four batches are screened in 4000 games versus the original networks (seed 521).
 Finalists get 20000-game independent screening and ISMCTS100 evaluation. Training
 loss and helper accuracy alone never authorize promotion. No learning-rate or
 input changes are mixed into the first helper comparison.
@@ -48,13 +48,60 @@ input changes are mixed into the first helper comparison.
 The smoke test completed four 512-deal batches. Maximum observed C#/CUDA
 log-probability difference was 1.39e-5; chosen normalized Q differed by at most
 1.08e-6. All exports still total 2,974,830 bytes. This verifies the pipeline,
-not strength. Initial tests: 97 C# tests and six new Python PPO tests pass.
+not strength. Initial tests: 97 C# tests and seven new Python PPO tests pass.
+Resuming the 512-deal smoke run at iteration 2 produces byte-identical final
+actor files at iteration 4. Resume restores optimizer/RNG states, honors explicitly
+requested learning rates, and refuses mismatched collection settings or progress.
+
+## Initial measured results
+
+Both fixed-budget runs completed 360,448 deals (98,304 critic warmup and 262,144
+PPO deals). All matches below use whole-game mirrored pairs; errors are one
+empirical standard error across pairs. Each row uses the original frozen networks
+as opponent, with both kinds of search disabled.
+
+| Helper / checkpoint | Independent games (seed 523) | Win rate +/- 1 sigma | 95% interval | Points/game |
+|---|---|---|---|---|
+| Privileged, development-best iteration 28 | 20,000 | 50.130% +/- .189 pp | [49.759%, 50.501%] | +.4 |
+| Privileged, fixed endpoint 44 | 20,000 | 50.385% +/- .198 pp | [49.997%, 50.773%] | +.5 |
+| Public, fixed endpoint 44 | 20,000 | 50.475% +/- .195 pp | [50.092%, 50.858%] | +.6 |
+
+The private helper improves prediction accuracy but has no demonstrated playing
+advantage over the public helper. Before fitting the twelfth identical warmup
+batch, explained variance was .713/.518/.660 for the privileged helper versus
+.588/.421/.567 for the public helper (suit/no-trump/all-trump). Warmup leaves all
+four exported networks byte-identical to the original; an identity match gave
+50.000% +/- .000 pp in 4,000 games. Its zero observed error is expected from
+identical deterministic players, not a strength estimate against another player.
+
+The public endpoint has a small positive result against the original, but neither
+run has passed the required ISMCTS gate. No weights or app levels are promoted.
+Training took 307.9 seconds for the private run and 721.3 seconds for the public
+run, excluding Python startup and the final evaluation. The latter overlapped
+other tests/evaluations, so these times are not a controlled throughput comparison.
+
+## Follow-up experiments
+
+The initial actor LR produces KL changes around .00003-.0002 per update, well
+below the .01 stop, and changes roughly 1% of greedy decisions on each new batch.
+The next fixed comparison raises only actor LR to 1e-5, resuming the privileged
+warmup checkpoint (iteration 12), then runs the same 32 PPO updates/seeds.
+The clipping and KL stop remain enabled. A separate temperature-.25 run will test
+less exploration while keeping the original 1e-6 actor LR. Its critic must warm
+up again because the sampled policy changes. These are hypotheses, not promotions.
+
+The LR-1e-5 endpoint scored **50.090% +/- .230 pp in 20,000 games**, 95% interval
+[49.640%, 50.540%], +.1 point/game (seed 523). Larger changes did not improve
+strength in this budget. A third follow-up keeps temperature 1 and LR 1e-6, changes
+only GAE lambda to .5, and runs 12 warmup plus 64 PPO batches. It evaluates after
+32 updates for comparison, then after 64. This tests whether bootstrapping from
+the helper reduces terminal-return noise enough to outweigh value-estimation bias.
 
 ## Sources
 
-- [PPO](https://arxiv.org/pdf/1707.06347), equations7,9-12 and algorithm1: clipped
+- [PPO](https://arxiv.org/pdf/1707.06347), equations 7, 9-12 and algorithm 1: clipped
   probability ratios, entropy and advantage estimation.
-- [GAE](https://arxiv.org/html/1506.02438v6): bias/variance tradeoff; lambda1 here
+- [GAE](https://arxiv.org/html/1506.02438v6): bias/variance tradeoff; lambda 1 here
   retains the full sampled terminal return rather than bootstrapping early.
 - [PerfectDou](https://arxiv.org/html/2203.16406): privileged training critic
   alongside a policy restricted to its own information.
@@ -66,7 +113,7 @@ output directory so long collection jobs do not lock the trainer's normal bin:
 
 ```powershell
 dotnet build tools/NeuralTrainer/NeuralTrainer.csproj -c Release -o artifacts/ppo-bin
-python tools/NeuralTrainer/Gpu/ppo.py --in src/AI/Belot.AI.ClaudePlayer/Neural/Weights --out artifacts/ppo-private --trainer artifacts/ppo-bin/NeuralTrainer.dll --critic privileged --warmup 12 --updates 32 --deals 8192 --threads 12 --seed 4401
+artifacts/torch-env/Scripts/python.exe -X utf8 tools/NeuralTrainer/Gpu/ppo.py --in src/AI/Belot.AI.ClaudePlayer/Neural/Weights --out artifacts/ppo-private --trainer artifacts/ppo-bin/NeuralTrainer.dll --critic privileged --warmup 12 --updates 32 --deals 8192 --threads 12 --seed 4401
 # Repeat with --critic public and a separate --out directory.
 ```
 

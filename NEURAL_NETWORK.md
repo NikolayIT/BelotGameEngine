@@ -1043,3 +1043,61 @@ Local logs and test reports are under `artifacts/neural-20260927/`: the final
 `final-python-tests`, `final-windows-build`, `final-android-build`, and `final-elo`
 logs. Training data, failed candidates and isolated experimental branches are
 retained for reproduction; none replaces the embedded weights.
+
+## 14. PPO with a training-only helper (September 27)
+
+After pushing the preceding work at `e89185b`, the next experiment implements
+on-policy PPO with a privileged critic, inspired by
+[PerfectDou](https://arxiv.org/html/2203.16406). The policy still sees only the
+original 600 public inputs. Three separate 696-256-128-1 helper networks also see
+the other three remaining hands, represented by 96 bits. They are discarded for
+deployment. The existing four actor weight files still total 2,974,830 bytes;
+bidding weights, inference architecture and feature layout remain unchanged.
+
+This implementation uses the Q outputs as legal-action softmax logits (temperature
+in game points), [PPO's clipped objective](https://arxiv.org/pdf/1707.06347), and
+selected-action return regression to preserve point units. The helper learns a
+residual over the public policy's expected Q. Its predictions are taken before
+fitting each new batch to avoid fitting a sample's baseline to its own action.
+The initial gamma/lambda are both 1, so the advantage is exactly terminal deal
+return minus that baseline. Other lambda settings use links to the same seat's
+next decision. This is an adaptation, not an exact PerfectDou reproduction.
+
+`record-ppo` collects complete deals using frozen policies and exact float32
+snapshots (training-only BNF1). Checked BPP1 records separate public features from
+ownership labels and retain legal masks, old probabilities, outcomes and trajectory
+links. The Python trainer verifies weight hashes and C#/CUDA prediction parity
+before every update. Deployment exports stay in the existing half-weight BNN1
+format. Checkpoints also save critic/optimizer/RNG states; a resumed smoke run
+reproduces uninterrupted final actor files byte for byte. Both training processes
+opt out of Windows background power throttling.
+
+### Matched helper comparison
+
+The private-helper run and public-helper control each used 12 critic-only warmup
+batches and 32 PPO batches of 8,192 deals: **360,448 deals** each. Settings:
+temperature 1, actor LR 1e-6, critic LR 3e-4, three epochs each, minibatch 2,048,
+clip .2, entropy .001, Q-regression weight 1, KL stop .01, training seed 4401.
+Public control keeps the identical helper architecture but zeros its private
+inputs. Warmup does not change any actor byte.
+
+All following results are greedy, search-free whole games in mirrored pairs
+against the original networks. Error is one empirical standard error across pairs.
+Checkpoint development used 4,000 games, seed 521; the table uses independent
+20,000-game checks, seed 523.
+
+| Helper / checkpoint | Win rate +/- 1 sigma | Games | 95% interval | Points/game |
+|---|---|---|---|---|
+| Private, development-best iteration 28 | 50.130% +/- .189 pp | 20,000 | [49.759%, 50.501%] | +.4 |
+| Private, fixed endpoint 44 | 50.385% +/- .198 pp | 20,000 | [49.997%, 50.773%] | +.5 |
+| Public, fixed endpoint 44 | 50.475% +/- .195 pp | 20,000 | [50.092%, 50.858%] | +.6 |
+
+The privileged helper improved fresh-batch return prediction: before fitting
+warmup batch 12, explained variance was .713/.518/.660 versus .588/.421/.567
+for the public control (suit/no-trump/all-trump). This did **not** establish a
+playing advantage from privileged information. Neither initial model has passed
+the ISMCTS promotion gate. Small gains against the original alone are insufficient.
+
+Full experiment settings, follow-ups and reproduction commands are in
+[PPO_EXPERIMENT.md](PPO_EXPERIMENT.md) and
+[Gpu/README.md](tools/NeuralTrainer/Gpu/README.md#ppo-with-a-helper-critic).

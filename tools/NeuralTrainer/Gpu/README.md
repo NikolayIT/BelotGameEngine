@@ -200,3 +200,41 @@ without changing any policy input, sidecar alignment after ring wraparound,
 malformed sidecars, finite-difference loss gradients, masked own/played cards,
 frozen warmup parameters and policy-only export. No feature-layout bump is needed
 because the input encoding is unchanged.
+
+## PPO with a helper critic
+
+`ppo.py` alternates complete on-policy deals in the C# simulator with CUDA PPO
+updates. The existing card Q networks parameterize a legal-action softmax;
+selected-action return regression retains their point scale. Bidding stays frozen.
+A separate critic sees public inputs and the three other remaining hands only
+during training. `--critic public` zeros the private inputs for a matched control.
+Neither helper is exported to the app. See [PPO_EXPERIMENT.md](../../../PPO_EXPERIMENT.md)
+for the fixed comparison, measured results and research sources.
+
+```powershell
+dotnet build tools/NeuralTrainer/NeuralTrainer.csproj -c Release -o artifacts/ppo-bin
+artifacts/torch-env/Scripts/python.exe -X utf8 tools/NeuralTrainer/Gpu/ppo.py --in artifacts/baseline --out artifacts/ppo-private --trainer artifacts/ppo-bin/NeuralTrainer.dll --critic privileged --warmup 12 --updates 32 --deals 8192 --threads 12 --seed 4401
+```
+
+`--updates` counts actor updates after the `--warmup` critic-only batches.
+Defaults use temperature 1 game point, GAE lambda 1, actor LR 1e-6 and critic LR
+3e-4. Each checkpoint contains the ordinary four BNN1 actor files plus a
+training-only `training.pt` containing models, optimizers and random states.
+Training uses checked BNF1 float32 snapshots so the PPO probability ratio does
+not include half-weight rounding. The BPP1 records keep private cards separate
+from policy inputs. The collector and Python compare snapshot hashes, chosen
+Q-values and action log-probabilities before every update.
+
+Resume with `--resume <checkpoint>/training.pt` and the same input path, critic
+mode, seed, temperature, lambda, warmup, deals and thread count. `--updates` is
+the desired total number of actor updates, not an extra count. Requested learning
+rates override the saved optimizer rates. Use a fresh output directory to fork
+an earlier checkpoint; appending requires its iteration to match the last progress
+record. Keep source weights unchanged. CPU/GPU random states are restored, and
+a resumed smoke run produced byte-identical final actor files.
+
+Automatic checkpoint matches use greedy, search-free actors against the supplied
+input folder. They are development checks. Promotion also requires independent
+mirrored whole games against ISMCTS at 100 ms, with training stopped, and an idle
+managed inference benchmark. Helper accuracy and training loss do not establish
+playing strength.
