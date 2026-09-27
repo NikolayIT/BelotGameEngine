@@ -36,8 +36,9 @@ The default constructor still uses networks alone. The endgame configuration
 solves all publicly consistent endings within its world limit, using perfect
 information inside each hypothetical world. It assumes the bots' declare-all
 policy; a withheld own meld, no fitting world, or overflow causes a fallback.
-See [the implementation note](ENDGAME_EXPERIMENT.md) for these limits. App
-calibration and the Master comparison are in progress.
+See [the implementation note](ENDGAME_EXPERIMENT.md) for these limits. Hints use
+this fast profile. Expert uses temperature 1.5 and MaxRegret 4; Master retains
+100-deal search with a 400-ms budget after a separate comparison.
 
 **Earlier measurements** (September 2026, mirrored pairs, i7-12700K):
 
@@ -325,14 +326,15 @@ In `src/Tests/Belot.AI.ClaudePlayer.Tests/Neural/`:
   a simple target.
 - `DecideFromViewTests` also checks the neural player decides the same from a seat's view.
 
-## 12. September 27 improvement experiments (in progress)
+## 12. September 27 improvement experiments
 
 ### Short research note
 
 The [primary-paper review](etc/NeuralResearch.md) covers search distillation,
 hidden-card inference, partnership learning, privileged critics and compact network
-designs. Its recommendations were tested against the frozen shipped player;
-independent ISMCTS matches remain the promotion gate.
+designs. The experiments below were tested against the frozen shipped player;
+independent ISMCTS matches remain the promotion gate. Privileged-critic PPO
+remains a future experiment.
 
 - **Better targets:** centred Monte Carlo loss, search-100 labels, policy KL,
   mean anchoring, suit augmentation and student trajectories produced ties or
@@ -343,12 +345,12 @@ independent ISMCTS matches remain the promotion gate.
   preserved the warm start, but their trained student scored only 50.4% +/- .2 pp
   against it over 20,000 games. These pilots do not rule out longer training or PPO.
 - **Fast endgames:** public-hand enumeration plus bounded double-dummy continuations
-  is the strongest fast candidate. With up to 90 worlds in the final three tricks,
-  it scored 54.65% +/- .168 pp against the frozen player and 89.7% +/- .2 pp against
-  SmartPlayer, each over 20,000 games, at 32.3 us/card in the latest idle benchmark.
+  is the promoted fast configuration. With up to 90 worlds in the final three tricks,
+  it scored 54.65% +/- .168 pp against the frozen player and 89.74% +/- .206 pp against
+  SmartPlayer, each over 20,000 games, at 31.1 us/card in the integrated idle benchmark.
   Its separate 2,000-game ISMCTS confirmation scored 53.45% +/- .942 pp,
   95% interval [51.605%, 55.295%], passing promotion. It uses the original neural
-  weights. The integrated build measured 31.1 us/card after the hint-context fix.
+  weights. No tested replacement network earned promotion.
 
 The fixed reference is the shipped weights at `544708e` (weights introduced in `8a0da0e`),
 copied to `artifacts/neural-20260927/baseline/` with SHA-256 hashes before experimentation.
@@ -826,8 +828,8 @@ dotnet artifacts/neural-20260927/endgame-tune-bin/NeuralTrainer.dll distill --te
 artifacts/neural-20260927/torch-env/Scripts/python.exe tools/NeuralTrainer/Gpu/fit.py --in artifacts/neural-20260927/baseline --data artifacts/neural-20260927/endgame-teacher90/data --validation-data artifacts/neural-20260927/endgame-teacher90-validation/data --out artifacts/neural-20260927/endgame-teacher90/student-1e-5 --epochs 12 --batch 1024 --learning-rate 1e-5 --card-value-weight .05 --anchor-mean --stream-data --seed 2401
 ```
 
-The matched second fit uses learning rate `5e-5`. Epochs 4 and 12 will be
-screened against the frozen player before any independent ISMCTS test.
+The matched second fit uses learning rate `5e-5`. Epochs 4 and 12 were
+screened against the frozen player before considering an independent ISMCTS test.
 
 The `1e-5` student scored 50.0% +/- .2 pp at epoch 4 and 50.3% +/- .2 pp at
 epoch 12 against the frozen player (20,000 games each, seed 29). Epoch 12 was
@@ -842,7 +844,7 @@ positions match the original at printed precision, and 20,000 mirrored games
 against the original give exactly 50.0% +/- 0.0 pp and zero point difference.
 Twenty Python tests pass, including export equivalence and learning gradients
 in the inserted layers. The deeper `5e-5` fit uses the same data, epochs and seed
-as the ordinary student; strength and idle timing results are pending.
+as the ordinary student; the completed measurements follow.
 
 The completed ordinary `5e-5` fit scored 49.9% +/- .2 pp at epoch 4 and
 50.3% +/- .2 pp at epoch 12; the deeper fit scored 50.0% +/- .2 pp and
@@ -870,7 +872,7 @@ The existing 100-deal search player scored 54.5% +/- 2.5 pp against the fast
 90-world endgame configuration over 200 games (seed 297, +3.1 points/game,
 +31 Elo). This fixed-sample comparison used no time cap and ran alongside
 training. It suggests a remaining search gain, but its 95% interval includes
-50%; a larger comparison is needed before claiming that advantage as established.
+50%. The larger idle comparison below establishes the advantage under the app budget.
 
 ### Integration and app calibration
 
@@ -913,16 +915,26 @@ Expert calibration against SmartPlayer, 20,000 games per row, seed 311, MaxRegre
 
 Choose **1.5**: it keeps Expert close to its previous difficulty while remaining
 above Skilled. Against the unrestricted fast profile it scores **26.465% +/-
-.276 pp**, -178 +/- 2 Elo, over 20,000 independent games (seed 313). The app's
-round robin will verify its position between Skilled and Master. Hints use the
-unrestricted fast profile.
+.276 pp**, -178 +/- 2 Elo, over 20,000 independent games (seed 313). Hints use the unrestricted fast profile. The final app round robin is reported below.
 
-Master selection is predeclared: compare the existing search against fast endgames
+The predeclared Master selection compared the existing search against fast endgames
 over 1,000 games (seed 397), then the combined search/endgame profile against the
-existing search over 500 games (seed 401). Both use 100 sampled deals, the app's
-400-ms cap, 10 threads, and no other heavy work. Keep the existing Master unless
-the combined profile's independent 95% interval lies above 50%. These matches are
-running; their outcomes will determine the app configuration before `elo 20000 60`.
+existing search over 500 games (seed 401). Both used 100 sampled deals, the app's
+400-ms cap, 10 threads, and no other heavy work. The selection rule kept the
+existing Master unless the combined profile's independent 95% interval lay above 50%.
+
+The first completed match supports retaining search for Master: **53.1% +/-
+1.255 pp over 1,000 games** against the fast endgame profile, 95% interval
+**[50.641%, 55.559%]**, +4.6 points/game, **+22 +/- 9 Elo**, in 19:25.
+This used the actual 400-ms cap.
+
+The combined search/endgame profile scored **52.8% +/- 1.667 pp over 500 games**
+against existing Master, 95% interval **[49.532%, 56.068%]**, +2.0 points/game,
+**+19 +/- 12 Elo**, in 19:36. Its interval crosses 50%, so it remains unpromoted.
+**Master retains SearchDeals 100 and a 400-ms budget, with endgames disabled.**
+Hints and Expert use the validated fast endgame profile; Expert uses temperature
+1.5 and MaxRegret 4. The search budget is checked between whole sampled deals,
+with at least eight played, so a decision may exceed that budget.
 
 ```powershell
 dotnet artifacts/neural-20260927/promoted-bin/NeuralTrainer.dll validate --in artifacts/neural-20260927/baseline --opponent ismcts:100 --endgame true --endgame-declarations true --endgame-tricks 3 --endgame-worlds 90 --pairs 1000 --threads 10 --seed 293

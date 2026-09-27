@@ -9,9 +9,9 @@ below, the methods and relevant experiments/ablations were inspected. The backgr
 and discovery-only sources are identified separately. Results in other games are leads
 for experiments; they do not establish strength in Bulgarian Belot.
 
-The first substantial experiment is **distillation of our measured stronger 100-world
-search**, with bidding frozen. This tests whether better targets alone improve the fast
-player. Keep both ordinary and centred action-value losses for a controlled comparison.
+The first substantial experiment was **distillation of our measured stronger 100-world
+search**, with bidding frozen. It tested whether better targets alone improve the fast
+player, comparing ordinary and centred action-value losses on the same data.
 Measure decision regret under the teacher as well as actual mirrored matches. Low
 training error with poor generalisation calls for more varied data or better inputs;
 high training and validation error may justify more capacity. Neither diagnostic
@@ -87,7 +87,7 @@ training labels or critic inputs, never inputs to the deployed seat policy.
 ## Experiments implied by the review
 
 1. Freeze the reference and verify whole-game evaluation and warmed timing. Done; see
-   [the results record](../NEURAL_NETWORK.md#12-september-27-improvement-experiments-in-progress).
+   [the results record](../NEURAL_NETWORK.md#12-september-27-improvement-experiments).
 2. Compare ordinary versus centred loss at equal continuation time. A small lineage gain
    is only a screening result; check ISMCTS before committing a long run.
 3. Collect all legal card values from 100-world search. Fit the same data with both losses,
@@ -107,9 +107,9 @@ Search teacher strength, distilled student strength, and actual ISMCTS results m
 separate measurements. There is no theoretical guarantee that our approximate search,
 teacher distribution, or finite-capacity student improves at every iteration.
 
-## What the experiments have established so far
+## Measured conclusions
 
-The [results record](../NEURAL_NETWORK.md#12-september-27-improvement-experiments-in-progress)
+The [results record](../NEURAL_NETWORK.md#12-september-27-improvement-experiments)
 contains the counts, uncertainty and commands. Search-100 remains a stronger teacher,
 but its tested students regress or tie: ordinary and centred Q losses, policy KL,
 mean anchoring, suit augmentation, wider networks, frozen residual corrections,
@@ -134,9 +134,9 @@ policy of declaring every combination. Its future actions know each sampled worl
 so this is approximate imperfect-information search.
 
 Increasing the three-trick cap to 90 worlds produces a stronger fast candidate:
-54.65% +/- .168 pp against the frozen network and 89.7% +/- .2 pp against SmartPlayer,
-each over 20,000 games. The latest idle benchmark is 32.3 us/card; timing varied
-between runs, including one 54.9-us result. Its independent 2,000-game ISMCTS match
+54.65% +/- .168 pp against the frozen network and 89.74% +/- .206 pp against SmartPlayer,
+each over 20,000 games. Earlier idle timing varied between runs, including
+one 54.9-us result. Its independent 2,000-game ISMCTS match
 scored 53.45% +/- .942 pp, with a 95% interval of [51.605%, 55.295%], passing the
 predeclared promotion gate. The integrated build measured 31.1 us/card.
 
@@ -146,3 +146,11 @@ rates and with extra identity-initialised depth scored only 50.3-50.4% against t
 frozen network over 20,000 games per student (standard errors .2 pp). These networks
 remain unpromoted. The measured improvement is in the bounded search configuration;
 we have not established an improvement in the neural weights.
+
+One remaining input question is declaration detail. `FeatureEncoder` records flags
+for declared types; `NeuralDeal.DeclarationBit` also groups sequences of five or
+more cards. The endgame teacher uses exact sequence lengths and multiplicities.
+Some publicly different states therefore share the neural encoding. Preserving
+those details is a concrete future feature experiment, requiring a new layout
+version and parity checks. This observation does not establish why the tested
+students failed or predict the size of a playing gain.

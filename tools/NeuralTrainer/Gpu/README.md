@@ -163,7 +163,7 @@ available. Host-memory streaming trades transfer time for a bounded GPU footprin
 `deepen.py --in <folder> --out <deeper-folder> --layers 2` inserts two identity
 ReLU layers before each card network's output. The original hidden activations
 are nonnegative, so the initial function is preserved. Bidding is copied unchanged.
-The shipped shape becomes 600-512-256-128-128-128-32, adding 198,168 bytes across
+The experimental shape becomes 600-512-256-128-128-128-32, adding 198,168 bytes across
 the three exported files. The existing managed loader and BNN1 format handle it.
 
 This applies [Net2DeeperNet](https://arxiv.org/html/1511.05641), not a residual

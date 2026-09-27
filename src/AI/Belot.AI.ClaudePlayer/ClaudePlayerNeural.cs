@@ -81,7 +81,7 @@
 
         /// <summary>
         /// Gets or sets how many deals a card decision plays out (<see cref="NeuralSearch"/>): 0,
-        /// the default, takes the card network's values as they are; with N deals every legal
+        /// the default, disables sampled rollouts; with N deals every legal
         /// card is played out in N deals of the unseen cards, by the networks for every seat, and
         /// valued by the average result (slower: about N times the cards times the rest of the deal).
         /// </summary>
@@ -90,7 +90,8 @@
         /// <summary>
         /// Gets or sets a value indicating whether to enumerate and solve bounded endings
         /// within <see cref="EndgameTricks"/> tricks. Disabled by default; values use perfect-
-        /// information continuations in every rule-consistent hidden deal.
+        /// information continuations in each accepted hidden deal. Successful endgame
+        /// evaluation takes priority over <see cref="SearchDeals"/>.
         /// </summary>
         public bool UseEndgameSearch { get; set; }
 

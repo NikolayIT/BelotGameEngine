@@ -35,7 +35,14 @@ scored **89.74% +/- .206 pp over 20,000 games**, +377 +/- 4 Elo.
 The latest integrated idle benchmark is **31.1 us/card** over 21,380 decisions
 in 100 games, after 20 warmup games. The endgame path handled 4,996 decisions.
 The unchanged four weight files total 2,974,830 bytes. Full results, variability
-and reproduction commands are in [NEURAL_NETWORK.md](NEURAL_NETWORK.md#12-september-27-improvement-experiments-in-progress).
+and reproduction commands are in [NEURAL_NETWORK.md](NEURAL_NETWORK.md#12-september-27-improvement-experiments).
+
+The app uses this fast configuration for hints and for Expert (temperature 1.5,
+MaxRegret 4). Master retains its 100-deal sampled search with a 400-ms budget:
+it beat fast endgames at **53.1% +/- 1.255 pp over 1,000 games**, +22 +/- 9 Elo.
+Adding endgames to that search scored **52.8% +/- 1.667 pp over 500 games** against
+existing Master, 95% interval [49.532%, 56.068%]. This did not meet the predeclared
+promotion threshold, so the combined profile remains unpromoted.
 
 ## Development measurements
 

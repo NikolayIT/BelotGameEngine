@@ -182,7 +182,7 @@ Match this style when extending the engine:
 Baseline opponents for the benchmark live in `AI/Belot.AI.DummyPlayer`: `DummyPlayer` (simple
 rules) and `RandomPlayer`.
 
-## ClaudePlayerIsmcts design (the strongest AI)
+## ClaudePlayerIsmcts design (the search benchmark)
 
 `AI/Belot.AI.ClaudePlayer`, a port of the design of the strongest player of the sister project
 Santase (github.com/NikolayIT/SantaseGameEngine, `ClaudePlayerIsmcts`). Measured in mirrored pairs
@@ -241,8 +241,10 @@ ClaudePlayerIsmcts (100 ms). The validated fast configuration adds bounded endga
 `EndgameThreeTrickWorldLimit = 90`. It scores **53.45% +/- .942 pp over 2,000 games**
 against ISMCTS, 95% interval [51.605%, 55.295%], and **54.65% +/- .168 pp over
 20,000 games** against the frozen networks. The latest idle mean is **31.1 us/card**.
-The weights and default constructor behavior are unchanged. Master search and app
-calibration are still being measured.
+The weights and default constructor behavior are unchanged. Master retains
+100-deal search with a 400-ms budget: it beat the fast profile at 53.1% +/-
+1.255 pp over 1,000 games. Adding endgames to Master scored 52.8% +/- 1.667 pp
+over 500 games, an inconclusive result, so that combination remains unpromoted.
 
 - **Four multilayer perceptrons value every action in game points** (the team's points from the
   deal minus the other team's, hanging points included): a bidding network (97 inputs → pass, the
@@ -311,8 +313,9 @@ Windows), modelled file for file on the Santase engine's `Santase.UI`. The perso
 picks the level of each other seat separately: the partner (North) and the rivals West (on the
 left) and East (on the right), from `Game/AiLevels.cs`: Random (`RandomPlayer`), Beginner
 (`DummyPlayer`), Skilled (`SmartPlayer`), Expert (`ClaudePlayerNeural` played loose,
-`Temperature` 1.25, `MaxRegret` 4) and Master (`ClaudePlayerNeural` with `SearchDeals` 100,
-at most 400 ms a card). The hints are the networks alone (instant). The Master keeps the id
+`Temperature` 1.5, `MaxRegret` 4, plus the validated bounded endgames) and Master
+(`ClaudePlayerNeural` with `SearchDeals` 100 and a 400-ms search budget). Hints use
+`AiLevels.CreateFastPlayer()`, the unrestricted neural/endgame profile. The Master keeps the id
 `claude` it had as ClaudePlayerIsmcts, so people's history and records carry over. The app
 references the three AI projects, so an `IPlayer` break in any of them breaks the app build too.
 
