@@ -586,7 +586,7 @@ inference, finite-difference gradients, frozen base and file corruption checks.
 Exported C#/Python diagnostics on all 22,213 independent validation positions
 agreed to 0.001 point. No inference-speed claim or ISMCTS gain is made for it.
 
-The next experiment uses true-card locations as an auxiliary training objective,
+The next experiment tested true-card locations as an auxiliary training objective,
 inspired by the Skat and DouZero+ evidence in the research review. It differs from
 DouZero+: predictions do not become explicit policy inputs. A training-only head
 shares the final hidden representation with Q-values, learns the relative owner
@@ -595,16 +595,45 @@ zero-weight control uses identical data, warmup and Q training. Thus inference
 architecture, inputs, point units and feature layout stay unchanged.
 
 `record-selfplay` records frozen-baseline Monte Carlo Q targets and a separate
-checked ownership sidecar. The planned comparison uses 100,000 training deals
+checked ownership sidecar. The comparison used 100,000 training deals
 (seed 3931) and 5,000 independent validation deals (seed 2931), 3% card exploration,
 frozen bidding, then four epochs at learning rate 1e-5. See the GPU README for
-reproduction. This is not yet evidence of improved play. The 75-test C# suite
+reproduction. Collection produced 1,884,525 training positions in 4:22 and 94,603
+validation positions in 0:13. Both runs used the same samples, seed 1401,
+batch 1024, centred Q-loss weight .05 and four epochs; the auxiliary weight was
+.01. Against the frozen player, each 20,000 mirrored games, seed 29:
+
+| Fit | Epoch 1 | Epoch 2 | Epoch 4 |
+|---|---|---|---|
+| Q-only control | 49.9% +/- .2 pp | 49.7% +/- .2 pp | 50.0% +/- .2 pp |
+| Q plus card-location loss | 49.9% +/- .2 pp | 49.7% +/- .2 pp | 49.9% +/- .2 pp |
+
+The auxiliary objective did not improve playing strength in this pilot. All-trumps
+held-out ownership accuracy rose from the control's 41.6% to 42.1%, which is a
+prediction diagnostic rather than evidence of better card choices. A stronger
+auxiliary weight (.1) and ordered-history inputs are being tested. The 75-test C# suite
 and 17 Python tests pass; they include a direct check that removing all hidden
 hands changes ownership labels without changing any policy input.
 
-A further search-target pilot will use a two-point minimum teacher regret: keep
+A further search-target pilot used a two-point minimum teacher regret: keep
 the teacher labels only where its best card exceeds the warm start's choice by
 at least two points, and preserve the warm start's Q-values elsewhere. This tests
 whether changing small, noisy preferences causes the earlier regression. It is
 not a confidence interval on the search estimates. The fitter's tests cover the
 threshold, legal-action masking and preservation of the original validation data.
+It retained teacher labels at 33,982 of 431,684 positions, with warm-start targets
+elsewhere, then used mean anchoring and the matched 24-epoch fit settings above.
+Epochs 4/12/24 scored 50.2% +/- .2 pp, 50.4% +/- .2 pp and 50.3% +/- .2 pp against
+the frozen player over 20,000 games each (seed 29). Epoch 24 was +.6 points/game,
++2 Elo. This removes most of the regression but is not a demonstrated ISMCTS gain.
+
+The public-history prototype is isolated on branch `neural-public-history`.
+It appends 64 scalar inputs specifying the trick number and position within it
+for each public card, bumps feature layout to 2, and explicitly extends the old
+weights with zero input rows before retraining. This initially preserves the
+playing function. Its tests pass: 78 C# and 20 Python, including engine/view parity,
+history reconstruction, struct-copy independence, widened sample counts, layout
+refusal and export checks. Across the 94,603 validation records, all original
+features, Q targets and ownership labels exactly match the layout-1 collection;
+the history fields are additional public information. Retraining results and an
+idle inference benchmark are pending. The production runtime stays on layout 1.

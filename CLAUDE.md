@@ -276,7 +276,8 @@ pairs: **the networks alone tie ClaudePlayerIsmcts (100 ms)**, 50.2% ± 1.3% of 
   `record-selfplay` can record true-deal action targets plus separate ownership
   labels. `Gpu/fit_belief.py` tests an auxiliary card-location objective against
   a matched zero-weight control; the auxiliary head is discarded on export.
-  Hidden cards are labels only, never policy inputs. This experiment is pending.
+  Hidden cards are labels only, never policy inputs. The first .01-weight pilot
+  tied the baseline; .1 weight and an isolated public-history prototype are pending.
   See `etc/NeuralResearch.md` for the broader research review and experiment rationale.
 - **Timing**: the September 27 trainer fixes warmup counting in `bench` and separately times
   warmed card callbacks through the engine. The frozen networks measured 18.5 us/card in
