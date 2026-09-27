@@ -103,7 +103,7 @@
         /// <summary>Gets or sets whether fit saves each completed epoch for subsequent match evaluation.</summary>
         public bool FitCheckpoints { get; set; }
 
-        /// <summary>Gets or sets the distillation teacher: ismcts, or neural with SearchDeals sampled worlds.</summary>
+        /// <summary>Gets or sets the distillation teacher: ismcts, neural sampled worlds, or endgame plus original network values elsewhere.</summary>
         public string Teacher { get; set; } = "ismcts";
 
         /// <summary>Gets or sets how often a labelled neural-teacher decision is played by the teacher (0 = student trajectories).</summary>

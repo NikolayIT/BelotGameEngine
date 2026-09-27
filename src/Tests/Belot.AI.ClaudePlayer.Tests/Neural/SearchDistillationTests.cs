@@ -18,6 +18,99 @@
         [Theory]
         [InlineData(0)]
         [InlineData(1)]
+        public void RecordsEndgameValuesAndKeepsOtherTargetsAtWarmStart(double teacherPlayChance)
+        {
+            var models = RandomModels.Create(7193);
+            var settings = new TrainingSettings
+            {
+                Teacher = "endgame",
+                EndgameDeclarations = true,
+                EndgameTricks = 3,
+                CardLabelChance = 1,
+                TeacherPlayChance = teacherPlayChance,
+            };
+            var buffers = Enumerable.Range(0, 4).Select(tag => new SampleBuffer(10000, tag == 0 ? 9 : 32)).ToArray();
+            var ordinary = new SmartPlayer.SmartPlayer();
+            var simulator = new BelotSimulator();
+            var indices = new int[FeatureEncoder.MaxActive];
+            var values = new float[FeatureEncoder.MaxActive];
+            var samples = 0;
+            var endings = 0;
+            for (var game = 0; game < 5; game++)
+            {
+                var match = new BelotMatch(new BelotMatchOptions { Random = new Random(7193 + game) });
+                match.Start();
+                while (!match.IsFinished)
+                {
+                    var seat = match.ToMove;
+                    if (match.Decision == BelotDecision.Bid)
+                    {
+                        match.Act(seat, BelotAction.Bid(ordinary.GetBid(match.CreateBidContext())));
+                    }
+                    else if (match.Decision == BelotDecision.Announce)
+                    {
+                        match.Act(seat, BelotAction.Declare(match.CreateAnnouncesContext().AvailableAnnounces));
+                    }
+                    else
+                    {
+                        var context = match.CreatePlayCardContext();
+                        var recorder = new SearchDistillPlayer(models, buffers, settings, samples);
+                        var teacher = new ClaudePlayerNeural(models)
+                        {
+                            UseEndgameSearch = true,
+                            EndgameUseDeclarations = true,
+                            EndgameTricks = 3,
+                        };
+                        var scores = teacher.EvaluateCards(context);
+                        var chosen = recorder.PlayCard(context);
+                        var expected = teacherPlayChance == 1
+                            ? scores.OrderByDescending(x => x.Value).ThenBy(x => x.Card.GetHashCode()).First().Card
+                            : new ClaudePlayerNeural(models).PlayCard(context).Card;
+                        Assert.Equal(expected, chosen.Card);
+                        endings += (int)teacher.EndgameDecisions;
+                        if (teacher.EndgameDecisions == 0)
+                        {
+                            Assert.Equal(new ClaudePlayerNeural(models).EvaluateCards(context).Select(x => x.Value), scores.Select(x => x.Value));
+                        }
+
+                        Assert.True(NeuralDeal.FromPlayContext(context, simulator, out var deal));
+                        var legal = NeuralDeal.ToMask(context.AvailableCardsToPlay);
+                        var rotation = FeatureEncoder.Rotation(deal.Kind);
+                        var buffer = buffers[1 + FeatureEncoder.CardNetwork(deal.Kind)];
+                        var sample = new Batch(1, 32);
+                        buffer.Take(sample, new[] { buffer.Count - 1 });
+                        var mask = 0u;
+                        foreach (var score in scores)
+                        {
+                            var output = FeatureEncoder.ToNetwork(score.Card.GetHashCode(), rotation);
+                            mask |= 1u << output;
+                            Assert.Equal((float)(Half)(score.Value / NeuralEvaluator.ValueScale), sample.Labels[output]);
+                        }
+
+                        Assert.Equal(mask, sample.Masks[0]);
+                        var count = FeatureEncoder.EncodeCard(in deal, legal, indices, values);
+                        Assert.Equal(count, sample.FeatureCounts[0]);
+                        for (var feature = 0; feature < count; feature++)
+                        {
+                            Assert.Equal(indices[feature], sample.Indices[feature]);
+                            Assert.Equal((float)(Half)values[feature], sample.Values[feature]);
+                        }
+
+                        samples++;
+                        match.Act(seat, BelotAction.PlayCard(chosen.Card));
+                    }
+                }
+            }
+
+            Assert.True(endings > 5);
+            Assert.True(samples > endings);
+            Assert.Equal(0, buffers[0].Written);
+            Assert.Equal(samples, buffers.Sum(x => x.Written));
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
         public void RecordsExactlyThePublicSearchValuesAndSeatFeatures(double teacherPlayChance)
         {
             var models = RandomModels.Create(27);

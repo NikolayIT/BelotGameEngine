@@ -54,3 +54,14 @@ hanging points and both teams; compare world enumeration and every action value
 against independent ternary assignments; check three-trick overflow fallback and
 bounded settings; alter all secret hands without changing values; and verify exact
 engine/seat-view parity with both endgame modes. All inference is managed C#.
+
+## Distillation experiment
+
+`distill --teacher endgame --in <baseline> --endgame-declarations true
+--endgame-tricks 3 --card-label-chance 1 --teacher-play-chance 0` records the
+bounded endgame's values where it applies and the original network's values
+elsewhere. It records every legal action and preserves bidding. Student
+trajectories isolate target changes from changed play. This tests whether the
+endgame gain can be learned without runtime search; it is not yet a measured gain.
+Use separately seeded validation games and the GPU fitter's `--anchor-mean` to
+preserve the original mean values while learning the teacher's action differences.

@@ -23,9 +23,9 @@
 
         public static void Record(TrainingSettings settings)
         {
-            if (settings.Teacher != "ismcts" && settings.Teacher != "neural" && settings.Teacher != "neural-batch" && settings.Teacher != "neural-gpu")
+            if (settings.Teacher != "ismcts" && settings.Teacher != "neural" && settings.Teacher != "neural-batch" && settings.Teacher != "neural-gpu" && settings.Teacher != "endgame")
             {
-                throw new ArgumentException("--teacher must be ismcts, neural, neural-batch or neural-gpu.", nameof(settings));
+                throw new ArgumentException("--teacher must be ismcts, neural, neural-batch, neural-gpu or endgame.", nameof(settings));
             }
 
             if (settings.Teacher == "neural-gpu" && string.IsNullOrEmpty(settings.In))

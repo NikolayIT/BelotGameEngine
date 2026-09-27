@@ -36,7 +36,8 @@
 
         public SearchDistillPlayer(NeuralModels models, SampleBuffer[] buffers, TrainingSettings settings, int seed, IBatchedCardPolicy policy = null)
         {
-            if (settings.SearchDeals <= 0)
+            var endgameTeacher = settings.Teacher == "endgame";
+            if (settings.SearchDeals <= 0 && !endgameTeacher)
             {
                 throw new ArgumentOutOfRangeException(nameof(settings), "A neural search teacher needs --search-deals above zero.");
             }
@@ -48,7 +49,10 @@
 
             this.teacher = new ClaudePlayerNeural(models)
             {
-                SearchDeals = settings.SearchDeals,
+                SearchDeals = endgameTeacher ? 0 : settings.SearchDeals,
+                UseEndgameSearch = endgameTeacher,
+                EndgameUseDeclarations = settings.EndgameDeclarations,
+                EndgameTricks = settings.EndgameTricks,
                 Rng = new Random(seed),
             };
             this.student = new ClaudePlayerNeural(models);
@@ -56,7 +60,7 @@
             this.random = new Random(seed ^ 0x5EED);
             this.labelChance = settings.CardLabelChance;
             this.teacherPlayChance = settings.TeacherPlayChance;
-            this.batched = policy == null ? null : new BatchedNeuralSearch(policy);
+            this.batched = policy == null || endgameTeacher ? null : new BatchedNeuralSearch(policy);
         }
 
         public BidType GetBid(PlayerGetBidContext context) => this.student.GetBid(context);
