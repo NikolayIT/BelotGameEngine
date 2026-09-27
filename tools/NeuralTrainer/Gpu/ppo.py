@@ -138,9 +138,16 @@ def advantages(values, outcomes, following, lam=1.0):
 
 class Critic(nn.Module):
     """Learns a residual over the actor's public expected Q; never exported to BNN1."""
-    def __init__(self):
+    def __init__(self, widths=(256, 128)):
         super().__init__()
-        self.net = nn.Sequential(nn.Linear(696, 256), nn.ReLU(), nn.Linear(256, 128), nn.ReLU(), nn.Linear(128, 1))
+        if not 1 <= len(widths) <= 8 or any(not 1 <= width <= 4096 for width in widths):
+            raise ValueError('Invalid helper widths')
+        layers, previous = [], 696
+        for width in widths:
+            layers.extend((nn.Linear(previous, width), nn.ReLU()))
+            previous = width
+        layers.append(nn.Linear(previous, 1))
+        self.net = nn.Sequential(*layers)
         nn.init.zeros_(self.net[-1].weight)
         nn.init.zeros_(self.net[-1].bias)
 
@@ -261,6 +268,8 @@ def restore(path, actors, critics, actor_optimizers, critic_optimizers, args):
     for key in ('critic', 'temperature', 'gae_lambda', 'seed', 'warmup', 'deals', 'threads'):
         if saved['args'][key] != getattr(args, key):
             raise ValueError(f'Resume changes {key}')
+    if saved['args'].get('critic_sizes', '256,128') != getattr(args, 'critic_sizes', '256,128'):
+        raise ValueError('Resume changes helper architecture')
     if Path(saved['args']['input']).resolve() != Path(args.input).resolve():
         raise ValueError('Resume changes the frozen input reference')
     if 'source_hashes' in saved and saved['source_hashes'] != source_hashes(args.input):
@@ -299,7 +308,7 @@ def run(args):
         raise ValueError('Output already contains a run; use a new directory or --resume')
     actors = [fit.read_network(Path(args.input) / (name + '.bin'), tag).to(args.device)
               for tag, name in enumerate(fit.NAMES[1:], 1)]
-    critics = [Critic().to(args.device) for _ in actors]
+    critics = [Critic(tuple(map(int, args.critic_sizes.split(',')))).to(args.device) for _ in actors]
     actor_optimizers = [torch.optim.Adam(m.parameters(), lr=args.actor_lr, eps=1e-5) for m in actors]
     critic_optimizers = [torch.optim.Adam(m.parameters(), lr=args.critic_lr, eps=1e-5) for m in critics]
     start = 0
@@ -369,6 +378,7 @@ def arguments():
     parser.add_argument('--trainer', required=True, help='Copied Release NeuralTrainer.dll')
     parser.add_argument('--device', default='cuda')
     parser.add_argument('--critic', choices=('privileged', 'public'), default='privileged')
+    parser.add_argument('--critic-sizes', default='256,128', help='Training-only hidden widths')
     parser.add_argument('--updates', type=int, default=16)
     parser.add_argument('--warmup', type=int, default=8)
     parser.add_argument('--deals', type=int, default=8192)

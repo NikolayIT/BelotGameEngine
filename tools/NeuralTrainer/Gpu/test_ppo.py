@@ -157,10 +157,27 @@ class PpoTests(unittest.TestCase):
                 ppo.restore(root / 'checkpoint/training.pt', actors, critics,
                             actor_optimizers, critic_optimizers, args)
             args.temperature = 1
+            args.critic_sizes = '512,256,128'
+            with self.assertRaisesRegex(ValueError, 'helper architecture'):
+                ppo.restore(root / 'checkpoint/training.pt', actors, critics,
+                            actor_optimizers, critic_optimizers, args)
+            args.critic_sizes = '256,128'
             (root / 'bid.bin').write_bytes(b'changed bid')
             with self.assertRaisesRegex(ValueError, 'source weights changed'):
                 ppo.restore(root / 'checkpoint/training.pt', actors, critics,
                             actor_optimizers, critic_optimizers, args)
+
+    def test_helper_capacity_starts_at_the_same_public_value(self):
+        torch.manual_seed(19)
+        public, private, base = torch.rand(5, 600), torch.rand(5, 96), torch.rand(5)
+        for widths in ((256, 128), (512, 256, 128)):
+            critic = ppo.Critic(widths)
+            self.assertTrue(torch.equal(critic(public, private, base), base))
+            self.assertEqual(critic.net[0].in_features, 696)
+            self.assertEqual(critic.net[-1].out_features, 1)
+        for widths in ((), (0,), (4097,), (32,) * 9):
+            with self.assertRaises(ValueError):
+                ppo.Critic(widths)
 
 
 if __name__ == '__main__':
