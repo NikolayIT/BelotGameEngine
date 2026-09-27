@@ -1169,6 +1169,9 @@ All errors below are one empirical standard error across mirrored pairs.
 | Pure network / SmartPlayer | 20,000 | 86.980% +/- .226 pp | [86.538%, 87.422%] | +57.9 |
 | Original pure network / SmartPlayer (control) | 20,000 | 86.495% +/- .230 pp | [86.044%, 86.946%] | +57.1 |
 | Bounded fast profile / original bounded fast profile | 20,000 | 50.620% +/- .187 pp | [50.253%, 50.987%] | +.8 |
+| Pure network / ISMCTS100 (seed 563) | 2,000 | 50.000% +/- .978 pp | [48.084%, 51.916%] | +.1 |
+| Bounded fast profile / SmartPlayer | 20,000 | 89.835% +/- .205 pp | [89.433%, 90.237%] | +63.9 |
+| Bounded fast profile / ISMCTS100 (seed 569) | 1,000 | 54.100% +/- 1.386 pp | [51.384%, 56.816%] | +5.7 |
 
 The confirmed gain is about **+4 Elo**, including with the existing bounded
 endgames. It is small. The first matched helper comparison does not establish
@@ -1176,13 +1179,37 @@ that privileged inputs caused it; no matched public-helper run used this entire
 longer GAE schedule. Neither helper accuracy nor the lineage comparison alone
 establishes a win over ISMCTS.
 
+The pure-network ISMCTS check completed in 40:49 with an exact 50% result.
+**PPO has not established a search-free improvement against ISMCTS.** The small
+gain against its own lineage did not transfer into a demonstrated benchmark win.
+
+Idle engine-callback timing uses 100 whole games after warmup:
+
+| Profile | Card choices | Mean us/card |
+|---|---|---|
+| Original pure network | 21,336 | 16.5 |
+| Selected pure network | 21,187 | 15.2 |
+| Original bounded fast profile | 21,380 | 27.9 |
+| Selected bounded fast profile | 21,225 | 27.6 |
+
+Earlier same-day pure-network passes measured 26.4 us for the original and
+18.4 us for the candidate. Architecture and parameter counts are identical;
+these variable timings do not establish an architectural speed gain. Both
+profiles remain below the 50-us limit in the idle confirmation.
+
+The candidate with Master search (100 worlds, 400-ms cap) measured **56.20
+ms/card**, 669 choices in four whole games after warmup. Its separate strength
+comparisons against the new fast profile and original Master are pending.
+
 Final ISMCTS100 checks were fixed before their results: 2,000 games without
 search (seed 563), plus 1,000 games for the existing bounded fast profile
 (seed 569). The latter is the proposed app configuration: three tricks, public
 declaration constraints, and at most 90 worlds for a three-trick decision.
-Promotion requires its 95% interval above 50%, a confirmed gain over the
-previous fast profile, and an idle card benchmark below 50 us. Results are pending;
-the embedded weights and app ratings are still unchanged.
+The bounded fast profile **passes the promotion gate**: its 95% interval is above
+50%, its gain over the previous fast profile is confirmed, and its idle card
+benchmark is below 50 us. This is a result for PPO plus bounded endgames; the
+pure network still ties ISMCTS. The embedded weights and app ratings are still
+unchanged while the Master comparisons complete.
 
 Full experiment settings, follow-ups and reproduction commands are in
 [PPO_EXPERIMENT.md](PPO_EXPERIMENT.md) and

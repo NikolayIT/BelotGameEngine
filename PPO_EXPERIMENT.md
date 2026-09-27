@@ -162,8 +162,23 @@ The final ISMCTS100 comparisons were fixed before their results: pure networks,
 2,000 games, seed 563; bounded fast profile, 1,000 games, seed 569. The proposed
 app profile retains three-trick endgames, declaration constraints and the 90-world
 limit. Its gate requires a 95% interval above 50% and less than 50 us/card, plus
-the already confirmed head-to-head gain. Those results are pending; no weights
-or app levels have changed during this PPO experiment.
+the already confirmed head-to-head gain. The pure check finished at **50.000% +/-
+.978 pp in 2,000 games**, 95% [48.084%, 51.916%], +.1 point/game. There is no
+demonstrated search-free win against ISMCTS. Idle engine timing measured 15.2
+us/card for the selected pure policy (21,187 choices) and 27.6 us for its bounded
+fast profile (21,225 choices), each over 100 games after warmup. The corresponding
+original profiles measured 16.5 and 27.9 us. Architecture is unchanged and timings
+vary between passes, so this is not evidence of an architectural speed gain.
+The bounded profile scored **54.100% +/- 1.386 pp in 1,000 games** against
+ISMCTS100, 95% [51.384%, 56.816%], +5.7 points/game. It passes the fast-player
+gate. Against SmartPlayer it scored **89.835% +/- .205 pp in 20,000 games**,
+95% [89.433%, 90.237%]. These results belong to PPO plus the existing bounded
+endgames; they do not establish a pure-network win against ISMCTS.
+
+Master with the selected weights measured 56.20 ms/card (669 choices in four
+games). Two predeclared 1,000-game comparisons now check it against the new fast
+profile (seed 577) and original Master (seed 587), both at 100 search worlds and
+a 400-ms cap. Weights and app levels remain unchanged until those checks finish.
 
 The evidence supports a small PPO gain in the all-trump policy. It does not show
 that larger helpers help, nor that private inputs beat a matched public helper.

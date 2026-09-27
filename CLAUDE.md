@@ -295,7 +295,11 @@ over 500 games, an inconclusive result, so that combination remains unpromoted.
   against the original pure networks in 40,000 held-out games (about +4 Elo),
   and 50.620% +/- .187 pp with bounded endgames on both sides in 20,000 games.
   Hidden hands improve critic prediction but did not beat the matched public
-  control in the initial experiment. The final ISMCTS promotion checks are pending.
+  control in the initial experiment. The pure policy still ties ISMCTS100:
+  50.000% +/- .978 pp in 2,000 games. Its latest idle timing is 15.2 us/card,
+  or 27.6 us with bounded endgames. That fast profile passes the ISMCTS gate at
+  54.100% +/- 1.386 pp in 1,000 games (95% [51.384%, 56.816%]); Master checks
+  are pending before embedding its all-trump weights and recalibrating the app.
   See `PPO_EXPERIMENT.md` and `NEURAL_NETWORK.md` section 14 for results and commands.
   Search-teacher students have not earned promotion. A separate bounded-endgame
   implementation (`Neural/EndgameSearch`) keeps the original networks and averages
