@@ -1097,6 +1097,24 @@ warmup batch 12, explained variance was .713/.518/.660 versus .588/.421/.567
 for the public control (suit/no-trump/all-trump). This did **not** establish a
 playing advantage from privileged information. Neither initial model has passed
 the ISMCTS promotion gate. Small gains against the original alone are insufficient.
+The direct private-versus-public endpoint match also tied: **49.795% +/- .182 pp
+for the private helper in 20,000 games**, 95% [49.437%, 50.153%], seed 541.
+
+Follow-ups used the private helper and 32 actor updates, changing one setting
+from the first run. These are
+20,000-game checks on seed 523, again against the original, without search:
+
+| Change | Win rate +/- 1 sigma | Games | 95% interval | Points/game |
+|---|---|---|---|---|
+| Actor LR 1e-5 | 50.090% +/- .230 pp | 20,000 | [49.640%, 50.540%] | +.1 |
+| Temperature .25 | 50.265% +/- .171 pp | 20,000 | [49.929%, 50.601%] | +.7 |
+| GAE lambda .5, 32 updates | 50.465% +/- .208 pp | 20,000 | [50.057%, 50.873%] | +.4 |
+
+The higher LR changed roughly 4-10% of greedy choices per early update versus
+about 1% at LR 1e-6, without a corresponding strength gain. The next test changes
+GAE lambda to .5 to use intermediate helper predictions and runs 64 updates,
+with a comparison checkpoint at 32. The seed-523 results inform this experiment
+selection; any final candidate needs a fresh confirmation seed.
 
 Full experiment settings, follow-ups and reproduction commands are in
 [PPO_EXPERIMENT.md](PPO_EXPERIMENT.md) and

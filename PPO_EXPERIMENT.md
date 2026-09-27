@@ -74,6 +74,10 @@ four exported networks byte-identical to the original; an identity match gave
 50.000% +/- .000 pp in 4,000 games. Its zero observed error is expected from
 identical deterministic players, not a strength estimate against another player.
 
+Directly comparing the two fixed endpoints on seed 541 gave the private helper
+**49.795% +/- .182 pp in 20,000 games**, 95% interval [49.437%, 50.153%],
++.1 point/game. This also fails to establish a playing benefit from hidden hands.
+
 The public endpoint has a small positive result against the original, but neither
 run has passed the required ISMCTS gate. No weights or app levels are promoted.
 Training took 307.9 seconds for the private run and 721.3 seconds for the public
@@ -96,6 +100,23 @@ strength in this budget. A third follow-up keeps temperature 1 and LR 1e-6, chan
 only GAE lambda to .5, and runs 12 warmup plus 64 PPO batches. It evaluates after
 32 updates for comparison, then after 64. This tests whether bootstrapping from
 the helper reduces terminal-return noise enough to outweigh value-estimation bias.
+
+The temperature-.25 endpoint scored **50.265% +/- .171 pp in 20,000 games**,
+95% interval [49.929%, 50.601%], +.7 point/game (seed 523). It does not establish
+an improvement. These seed-523 comparisons now also inform experiment selection;
+a final candidate must receive a new seed for confirmation.
+
+The lambda-.5 checkpoint after 32 updates scored **50.465% +/- .208 pp in
+20,000 games**, 95% interval [50.057%, 50.873%], +.4 point/game (seed 523).
+The planned continuation to 64 updates is still being evaluated. This small gain
+against the original does not establish a gain against ISMCTS.
+
+A separate capacity test will use a 696-512-256-128-1 privileged helper, while
+retaining the original actor, temperature 1, LR 1e-6 and lambda 1. It will train
+12 warmup plus 64 PPO batches, with an evaluation at 32 updates for the original
+budget comparison. This tests the helper's capacity without increasing deployed
+weights or inference work. `--critic-sizes` configures only this discarded helper;
+resume refuses an architecture mismatch.
 
 ## Sources
 
@@ -121,3 +142,9 @@ Progress is append-only JSONL. Each saved checkpoint contains managed actor
 weights and a separate training.pt with actors, critics, optimizers and RNG
 states. Resume with --resume path/to/training.pt and matching collection settings.
 Batch files are reused; saved snapshot states and seeds reproduce them.
+New run manifests (`run-NNNN.json`, where NNNN is the resumed iteration) record
+Python/PyTorch/CUDA versions, device, source-weight hashes, trainer DLL hash and
+Python source hashes. New checkpoints refuse source weights changed in place.
+Earlier pilot checkpoints predate this hash check and require unchanged source
+files when resumed. Their frozen baseline hashes are recorded in the experiment
+artifacts and the preceding research results.

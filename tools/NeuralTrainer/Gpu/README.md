@@ -218,7 +218,9 @@ artifacts/torch-env/Scripts/python.exe -X utf8 tools/NeuralTrainer/Gpu/ppo.py --
 
 `--updates` counts actor updates after the `--warmup` critic-only batches.
 Defaults use temperature 1 game point, GAE lambda 1, actor LR 1e-6 and critic LR
-3e-4. Each checkpoint contains the ordinary four BNN1 actor files plus a
+3e-4. `--critic-sizes 512,256,128` changes only the training helper's hidden
+layers; the default is `256,128`. Resume requires the same helper architecture.
+Each checkpoint contains the ordinary four BNN1 actor files plus a
 training-only `training.pt` containing models, optimizers and random states.
 Training uses checked BNF1 float32 snapshots so the PPO probability ratio does
 not include half-weight rounding. The BPP1 records keep private cards separate
@@ -232,6 +234,10 @@ rates override the saved optimizer rates. Use a fresh output directory to fork
 an earlier checkpoint; appending requires its iteration to match the last progress
 record. Keep source weights unchanged. CPU/GPU random states are restored, and
 a resumed smoke run produced byte-identical final actor files.
+New checkpoints also verify the source-weight hashes when resuming. Each
+`run-NNNN.json` records the settings, software/device versions, initial weights,
+trainer DLL and Python source hashes. Earlier pilot checkpoints without hashes
+remain readable and require the caller to preserve their source weights.
 
 Automatic checkpoint matches use greedy, search-free actors against the supplied
 input folder. They are development checks. Promotion also requires independent
