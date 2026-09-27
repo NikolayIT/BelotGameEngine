@@ -105,3 +105,29 @@ training labels or critic inputs, never inputs to the deployed seat policy.
 Search teacher strength, distilled student strength, and actual ISMCTS results must remain
 separate measurements. There is no theoretical guarantee that our approximate search,
 teacher distribution, or finite-capacity student improves at every iteration.
+
+## What the experiments have established so far
+
+The [results record](../NEURAL_NETWORK.md#12-september-27-improvement-experiments-in-progress)
+contains the counts, uncertainty and commands. Search-100 remains a stronger teacher,
+but its tested students regress or tie: ordinary and centred Q losses, policy KL,
+mean anchoring, suit augmentation, wider networks, frozen residual corrections,
+shared card heads and student trajectories have not produced a promotable network.
+Filtering small teacher advantages mostly prevents regression without establishing
+an independent ISMCTS gain. Lower prediction error has repeatedly failed to imply
+better play.
+
+Ownership supervision at weights .01 and .1 and public-order inputs were implemented
+and tested. The four-epoch Q-only history fit ties; the stronger auxiliary objective
+regresses. These are short pilot results, not evidence against history or learned
+beliefs in general. A longer online run or explicit belief-conditioned policy would
+test different hypotheses. PPO with a privileged critic remains unimplemented.
+
+A compact alternative from the PIMC literature is now under independent evaluation:
+solve the final two tricks, and three-trick positions with at most eight publicly
+consistent worlds. It gains about three percentage points against the frozen network
+at 25 us/card, retaining the original weights. Its declaration model assumes the bots'
+policy of declaring every combination. Its future actions know each sampled world,
+so this is approximate imperfect-information search. A subsequent student experiment
+will fit these inexpensive endgame targets while retaining the warm start's targets
+elsewhere; it will be judged by the same match gate.

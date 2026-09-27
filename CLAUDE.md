@@ -276,8 +276,13 @@ pairs: **the networks alone tie ClaudePlayerIsmcts (100 ms)**, 50.2% ± 1.3% of 
   `record-selfplay` can record true-deal action targets plus separate ownership
   labels. `Gpu/fit_belief.py` tests an auxiliary card-location objective against
   a matched zero-weight control; the auxiliary head is discarded on export.
-  Hidden cards are labels only, never policy inputs. The first .01-weight pilot
-  tied the baseline; .1 weight and an isolated public-history prototype are pending.
+  Hidden cards are labels only, never policy inputs. The .01-weight pilot tied
+  the baseline; .1 weight regressed. An isolated layout-2 public-history prototype
+  also tied with Q-only fitting and regressed with .1-weight ownership loss.
+  Search-teacher students have not earned promotion. A separate bounded-endgame
+  candidate (`neural-bounded-endgame`) keeps the original networks, averages
+  perfect-information endings over publicly consistent hands, and measured
+  25.0 us/card. Its independent ISMCTS promotion evaluation is pending.
   See `etc/NeuralResearch.md` for the broader research review and experiment rationale.
 - **Timing**: the September 27 trainer fixes warmup counting in `bench` and separately times
   warmed card callbacks through the engine. The frozen networks measured 18.5 us/card in

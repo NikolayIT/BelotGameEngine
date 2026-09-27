@@ -611,7 +611,9 @@ batch 1024, centred Q-loss weight .05 and four epochs; the auxiliary weight was
 The auxiliary objective did not improve playing strength in this pilot. All-trumps
 held-out ownership accuracy rose from the control's 41.6% to 42.1%, which is a
 prediction diagnostic rather than evidence of better card choices. A stronger
-auxiliary weight (.1) and ordered-history inputs are being tested. The 75-test C# suite
+auxiliary weight (.1) scored 49.6% +/- .2 pp at epoch 1, 49.2% +/- .2 at epoch 2,
+and 49.2% +/- .2 at epoch 4 (20,000 games each, seed 29). Its final difference
+was -1.1 points/game, -6 Elo. The 75-test C# suite
 and 17 Python tests pass; they include a direct check that removing all hidden
 hands changes ownership labels without changing any policy input.
 
@@ -635,5 +637,88 @@ playing function. Its tests pass: 78 C# and 20 Python, including engine/view par
 history reconstruction, struct-copy independence, widened sample counts, layout
 refusal and export checks. Across the 94,603 validation records, all original
 features, Q targets and ownership labels exactly match the layout-1 collection;
-the history fields are additional public information. Retraining results and an
-idle inference benchmark are pending. The production runtime stays on layout 1.
+the history fields are additional public information. The production runtime stays
+on layout 1.
+
+The public-history branch (`1d06f40`) collected the same 100,000 training deals,
+yielding 1,884,525 positions. Matched four-epoch fits used learning rate 1e-5,
+batch 1024, seed 1401 and centred Q-loss weight .05. Every cell below is 20,000
+games against the function-equivalent layout-2 baseline, seed 29, one standard
+error across mirrored pairs:
+
+| Public-history fit | Epoch 1 | Epoch 2 | Epoch 4 |
+|---|---|---|---|
+| Q-only | 50.2% +/- .2 pp | 50.0% +/- .2 pp | 50.0% +/- .2 pp |
+| Q plus card-location loss, weight .1 | 49.7% +/- .2 pp | 49.1% +/- .2 pp | 49.2% +/- .2 pp |
+
+These short, low-learning-rate fits provide no evidence of stronger play. They
+do not establish that public history is useless: the 64 added input rows start
+at zero, and longer online training may be needed to learn from them. No trained
+history model is promoted, and no idle speed claim is made for this branch.
+
+### Search labels on student trajectories, completed
+
+The 1,000-game search-100 collection on fast-student trajectories finished in
+50:16, with 213,144 positions (72,504 suit, 38,936 no-trumps, 101,704 all-trumps).
+The teacher, bidding, independent validation data and 24-epoch fitting schedule
+match the earlier full-data tests. Every cell is 20,000 games against the frozen
+network, seed 29, with one standard error across mirrored pairs:
+
+| Fit | Epoch 4 | Epoch 12 | Epoch 24 |
+|---|---|---|---|
+| Mean-anchored teacher targets | 49.2% +/- .2 pp | 48.4% +/- .2 pp | 48.4% +/- .2 pp |
+| Mean anchoring plus two-point teacher-regret filter | 50.4% +/- .2 pp | 50.1% +/- .2 pp | 50.0% +/- .2 pp |
+
+Neither recovers the teacher's gain. Search quality, trajectory distribution,
+loss choice and additional capacity have all been tested; the present evidence
+does not justify replacing the deployed neural weights with these students.
+Reproduce with the GPU README's collection/fitting commands, adding
+`--teacher-play-chance 0 --games 1000 --seed 8371` for collection and
+`--anchor-mean` (optionally `--minimum-teacher-regret 2`) for fitting.
+
+### Bounded endgame search candidate
+
+Branch `neural-bounded-endgame`, commit `0417b5c`, retains the frozen networks and
+adds optional managed C# endgame search. It enumerates hands consistent with
+public observations, solves each by partnership alpha-beta, and averages every
+legal action's game-point outcome. Future choices within each world have perfect
+information: this is a PIMC approximation, not an exact information-set value.
+
+The default optional horizon is two tricks, at most 90 worlds. A three-trick
+setting solves positions with at most eight consistent worlds and otherwise
+falls back. An additional declaration model reconstructs hypothetical original
+hands from remaining and publicly played cards. It conditions on the bots'
+policy of declaring all available combinations; humans who withhold declarations
+can violate that assumption. Actual secret hands never enter evaluation.
+
+Development matches against the frozen network, 20,000 games each, seed 29:
+
+| Variant | Win rate, one standard error | Points/game | Elo |
+|---|---|---|---|
+| Two tricks, known declaration ranks only | 51.0% +/- .1 pp | +1.7 | +7 |
+| Two tricks, declaration model | 52.3% +/- .1 pp | +3.6 | +16 |
+| Three tricks, eight-world cap and declaration model | 53.0% +/- .1 pp | +4.5 | +21 |
+
+Independent baseline checks of the fixed three-trick candidate scored
+53.0% +/- .1 pp over 20,000 games at seed 97 (+4.6 points/game, +21 Elo), and
+53.2% +/- .1 pp over 20,000 games at seed 1000000007 (+4.4 points/game, +22 Elo).
+`validate` multiplies the supplied seed by 100,000 before adding each pair index;
+these ranges are distinct. The latter seed wraps to starting RNG seed 277147232
+under the current unchecked C# arithmetic. The seed-97 ISMCTS run was interrupted
+before any score was reported; its replacement uses 500 pairs at seed 1000000007.
+The independent ISMCTS promotion result is pending.
+
+Idle engine benchmarks after 20 warmup games, then 100 measured games:
+
+| Variant | Mean us/card | Card decisions |
+|---|---|---|
+| Frozen network | 19.2 | 21,336 |
+| Two tricks plus declaration model | 22.4 | 21,286 |
+| Three tricks plus declaration model | 25.0 | 21,391 |
+
+The last configuration meets the latency budget, with 3,612 endgame evaluations.
+It is a stronger fast candidate against its lineage; its neural weights have
+not improved. Eighty C# tests pass on the branch, including alpha-beta versus
+exhaustive play, independent world enumeration, hidden-hand independence,
+three-trick overflow fallback, scoring variants and engine/view parity.
+See `ENDGAME_EXPERIMENT.md` on that branch for implementation and commands.
