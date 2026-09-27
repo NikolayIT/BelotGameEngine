@@ -10,7 +10,7 @@
     {
         public static int Sample(float[] values, uint mask, double temperature, double uniform, out float logProbability)
         {
-            if (mask == 0 || !double.IsFinite(temperature) || temperature <= 0 || uniform < 0 || uniform >= 1)
+            if (mask == 0 || !double.IsFinite(temperature) || temperature <= 0 || !double.IsFinite(uniform) || uniform < 0 || uniform >= 1)
             {
                 throw new ArgumentOutOfRangeException(nameof(temperature));
             }

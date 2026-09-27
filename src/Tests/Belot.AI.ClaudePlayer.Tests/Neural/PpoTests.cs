@@ -29,6 +29,7 @@
             Assert.Equal(secondLog, unchanged);
             Assert.Throws<ArgumentOutOfRangeException>(() => PpoPolicy.Sample(q, 0, 1, 0.5, out _));
             Assert.Throws<ArgumentOutOfRangeException>(() => PpoPolicy.Sample(q, mask, 0, 0.5, out _));
+            Assert.Throws<ArgumentOutOfRangeException>(() => PpoPolicy.Sample(q, mask, 1, double.NaN, out _));
         }
 
         [Fact]
@@ -66,6 +67,11 @@
             }
 
             var bytes = file.ToArray();
+            for (var length = 0; length < (6 + source.LayerCount) * sizeof(int); length++)
+            {
+                Assert.Throws<InvalidDataException>(() => PpoTrainingFiles.Read(new MemoryStream(bytes[..length]), 1));
+            }
+
             Assert.Throws<InvalidDataException>(() => PpoTrainingFiles.Read(new MemoryStream(bytes), 2));
             Assert.Throws<InvalidDataException>(() => PpoTrainingFiles.Read(new MemoryStream(bytes[..^1]), 1));
             Assert.Throws<InvalidDataException>(() => PpoTrainingFiles.Read(new MemoryStream(bytes.Concat(new byte[1]).ToArray()), 1));

@@ -32,6 +32,11 @@
 
         public static NeuralNetwork Read(Stream stream, int expectedTag)
         {
+            if (stream.Length - stream.Position < 5 * sizeof(int))
+            {
+                throw new InvalidDataException("Truncated PPO snapshot header.");
+            }
+
             using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, leaveOpen: true);
             if (reader.ReadInt32() != Magic || reader.ReadInt32() != 1 || reader.ReadInt32() != expectedTag
                 || reader.ReadInt32() != FeatureEncoder.LayoutVersion)
@@ -40,7 +45,7 @@
             }
 
             var layers = reader.ReadInt32();
-            if (layers < 1 || layers > 16)
+            if (layers < 1 || layers > 16 || stream.Length - stream.Position < (layers + 1) * sizeof(int))
             {
                 throw new InvalidDataException("Invalid PPO layer count.");
             }
