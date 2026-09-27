@@ -30,7 +30,8 @@ class FitTests(unittest.TestCase):
             args = Namespace(input=str(source), data=str(root / "data"), validation_data="",
                              out=str(output), epochs=2, batch=1024, learning_rate=0.001,
                              card_value_weight=0.05, policy_temperature=0, residual_sizes="",
-                             suit_augmentation=False, anchor_mean=False, minimum_teacher_regret=0, device="cpu", seed=7)
+                             suit_augmentation=False, anchor_mean=False, minimum_teacher_regret=0,
+                             stream_data=False, device="cpu", seed=7)
             with contextlib.redirect_stdout(io.StringIO()):
                 fit.run(args)
             for name in ("bid", "notrumps", "alltrumps"):
@@ -40,6 +41,19 @@ class FitTests(unittest.TestCase):
             self.assertNotEqual((source / "trump.bin").read_bytes(), (output / "trump.bin").read_bytes())
             self.assertTrue((output / "sources.json").is_file())
             fit.read_network(output / "trump.bin", 1)
+            for device in ('cpu', 'cuda') if torch.cuda.is_available() else ('cpu',):
+                exports = []
+                for stream in (False, True):
+                    args.out = str(root / f'{device}-{stream}')
+                    args.device = device
+                    args.stream_data = stream
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        fit.run(args)
+                    exports.append(Path(args.out))
+                for name in fit.NAMES:
+                    for epoch in ('', 'epoch-001', 'epoch-002'):
+                        self.assertEqual((exports[0] / epoch / (name + '.bin')).read_bytes(),
+                                         (exports[1] / epoch / (name + '.bin')).read_bytes())
 
     def test_network_round_trip_preserves_half_weights_and_input_major_order(self):
         torch.manual_seed(2)

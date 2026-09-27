@@ -150,6 +150,12 @@ four-actor run collected 4,183 positions in 76 seconds across 20 games. These
 are training-throughput pilots during other collection work, not app latency
 measurements or proof of universal floating-point equivalence.
 
+For collections larger than available GPU memory, `fit.py --stream-data` keeps
+samples in CPU memory and transfers one training batch at a time. The default
+keeps one contract's dataset on the GPU. Both modes use the same sample order,
+loss and export format; tests compare exported weights, including CUDA when
+available. Host-memory streaming trades transfer time for a bounded GPU footprint.
+
 ## Auxiliary card-location experiment
 
 `record-selfplay` freezes the supplied networks and records the existing true-deal

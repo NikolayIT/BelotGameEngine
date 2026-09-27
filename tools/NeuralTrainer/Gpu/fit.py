@@ -343,20 +343,21 @@ def run(args):
             # Validation keeps the original teacher targets, including their mean values.
             data = anchor_targets(model, data, args.batch, device)
         optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
-        # Only one contract's data is resident on the GPU at once.
-        device_data = tuple(tensor.to(device) for tensor in data)
+        # Large collections can stay in host memory, with only each batch on the GPU.
+        storage_device = torch.device('cpu') if args.stream_data else device
+        device_data = tuple(tensor.to(storage_device) for tensor in data)
         maps = suit_maps(tag, device) if tag != 0 and args.suit_augmentation else None
         for epoch in range(1, args.epochs + 1):
             rate = args.learning_rate * (0.3 if epoch > args.epochs * 0.7 else 1)
             optimizer.param_groups[0]["lr"] = rate
-            order = torch.tensor(rng.permutation(training), device=device)
+            order = torch.tensor(rng.permutation(training), device=storage_device)
             if device.type == "cuda":
                 torch.cuda.synchronize()
             started = time.perf_counter()
             train_loss, label_count = 0.0, 0
             for start in range(0, len(order), args.batch):
                 selection = order[start:start + args.batch]
-                x, y, mask = (tensor[selection] for tensor in device_data)
+                x, y, mask = (tensor[selection].to(device) for tensor in device_data)
                 if maps is not None:
                     x, y, mask = augment_suits(x, y, mask, tag, maps)
                 optimizer.zero_grad(set_to_none=True)
@@ -389,6 +390,8 @@ if __name__ == "__main__":
     parser.add_argument("--out", required=True)
     parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--batch", type=int, default=1024)
+    parser.add_argument("--stream-data", action="store_true",
+                        help="Keep samples in CPU memory and transfer each training batch to the GPU")
     parser.add_argument("--learning-rate", type=float, default=5e-5)
     parser.add_argument("--card-value-weight", type=float, default=-1)
     parser.add_argument("--policy-temperature", type=float, default=0,
