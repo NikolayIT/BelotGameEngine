@@ -128,6 +128,14 @@
         /// <summary>Gets or sets what "validate" plays against: smart, ismcts:ms or a folder of networks.</summary>
         public string Opponent { get; set; } = "ismcts:100";
 
+        /// <summary>Gets or sets the sampled worlds for an opponent loaded from a network folder.</summary>
+        public int OpponentSearchDeals { get; set; }
+
+        public int OpponentSearchMilliseconds { get; set; }
+
+        /// <summary>Gets or sets whether a folder opponent uses the same endgame settings as the candidate.</summary>
+        public bool OpponentEndgame { get; set; }
+
         public int Pairs { get; set; } = 200;
 
         /// <summary>Gets or sets how many labelled deals "bench" times (0 = time 20000 deals without labels).</summary>
@@ -147,6 +155,8 @@
         public bool EndgameDeclarations { get; set; }
 
         public int EndgameTricks { get; set; } = 2;
+
+        public int EndgameWorlds { get; set; } = 8;
 
         public double SearchPriorDeals { get; set; }
 

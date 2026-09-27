@@ -84,6 +84,7 @@
                     UseEndgameSearch = settings.Endgame,
                     EndgameUseDeclarations = settings.EndgameDeclarations,
                     EndgameTricks = settings.EndgameTricks,
+                    EndgameThreeTrickWorldLimit = settings.EndgameWorlds,
                     SearchPriorDeals = settings.SearchPriorDeals,
                     SearchPruneMargin = settings.SearchPruneMargin,
                     SearchTimeLimitMilliseconds = settings.SearchMilliseconds,
@@ -111,7 +112,15 @@
             else
             {
                 var baseline = NeuralModels.Load(settings.Opponent);
-                opponent = () => new ClaudePlayerNeural(baseline);
+                opponent = () => new ClaudePlayerNeural(baseline)
+                {
+                    SearchDeals = settings.OpponentSearchDeals,
+                    SearchTimeLimitMilliseconds = settings.OpponentSearchMilliseconds,
+                    UseEndgameSearch = settings.OpponentEndgame,
+                    EndgameUseDeclarations = settings.EndgameDeclarations,
+                    EndgameTricks = settings.EndgameTricks,
+                    EndgameThreeTrickWorldLimit = settings.EndgameWorlds,
+                };
             }
 
             var stopwatch = Stopwatch.StartNew();
@@ -137,6 +146,7 @@
                 UseEndgameSearch = settings.Endgame,
                 EndgameUseDeclarations = settings.EndgameDeclarations,
                 EndgameTricks = settings.EndgameTricks,
+                EndgameThreeTrickWorldLimit = settings.EndgameWorlds,
                 SearchPriorDeals = settings.SearchPriorDeals,
                 SearchPruneMargin = settings.SearchPruneMargin,
                 SearchTimeLimitMilliseconds = settings.SearchMilliseconds,
@@ -160,7 +170,7 @@
             var ticks = timed.Sum(x => x.Ticks);
             Console.WriteLine(
                 $"search {settings.SearchDeals} deals (prior {settings.SearchPriorDeals}, prune {settings.SearchPruneMargin}, "
-                + $"limit {settings.SearchMilliseconds} ms, endgame {settings.Endgame}/{settings.EndgameTricks}, declarations {settings.EndgameDeclarations}, "
+                + $"limit {settings.SearchMilliseconds} ms, endgame {settings.Endgame}/{settings.EndgameTricks}/{settings.EndgameWorlds}, declarations {settings.EndgameDeclarations}, "
                 + $"{players.Sum(x => x.EndgameDecisions) - warmupEndgames} endgames): {decisions} card decisions, "
                 + $"{ticks * 1_000_000.0 / Stopwatch.Frequency / decisions:0.0} µs per card through the engine ({games} games, warmup excluded)");
         }

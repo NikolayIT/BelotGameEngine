@@ -53,6 +53,7 @@
                 UseEndgameSearch = endgameTeacher,
                 EndgameUseDeclarations = settings.EndgameDeclarations,
                 EndgameTricks = settings.EndgameTricks,
+                EndgameThreeTrickWorldLimit = settings.EndgameWorlds,
                 Rng = new Random(seed),
             };
             this.student = new ClaudePlayerNeural(models);

@@ -106,13 +106,23 @@
         }
 
         /// <summary>
-        /// Gets or sets the endgame horizon: two tricks, or three when at most eight hidden
-        /// deals fit the observations. All two-trick worlds are still considered. Default two.
+        /// Gets or sets the endgame horizon: two tricks, or three within
+        /// <see cref="EndgameThreeTrickWorldLimit"/> worlds. Default two.
         /// </summary>
         public int EndgameTricks
         {
             get => this.endgame.Tricks;
             set => this.endgame.Tricks = value == 2 || value == 3 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>
+        /// Gets or sets the maximum worlds to solve with three tricks left (1 to 90, default 8).
+        /// More worlds extend endgame coverage at higher cost. Two-trick coverage is unchanged.
+        /// </summary>
+        public int EndgameThreeTrickWorldLimit
+        {
+            get => this.endgame.ThreeTrickWorldLimit;
+            set => this.endgame.ThreeTrickWorldLimit = value >= 1 && value <= 90 ? value : throw new ArgumentOutOfRangeException(nameof(value));
         }
 
         /// <summary>

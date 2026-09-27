@@ -7,7 +7,7 @@
     using Belot.Engine.Players;
 
     /// <summary>
-    /// Enumerates remaining deals in the final two tricks, or three with at most eight worlds, and solves
+    /// Enumerates remaining deals in the final two tricks, or three within a bounded world count, and solves
     /// each by partnership minimax. Equal-weight perfect-information results approximate
     /// the seat's values (PIMC); future decisions inside a world have perfect information.
     /// Declines inconsistent constraints. Unresolved announcement ranks require the optional
@@ -40,6 +40,8 @@
 
         public int Tricks { get; set; } = 2;
 
+        public int ThreeTrickWorldLimit { get; set; } = 8;
+
         public bool Evaluate(PlayerPlayCardContext context, in NeuralDeal deal, uint legal, BelotSimulator simulator, float[] values)
         {
             this.Worlds = 0;
@@ -66,7 +68,7 @@
 
             this.simulator = simulator;
             this.team = this.knowledge.Me & 1;
-            this.worldLimit = deal.Play.TricksPlayed < 6 ? 8 : 90;
+            this.worldLimit = deal.Play.TricksPlayed < 6 ? this.ThreeTrickWorldLimit : 90;
             this.overflow = false;
             Array.Clear(this.sums);
             Array.Clear(this.needs);

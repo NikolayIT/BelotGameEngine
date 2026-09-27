@@ -58,17 +58,19 @@
         }
 
         [Theory]
-        [InlineData(2, false)]
-        [InlineData(2, true)]
-        [InlineData(3, true)]
-        public void PublicWorldsAndValuesMatchIndependentAssignmentsAndIgnoreSecretHands(int tricks, bool declarations)
+        [InlineData(2, false, 8)]
+        [InlineData(2, true, 8)]
+        [InlineData(3, true, 8)]
+        [InlineData(3, true, 32)]
+        [InlineData(3, true, 90)]
+        public void PublicWorldsAndValuesMatchIndependentAssignmentsAndIgnoreSecretHands(int tricks, bool declarations, int worldLimit)
         {
             var checkedPositions = 0;
             var multipleWorlds = 0;
             var earlyPositions = 0;
             var checkedOverflow = false;
             var simulator = new BelotSimulator();
-            var search = new EndgameSearch { UseDeclarations = declarations, Tricks = tricks };
+            var search = new EndgameSearch { UseDeclarations = declarations, Tricks = tricks, ThreeTrickWorldLimit = worldLimit };
             var smart = new SmartPlayer.SmartPlayer();
             for (var seed = 0; seed < 8; seed++)
             {
@@ -97,7 +99,7 @@
                             Assert.True(knowledge.Build(context, simulator, usePlayInference: true));
                             var expected = EnumerateAssignments(knowledge, simulator, legal, declarations, out var worlds);
                             Assert.Equal(worlds, search.Worlds);
-                            Assert.InRange(worlds, 1, deal.Play.TricksPlayed < 6 ? 8 : 90);
+                            Assert.InRange(worlds, 1, deal.Play.TricksPlayed < 6 ? worldLimit : 90);
                             Assert.Equal(expected, actual);
                             multipleWorlds += worlds > 1 ? 1 : 0;
                             earlyPositions += deal.Play.TricksPlayed == 5 ? 1 : 0;
@@ -119,7 +121,7 @@
                             var knowledge = new RoundKnowledge();
                             Assert.True(knowledge.Build(context, simulator, usePlayInference: true));
                             EnumerateAssignments(knowledge, simulator, legal, declarations, out var worlds, onlyCount: true);
-                            if (worlds > 8)
+                            if (worlds > worldLimit)
                             {
                                 var untouched = Enumerable.Repeat(9f, 32).ToArray();
                                 Assert.False(search.Evaluate(context, in deal, legal, simulator, untouched));
@@ -148,6 +150,9 @@
         {
             var player = new ClaudePlayerNeural();
             Assert.Equal(2, player.EndgameTricks);
+            Assert.Equal(8, player.EndgameThreeTrickWorldLimit);
+            Assert.Throws<ArgumentOutOfRangeException>(() => player.EndgameThreeTrickWorldLimit = 0);
+            Assert.Throws<ArgumentOutOfRangeException>(() => player.EndgameThreeTrickWorldLimit = 91);
             Assert.Throws<ArgumentOutOfRangeException>(() => player.EndgameTricks = 4);
             Assert.Throws<ArgumentOutOfRangeException>(() => player.EndgameTricks = 0);
         }

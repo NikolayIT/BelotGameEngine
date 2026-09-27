@@ -1,4 +1,4 @@
-# Bounded endgame search (promotion evaluation pending)
+# Bounded endgame search (not promoted)
 
 The experimental player keeps the original networks and adds optional, deterministic
 PIMC search near the end of a deal. It enumerates hands consistent with the deciding
@@ -40,15 +40,19 @@ Idle engine-card benchmark, 100 games after 20 warmup games:
 | Two tricks plus declarations | 22.4 | 21,286 | 3,112 |
 | Three tricks plus declarations | 25.0 | 21,391 | 3,612 |
 
-The three-trick configuration meets the 50-us budget. An independent ISMCTS result
-is still required before promotion. The neural weights themselves have not improved.
+The three-trick configuration meets the 50-us mean latency budget. The fixed
+eight-world candidate scored 53.2% +/- .1 pp against the frozen network over
+20,000 independent games and 52.4% +/- 1.4 pp against ISMCTS100 over 1,000 games
+(+2.7 points/game, +17 Elo). The latter 95% interval includes 50%, so promotion
+is refused. CLI seed 1000000007 maps to RNG seed 277147232 in the validator.
+The neural weights themselves have not improved.
 
 ```powershell
 dotnet artifacts/neural-20260927/endgame-three-bin/NeuralTrainer.dll validate --in artifacts/neural-20260927/baseline --opponent artifacts/neural-20260927/baseline --endgame true --endgame-declarations true --endgame-tricks 3 --pairs 10000 --threads 16 --seed 29
 dotnet artifacts/neural-20260927/endgame-three-bin/NeuralTrainer.dll bench --in artifacts/neural-20260927/baseline --endgame true --endgame-declarations true --endgame-tricks 3
 ```
 
-Verification: 80 C# tests pass, Release build zero warnings/errors. Tests compare
+Verification: 84 C# tests pass, Release build zero warnings/errors. Tests compare
 alpha-beta against exhaustive play across all contracts, doubled/redoubled deals,
 hanging points and both teams; compare world enumeration and every action value
 against independent ternary assignments; check three-trick overflow fallback and
@@ -65,3 +69,11 @@ trajectories isolate target changes from changed play. This tests whether the
 endgame gain can be learned without runtime search; it is not yet a measured gain.
 Use separately seeded validation games and the GPU fitter's `--anchor-mean` to
 preserve the original mean values while learning the teacher's action differences.
+
+The optional `--endgame-worlds` setting bounds three-trick enumeration between 1
+and 90 worlds (default 8); every valid two-trick world is still considered. Larger
+limits require new strength and idle timing checks. For direct Master comparisons,
+folder opponents accept `--opponent-search-deals`, `--opponent-search-milliseconds`
+and `--opponent-endgame true`. The last option uses the candidate's declaration,
+horizon and world-limit settings; all opponent options default to the old fast
+network behavior. The full settings are printed with each validation result.
