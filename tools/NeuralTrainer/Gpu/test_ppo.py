@@ -134,6 +134,8 @@ class PpoTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / 'bid.bin').write_bytes(b'frozen bid')
+            for actor, name in zip(actors, fit.NAMES[1:]):
+                fit.write_network(actor, root / (name + '.bin'))
             args = SimpleNamespace(input=str(root), device='cpu', critic='privileged',
                                    temperature=1, gae_lambda=1, seed=7, warmup=2, deals=32,
                                    threads=2, actor_lr=1e-6, critic_lr=3e-4)
@@ -152,6 +154,11 @@ class PpoTests(unittest.TestCase):
             self.assertEqual((root / 'checkpoint/bid.bin').read_bytes(), b'frozen bid')
             args.temperature = 2
             with self.assertRaises(ValueError):
+                ppo.restore(root / 'checkpoint/training.pt', actors, critics,
+                            actor_optimizers, critic_optimizers, args)
+            args.temperature = 1
+            (root / 'bid.bin').write_bytes(b'changed bid')
+            with self.assertRaisesRegex(ValueError, 'source weights changed'):
                 ppo.restore(root / 'checkpoint/training.pt', actors, critics,
                             actor_optimizers, critic_optimizers, args)
 

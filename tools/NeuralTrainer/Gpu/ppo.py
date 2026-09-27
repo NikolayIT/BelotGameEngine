@@ -6,6 +6,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import platform
 import shutil
 import struct
 import subprocess
@@ -242,12 +243,17 @@ def checkpoint(directory, actors, critics, actor_optimizers, critic_optimizers, 
     shutil.copyfile(Path(args.input) / 'bid.bin', directory / 'bid.bin')
     for model, name in zip(actors, fit.NAMES[1:]):
         fit.write_network(model, directory / (name + '.bin'))
-    torch.save({'iteration': iteration, 'args': vars(args),
+    torch.save({'iteration': iteration, 'args': vars(args), 'source_hashes': source_hashes(args.input),
                 'actors': [m.state_dict() for m in actors], 'critics': [m.state_dict() for m in critics],
                 'actor_optimizers': [o.state_dict() for o in actor_optimizers],
                 'critic_optimizers': [o.state_dict() for o in critic_optimizers],
                 'rng': torch.get_rng_state(),
                 'cuda_rng': torch.cuda.get_rng_state_all() if torch.cuda.is_available() else []}, directory / 'training.pt')
+
+
+def source_hashes(directory):
+    return {name: hashlib.sha256((Path(directory) / (name + '.bin')).read_bytes()).hexdigest()
+            for name in fit.NAMES}
 
 
 def restore(path, actors, critics, actor_optimizers, critic_optimizers, args):
@@ -257,6 +263,8 @@ def restore(path, actors, critics, actor_optimizers, critic_optimizers, args):
             raise ValueError(f'Resume changes {key}')
     if Path(saved['args']['input']).resolve() != Path(args.input).resolve():
         raise ValueError('Resume changes the frozen input reference')
+    if 'source_hashes' in saved and saved['source_hashes'] != source_hashes(args.input):
+        raise ValueError('Resume source weights changed')
     for objects, key in ((actors, 'actors'), (critics, 'critics'),
                          (actor_optimizers, 'actor_optimizers'), (critic_optimizers, 'critic_optimizers')):
         for target, state in zip(objects, saved[key]):
@@ -308,6 +316,14 @@ def run(args):
     shutil.copyfile(Path(args.input) / 'bid.bin', snapshot / 'bid.bin')
     clock = time.monotonic()
     (root / 'settings.json').write_text(json.dumps(vars(args), indent=2), encoding='utf-8')
+    provenance = {'args': vars(args), 'python': platform.python_version(), 'torch': str(torch.__version__),
+                  'cuda': torch.version.cuda,
+                  'device': torch.cuda.get_device_name(args.device) if str(args.device).startswith('cuda') else 'cpu',
+                  'source_hashes': source_hashes(args.input),
+                  'trainer_sha256': hashlib.sha256(Path(args.trainer).read_bytes()).hexdigest(),
+                  'python_sources': {Path(path).name: hashlib.sha256(Path(path).read_bytes()).hexdigest()
+                                     for path in (__file__, fit.__file__)}}
+    (root / f'run-{start:04}.json').write_text(json.dumps(provenance, indent=2), encoding='utf-8')
     for step in range(start, args.warmup + args.updates):
         iteration_clock = time.monotonic()
         for actor, name in zip(actors, fit.NAMES[1:]):
