@@ -24,7 +24,7 @@
         private const double AnchorElo = 1200d;
 
         // The app's Expert and Master levels (Belot.UI's AiLevels).
-        private const double ExpertTemperature = 1.25;
+        private const double ExpertTemperature = 1.5;
 
         private const double ExpertMaxRegret = 4;
 
@@ -35,7 +35,7 @@
         /// <summary>Plays the round robin and prints the ratings.</summary>
         /// <param name="parallelism">How many games run at once.</param>
         /// <param name="fastPairs">Mirrored pairs per matchup of the fast levels.</param>
-        /// <param name="slowPairs">Mirrored pairs per matchup with the ISMCTS level (it spends its time budget on every card).</param>
+        /// <param name="slowPairs">Mirrored pairs per matchup with Master or ISMCTS, which search on every card.</param>
         public static void Run(int parallelism, int fastPairs, int slowPairs)
         {
             var levels = new[]
@@ -45,8 +45,16 @@
                 new Level("smart", "SmartPlayer", () => new SmartPlayer(), isSlow: false),
                 new Level(
                     "expert",
-                    "Neural (loose)",
-                    () => new ClaudePlayerNeural { Temperature = ExpertTemperature, MaxRegret = ExpertMaxRegret },
+                    "Neural/endgame (loose)",
+                    () => new ClaudePlayerNeural
+                    {
+                        Temperature = ExpertTemperature,
+                        MaxRegret = ExpertMaxRegret,
+                        UseEndgameSearch = true,
+                        EndgameUseDeclarations = true,
+                        EndgameTricks = 3,
+                        EndgameThreeTrickWorldLimit = 90,
+                    },
                     isSlow: false),
                 new Level(
                     "claude",
@@ -60,7 +68,7 @@
             var wins = new double[n, n];
             var games = new double[n, n];
             var pairScores = new double[n * n][];
-            Console.WriteLine($"ELO round robin of the app's levels, pair vs pair: {fastPairs} mirrored pairs a matchup ({slowPairs} with ISMCTS)");
+            Console.WriteLine($"ELO round robin of the app's levels, pair vs pair: {fastPairs} mirrored pairs a matchup ({slowPairs} with search players)");
             Console.WriteLine(new string('=', Program.LineLength));
 
             var total = Stopwatch.StartNew();
@@ -80,7 +88,7 @@
                     games[j, i] += played;
                     Console.WriteLine(
                         $"  {levels[i].Name,-20} {winsI,6} - {played - winsI,-6} {levels[j].Name,-20} "
-                        + $"({100.0 * winsI / played,5:0.0}% +/- {100 * sigma:0.000} pp; {played} games | {stopwatch.Elapsed:hh\\:mm\\:ss\\.f})");
+                        + $"({100.0 * winsI / played,7:0.000}% +/- {100 * sigma:0.000} pp; {played} games | {stopwatch.Elapsed:hh\\:mm\\:ss\\.f})");
                 }
             }
 

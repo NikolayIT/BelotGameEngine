@@ -7,7 +7,6 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    using Belot.AI.ClaudePlayer;
     using Belot.Engine.Cards;
     using Belot.Engine.Game;
     using Belot.Engine.GameMechanics;
@@ -159,7 +158,7 @@
                 bots[seat.Index()] = this.createBot(seat) ?? throw new InvalidOperationException($"No player for {seat}.");
             }
 
-            this.hintPlayer = this.hintFactory?.Invoke() ?? new ClaudePlayerNeural();
+            this.hintPlayer = this.hintFactory?.Invoke() ?? AiLevels.CreateFastPlayer();
             this.hinting = Task.CompletedTask;
             var game = new BelotMatch(new BelotMatchOptions
             {

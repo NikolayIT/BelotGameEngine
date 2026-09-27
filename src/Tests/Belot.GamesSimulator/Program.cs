@@ -28,7 +28,7 @@
         ///   neural-ab [pairs] [candidate] [baseline]: two folders of networks ("-" the embedded)
         ///   against each other;
         ///   elo [fastPairs] [slowPairs]: the MAUI app's levels in a pair-vs-pair round robin
-        ///   (default 20000 mirrored pairs a matchup, 150 with ISMCTS), printing the ratings to
+        ///   (default 20000 mirrored pairs a matchup, 150 with search players), printing the ratings to
         ///   paste into the app's level list.
         /// </summary>
         /// <param name="args">The optional suite name and its arguments.</param>

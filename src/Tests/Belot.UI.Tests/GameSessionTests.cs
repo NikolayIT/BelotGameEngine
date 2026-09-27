@@ -298,10 +298,13 @@
 
         // A hint is what the hint player would decide in the person's place, from the person's
         // own view; asked for a turn that is over, it is dropped.
-        [Fact]
-        public void HintsShouldBeWhatTheHintPlayerWouldDoInThePersonsPlace() => UiThread.Run(async () =>
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void HintsShouldBeWhatTheHintPlayerWouldDoInThePersonsPlace(bool useDefault) => UiThread.Run(async () =>
         {
-            var session = NewSession(11, hint: () => new SmartPlayer());
+            Func<IPlayer> factory = useDefault ? AiLevels.CreateFastPlayer : () => new SmartPlayer();
+            var session = new GameSession(Names, seat => new DummyPlayer(), GamePace.Instant, useDefault ? null : factory, new Random(11));
             var driver = new TableDriver(session, 11) { AutoPlay = false };
             var nextTurn = new TaskCompletionSource<TurnInfo>(TaskCreationOptions.RunContinuationsAsynchronously);
             driver.Turn += turn =>
@@ -337,7 +340,7 @@
                     continue;
                 }
 
-                var expected = new SmartPlayer().Decide(view);
+                var expected = factory().Decide(view);
                 var hint = (await session.GetHintAsync())!;
                 Assert.Equal(expected.Type, hint.Type);
                 Assert.Equal(expected.BidType, hint.BidType);

@@ -11,18 +11,19 @@
     public static class AiLevels
     {
         /// <summary>
-        /// The Expert is the networks alone, played a little loose: it takes a card or bid worth d
-        /// game points less than the best e^(-d / T) times as often, never one worse than the best
+        /// The Expert uses the networks with bounded endgames and plays a little loose: a card or bid worth d
+        /// game points less than the best is chosen e^(-d / T) times as often, never one worse than the best
         /// by more than MaxRegret points (see ClaudePlayerNeural).
         /// </summary>
-        public const double ExpertTemperature = 1.25;
+        public const double ExpertTemperature = 1.5;
 
         public const double ExpertMaxRegret = 4;
 
         /// <summary>
         /// The Master plays each legal card out in this many deals of the unseen cards, with the
-        /// networks for every seat (ClaudePlayerNeural.SearchDeals): about 50 ms a card on a
-        /// desktop, and never more than <see cref="MasterMilliseconds"/> on a slow phone.
+        /// networks for every seat (ClaudePlayerNeural.SearchDeals): about 60 ms a card on a
+        /// desktop. It checks <see cref="MasterMilliseconds"/> between complete sampled deals,
+        /// after at least eight, so the budget is not a strict deadline.
         /// </summary>
         public const int MasterSearchDeals = 100;
 
@@ -42,7 +43,7 @@
                 "Level_Expert_Tag",
                 4,
                 1554,
-                () => new ClaudePlayerNeural { Temperature = ExpertTemperature, MaxRegret = ExpertMaxRegret }),
+                CreateExpertPlayer),
             new AiLevel(
                 "claude",
                 "👑",
@@ -59,5 +60,22 @@
         /// <summary>The level with this id, or null for an unknown one.</summary>
         public static AiLevel? Find(string? id) =>
             All.FirstOrDefault(o => string.Equals(o.Id, id, StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>The validated fast profile used for hints and as the basis of Expert.</summary>
+        public static ClaudePlayerNeural CreateFastPlayer() => new ClaudePlayerNeural
+        {
+            UseEndgameSearch = true,
+            EndgameUseDeclarations = true,
+            EndgameTricks = 3,
+            EndgameThreeTrickWorldLimit = 90,
+        };
+
+        private static ClaudePlayerNeural CreateExpertPlayer()
+        {
+            var player = CreateFastPlayer();
+            player.Temperature = ExpertTemperature;
+            player.MaxRegret = ExpertMaxRegret;
+            return player;
+        }
     }
 }
