@@ -29,7 +29,7 @@ class FitTests(unittest.TestCase):
                 (root / ("data." + name + ".samples")).write_bytes(header + (record * 2 if tag == 1 else b""))
             args = Namespace(input=str(source), data=str(root / "data"), validation_data="",
                              out=str(output), epochs=2, batch=1024, learning_rate=0.001,
-                             card_value_weight=0.05, policy_temperature=0, device="cpu", seed=7)
+                             card_value_weight=0.05, policy_temperature=0, residual_sizes="", device="cpu", seed=7)
             with contextlib.redirect_stdout(io.StringIO()):
                 fit.run(args)
             for name in ("bid", "notrumps", "alltrumps"):
@@ -67,6 +67,31 @@ class FitTests(unittest.TestCase):
                     fit.read_network(second, 1)
             with self.assertRaises(ValueError):
                 fit.read_network(first, 2)
+
+    def test_frozen_residual_branch_merges_into_existing_format(self):
+        torch.manual_seed(2)
+        base = fit.Network(1, 1, (600, 16, 8, 4, 32))
+        original = [parameter.detach().clone() for parameter in base.parameters()]
+        model = fit.ResidualNetwork(base, (8, 4, 4))
+        x = torch.randn(6, 600)
+        torch.testing.assert_close(model(x), base(x), rtol=0, atol=0)
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+        for _ in range(3):
+            optimizer.zero_grad()
+            model(x).square().mean().backward()
+            optimizer.step()
+        for before, after in zip(original, base.parameters()):
+            torch.testing.assert_close(before, after, rtol=0, atol=0)
+        self.assertFalse(torch.equal(model(x), base(x)))
+        torch.testing.assert_close(model(x), model.merged()(x), rtol=1e-5, atol=1e-6)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "merged.bin"
+            fit.write_network(model, path)
+            restored = fit.read_network(path, 1)
+            self.assertEqual(restored.sizes, (600, 24, 12, 8, 32))
+            torch.testing.assert_close(model(x), restored(x), rtol=0.01, atol=0.001)
+        with self.assertRaises(ValueError):
+            fit.ResidualNetwork(base, (8, 4))
 
     def test_non_finite_or_overflowed_export_is_refused(self):
         model = fit.Network(1, 1, (600, 32))

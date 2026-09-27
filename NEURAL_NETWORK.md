@@ -485,3 +485,16 @@ seeded search-teacher validation games and the full 2,000-game training dataset 
 being collected. The GPU fitter has eight passing tests, including finite-difference
 policy-KL gradients, illegal-action masking, and offset invariance. No weights or app
 levels have changed.
+
+The 30-minute collection checkpoint contains about 181,000 decisions. Continuing
+centred fitting for 24 epochs on it scored 47.6% +/- 0.6 pp over 4,000 games
+(-3.4 points/game, -17 ELO). An additive 128/64/64 branch with the original model
+frozen, zero initial output, and learning rate 0.001 scored 48.0% +/- 0.5 pp at
+epoch 4, 41.1% +/- 0.6 pp at epoch 12, and 39.0% +/- 0.6 pp at epoch 24 (4,000
+games each). It overfit: on separately seeded 100-game teacher validation data,
+all-trumps teacher regret rose from 0.62 to 0.73 points. It is rejected. Its
+branches export as one ordinary MLP; nine Python tests include frozen-parameter
+and merged/exported prediction checks. More parameters alone have not helped.
+
+At this stage the Engine (741), UI (71), and prior ClaudePlayer (69) tests passed.
+The Windows and Android app builds both completed with zero warnings and errors.

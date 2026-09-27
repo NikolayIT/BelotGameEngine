@@ -47,6 +47,14 @@ value remains. This is a variant of policy distillation, not an exact
 reproduction of Rusu et al.'s teacher-only temperature. The default is zero
 (disabled); first pilot results did not improve playing strength.
 
+`--residual-sizes 128,64,64` freezes the loaded card network and trains a small
+additive branch with zero initial output. It has one width per original hidden
+layer. Export merges the branches into a single block-diagonal MLP, so the C#
+loader and inference code remain unchanged. Tests check initial equivalence,
+that the original parameters stay fixed, and equivalence after merging/export.
+This increases file size and inference work; benchmark before promotion. The
+first limited-data pilot overfit and became substantially weaker.
+
 `--validation-data <prefix>` uses a separately collected dataset. Without it,
 5% of samples are held out at random. That split can share games with training
 and is only a fitting diagnostic. Promotion requires independent whole-game

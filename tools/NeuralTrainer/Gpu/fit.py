@@ -53,6 +53,43 @@ class Network(nn.Module):
         return self.layers[-1](x)
 
 
+class ResidualNetwork(nn.Module):
+    """Train a small correction while preserving the pretrained branch exactly."""
+    def __init__(self, base, hidden_sizes):
+        super().__init__()
+        if not hidden_sizes or len(hidden_sizes) != len(base.sizes) - 2 or any(size <= 0 for size in hidden_sizes):
+            raise ValueError("Residual branch must have one positive width per existing hidden layer")
+        self.base = base.requires_grad_(False)
+        self.residual = Network(base.tag, base.layout, (base.sizes[0], *hidden_sizes, base.sizes[-1]))
+        self.tag, self.layout = base.tag, base.layout
+        self.sizes = (base.sizes[0], *(a + b for a, b in zip(base.sizes[1:-1], hidden_sizes)), base.sizes[-1])
+        nn.init.zeros_(self.residual.layers[-1].weight)
+        nn.init.zeros_(self.residual.layers[-1].bias)
+
+    def forward(self, x):
+        return self.base(x) + self.residual(x)
+
+    @torch.no_grad()
+    def merged(self):
+        """Fold parallel branches into the runtime's ordinary block-diagonal MLP."""
+        merged = Network(self.tag, self.layout, self.sizes)
+        for index, (target, base, extra) in enumerate(zip(merged.layers, self.base.layers, self.residual.layers)):
+            target.weight.zero_()
+            target.bias.zero_()
+            if index == 0:
+                target.weight.copy_(torch.cat((base.weight, extra.weight)).cpu())
+                target.bias.copy_(torch.cat((base.bias, extra.bias)).cpu())
+            elif index == len(merged.layers) - 1:
+                target.weight.copy_(torch.cat((base.weight, extra.weight), dim=1).cpu())
+                target.bias.copy_((base.bias + extra.bias).cpu())
+            else:
+                outputs, inputs = base.weight.shape
+                target.weight[:outputs, :inputs].copy_(base.weight.cpu())
+                target.weight[outputs:, inputs:].copy_(extra.weight.cpu())
+                target.bias.copy_(torch.cat((base.bias, extra.bias)).cpu())
+        return merged
+
+
 def read_network(path, expected_tag):
     data = Path(path).read_bytes()
     if len(data) < 20:
@@ -85,6 +122,8 @@ def read_network(path, expected_tag):
 
 
 def write_network(model, path):
+    if isinstance(model, ResidualNetwork):
+        model = model.merged()
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("wb") as file:
@@ -218,7 +257,10 @@ def run(args):
     sources = {}
     for tag, name in enumerate(NAMES):
         source = Path(args.input) / (name + ".bin")
-        model = read_network(source, tag).to(device)
+        model = read_network(source, tag)
+        if tag != 0 and args.residual_sizes:
+            model = ResidualNetwork(model, [int(width) for width in args.residual_sizes.split(",")])
+        model = model.to(device)
         sample_path = args.data + "." + name + ".samples"
         data = read_samples(sample_path, model.sizes[0], model.sizes[-1])
         sources[str(source)] = hashlib.sha256(source.read_bytes()).hexdigest()
@@ -295,6 +337,8 @@ if __name__ == "__main__":
     parser.add_argument("--card-value-weight", type=float, default=-1)
     parser.add_argument("--policy-temperature", type=float, default=0,
                         help="Positive game-point temperature replaces advantage Huber with policy KL")
+    parser.add_argument("--residual-sizes", default="",
+                        help="Freeze the input network and learn an additive branch, e.g. 128,64,64")
     parser.add_argument("--device", choices=("cpu", "cuda"), default="cuda")
     parser.add_argument("--seed", type=int, default=401)
     arguments = parser.parse_args()
