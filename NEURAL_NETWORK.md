@@ -385,7 +385,7 @@ Initial candidates (all uncertainty is one standard error over mirrored pairs):
 |---|---|---|
 | Old loss, 5-minute continuation | 49.6% +/- 0.2 pp, -0.5 points/game, -3 ELO | No improvement |
 | Old loss, 15-minute continuation | 49.6% +/- 0.2 pp, -0.3 points/game, -2 ELO | 86.6% +/- 0.2 pp vs Smart, 20,000 games; 48.0% +/- 2.2 pp vs ISMCTS 100 ms, 400 games, seed 30, -3.7 points/game, -14 ELO |
-| Centred loss, 15-minute continuation | 50.9% +/- 0.2 pp, +1.1 points/game, +6 ELO | 86.8% +/- 0.2 pp vs Smart, 20,000 games, +57.9 points/game, +327 ELO; ISMCTS check pending |
+| Centred loss, 15-minute continuation | 50.9% +/- 0.2 pp, +1.1 points/game, +6 ELO | 86.8% +/- 0.2 pp vs Smart, 20,000 games, +57.9 points/game, +327 ELO; 48.0% +/- 2.2 pp vs ISMCTS 100 ms, 400 games, seed 30, -2.8 points/game, -14 ELO |
 | Mean card weights of run3/0010, run3/0011 and final; final bidding kept | 50.1% +/- 0.2 pp, +0.1 points/game, +1 ELO | Tie; fails the first promotion gate |
 
 The 15-minute control processed 498,266 deals and 16,478 optimiser batches. Its settings
@@ -420,3 +420,31 @@ The centred pilot also scored 51.0% +/- 0.2 pp against the equal-duration contro
 card decisions in 100 games after warmup. The small lineage gain is not a promotion;
 independent ISMCTS evaluation is required. Timing differences between these identical
 architectures reflect run variability and scheduling, not an inference optimisation.
+
+### Capacity and fitting diagnostics
+
+Both 15-minute continuations finished at 48.0% +/- 2.2 pp against ISMCTS over 400 games
+(seed 30, 100 ms, 10 threads, with no concurrent training). The centred loss has not
+shown an independent strength gain, despite its small advantage over the frozen networks.
+Neither candidate is promoted. These short checks do not rule out smaller improvements.
+
+`expand --in <folder> --out <wider-folder> --sizes 640,384,192 --seed 371` widens the card
+MLPs while preserving their initial function. The old units and weights are copied;
+new units have random incoming weights and zero connections into old units. Those zero
+connections can learn immediately. Bidding remains byte-for-byte unchanged. This lets
+an equal-data experiment test capacity without discarding the warm start. The candidate
+shape is 600-640-384-192-32; inference timing still needs an idle benchmark.
+
+`fit --fit-checkpoints true` retains each epoch for later matches. Optional
+`--validation-data <independent-prefix>` uses separately generated games for validation;
+otherwise the original random 5% sample split is retained, which can contain decisions
+from games also represented in training. The logs report absolute and centred RMSE in
+points, teacher regret (best teacher value minus the teacher value of the student's
+choice), and the fraction choosing an equally best labelled action. `diagnose --in
+<folder> --data <prefix>` reports these measures without training. These are descriptive
+fit diagnostics, not independent match-strength estimates.
+
+Tests verify legal-action masking and point units in diagnostics, use of independent
+validation samples, complete per-epoch checkpoints, expansion parity before and after
+16-bit export, refusal of shrinking/mismatched layer counts, and learning through the
+new units. The full ClaudePlayer suite has 69 passing tests and builds without warnings.

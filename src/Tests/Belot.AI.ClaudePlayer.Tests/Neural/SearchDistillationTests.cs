@@ -82,6 +82,56 @@
         }
 
         [Fact]
+        public void IndependentValidationSamplesAreNotUsedForTraining()
+        {
+            var directory = Path.Combine(Path.GetTempPath(), "belot-holdout-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(directory);
+            try
+            {
+                var input = Path.Combine(directory, "input");
+                var output = Path.Combine(directory, "output");
+                var training = Path.Combine(directory, "train");
+                var validation = Path.Combine(directory, "validation");
+                RandomModels.Create(41).Save(input);
+                foreach (var name in NeuralModels.FileNames)
+                {
+                    var tag = Array.IndexOf(NeuralModels.FileNames, name);
+                    foreach (var (prefix, target) in new[] { (training, 10f), (validation, -10f) })
+                    {
+                        var buffer = new SampleBuffer(1, tag == 0 ? 9 : 32);
+                        if (tag == 1)
+                        {
+                            var labels = new float[32];
+                            labels[0] = target;
+                            buffer.Add(new[] { 0 }, new[] { 1f }, labels, 1);
+                        }
+
+                        buffer.Save(prefix + "." + Path.GetFileNameWithoutExtension(name) + ".samples");
+                    }
+                }
+
+                Distillation.Fit(new TrainingSettings
+                {
+                    In = input,
+                    Out = output,
+                    Data = training,
+                    ValidationData = validation,
+                    Epochs = 1,
+                    Batch = 64,
+                    Learners = 1,
+                    FitLearningRate = 0.01,
+                });
+                var before = NeuralModels.Load(input).Networks[1];
+                var after = NeuralModels.Load(output).Networks[1];
+                Assert.True(after.GetBiases(after.LayerCount - 1)[0] > before.GetBiases(before.LayerCount - 1)[0]);
+            }
+            finally
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+
+        [Fact]
         public void EmptySamplesKeepWarmStartWeightsAndRefuseRandomOnes()
         {
             var directory = Path.Combine(Path.GetTempPath(), "belot-distill-" + Guid.NewGuid().ToString("N"));
@@ -149,9 +199,15 @@
                     Batch = 64,
                     Learners = 1,
                     FitLearningRate = 0.01,
+                    FitCheckpoints = true,
                 });
                 var before = NeuralModels.Load(input).Networks[1];
                 var after = NeuralModels.Load(output).Networks[1];
+                foreach (var name in NeuralModels.FileNames)
+                {
+                    Assert.Equal(File.ReadAllBytes(Path.Combine(output, name)), File.ReadAllBytes(Path.Combine(output, "epoch-001", name)));
+                }
+
                 var last = before.LayerCount - 1;
                 Assert.NotEqual(before.GetBiases(last)[0], after.GetBiases(last)[0]);
                 Assert.Equal(before.GetBiases(last).Skip(1), after.GetBiases(last).Skip(1));

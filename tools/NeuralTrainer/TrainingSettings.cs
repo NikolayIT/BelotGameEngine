@@ -97,6 +97,12 @@
         /// <summary>Gets or sets the sample files' path prefix ("distill" and "fit").</summary>
         public string Data { get; set; } = "data/distill";
 
+        /// <summary>Gets or sets an independent validation sample prefix (empty = hold out 5% of Data).</summary>
+        public string ValidationData { get; set; } = string.Empty;
+
+        /// <summary>Gets or sets whether fit saves each completed epoch for subsequent match evaluation.</summary>
+        public bool FitCheckpoints { get; set; }
+
         /// <summary>Gets or sets the distillation teacher: ismcts, or neural with SearchDeals sampled worlds.</summary>
         public string Teacher { get; set; } = "ismcts";
 

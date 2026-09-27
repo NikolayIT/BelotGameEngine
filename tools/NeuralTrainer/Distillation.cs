@@ -83,6 +83,15 @@
         {
             var networks = TrainingRun.CreateNetworks(settings);
             var random = new Random(settings.Seed);
+            Console.WriteLine($"fit: {settings}");
+            if (settings.FitCheckpoints)
+            {
+                for (var epoch = 1; epoch <= settings.Epochs; epoch++)
+                {
+                    TrainingRun.ToModels(networks).Save(Path.Combine(settings.Out, $"epoch-{epoch:000}"));
+                }
+            }
+
             for (var tag = 0; tag < 4; tag++)
             {
                 var buffer = SampleBuffer.Load($"{settings.Data}.{Names[tag]}.samples");
@@ -99,30 +108,17 @@
                 }
 
                 var slots = Enumerable.Range(0, count).OrderBy(_ => random.Next()).ToArray();
-                var validation = slots.Take(Math.Max(1, count / 20)).ToArray();
-                var training = slots.Skip(validation.Length).ToArray();
+                var independent = !string.IsNullOrEmpty(settings.ValidationData);
+                var validationBuffer = independent ? SampleBuffer.Load($"{settings.ValidationData}.{Names[tag]}.samples") : buffer;
+                var validation = independent
+                    ? Enumerable.Range(0, validationBuffer.Count).ToArray()
+                    : slots.Take(Math.Max(1, count / 20)).ToArray();
+                var training = independent ? slots : slots.Skip(validation.Length).ToArray();
                 var network = networks[tag];
                 var workers = Enumerable.Range(0, settings.Learners).Select(_ => new MlpWorker(network.Sizes)).ToArray();
                 var batch = new Batch(settings.Batch, buffer.Outputs);
-                Console.WriteLine($"{Names[tag]}: {count} samples, {string.Join("-", network.Sizes)}; validation loss {ValidationLoss(network, buffer, validation, batch, workers[0], settings):0.0000}");
-                for (var epoch = 1; epoch <= settings.Epochs; epoch++)
-                {
-                    var stopwatch = Stopwatch.StartNew();
-                    Shuffle(training, random);
-                    var rate = (float)(settings.FitLearningRate * (epoch > settings.Epochs * 0.7 ? 0.3 : 1));
-                    var loss = 0.0;
-                    var batches = 0;
-                    for (var start = 0; start < training.Length; start += settings.Batch)
-                    {
-                        buffer.Take(batch, training.AsSpan(start, Math.Min(settings.Batch, training.Length - start)));
-                        loss += network.Train(batch, workers, rate, (float)settings.MaxNorm, (float)settings.Huber, tag == NeuralModels.BidTag ? -1 : (float)settings.CardValueWeight);
-                        batches++;
-                    }
-
-                    Console.WriteLine(
-                        $"  epoch {epoch}: training loss {loss / Math.Max(1, batches):0.0000}, validation loss "
-                        + $"{ValidationLoss(network, buffer, validation, batch, workers[0], settings):0.0000} ({stopwatch.Elapsed:mm\\:ss})");
-                }
+                Console.WriteLine($"{Names[tag]}: {count} samples, {string.Join("-", network.Sizes)}; validation loss {ValidationLoss(network, validationBuffer, validation, batch, workers[0], settings):0.0000}");
+                Console.WriteLine($"  validation: {SampleDiagnostics.Measure(network.ToNetwork(), validationBuffer, validation, batch)}");
 
                 // An action the samples never measured (ClaudePlayerIsmcts does not double) starts
                 // out clearly bad, a deal lost, until self-play measures it.
@@ -142,24 +138,62 @@
                         Console.WriteLine($"  output {output} was never labelled: it starts at -{NeuralEvaluator.ValueScale} game points");
                     }
                 }
+
+                for (var epoch = 1; epoch <= settings.Epochs; epoch++)
+                {
+                    var stopwatch = Stopwatch.StartNew();
+                    Shuffle(training, random);
+                    var rate = (float)(settings.FitLearningRate * (epoch > settings.Epochs * 0.7 ? 0.3 : 1));
+                    var loss = 0.0;
+                    var batches = 0;
+                    for (var start = 0; start < training.Length; start += settings.Batch)
+                    {
+                        buffer.Take(batch, training.AsSpan(start, Math.Min(settings.Batch, training.Length - start)));
+                        loss += network.Train(batch, workers, rate, (float)settings.MaxNorm, (float)settings.Huber, tag == NeuralModels.BidTag ? -1 : (float)settings.CardValueWeight);
+                        batches++;
+                    }
+
+                    Console.WriteLine(
+                        $"  epoch {epoch}: training loss {loss / Math.Max(1, batches):0.0000}, validation loss "
+                        + $"{ValidationLoss(network, validationBuffer, validation, batch, workers[0], settings):0.0000} ({stopwatch.Elapsed:mm\\:ss})");
+                    Console.WriteLine($"  validation: {SampleDiagnostics.Measure(network.ToNetwork(), validationBuffer, validation, batch)}");
+                    if (settings.FitCheckpoints)
+                    {
+                        using var stream = File.Create(Path.Combine(settings.Out, $"epoch-{epoch:000}", NeuralModels.FileNames[tag]));
+                        network.ToNetwork().Write(stream);
+                    }
+                }
             }
 
             TrainingRun.ToModels(networks).Save(settings.Out);
             Console.WriteLine($"Saved to {settings.Out}");
         }
 
+        public static void Diagnose(TrainingSettings settings)
+        {
+            var models = string.IsNullOrEmpty(settings.In) ? NeuralModels.Embedded : NeuralModels.Load(settings.In);
+            Console.WriteLine($"diagnose: {settings}");
+            for (var tag = 0; tag < models.Networks.Length; tag++)
+            {
+                var buffer = SampleBuffer.Load($"{settings.Data}.{Names[tag]}.samples");
+                var slots = Enumerable.Range(0, buffer.Count).ToArray();
+                Console.WriteLine($"{Names[tag]}: {SampleDiagnostics.Measure(models.Networks[tag], buffer, slots, new Batch(settings.Batch, buffer.Outputs))}");
+            }
+        }
+
         private static double ValidationLoss(Mlp network, SampleBuffer buffer, int[] validation, Batch batch, MlpWorker worker, TrainingSettings settings)
         {
             var loss = 0.0;
-            var batches = 0;
+            var labelCount = 0;
             for (var start = 0; start < validation.Length; start += batch.Capacity)
             {
                 buffer.Take(batch, validation.AsSpan(start, Math.Min(batch.Capacity, validation.Length - start)));
-                loss += network.Loss(batch, worker, (float)settings.Huber, network.Tag == NeuralModels.BidTag ? -1 : (float)settings.CardValueWeight);
-                batches++;
+                var labels = batch.Masks.Take(batch.Count).Sum(mask => System.Numerics.BitOperations.PopCount(mask));
+                loss += labels * network.Loss(batch, worker, (float)settings.Huber, network.Tag == NeuralModels.BidTag ? -1 : (float)settings.CardValueWeight);
+                labelCount += labels;
             }
 
-            return loss / Math.Max(1, batches);
+            return loss / Math.Max(1, labelCount);
         }
 
         // The outputs labelled in any sample.

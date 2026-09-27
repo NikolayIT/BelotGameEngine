@@ -29,7 +29,7 @@
             Console.OutputEncoding = new UTF8Encoding(false);
             if (args.Length == 0)
             {
-                Console.WriteLine("Commands: distill, fit, train, validate, bench (see Program.cs and NEURAL_NETWORK.md).");
+                Console.WriteLine("Commands: distill, fit, diagnose, expand, train, validate, bench (see Program.cs and NEURAL_NETWORK.md).");
                 return 1;
             }
 
@@ -42,6 +42,12 @@
                     break;
                 case "fit":
                     Distillation.Fit(settings);
+                    break;
+                case "diagnose":
+                    Distillation.Diagnose(settings);
+                    break;
+                case "expand":
+                    NetworkExpansion.Run(settings);
                     break;
                 case "train":
                     new TrainingRun(settings).Run();
