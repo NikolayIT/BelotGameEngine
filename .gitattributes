@@ -1,0 +1,2 @@
+# The neural player's trained networks (16-bit floats): never touch their bytes.
+*.bin binary
