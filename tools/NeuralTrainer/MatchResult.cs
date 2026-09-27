@@ -35,7 +35,7 @@
         public double Upper95 => Math.Min(1, this.Score + (1.959963984540054 * this.Sigma));
 
         public override string ToString() =>
-            $"{this.Games} games: {this.Score:P1} ± {this.Sigma:P3}, 95% [{this.Lower95:P3}, {this.Upper95:P3}], "
+            $"{this.Games} games: {this.Score:P3} ± {this.Sigma:P3}, 95% [{this.Lower95:P3}, {this.Upper95:P3}], "
             + $"{this.PointsPerGame:+0.0;-0.0} points a game, ELO {this.Elo:+0;-0} ± {this.EloSigma:0}";
     }
 }
