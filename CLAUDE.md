@@ -260,6 +260,16 @@ pairs: **the networks alone tie ClaudePlayerIsmcts (100 ms)**, 50.2% ± 1.3% of 
   played out in the true deal by all four seats' networks (Monte Carlo policy iteration, the
   actions sharing the deal's luck). Run the trainer from a copy of its binaries (`-o`) when you
   want to build meanwhile: a running trainer locks its `bin`, which the ClaudePlayer tests build.
+  Experimental training options: `--card-value-weight 0.05` separates action errors from a
+  common deal-value error (default `-1` keeps the original Huber objective);
+  `distill --teacher neural --in <folder> --search-deals 100 --card-label-chance 1` records
+  the stronger sampled-world teacher for `fit --in <warm-start>`. Empty data preserves the
+  corresponding warm-start model. These options have not yet produced promoted weights.
+  See `etc/NeuralResearch.md` for the broader research review and experiment rationale.
+- **Timing**: the September 27 trainer fixes warmup counting in `bench` and separately times
+  warmed card callbacks through the engine. The frozen networks measured 18.5 us/card in
+  that check; the historical 8.6 us figure above used a different, slightly biased measure.
+  Use the corrected benchmark for new comparisons.
 - **`SearchDeals`** plays each legal card out in N deals of the unseen cards (dealt like ISMCTS's,
   `WorldSampler`) with the networks for every seat and averages: +121 ELO over the networks alone
   at 100 deals; 10 deals is worse than none. `SearchTimeLimitMilliseconds` caps it on slow phones.

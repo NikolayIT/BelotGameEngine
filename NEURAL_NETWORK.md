@@ -305,6 +305,22 @@ the individual games. Development and final evaluation use different deal seeds.
 
 ### Research and experiment order
 
+The broader primary-source review is in [etc/NeuralResearch.md](etc/NeuralResearch.md).
+It covers search distillation, Skat inference, DouZero/PerfectDou/DouZero+, Gongzhu,
+Bridge partnership learning, residual networks, ReBeL/Student of Games, and the ICLR
+2026 comparison of policy-gradient methods. It distinguishes methods/ablation review
+from abstract-only screening; it is not a claim of an exhaustive literature review.
+
+The most relevant architectural lead is to retain **ordered public play** and add
+**card-location supervision**. The current encoder loses the order of earlier tricks.
+A compact history MLP may capture that evidence within the runtime budget; larger
+residual networks and transformers remain candidates to measure. PerfectDou and newer
+policy-gradient results also justify considering PPO with a training-only privileged
+critic if the current action-value approach saturates. None of those other-game results
+proves a gain here. The first substantial test uses our already measured stronger
+100-world search as a teacher, then compares fitting error, teacher decision regret,
+whole-game strength and inference cost before selecting a replacement architecture.
+
 - [Expert Iteration (Anthony, Tian and Barber, 2017)](https://arxiv.org/abs/1705.08439)
   alternates search and learning from its decisions. The measured strength of our
   100-deal neural search makes it a directly available teacher. Search labels must use
@@ -336,8 +352,8 @@ candidate. Bidding remains on the original loss. No feature layout or weight for
 First compare equal-duration continuations from the frozen weights, with bidding frozen,
 using the original and centred losses. Evaluate both against the reference and ISMCTS.
 Then use the evidence to choose longer self-play or distillation of the search teacher.
-Architectural changes and a new training stack are deferred until those measurements
-identify a reason to pay their implementation and inference costs.
+Architectural and training-stack changes remain open. Use teacher-fitting diagnostics
+and the history/inference evidence above to choose the next controlled experiment.
 
 ### Measurement corrections
 
@@ -363,12 +379,13 @@ The final results and reproduction commands will be recorded here after the runs
 | Corrected self-play benchmark | 11.3 us/decision (518,891 measured decisions, excludes warmup) |
 | Engine card callbacks on one thread | 18.5 us/card (21,336 decisions across 100 games, excludes 20 warmup games) |
 
-Initial rejects (all uncertainty is one standard error over mirrored pairs):
+Initial candidates (all uncertainty is one standard error over mirrored pairs):
 
 | Candidate | vs frozen baseline, 20,000 games, seed 29 | Other evidence |
 |---|---|---|
 | Old loss, 5-minute continuation | 49.6% +/- 0.2 pp, -0.5 points/game, -3 ELO | No improvement |
-| Old loss, 15-minute continuation | 49.6% +/- 0.2 pp, -0.3 points/game, -2 ELO | 86.6% +/- 0.2 pp vs Smart, 20,000 games, +57.1 points/game, +324 ELO |
+| Old loss, 15-minute continuation | 49.6% +/- 0.2 pp, -0.3 points/game, -2 ELO | 86.6% +/- 0.2 pp vs Smart, 20,000 games; 48.0% +/- 2.2 pp vs ISMCTS 100 ms, 400 games, seed 30, -3.7 points/game, -14 ELO |
+| Centred loss, 15-minute continuation | 50.9% +/- 0.2 pp, +1.1 points/game, +6 ELO | 86.8% +/- 0.2 pp vs Smart, 20,000 games, +57.9 points/game, +327 ELO; ISMCTS check pending |
 | Mean card weights of run3/0010, run3/0011 and final; final bidding kept | 50.1% +/- 0.2 pp, +0.1 points/game, +1 ELO | Tie; fails the first promotion gate |
 
 The 15-minute control processed 498,266 deals and 16,478 optimiser batches. Its settings
@@ -397,3 +414,9 @@ actions. New random networks still initialise unlabelled actions pessimistically
 Tests cover centred-loss gradients through every network layer, output gradients on both
 sides of Huber clipping, cancellation of common deal offsets, absolute-value calibration,
 empty and single-action masks, and exact search-label/feature parity through a whole game.
+
+The centred pilot also scored 51.0% +/- 0.2 pp against the equal-duration control over
+20,000 games (+1.5 points/game, +7 ELO). Its engine timing was 16.3 us/card over 21,516
+card decisions in 100 games after warmup. The small lineage gain is not a promotion;
+independent ISMCTS evaluation is required. Timing differences between these identical
+architectures reflect run variability and scheduling, not an inference optimisation.
