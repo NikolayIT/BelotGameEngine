@@ -788,3 +788,29 @@ against the original give exactly 50.0% +/- 0.0 pp and zero point difference.
 Twenty Python tests pass, including export equivalence and learning gradients
 in the inserted layers. The deeper `5e-5` fit uses the same data, epochs and seed
 as the ordinary student; strength and idle timing results are pending.
+
+The completed ordinary `5e-5` fit scored 49.9% +/- .2 pp at epoch 4 and
+50.3% +/- .2 pp at epoch 12; the deeper fit scored 50.0% +/- .2 pp and
+50.4% +/- .2 pp respectively. Each is 20,000 games against the frozen player,
+seed 29. Final point differences were +.4 and +.5 points/game (+2 and +3 Elo).
+Neither recovers enough of the stronger teacher to justify neural-only promotion.
+
+With all training and other matches stopped, the final idle benchmark measured
+20.0 us/card for the frozen network (21,336 decisions), 20.5 for the deeper
+epoch-12 student (21,262), and 32.3 for the frozen network plus 90-world endgame
+(21,380). Each uses 100 measured games after 20 warmup games. The depth change
+fits the latency/storage constraints but has not established useful playing gains.
+
+The fixed 90-world configuration's fresh baseline comparison at seed 293 scored
+54.65% +/- .168 pp over 20,000 games, 95% interval [54.320%, 54.980%], +6.7
+points/game, +32 +/- 1 Elo. A predeclared **2,000-game** ISMCTS100 confirmation
+uses that same separate seed range and 10 threads, with other heavy work stopped.
+It is pending. Trainer match summaries now expose the precise normal interval
+and the delta-method Elo standard error, with four new tests (88 C# tests total
+on branch `53fa698`). Promotion uses the interval rather than a rounded sigma.
+
+The existing 100-deal search player scored 54.5% +/- 2.5 pp against the fast
+90-world endgame configuration over 200 games (seed 297, +3.1 points/game,
++31 Elo). This fixed-sample comparison used no time cap and ran alongside
+training. It suggests a remaining search gain, but its 95% interval includes
+50%; a larger comparison is needed before claiming that advantage as established.
