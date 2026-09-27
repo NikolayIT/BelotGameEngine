@@ -1084,7 +1084,9 @@ inputs. Warmup does not change any actor byte.
 All following results are greedy, search-free whole games in mirrored pairs
 against the original networks. Error is one empirical standard error across pairs.
 Checkpoint development used 4,000 games, seed 521; the table uses independent
-20,000-game checks, seed 523.
+20,000-game checks, seed 523. The CLI maps a seed to `seed * 100000 + pairIndex`,
+so these runs and the later seed-557 confirmation use disjoint deals. Seed 523
+became development data once its results were used to choose follow-ups.
 
 | Helper / checkpoint | Win rate +/- 1 sigma | Games | 95% interval | Points/game |
 |---|---|---|---|---|
@@ -1110,6 +1112,8 @@ from the first run. These are
 | Temperature .25 | 50.265% +/- .171 pp | 20,000 | [49.929%, 50.601%] | +.7 |
 | GAE lambda .5, 32 updates | 50.465% +/- .208 pp | 20,000 | [50.057%, 50.873%] | +.4 |
 | GAE lambda .5, 64 updates | 50.450% +/- .218 pp | 20,000 | [50.023%, 50.877%] | +.6 |
+| Larger helper, 32 updates | 50.090% +/- .200 pp | 20,000 | [49.699%, 50.481%] | +.1 |
+| Larger helper, 64 updates | 50.250% +/- .211 pp | 20,000 | [49.837%, 50.663%] | +.4 |
 
 The higher LR changed roughly 4-10% of greedy choices per early update versus
 about 1% at LR 1e-6, without a corresponding strength gain. GAE lambda .5 uses
@@ -1130,6 +1134,55 @@ effects. Other card networks and bidding stayed at the original weights:
 The all-trump-only confirmation has a 95% interval of [50.003%, 50.737%]: a
 small gain, close to the significance threshold. These are separate whole-game
 matches; contract effects do not add linearly. No ISMCTS result is implied.
+
+The larger 696-512-256-128-1 helper also failed to improve the whole actor. Its
+corresponding contract-only checks (20,000 games each, seed 523) gave all trumps
+50.485% +/- .172 pp, no trumps 50.165% +/- .116 pp, and suits 49.640% +/- .135 pp.
+At identical warmup batch 12 its fresh-batch explained variance was
+.705/.512/.641 versus .713/.518/.660 for the smaller private helper. Larger
+capacity did not solve either the prediction or playing-strength problem in this
+budget. These are single-training-seed pilots, not an architecture ranking.
+
+### Selected all-trump network
+
+The smaller privileged helper with GAE lambda .5 continued from 64 to 128 actor
+updates. Including its 12 critic warmup batches, this lineage saw **1,146,880
+deals**. Checkpoint selection kept the original bidding, suit and no-trump files
+and replaced only `alltrumps.bin`. The following whole-game development checks
+all use 20,000 games against the original pure networks, seed 523:
+
+| Saved iteration | Actor updates | Win rate +/- 1 sigma | 95% interval | Points/game |
+|---|---|---|---|---|
+| 96 | 84 | 50.300% +/- .184 pp | [49.939%, 50.661%] | +.8 |
+| 112 | 100 | 50.415% +/- .189 pp | [50.045%, 50.785%] | +.8 |
+| 128 | 116 | 50.555% +/- .187 pp | [50.189%, 50.921%] | +1.0 |
+| 140 | 128 | 50.650% +/- .189 pp | [50.280%, 51.020%] | +1.0 |
+
+Iteration 140 was fixed before the following seed-557 confirmation. The candidate
+is `artifacts/neural-20260927/ppo-gae-long-0140-alltrumps`; its changed file has
+SHA-256 `2C8C7E15682B764A231DFF74B461F6B70DF1099C1974C0D30D20FC2675B1E5CB`.
+All errors below are one empirical standard error across mirrored pairs.
+
+| Candidate / opponent | Games | Win rate +/- 1 sigma | 95% interval | Points/game |
+|---|---|---|---|---|
+| Pure network / original pure network | 40,000 | 50.628% +/- .135 pp | [50.364%, 50.891%] | +.9 |
+| Pure network / SmartPlayer | 20,000 | 86.980% +/- .226 pp | [86.538%, 87.422%] | +57.9 |
+| Original pure network / SmartPlayer (control) | 20,000 | 86.495% +/- .230 pp | [86.044%, 86.946%] | +57.1 |
+| Bounded fast profile / original bounded fast profile | 20,000 | 50.620% +/- .187 pp | [50.253%, 50.987%] | +.8 |
+
+The confirmed gain is about **+4 Elo**, including with the existing bounded
+endgames. It is small. The first matched helper comparison does not establish
+that privileged inputs caused it; no matched public-helper run used this entire
+longer GAE schedule. Neither helper accuracy nor the lineage comparison alone
+establishes a win over ISMCTS.
+
+Final ISMCTS100 checks were fixed before their results: 2,000 games without
+search (seed 563), plus 1,000 games for the existing bounded fast profile
+(seed 569). The latter is the proposed app configuration: three tricks, public
+declaration constraints, and at most 90 worlds for a three-trick decision.
+Promotion requires its 95% interval above 50%, a confirmed gain over the
+previous fast profile, and an idle card benchmark below 50 us. Results are pending;
+the embedded weights and app ratings are still unchanged.
 
 Full experiment settings, follow-ups and reproduction commands are in
 [PPO_EXPERIMENT.md](PPO_EXPERIMENT.md) and

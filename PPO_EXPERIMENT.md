@@ -4,7 +4,8 @@
 
 Starting point: master e89185b, pushed to origin before this experiment. Runtime
 networks, 600 policy inputs, bidding weights and BNN1 exports are unchanged.
-All evaluation uses greedy card choices with both search options disabled.
+Development evaluation uses greedy card choices with both search options
+disabled. Final confirmation also checks the app's existing bounded fast profile.
 
 The actor is the existing Q network, parameterizing a masked softmax as
 pi(a|o) = softmax(26 * Q(o,a) / temperature). PPO uses the clipped surrogate,
@@ -48,7 +49,8 @@ input changes are mixed into the first helper comparison.
 The smoke test completed four 512-deal batches. Maximum observed C#/CUDA
 log-probability difference was 1.39e-5; chosen normalized Q differed by at most
 1.08e-6. All exports still total 2,974,830 bytes. This verifies the pipeline,
-not strength. Initial tests: 97 C# tests and seven new Python PPO tests pass.
+not strength. The final checks pass 97 C# AI/trainer tests and eight Python PPO
+tests (28 Python tests including the earlier GPU tooling).
 Resuming the 512-deal smoke run at iteration 2 produces byte-identical final
 actor files at iteration 4. Resume restores optimizer/RNG states, honors explicitly
 requested learning rates, and refuses mismatched collection settings or progress.
@@ -88,18 +90,18 @@ other tests/evaluations, so these times are not a controlled throughput comparis
 
 The initial actor LR produces KL changes around .00003-.0002 per update, well
 below the .01 stop, and changes roughly 1% of greedy decisions on each new batch.
-The next fixed comparison raises only actor LR to 1e-5, resuming the privileged
-warmup checkpoint (iteration 12), then runs the same 32 PPO updates/seeds.
-The clipping and KL stop remain enabled. A separate temperature-.25 run will test
-less exploration while keeping the original 1e-6 actor LR. Its critic must warm
-up again because the sampled policy changes. These are hypotheses, not promotions.
+The next fixed comparison raised only actor LR to 1e-5, resuming the privileged
+warmup checkpoint (iteration 12), then ran the same 32 PPO updates/seeds.
+The clipping and KL stop remained enabled. A separate temperature-.25 run tested
+less exploration while keeping the original 1e-6 actor LR. Its critic warmed
+up again because the sampled policy changed.
 
 The LR-1e-5 endpoint scored **50.090% +/- .230 pp in 20,000 games**, 95% interval
 [49.640%, 50.540%], +.1 point/game (seed 523). Larger changes did not improve
-strength in this budget. A third follow-up keeps temperature 1 and LR 1e-6, changes
-only GAE lambda to .5, and runs 12 warmup plus 64 PPO batches. It evaluates after
-32 updates for comparison, then after 64. This tests whether bootstrapping from
-the helper reduces terminal-return noise enough to outweigh value-estimation bias.
+strength in this budget. A third follow-up kept temperature 1 and LR 1e-6, changed
+only GAE lambda to .5, and ran 12 warmup plus 64 PPO batches. It evaluated after
+32 updates for comparison, then after 64. This tested whether bootstrapping from
+the helper reduced terminal-return noise enough to outweigh value-estimation bias.
 
 The temperature-.25 endpoint scored **50.265% +/- .171 pp in 20,000 games**,
 95% interval [49.929%, 50.601%], +.7 point/game (seed 523). It does not establish
@@ -112,21 +114,61 @@ After 64 updates it scored **50.450% +/- .218 pp in 20,000 games**, 95% interval
 [50.023%, 50.877%], +.6 point/game (seed 523). This small gain against the original
 does not establish a gain against ISMCTS.
 
-A separate capacity test will use a 696-512-256-128-1 privileged helper, while
-retaining the original actor, temperature 1, LR 1e-6 and lambda 1. It will train
+A separate capacity test used a 696-512-256-128-1 privileged helper, while
+retaining the original actor, temperature 1, LR 1e-6 and lambda 1. It trained
 12 warmup plus 64 PPO batches, with an evaluation at 32 updates for the original
-budget comparison. This tests the helper's capacity without increasing deployed
+budget comparison. This tested the helper's capacity without increasing deployed
 weights or inference work. `--critic-sizes` configures only this discarded helper;
 resume refuses an architecture mismatch.
+
+The capacity test completed: iteration 44 scored **50.090% +/- .200 pp in 20,000
+games**, 95% [49.699%, 50.481%], +.1 point/game. Iteration 76 scored **50.250% +/-
+.211 pp in 20,000 games**, 95% [49.837%, 50.663%], +.4 point/game. Both use seed
+523. Contract-only checks of iteration 76 (20,000 games each, same seed) gave
+all trumps 50.485% +/- .172 pp, no trumps 50.165% +/- .116 pp, and suits 49.640%
++/- .135 pp. Larger capacity did not improve the whole actor in this pilot.
 
 Contract checks from the GAE-64 endpoint replace only one card file at a time,
 retaining the other original networks. On 20,000 games each, seed 523: all trumps
 50.610% +/- .179 pp; no trumps 49.945% +/- .129 pp; suits 49.515% +/- .136 pp.
 The all-trump variant's fresh seed-547 check gave 50.370% +/- .187 pp in 20,000
-games, 95% [50.003%, 50.737%]. This small positive signal motivates a fixed
+games, 95% [50.003%, 50.737%]. This small positive signal motivated a fixed
 continuation of GAE from 64 to 128 updates and another all-trump-only export.
-That continuation will first use seed 523 for comparison, then a new confirmation
-seed after candidate selection. It does not authorize promotion without ISMCTS.
+That continuation used seed 523 for comparison, then a new confirmation seed
+after candidate selection. It does not authorize promotion without ISMCTS.
+
+## Final candidate and confirmation
+
+The 128-update GAE endpoint (iteration 140) supplied only `alltrumps.bin`;
+`bid.bin`, `trump.bin` and `notrumps.bin` remain the original files. Including
+warmup, its lineage used 1,146,880 deals. All four exported files still total
+2,974,830 bytes, with identical inference shapes and no helper at runtime.
+
+Its development result was 50.650% +/- .189 pp in 20,000 games (seed 523).
+After selection, seed 557 confirmed **50.628% +/- .135 pp in 40,000 games**
+against the original pure networks, 95% [50.364%, 50.891%], +.9 point/game.
+With bounded endgames enabled for both sides, it scored **50.620% +/- .187 pp
+in 20,000 games**, 95% [50.253%, 50.987%], +.8 point/game. Both are about +4 Elo.
+The CLI uses `seed * 100000 + pairIndex`, so confirmation deals are disjoint
+from development. Mirrored pairs are the independent units for the reported error.
+
+Against SmartPlayer, the pure candidate scored **86.980% +/- .226 pp in 20,000
+games**, compared with the original's **86.495% +/- .230 pp in 20,000 games**,
+both on seed 557. These are separate match estimates, not a significance test
+of their difference. See `NEURAL_NETWORK.md` section 14 for intervals and the
+full ablation tables.
+
+The final ISMCTS100 comparisons were fixed before their results: pure networks,
+2,000 games, seed 563; bounded fast profile, 1,000 games, seed 569. The proposed
+app profile retains three-trick endgames, declaration constraints and the 90-world
+limit. Its gate requires a 95% interval above 50% and less than 50 us/card, plus
+the already confirmed head-to-head gain. Those results are pending; no weights
+or app levels have changed during this PPO experiment.
+
+The evidence supports a small PPO gain in the all-trump policy. It does not show
+that larger helpers help, nor that private inputs beat a matched public helper.
+The longer GAE schedule was only run with the private helper, so that attribution
+remains untested.
 
 ## Sources
 
@@ -139,14 +181,43 @@ seed after candidate selection. It does not authorize promotion without ISMCTS.
 
 ## Reproduction
 
-Use the CUDA environment in tools/NeuralTrainer/Gpu/README.md. Build to a copied
-output directory so long collection jobs do not lock the trainer's normal bin:
+Use the CUDA environment in tools/NeuralTrainer/Gpu/README.md (the experiment used
+Python 3.12.3, PyTorch 2.9.1+cu126, NumPy 2.2.6 and an RTX 2080 SUPER). Recover
+the fixed source weights from the pre-PPO commit rather than starting a reproduction
+from whichever weights are currently embedded. Build to a copied output directory
+so long collection jobs do not lock the trainer's normal bin:
 
 ```powershell
+New-Item -ItemType Directory -Force artifacts | Out-Null
+git archive --format=zip --output=artifacts/ppo-original.zip e89185b src/AI/Belot.AI.ClaudePlayer/Neural/Weights
+Expand-Archive -LiteralPath artifacts/ppo-original.zip -DestinationPath artifacts/ppo-original
+$original = 'artifacts/ppo-original/src/AI/Belot.AI.ClaudePlayer/Neural/Weights'
 dotnet build tools/NeuralTrainer/NeuralTrainer.csproj -c Release -o artifacts/ppo-bin
-artifacts/torch-env/Scripts/python.exe -X utf8 tools/NeuralTrainer/Gpu/ppo.py --in src/AI/Belot.AI.ClaudePlayer/Neural/Weights --out artifacts/ppo-private --trainer artifacts/ppo-bin/NeuralTrainer.dll --critic privileged --warmup 12 --updates 32 --deals 8192 --threads 12 --seed 4401
+artifacts/torch-env/Scripts/python.exe -X utf8 tools/NeuralTrainer/Gpu/ppo.py --in $original --out artifacts/ppo-private --trainer artifacts/ppo-bin/NeuralTrainer.dll --critic privileged --warmup 12 --updates 32 --deals 8192 --threads 12 --seed 4401
 # Repeat with --critic public and a separate --out directory.
 ```
+
+The selected run first trained 64 updates with GAE lambda .5, then resumed for
+a total of 128 updates. Only its all-trump actor is kept:
+
+```powershell
+artifacts/torch-env/Scripts/python.exe -X utf8 tools/NeuralTrainer/Gpu/ppo.py --in $original --out artifacts/ppo-gae64 --trainer artifacts/ppo-bin/NeuralTrainer.dll --critic privileged --warmup 12 --updates 64 --deals 8192 --threads 12 --seed 4401 --gae-lambda .5
+artifacts/torch-env/Scripts/python.exe -X utf8 tools/NeuralTrainer/Gpu/ppo.py --in $original --out artifacts/ppo-gae128 --trainer artifacts/ppo-bin/NeuralTrainer.dll --critic privileged --warmup 12 --updates 128 --deals 8192 --threads 12 --seed 4401 --gae-lambda .5 --save-every 16 --resume artifacts/ppo-gae64/iteration-0076/training.pt
+New-Item -ItemType Directory artifacts/ppo-selected | Out-Null
+Copy-Item -Path "$original/*.bin" -Destination artifacts/ppo-selected
+Copy-Item -LiteralPath artifacts/ppo-gae128/iteration-0140/alltrumps.bin -Destination artifacts/ppo-selected/alltrumps.bin
+dotnet artifacts/ppo-bin/NeuralTrainer.dll validate --in artifacts/ppo-selected --opponent $original --pairs 20000 --threads 8 --seed 557
+dotnet artifacts/ppo-bin/NeuralTrainer.dll validate --in artifacts/ppo-selected --opponent smart --pairs 10000 --threads 8 --seed 557
+dotnet artifacts/ppo-bin/NeuralTrainer.dll validate --in artifacts/ppo-selected --opponent ismcts:100 --pairs 1000 --threads 10 --seed 563
+dotnet artifacts/ppo-bin/NeuralTrainer.dll validate --in artifacts/ppo-selected --endgame true --endgame-declarations true --endgame-tricks 3 --endgame-worlds 90 --opponent $original --opponent-endgame true --pairs 10000 --threads 12 --seed 557
+dotnet artifacts/ppo-bin/NeuralTrainer.dll validate --in artifacts/ppo-selected --endgame true --endgame-declarations true --endgame-tricks 3 --endgame-worlds 90 --opponent ismcts:100 --pairs 500 --threads 10 --seed 569
+dotnet artifacts/ppo-bin/NeuralTrainer.dll bench --in artifacts/ppo-selected
+dotnet artifacts/ppo-bin/NeuralTrainer.dll bench --in artifacts/ppo-selected --endgame true --endgame-declarations true --endgame-tricks 3 --endgame-worlds 90
+```
+
+Run timed opponents and benchmarks while training/build jobs are stopped. Games
+against timed search are not bitwise reproducible: scheduling affects how many
+iterations each decision completes.
 
 Progress is append-only JSONL. Each saved checkpoint contains managed actor
 weights and a separate training.pt with actors, critics, optimizers and RNG

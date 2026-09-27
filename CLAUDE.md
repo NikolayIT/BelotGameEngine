@@ -291,6 +291,11 @@ over 500 games, an inconclusive result, so that combination remains unpromoted.
   units through return regression, and exports use the existing BNN1 format.
   Float32 BNF1 snapshots preserve collection/update probability parity; BPP1
   records keep public inputs, private labels and same-seat trajectories separate.
+  PPO's longer GAE-.5 run improves only the all-trump file: 50.628% +/- .135 pp
+  against the original pure networks in 40,000 held-out games (about +4 Elo),
+  and 50.620% +/- .187 pp with bounded endgames on both sides in 20,000 games.
+  Hidden hands improve critic prediction but did not beat the matched public
+  control in the initial experiment. The final ISMCTS promotion checks are pending.
   See `PPO_EXPERIMENT.md` and `NEURAL_NETWORK.md` section 14 for results and commands.
   Search-teacher students have not earned promotion. A separate bounded-endgame
   implementation (`Neural/EndgameSearch`) keeps the original networks and averages
