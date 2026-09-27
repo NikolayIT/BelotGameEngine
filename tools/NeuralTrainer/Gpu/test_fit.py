@@ -25,7 +25,7 @@ class FitTests(unittest.TestCase):
                 fit.write_network(fit.Network(tag, 1, (inputs, 8, outputs)), source / (name + ".bin"))
                 header = struct.pack("<3i", fit.SAMPLE_MAGIC, outputs, 2 if tag == 1 else 0)
                 # Two samples: one held out, one in the final partial training batch.
-                record = struct.pack("<BHeIee", 1, 0, 1.0, 3, 0.25, -0.25)
+                record = struct.pack("<BHeIee", 1, 0, 0.3, 3, 0.25, -0.25)
                 (root / ("data." + name + ".samples")).write_bytes(header + (record * 2 if tag == 1 else b""))
             args = Namespace(input=str(source), data=str(root / "data"), validation_data="",
                              out=str(output), epochs=2, batch=1024, learning_rate=0.001,

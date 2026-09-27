@@ -152,8 +152,10 @@ measurements or proof of universal floating-point equivalence.
 
 For collections larger than available GPU memory, `fit.py --stream-data` keeps
 samples in CPU memory and transfers one training batch at a time. The default
-keeps one contract's dataset on the GPU. Both modes use the same sample order,
-loss and export format; tests compare exported weights, including CUDA when
+keeps one contract's dataset on the GPU. GPU features retain their source file's
+float16 representation and each batch converts exactly back to float32 for all
+network arithmetic; this reduces GPU storage without further rounding the inputs.
+Both modes use the same sample order, loss and export format; tests compare exported weights, including CUDA when
 available. Host-memory streaming trades transfer time for a bounded GPU footprint.
 
 ## Auxiliary card-location experiment

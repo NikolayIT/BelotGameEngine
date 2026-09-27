@@ -345,7 +345,11 @@ def run(args):
         optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
         # Large collections can stay in host memory, with only each batch on the GPU.
         storage_device = torch.device('cpu') if args.stream_data else device
-        device_data = tuple(tensor.to(storage_device) for tensor in data)
+        # Sample files already encode features as float16. Keeping that exact
+        # representation on the GPU halves storage; batches still compute in float32.
+        feature_type = torch.float16 if storage_device.type == 'cuda' else torch.float32
+        device_data = (data[0].to(device=storage_device, dtype=feature_type),
+                       data[1].to(storage_device), data[2].to(storage_device))
         maps = suit_maps(tag, device) if tag != 0 and args.suit_augmentation else None
         for epoch in range(1, args.epochs + 1):
             rate = args.learning_rate * (0.3 if epoch > args.epochs * 0.7 else 1)
@@ -358,6 +362,7 @@ def run(args):
             for start in range(0, len(order), args.batch):
                 selection = order[start:start + args.batch]
                 x, y, mask = (tensor[selection].to(device) for tensor in device_data)
+                x = x.float()
                 if maps is not None:
                     x, y, mask = augment_suits(x, y, mask, tag, maps)
                 optimizer.zero_grad(set_to_none=True)
