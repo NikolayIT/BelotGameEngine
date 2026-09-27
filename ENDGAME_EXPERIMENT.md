@@ -52,7 +52,7 @@ dotnet artifacts/neural-20260927/endgame-three-bin/NeuralTrainer.dll validate --
 dotnet artifacts/neural-20260927/endgame-three-bin/NeuralTrainer.dll bench --in artifacts/neural-20260927/baseline --endgame true --endgame-declarations true --endgame-tricks 3
 ```
 
-Verification: 84 C# tests pass, Release build zero warnings/errors. Tests compare
+Verification: 88 C# tests pass, Release build zero warnings/errors. Tests compare
 alpha-beta against exhaustive play across all contracts, doubled/redoubled deals,
 hanging points and both teams; compare world enumeration and every action value
 against independent ternary assignments; check three-trick overflow fallback and
@@ -77,3 +77,8 @@ folder opponents accept `--opponent-search-deals`, `--opponent-search-millisecon
 and `--opponent-endgame true`. The last option uses the candidate's declaration,
 horizon and world-limit settings; all opponent options default to the old fast
 network behavior. The full settings are printed with each validation result.
+
+Match summaries now print the mirrored-pair standard error and normal 95% interval
+to three decimal percentage points, plus the delta-method Elo standard error.
+Tests cover interval precision near the promotion threshold and the Elo derivative.
+This avoids making a promotion decision from a standard error rounded to one digit.
