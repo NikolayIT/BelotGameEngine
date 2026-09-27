@@ -101,12 +101,21 @@
             }
 
             var stopwatch = Stopwatch.StartNew();
-            var result = Evaluation.MirrorMatch(Neural, Neural, opponent, opponent, settings.Pairs, settings.Threads, settings.Seed * 100_000);
+            Console.WriteLine($"validate: {settings}");
+            var result = Evaluation.MirrorMatch(
+                Neural,
+                Neural,
+                opponent,
+                opponent,
+                settings.Pairs,
+                settings.Threads,
+                settings.Seed * 100_000,
+                done => Console.WriteLine($"{stopwatch.Elapsed:hh\\:mm\\:ss} {done}/{settings.Pairs} mirrored pairs"));
             Console.WriteLine($"{settings.In} vs {settings.Opponent}: {result} ({stopwatch.Elapsed})");
         }
 
-        // The time of a searched card decision: whole games of four searching players on one thread.
-        private static void BenchSearch(NeuralModels models, TrainingSettings settings)
+        // Card decisions through the engine, after warming up; excludes bidding and forced cards.
+        private static void BenchCards(NeuralModels models, TrainingSettings settings)
         {
             var players = Enumerable.Range(0, 4).Select(seat => new ClaudePlayerNeural(models)
             {
@@ -116,8 +125,15 @@
                 SearchTimeLimitMilliseconds = settings.SearchMilliseconds,
                 Rng = new Random(seat),
             }).ToArray();
+            var warmupGames = settings.SearchDeals > 0 ? 1 : 20;
+            for (var game = 0; game < warmupGames; game++)
+            {
+                new Belot.Engine.BelotGame(players[0], players[1], players[2], players[3], new Random(-game - 1)).PlayGame();
+            }
+
             var timed = players.Select(x => new TimedPlayer(x)).ToArray();
-            for (var game = 0; game < 4; game++)
+            var games = settings.SearchDeals > 0 ? 4 : 100;
+            for (var game = 0; game < games; game++)
             {
                 new Belot.Engine.BelotGame(timed[0], timed[1], timed[2], timed[3], new Random(game)).PlayGame();
             }
@@ -127,7 +143,7 @@
             Console.WriteLine(
                 $"search {settings.SearchDeals} deals (prior {settings.SearchPriorDeals}, prune {settings.SearchPruneMargin}, "
                 + $"limit {settings.SearchMilliseconds} ms): {decisions} card decisions, "
-                + $"{ticks * 1000.0 / Stopwatch.Frequency / decisions:0.0} ms a decision");
+                + $"{ticks * 1_000_000.0 / Stopwatch.Frequency / decisions:0.0} µs per card through the engine ({games} games, warmup excluded)");
         }
 
         // The time of a decision: whole self-play deals with the networks, no labels.
@@ -136,7 +152,7 @@
             var models = string.IsNullOrEmpty(settings.In) ? NeuralModels.Embedded : NeuralModels.Load(settings.In);
             if (settings.SearchDeals > 0)
             {
-                BenchSearch(models, settings);
+                BenchCards(models, settings);
                 return;
             }
 
@@ -157,12 +173,15 @@
                 actor.PlayDeal(seats, 0b1111, buffers);
             }
 
+            var warmupDecisions = actor.Decisions;
             var stopwatch = Stopwatch.StartNew();
             var count = deals;
             for (var i = 0; i < count; i++)
             {
                 actor.PlayDeal(seats, 0b1111, buffers);
             }
+
+            stopwatch.Stop();
 
             if (labels)
             {
@@ -190,8 +209,12 @@
             var elapsed = stopwatch.Elapsed;
             Console.WriteLine(
                 $"{count} deals in {elapsed.TotalSeconds:0.00} s: {elapsed.TotalMilliseconds * 1000 / count:0} µs a deal, "
-                + $"{elapsed.TotalMilliseconds * 1000 / actor.Decisions:0.0} µs a decision ({actor.Decisions} decisions); "
+                + $"{elapsed.TotalMilliseconds * 1000 / (actor.Decisions - warmupDecisions):0.0} µs a decision ({actor.Decisions - warmupDecisions} decisions, warmup excluded); "
                 + $"networks {string.Join(", ", models.Networks.Select(n => $"{string.Join("-", n.GetSizes())} ({n.ParameterCount / 1000}k)"))}");
+            if (!labels)
+            {
+                BenchCards(models, settings);
+            }
         }
     }
 }

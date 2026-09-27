@@ -21,12 +21,15 @@
             Func<IPlayer> teamB2,
             int pairs,
             int parallelism,
-            int seed = 0)
+            int seed = 0,
+            Action<int> progress = null)
         {
             using var players = new ThreadLocal<IPlayer[]>(() => new[] { teamA1(), teamA2(), teamB1(), teamB2() });
             var pairScores = new double[pairs];
             long pointsA = 0;
             long pointsB = 0;
+            var completed = 0;
+            var progressInterval = Math.Max(50, pairs / 10);
             Parallel.For(
                 0,
                 pairs,
@@ -42,6 +45,11 @@
                     pairScores[i] = winsA / 2.0;
                     Interlocked.Add(ref pointsA, first.SouthNorthPoints + second.EastWestPoints);
                     Interlocked.Add(ref pointsB, first.EastWestPoints + second.SouthNorthPoints);
+                    var done = Interlocked.Increment(ref completed);
+                    if (done % progressInterval == 0 || done == pairs)
+                    {
+                        progress?.Invoke(done);
+                    }
                 });
 
             var mean = 0.0;
