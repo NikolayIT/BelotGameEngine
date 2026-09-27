@@ -43,6 +43,9 @@
                 case "record-selfplay":
                     SelfPlayRecording.Run(settings);
                     break;
+                case "record-ppo":
+                    PpoRecording.Run(settings);
+                    break;
                 case "fit":
                     Distillation.Fit(settings);
                     break;

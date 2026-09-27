@@ -144,6 +144,9 @@
         /// <summary>Gets or sets the networks' temperature in "validate" (0 = always the best action).</summary>
         public double Temperature { get; set; }
 
+        /// <summary>Gets or sets whether record-ppo reads training-only float32 actor snapshots.</summary>
+        public bool PpoFloat { get; set; }
+
         /// <summary>Gets or sets the networks' MaxRegret in "validate", in game points.</summary>
         public double MaxRegret { get; set; } = double.PositiveInfinity;
 
