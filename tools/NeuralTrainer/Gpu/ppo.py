@@ -250,6 +250,28 @@ def checkpoint(directory, actors, critics, actor_optimizers, critic_optimizers, 
                 'cuda_rng': torch.cuda.get_rng_state_all() if torch.cuda.is_available() else []}, directory / 'training.pt')
 
 
+def restore(path, actors, critics, actor_optimizers, critic_optimizers, args):
+    saved = torch.load(path, map_location=args.device, weights_only=True)
+    for key in ('critic', 'temperature', 'gae_lambda', 'seed', 'warmup', 'deals', 'threads'):
+        if saved['args'][key] != getattr(args, key):
+            raise ValueError(f'Resume changes {key}')
+    if Path(saved['args']['input']).resolve() != Path(args.input).resolve():
+        raise ValueError('Resume changes the frozen input reference')
+    for objects, key in ((actors, 'actors'), (critics, 'critics'),
+                         (actor_optimizers, 'actor_optimizers'), (critic_optimizers, 'critic_optimizers')):
+        for target, state in zip(objects, saved[key]):
+            target.load_state_dict(state)
+    # Loading optimizer state otherwise silently restores the old command's rates.
+    for optimizers, rate in ((actor_optimizers, args.actor_lr), (critic_optimizers, args.critic_lr)):
+        for optimizer in optimizers:
+            for group in optimizer.param_groups:
+                group['lr'] = rate
+    torch.set_rng_state(saved['rng'].cpu())
+    if saved['cuda_rng'] and torch.cuda.is_available():
+        torch.cuda.set_rng_state_all([state.cpu() for state in saved['cuda_rng']])
+    return saved['iteration']
+
+
 def run(args):
     fit.disable_power_throttling()
     torch.set_num_threads(2)
@@ -274,18 +296,13 @@ def run(args):
     critic_optimizers = [torch.optim.Adam(m.parameters(), lr=args.critic_lr, eps=1e-5) for m in critics]
     start = 0
     if args.resume:
-        saved = torch.load(args.resume, map_location=args.device, weights_only=False)
-        for key in ('critic', 'temperature', 'gae_lambda', 'seed', 'warmup', 'deals', 'threads'):
-            if saved['args'][key] != getattr(args, key):
-                raise ValueError(f'Resume changes {key}')
-        for objects, key in ((actors, 'actors'), (critics, 'critics'),
-                             (actor_optimizers, 'actor_optimizers'), (critic_optimizers, 'critic_optimizers')):
-            for target, state in zip(objects, saved[key]):
-                target.load_state_dict(state)
-        torch.set_rng_state(saved['rng'].cpu())
-        if saved['cuda_rng']:
-            torch.cuda.set_rng_state_all([state.cpu() for state in saved['cuda_rng']])
-        start = saved['iteration']
+        start = restore(args.resume, actors, critics, actor_optimizers, critic_optimizers, args)
+        if (root / 'progress.jsonl').exists():
+            last = json.loads((root / 'progress.jsonl').read_text(encoding='utf-8').splitlines()[-1])
+            if last['iteration'] != start:
+                raise ValueError('Resume would duplicate or skip existing progress; use a new output directory')
+        if start >= args.warmup + args.updates:
+            raise ValueError('Resume needs a later requested final iteration')
     snapshot = root / 'actor-f32'
     snapshot.mkdir(exist_ok=True)
     shutil.copyfile(Path(args.input) / 'bid.bin', snapshot / 'bid.bin')

@@ -125,6 +125,36 @@ class PpoTests(unittest.TestCase):
         self.assertTrue(any(not torch.equal(original_actor[k], v) for k, v in actor.state_dict().items()))
         self.assertTrue(all(np.isfinite(v) for v in stats.values()))
 
+    def test_checkpoint_restores_parameters_rng_and_requested_rates(self):
+        torch.manual_seed(17)
+        actors = [fit.Network(tag, 1, (600, 4, 32)) for tag in (1, 2, 3)]
+        critics = [ppo.Critic() for _ in actors]
+        actor_optimizers = [torch.optim.Adam(m.parameters(), lr=1e-6) for m in actors]
+        critic_optimizers = [torch.optim.Adam(m.parameters(), lr=3e-4) for m in critics]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'bid.bin').write_bytes(b'frozen bid')
+            args = SimpleNamespace(input=str(root), device='cpu', critic='privileged',
+                                   temperature=1, gae_lambda=1, seed=7, warmup=2, deals=32,
+                                   threads=2, actor_lr=1e-6, critic_lr=3e-4)
+            ppo.checkpoint(root / 'checkpoint', actors, critics, actor_optimizers, critic_optimizers, 4, args)
+            expected_random = torch.rand(5)
+            expected_weight = actors[0].layers[0].weight.detach().clone()
+            with torch.no_grad():
+                actors[0].layers[0].weight.zero_()
+            args.actor_lr = 3e-6
+            iteration = ppo.restore(root / 'checkpoint/training.pt', actors, critics,
+                                    actor_optimizers, critic_optimizers, args)
+            self.assertEqual(iteration, 4)
+            self.assertTrue(torch.equal(torch.rand(5), expected_random))
+            self.assertTrue(torch.equal(actors[0].layers[0].weight, expected_weight))
+            self.assertEqual(actor_optimizers[0].param_groups[0]['lr'], 3e-6)
+            self.assertEqual((root / 'checkpoint/bid.bin').read_bytes(), b'frozen bid')
+            args.temperature = 2
+            with self.assertRaises(ValueError):
+                ppo.restore(root / 'checkpoint/training.pt', actors, critics,
+                            actor_optimizers, critic_optimizers, args)
+
 
 if __name__ == '__main__':
     unittest.main()
