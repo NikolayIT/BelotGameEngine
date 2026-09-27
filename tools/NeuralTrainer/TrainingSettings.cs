@@ -142,6 +142,12 @@
         /// <summary>Gets or sets how many deals the networks' card decisions play out in "validate" (0 = none).</summary>
         public int SearchDeals { get; set; }
 
+        public bool Endgame { get; set; }
+
+        public bool EndgameDeclarations { get; set; }
+
+        public int EndgameTricks { get; set; } = 2;
+
         public double SearchPriorDeals { get; set; }
 
         public double SearchPruneMargin { get; set; }

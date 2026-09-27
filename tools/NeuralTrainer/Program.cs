@@ -81,6 +81,9 @@
                     Temperature = settings.Temperature,
                     MaxRegret = settings.MaxRegret,
                     SearchDeals = settings.SearchDeals,
+                    UseEndgameSearch = settings.Endgame,
+                    EndgameUseDeclarations = settings.EndgameDeclarations,
+                    EndgameTricks = settings.EndgameTricks,
                     SearchPriorDeals = settings.SearchPriorDeals,
                     SearchPruneMargin = settings.SearchPruneMargin,
                     SearchTimeLimitMilliseconds = settings.SearchMilliseconds,
@@ -131,6 +134,9 @@
             var players = Enumerable.Range(0, 4).Select(seat => new ClaudePlayerNeural(models)
             {
                 SearchDeals = settings.SearchDeals,
+                UseEndgameSearch = settings.Endgame,
+                EndgameUseDeclarations = settings.EndgameDeclarations,
+                EndgameTricks = settings.EndgameTricks,
                 SearchPriorDeals = settings.SearchPriorDeals,
                 SearchPruneMargin = settings.SearchPruneMargin,
                 SearchTimeLimitMilliseconds = settings.SearchMilliseconds,
@@ -143,6 +149,7 @@
             }
 
             var timed = players.Select(x => new TimedPlayer(x)).ToArray();
+            var warmupEndgames = players.Sum(x => x.EndgameDecisions);
             var games = settings.SearchDeals > 0 ? 4 : 100;
             for (var game = 0; game < games; game++)
             {
@@ -153,7 +160,8 @@
             var ticks = timed.Sum(x => x.Ticks);
             Console.WriteLine(
                 $"search {settings.SearchDeals} deals (prior {settings.SearchPriorDeals}, prune {settings.SearchPruneMargin}, "
-                + $"limit {settings.SearchMilliseconds} ms): {decisions} card decisions, "
+                + $"limit {settings.SearchMilliseconds} ms, endgame {settings.Endgame}/{settings.EndgameTricks}, declarations {settings.EndgameDeclarations}, "
+                + $"{players.Sum(x => x.EndgameDecisions) - warmupEndgames} endgames): {decisions} card decisions, "
                 + $"{ticks * 1_000_000.0 / Stopwatch.Frequency / decisions:0.0} µs per card through the engine ({games} games, warmup excluded)");
         }
 
@@ -161,7 +169,7 @@
         private static void Bench(TrainingSettings settings)
         {
             var models = string.IsNullOrEmpty(settings.In) ? NeuralModels.Embedded : NeuralModels.Load(settings.In);
-            if (settings.SearchDeals > 0)
+            if (settings.SearchDeals > 0 || settings.Endgame)
             {
                 BenchCards(models, settings);
                 return;

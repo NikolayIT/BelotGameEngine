@@ -18,7 +18,8 @@
     /// bidding network and a card network for each kind of contract (the suits, no trumps, all
     /// trumps) value every action open to the player, in game points (its team's points from the
     /// deal minus the other team's, as if everybody played on like the networks), and the player
-    /// takes the best. A decision costs one small forward pass, not a search.
+    /// takes the best. Normally a decision uses one forward pass. Optional sampled search
+    /// or bounded endgame search improves the values by simulating continuations.
     ///
     /// <see cref="Temperature"/> and <see cref="MaxRegret"/> make it weaker on purpose: it then
     /// sometimes takes an action that is nearly as good (never one worse than the best by more
@@ -30,6 +31,7 @@
         private readonly BelotSimulator simulator = new BelotSimulator();
         private readonly NeuralEvaluator evaluator;
         private readonly NeuralSearch search = new NeuralSearch();
+        private readonly EndgameSearch endgame = new EndgameSearch();
         private readonly float[] cardValues = new float[FeatureEncoder.CardOutputs];
         private readonly float[] bidValues = new float[FeatureEncoder.BidOutputs];
 
@@ -86,6 +88,34 @@
         public int SearchDeals { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether to enumerate and solve the final two tricks
+        /// when every announcement rank is known. Disabled by default; values use perfect-
+        /// information continuations in every rule-consistent hidden deal.
+        /// </summary>
+        public bool UseEndgameSearch { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether endgame worlds also match the observed declarations, assuming
+        /// each seat declares every available combination as the bots do. This resolves hidden
+        /// announcement ranks from each hypothetical original hand. Disabled by default.
+        /// </summary>
+        public bool EndgameUseDeclarations
+        {
+            get => this.endgame.UseDeclarations;
+            set => this.endgame.UseDeclarations = value;
+        }
+
+        /// <summary>
+        /// Gets or sets the endgame horizon: two tricks, or three when at most eight hidden
+        /// deals fit the observations. All two-trick worlds are still considered. Default two.
+        /// </summary>
+        public int EndgameTricks
+        {
+            get => this.endgame.Tricks;
+            set => this.endgame.Tricks = value == 2 || value == 3 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>
         /// Gets or sets a time budget per card for the search, in milliseconds (0 = none): it plays
         /// no new deal once the budget is spent (at least eight), so a slower device plays fewer.
         /// </summary>
@@ -116,6 +146,8 @@
         public int Fallbacks { get; private set; }
 
         internal NeuralModels Models => this.evaluator.Models;
+
+        internal long EndgameDecisions { get; private set; }
 
         public BidType GetBid(PlayerGetBidContext context)
         {
@@ -214,6 +246,12 @@
                 || this.simulator.LegalMoves(in deal.Play) != legal)
             {
                 return false;
+            }
+
+            if (this.UseEndgameSearch && this.endgame.Evaluate(context, in deal, legal, this.simulator, this.cardValues))
+            {
+                this.EndgameDecisions++;
+                return true;
             }
 
             if (this.SearchDeals > 0

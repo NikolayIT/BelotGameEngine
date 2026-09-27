@@ -20,6 +20,7 @@
         public void TheBotsDecideTheSameFromAViewAsFromTheEngineContext()
         {
             var decisions = 0;
+            var endgames = 0L;
             for (var seed = 0; seed < 2; seed++)
             {
                 var match = new BelotMatch(new BelotMatchOptions { Random = new Random(seed) });
@@ -27,6 +28,8 @@
                 var fromView = Enumerable.Range(0, 4).Select(i => Claude(seed, i)).ToArray();
                 var smart = new SmartPlayer.SmartPlayer();
                 var neural = new ClaudePlayerNeural(RandomModels.Create(seed));
+                var endgame = new ClaudePlayerNeural(RandomModels.Create(seed)) { UseEndgameSearch = true };
+                var declaredEndgame = new ClaudePlayerNeural(RandomModels.Create(seed)) { UseEndgameSearch = true, EndgameUseDeclarations = true, EndgameTricks = 3 };
                 match.Start();
                 while (!match.IsFinished)
                 {
@@ -36,12 +39,17 @@
                     AssertSame(expected, fromView[seat.Index()].Decide(view));
                     AssertSame(DecideFromContext(smart, match), smart.Decide(view));
                     AssertSame(DecideFromContext(neural, match), neural.Decide(view));
+                    AssertSame(DecideFromContext(endgame, match), endgame.Decide(view));
+                    AssertSame(DecideFromContext(declaredEndgame, match), declaredEndgame.Decide(view));
                     Assert.Equal(BelotActResult.Ok, match.Act(seat, expected));
                     decisions++;
                 }
+
+                endgames += endgame.EndgameDecisions;
             }
 
             Assert.True(decisions > 300);
+            Assert.True(endgames > 0);
         }
 
         private static ClaudePlayerIsmcts Claude(int seed, int seat) =>
