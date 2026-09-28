@@ -76,6 +76,16 @@
             return 0;
         }
 
+        internal static ClaudePlayerNeural CreateBenchmarkPlayer(TrainingSettings settings, NeuralModels models, int seed)
+        {
+            return settings.Player.ToLowerInvariant() switch
+            {
+                "candidate" or "neural" => OpponentCatalog.Configured(settings, models, seed),
+                "master" or "rollout-master" or "fast" or "expert" => (ClaudePlayerNeural)OpponentCatalog.Factory(settings.Player, models)(seed),
+                _ => throw new ArgumentException($"Unknown benchmark player '{settings.Player}'. Use candidate, neural, master, rollout-master, fast or expert.", nameof(settings)),
+            };
+        }
+
         // Two of the networks against two of the opponent, in mirrored pairs of games.
         private static void Validate(TrainingSettings settings)
         {
@@ -136,10 +146,10 @@
         }
 
         // Card decisions through the engine, after warming up; excludes bidding and forced cards.
-        private static void BenchCards(NeuralModels models, TrainingSettings settings)
+        private static void BenchCards(ClaudePlayerNeural[] players, TrainingSettings settings)
         {
-            var players = Enumerable.Range(0, 4).Select(seat => OpponentCatalog.Configured(settings, models, seat)).ToArray();
-            var warmupGames = settings.SearchDeals > 0 ? 1 : 20;
+            var player = players[0];
+            var warmupGames = player.SearchDeals > 0 ? 1 : 20;
             for (var game = 0; game < warmupGames; game++)
             {
                 new Belot.Engine.BelotGame(players[0], players[1], players[2], players[3], new Random(-game - 1)).PlayGame();
@@ -158,7 +168,7 @@
             var warmupCutoffs = players.Sum(x => x.EndgameTranspositionCutoffs);
             var warmupNeuralVariance = players.Sum(x => x.SearchNeuralVariance);
             var warmupResidualVariance = players.Sum(x => x.SearchResidualVariance);
-            var games = settings.BenchGames > 0 ? settings.BenchGames : settings.SearchDeals > 0 ? 4 : 100;
+            var games = settings.BenchGames > 0 ? settings.BenchGames : player.SearchDeals > 0 ? 4 : 100;
             for (var game = 0; game < games; game++)
             {
                 new Belot.Engine.BelotGame(timed[0], timed[1], timed[2], timed[3], new Random(game)).PlayGame();
@@ -171,6 +181,7 @@
             double Percentile(double quantile) => Micros(samples[(int)Math.Ceiling(quantile * samples.Length) - 1]);
             Console.WriteLine($"card latency us: p50={Percentile(.5):0.0}, p95={Percentile(.95):0.0}, p99={Percentile(.99):0.0}, max={Micros(samples[^1]):0.0}, over10ms={samples.Count(x => Micros(x) > 10000)}/{samples.Length}");
             Console.WriteLine(settings);
+            Console.WriteLine($"effective player {settings.Player}: temperature {player.Temperature}, regret {player.MaxRegret}, suit ensemble {player.CardSuitEnsemble}");
             Console.WriteLine($"endgame totals: {players.Sum(x => x.EndgameNodes) - warmupNodes} nodes, {players.Sum(x => x.EndgameWorlds) - warmupWorlds} worlds");
             Console.WriteLine($"endgame sampling: {players.Sum(x => x.EndgameSampleAttempts) - warmupAttempts} attempts, {players.Sum(x => x.EndgameIncompleteWorlds) - warmupIncomplete} incomplete worlds");
             Console.WriteLine($"endgame likelihood: {players.Sum(x => x.EndgameLikelihoodEvaluations) - warmupLikelihood} evaluations, {players.Sum(x => x.EndgameEffectiveWorlds) - warmupEffective:0.0} effective worlds");
@@ -179,8 +190,10 @@
             var residualVariance = players.Sum(x => x.SearchResidualVariance) - warmupResidualVariance;
             Console.WriteLine($"control variate variance sums: neural={neuralVariance:0.000}, residual={residualVariance:0.000}, ratio={residualVariance / neuralVariance:0.000}");
             Console.WriteLine(
-                $"search {settings.SearchDeals} deals (prior {settings.SearchPriorDeals}, prune {settings.SearchPruneMargin}, "
-                + $"limit {settings.SearchMilliseconds} ms, endgame {settings.Endgame}/{settings.EndgameTricks}/{settings.EndgameWorlds}, declarations {settings.EndgameDeclarations}, "
+                $"search {player.SearchDeals} deals (prior {player.SearchPriorDeals}, prune {player.SearchPruneMargin}, "
+                + $"limit {player.SearchTimeLimitMilliseconds} ms, endgame {player.UseEndgameSearch}/{player.EndgameTricks}/{player.EndgameThreeTrickWorldLimit}, declarations {player.EndgameUseDeclarations}, "
+                + $"sampled {player.EndgameSampledWorlds}, nodes {player.EndgameNodeLimit}, endgame limit {player.EndgameTimeLimitMilliseconds} ms, transpositions {player.EndgameUseTranspositions}, "
+                + $"ownership power {player.EndgameOwnershipPower}, ownership mix {player.EndgameOwnershipUniformMix}, "
                 + $"{players.Sum(x => x.EndgameDecisions) - warmupEndgames} endgames): {decisions} card decisions, "
                 + $"{ticks * 1_000_000.0 / Stopwatch.Frequency / decisions:0.0} µs per card through the engine ({games} games, warmup excluded)");
         }
@@ -189,9 +202,12 @@
         private static void Bench(TrainingSettings settings)
         {
             var models = string.IsNullOrEmpty(settings.In) ? NeuralModels.Embedded : NeuralModels.Load(settings.In);
-            if (settings.SearchDeals > 0 || settings.Endgame)
+            var players = Enumerable.Range(0, 4).Select(seat => CreateBenchmarkPlayer(settings, models, seat)).ToArray();
+            var namedProfile = !settings.Player.Equals("candidate", StringComparison.OrdinalIgnoreCase)
+                && !settings.Player.Equals("neural", StringComparison.OrdinalIgnoreCase);
+            if (namedProfile || players[0].SearchDeals > 0 || players[0].UseEndgameSearch || players[0].CardSuitEnsemble || !string.IsNullOrEmpty(settings.CardCorrection))
             {
-                BenchCards(models, settings);
+                BenchCards(players, settings);
                 return;
             }
 
@@ -252,7 +268,7 @@
                 + $"networks {string.Join(", ", models.Networks.Select(n => $"{string.Join("-", n.GetSizes())} ({n.ParameterCount / 1000}k)"))}");
             if (!labels)
             {
-                BenchCards(models, settings);
+                BenchCards(players, settings);
             }
         }
     }
