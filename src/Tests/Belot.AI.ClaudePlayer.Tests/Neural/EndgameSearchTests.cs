@@ -206,9 +206,12 @@
             Assert.Equal(2, player.EndgameTricks);
             Assert.Equal(8, player.EndgameThreeTrickWorldLimit);
             Assert.Throws<ArgumentOutOfRangeException>(() => player.EndgameThreeTrickWorldLimit = 0);
-            Assert.Throws<ArgumentOutOfRangeException>(() => player.EndgameThreeTrickWorldLimit = 91);
-            Assert.Throws<ArgumentOutOfRangeException>(() => player.EndgameTricks = 4);
+            Assert.Throws<ArgumentOutOfRangeException>(() => player.EndgameThreeTrickWorldLimit = 1681);
+            Assert.Throws<ArgumentOutOfRangeException>(() => player.EndgameTricks = 6);
             Assert.Throws<ArgumentOutOfRangeException>(() => player.EndgameTricks = 0);
+            Assert.Throws<ArgumentOutOfRangeException>(() => player.EndgameSampledWorlds = -1);
+            Assert.Throws<ArgumentOutOfRangeException>(() => player.EndgameNodeLimit = -1);
+            Assert.Throws<ArgumentOutOfRangeException>(() => player.EndgameTimeLimitMilliseconds = -1);
         }
 
         // Independent ternary assignment of each unseen card, followed by explicit filtering.

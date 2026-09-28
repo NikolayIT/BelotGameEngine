@@ -34,6 +34,7 @@
         private readonly EndgameSearch endgame = new EndgameSearch();
         private readonly float[] cardValues = new float[FeatureEncoder.CardOutputs];
         private readonly float[] bidValues = new float[FeatureEncoder.BidOutputs];
+        private LateCardCorrectionModel.Evaluator lateCorrection;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ClaudePlayerNeural"/> class with the
@@ -107,23 +108,128 @@
         }
 
         /// <summary>
-        /// Gets or sets the endgame horizon: two tricks, or three within
-        /// <see cref="EndgameThreeTrickWorldLimit"/> worlds. Default two.
+        /// Gets or sets the endgame horizon (two to five tricks, default two).
+        /// Four or five tricks require <see cref="EndgameSampledWorlds"/>.
         /// </summary>
         public int EndgameTricks
         {
             get => this.endgame.Tricks;
-            set => this.endgame.Tricks = value == 2 || value == 3 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+            set => this.endgame.Tricks = value >= 2 && value <= 5 ? value : throw new ArgumentOutOfRangeException(nameof(value));
         }
 
         /// <summary>
-        /// Gets or sets the maximum worlds to solve with three tricks left (1 to 90, default 8).
+        /// Gets or sets the maximum worlds to solve with three tricks left (1 to 1680, default 8).
         /// More worlds extend endgame coverage at higher cost. Two-trick coverage is unchanged.
         /// </summary>
         public int EndgameThreeTrickWorldLimit
         {
             get => this.endgame.ThreeTrickWorldLimit;
-            set => this.endgame.ThreeTrickWorldLimit = value >= 1 && value <= 90 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+            set => this.endgame.ThreeTrickWorldLimit = value >= 1 && value <= 1680 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Gets or sets the sampled worlds for longer endings or enumeration overflow (0 disables sampling).</summary>
+        public int EndgameSampledWorlds
+        {
+            get => this.endgame.SampledWorlds;
+            set => this.endgame.SampledWorlds = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Gets or sets the endgame tree node budget per decision (0 = unlimited).</summary>
+        public int EndgameNodeLimit
+        {
+            get => this.endgame.NodeLimit;
+            set => this.endgame.NodeLimit = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Gets or sets the endgame time budget in milliseconds (0 = unlimited).</summary>
+        public int EndgameTimeLimitMilliseconds
+        {
+            get => this.endgame.TimeLimitMilliseconds;
+            set => this.endgame.TimeLimitMilliseconds = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Gets or sets whether the solver merges equivalent zero-point cards inside hypothetical continuations.</summary>
+        public bool EndgamePruneEquivalentCards
+        {
+            get => this.endgame.PruneEquivalentCards;
+            set => this.endgame.PruneEquivalentCards = value;
+        }
+
+        /// <summary>Gets or sets whether endgame solving reuses fully verified trick-boundary positions.</summary>
+        public bool EndgameUseTranspositions
+        {
+            get => this.endgame.UseTranspositions;
+            set => this.endgame.UseTranspositions = value;
+        }
+
+        /// <summary>Gets or sets how many recent public plays weight endgame worlds (0 disables policy inference).</summary>
+        public int EndgamePolicyActions
+        {
+            get => this.endgame.PolicyActions;
+            set => this.endgame.PolicyActions = value >= 0 && value <= 32 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Gets or sets the historical action model's temperature in game points.</summary>
+        public double EndgamePolicyTemperature
+        {
+            get => this.endgame.PolicyTemperature;
+            set => this.endgame.PolicyTemperature = double.IsFinite(value) && value > 0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Gets or sets the historical action model's uniform choice probability.</summary>
+        public double EndgamePolicyUniformMix
+        {
+            get => this.endgame.PolicyUniformMix;
+            set => this.endgame.PolicyUniformMix = double.IsFinite(value) && value >= 0 && value <= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Gets or sets the power of the historical action likelihood (0 keeps uniform world weights).</summary>
+        public double EndgamePolicyPower
+        {
+            get => this.endgame.PolicyPower;
+            set => this.endgame.PolicyPower = double.IsFinite(value) && value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Gets or sets extra heuristic worlds for the experimental rollout control variate (0 disables it).</summary>
+        public int SearchControlVariateDeals
+        {
+            get => this.search.ControlVariateDeals;
+            set => this.search.ControlVariateDeals = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Gets or sets completed tricks before a neural value bootstrap (0 plays the full deal).</summary>
+        public int SearchRolloutTricks
+        {
+            get => this.search.RolloutTricks;
+            set => this.search.RolloutTricks = value >= 0 && value <= 8 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Gets or sets whether truncated rollouts wait for the deciding seat's next turn before valuing the leaf.</summary>
+        public bool SearchRolloutRootLeaf
+        {
+            get => this.search.RolloutRootLeaf;
+            set => this.search.RolloutRootLeaf = value;
+        }
+
+        /// <summary>Gets or sets exact perfect-information tricks at a rollout leaf (0, 2 or 3).</summary>
+        public int SearchDoubleDummyTricks
+        {
+            get => this.search.DoubleDummyTricks;
+            set => this.search.DoubleDummyTricks = value == 0 || value == 2 || value == 3 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Gets or sets whether rollouts after the first trick condition on all declared combinations.</summary>
+        public bool SearchUseDeclarations
+        {
+            get => this.search.UseDeclarations;
+            set => this.search.UseDeclarations = value;
+        }
+
+        /// <summary>Gets or sets completed worlds before the rollout time budget may stop sampling.</summary>
+        public int SearchMinimumDeals
+        {
+            get => this.search.MinimumDeals;
+            set => this.search.MinimumDeals = value >= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value));
         }
 
         /// <summary>
@@ -158,7 +264,51 @@
 
         internal NeuralModels Models => this.evaluator.Models;
 
+        internal LateCardCorrectionModel CardCorrectionModel
+        {
+            set => this.lateCorrection = value?.CreateEvaluator();
+        }
+
+        internal CardOwnershipModel EndgameOwnershipModel
+        {
+            set => this.endgame.Ownership = value?.CreateEvaluator();
+        }
+
+        internal double EndgameOwnershipPower
+        {
+            get => this.endgame.OwnershipPower;
+            set => this.endgame.OwnershipPower = double.IsFinite(value) && value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        internal double EndgameOwnershipUniformMix
+        {
+            get => this.endgame.OwnershipUniformMix;
+            set => this.endgame.OwnershipUniformMix = double.IsFinite(value) && value >= 0 && value <= 1 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
         internal long EndgameDecisions { get; private set; }
+
+        internal long EndgameNodes { get; private set; }
+
+        internal long EndgameWorlds { get; private set; }
+
+        internal long EndgameSampleAttempts { get; private set; }
+
+        internal long EndgameIncompleteWorlds { get; private set; }
+
+        internal long EndgameLikelihoodEvaluations { get; private set; }
+
+        internal double EndgameEffectiveWorlds { get; private set; }
+
+        internal long EndgameTranspositionProbes { get; private set; }
+
+        internal long EndgameTranspositionHits { get; private set; }
+
+        internal long EndgameTranspositionCutoffs { get; private set; }
+
+        internal double SearchNeuralVariance { get; private set; }
+
+        internal double SearchResidualVariance { get; private set; }
 
         public BidType GetBid(PlayerGetBidContext context)
         {
@@ -259,19 +409,35 @@
                 return false;
             }
 
-            if (this.UseEndgameSearch && this.endgame.Evaluate(context, in deal, legal, this.simulator, this.cardValues))
+            if (this.UseEndgameSearch)
             {
-                this.EndgameDecisions++;
-                return true;
+                var solved = this.endgame.Evaluate(context, in deal, legal, this.simulator, this.cardValues, this.Rng, this.evaluator);
+                this.EndgameNodes += this.endgame.Nodes;
+                this.EndgameWorlds += this.endgame.Worlds;
+                this.EndgameSampleAttempts += this.endgame.SampleAttempts;
+                this.EndgameIncompleteWorlds += this.endgame.IncompleteWorlds;
+                this.EndgameLikelihoodEvaluations += this.endgame.LikelihoodEvaluations;
+                this.EndgameEffectiveWorlds += this.endgame.EffectiveWorlds;
+                this.EndgameTranspositionProbes += this.endgame.TranspositionProbes;
+                this.EndgameTranspositionHits += this.endgame.TranspositionHits;
+                this.EndgameTranspositionCutoffs += this.endgame.TranspositionCutoffs;
+                if (solved)
+                {
+                    this.EndgameDecisions++;
+                    return true;
+                }
             }
 
             if (this.SearchDeals > 0
                 && this.search.Evaluate(context, in deal, legal, this.SearchDeals, this.evaluator, this.simulator, this.Rng, this.cardValues))
             {
+                this.SearchNeuralVariance += this.search.NeuralDifferenceVariance;
+                this.SearchResidualVariance += this.search.ResidualDifferenceVariance;
                 return true;
             }
 
             this.evaluator.EvaluateCards(in deal, legal, this.cardValues);
+            this.lateCorrection?.Apply(in deal, legal, this.cardValues);
             return true;
         }
 
