@@ -5,6 +5,7 @@
     using System.Globalization;
     using System.Linq;
     using System.Text;
+    using System.Text.Json;
 
     using Belot.AI.ClaudePlayer;
     using Belot.AI.ClaudePlayer.Neural;
@@ -29,7 +30,7 @@
             Console.OutputEncoding = new UTF8Encoding(false);
             if (args.Length == 0)
             {
-                Console.WriteLine("Commands: distill, record-selfplay, record-ppo, fit, diagnose, expand, train, validate, bench (see Program.cs and NEURAL_NETWORK.md).");
+                Console.WriteLine("Commands: distill, record-selfplay, record-ppo, fit, diagnose, expand, train, validate, arena, bench (see Program.cs and NEURAL_NETWORK.md).");
                 return 1;
             }
 
@@ -61,6 +62,9 @@
                 case "validate":
                     Validate(settings);
                     break;
+                case "arena":
+                    Arena.Run(settings);
+                    break;
                 case "bench":
                     Bench(settings);
                     break;
@@ -76,7 +80,7 @@
         private static void Validate(TrainingSettings settings)
         {
             var models = string.IsNullOrEmpty(settings.In) ? NeuralModels.Embedded : NeuralModels.Load(settings.In);
-            IPlayer Neural()
+            IPlayer Neural(int seed)
             {
                 var player = new ClaudePlayerNeural(models)
                 {
@@ -91,32 +95,38 @@
                     SearchPriorDeals = settings.SearchPriorDeals,
                     SearchPruneMargin = settings.SearchPruneMargin,
                     SearchTimeLimitMilliseconds = settings.SearchMilliseconds,
-                    Rng = new Random(Environment.CurrentManagedThreadId),
+                    Rng = new Random(seed),
                 };
                 return settings.Bidding switch
                     {
                         "smart" => new MixedPlayer(new SmartPlayer(), player),
-                        "ismcts" => new MixedPlayer(new ClaudePlayerIsmcts(), player),
+                        "ismcts" => new MixedPlayer(new ClaudePlayerIsmcts { Rng = new Random(seed) }, player),
                         _ => player,
                     };
             }
 
-            Func<IPlayer> opponent;
+            Func<int, IPlayer> opponent;
             if (settings.Opponent == "smart")
             {
-                opponent = () => new SmartPlayer();
+                opponent = _ => new SmartPlayer();
+            }
+            else if (settings.Opponent.Equals("sharpbelot", StringComparison.OrdinalIgnoreCase)
+                     || settings.Opponent.Equals("belot206", StringComparison.OrdinalIgnoreCase))
+            {
+                opponent = OpponentCatalog.Factory(settings.Opponent);
             }
             else if (settings.Opponent.StartsWith("ismcts", StringComparison.Ordinal))
             {
                 var parts = settings.Opponent.Split(':');
                 var milliseconds = parts.Length > 1 ? int.Parse(parts[1], CultureInfo.InvariantCulture) : 100;
-                opponent = () => new ClaudePlayerIsmcts { TimeLimitMilliseconds = milliseconds };
+                opponent = seed => new ClaudePlayerIsmcts { Rng = new Random(seed), TimeLimitMilliseconds = milliseconds };
             }
             else
             {
                 var baseline = NeuralModels.Load(settings.Opponent);
-                opponent = () => new ClaudePlayerNeural(baseline)
+                opponent = seed => new ClaudePlayerNeural(baseline)
                 {
+                    Rng = new Random(seed),
                     SearchDeals = settings.OpponentSearchDeals,
                     SearchTimeLimitMilliseconds = settings.OpponentSearchMilliseconds,
                     UseEndgameSearch = settings.OpponentEndgame,
@@ -128,16 +138,15 @@
 
             var stopwatch = Stopwatch.StartNew();
             Console.WriteLine($"validate: {settings}");
-            var result = Evaluation.MirrorMatch(
+            var result = Arena.Play(
                 Neural,
-                Neural,
-                opponent,
                 opponent,
                 settings.Pairs,
                 settings.Threads,
-                settings.Seed * 100_000,
+                checked(settings.Seed * 100_000),
                 done => Console.WriteLine($"{stopwatch.Elapsed:hh\\:mm\\:ss} {done}/{settings.Pairs} mirrored pairs"));
-            Console.WriteLine($"{settings.In} vs {settings.Opponent}: {result} ({stopwatch.Elapsed})");
+            Console.WriteLine($"{settings.In} vs {settings.Opponent}: {result.Match} ({stopwatch.Elapsed})");
+            Console.WriteLine($"legacy diagnostics A: {JsonSerializer.Serialize(result.TeamA)}; B: {JsonSerializer.Serialize(result.TeamB)}");
         }
 
         // Card decisions through the engine, after warming up; excludes bidding and forced cards.

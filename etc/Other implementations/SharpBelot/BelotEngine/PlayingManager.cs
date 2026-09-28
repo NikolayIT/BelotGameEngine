@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Author: Konstantin Ivanov
  * 
  * Official site: http://konstantini.data.bg/sharpbelot
@@ -171,7 +171,7 @@ namespace Belot
 		/// <summary>
 		/// If card played by this player is valid according to game rules
 		/// </summary>
-		public bool IsValid( Player player, Card card )
+		public virtual bool IsValid( Player player, Card card )
 		{			
 			if( player == null)
 				throw new ArgumentNullException( "Player", "Player cannot be null");

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Belot.Legacy.SharpEngine</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <!-- Compile the preserved third-party sources without applying our style rules to them. -->
+  <ItemGroup>
+    <Compile Include="../../../etc/Other implementations/SharpBelot/BelotEngine/*.cs" />
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>Belot.LegacyOpponents</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>

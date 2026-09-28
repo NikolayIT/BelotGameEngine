@@ -1,5 +1,8 @@
-namespace BelotArena
+﻿namespace BelotArena
 {
+    using System;
+    using System.Collections.Generic;
+
     using Belot.Engine;
     using Belot.Engine.Cards;
     using Belot.Engine.Game;
@@ -30,10 +33,15 @@ namespace BelotArena
         private readonly V2.DelphiRandom rng;
 
         public OriginalEnginePlayer(string name, Func<V2.PlayContext, V2.Card> brain, uint seed = 1)
+            : this(name, brain, new V2.DelphiRandom(seed))
+        {
+        }
+
+        public OriginalEnginePlayer(string name, Func<V2.PlayContext, V2.Card> brain, V2.DelphiRandom rng)
         {
             this.Name = name;
             this.brain = brain;
-            this.rng = new V2.DelphiRandom(seed);
+            this.rng = rng;
         }
 
         public string Name { get; }

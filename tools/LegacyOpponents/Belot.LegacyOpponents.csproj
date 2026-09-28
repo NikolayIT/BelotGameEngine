@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <CodeAnalysisRuleSet>../../src/Rules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="SharpBelot.Engine/**;SharpBelot.AI/**" />
+    <AdditionalFiles Include="../../src/stylecop.json" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="all" />
+    <ProjectReference Include="../../src/Belot.Engine/Belot.Engine.csproj" />
+    <ProjectReference Include="SharpBelot.Engine/SharpBelot.Engine.csproj" />
+    <ProjectReference Include="SharpBelot.AI/SharpBelot.AI.csproj" />
+    <ProjectReference Include="../../etc/Other implementations/Bridge Belot v2.06 MP/reconstructed-csharp/BelotV2.AI/BelotV2.AI.csproj" />
+    <Compile Include="../../etc/Other implementations/Bridge Belot v2.06 MP/reconstructed-csharp/BelotV2.Arena/OriginalEnginePlayer.cs" Link="OriginalEnginePlayer.cs" />
+  </ItemGroup>
+</Project>

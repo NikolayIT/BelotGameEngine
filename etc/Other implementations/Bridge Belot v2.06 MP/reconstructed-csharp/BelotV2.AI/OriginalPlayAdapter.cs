@@ -1,4 +1,4 @@
-namespace BelotV2
+﻿namespace BelotV2
 {
     /// <summary>
     /// Bridges the engine's <see cref="PlayContext"/> onto <see cref="OriginalPlayAi"/>, which
@@ -68,7 +68,11 @@ namespace BelotV2
         }
 
         public static Card Play(PlayContext ctx, DelphiRandom rng)
+            => Play(ctx, rng, out _);
+
+        public static Card Play(PlayContext ctx, DelphiRandom rng, out bool usedFallback)
         {
+            usedFallback = false;
             if (ctx.Legal.Count == 1)
             {
                 return ctx.Legal[0];
@@ -170,11 +174,13 @@ namespace BelotV2
             int slot = ai.Decide();
             if (slot < 0 || slot >= hand.Count)
             {
+                usedFallback = true;
                 return ctx.Legal[0];
             }
 
             Card chosen = hand[slot];
-            return ctx.Legal.Contains(chosen) ? chosen : ctx.Legal[0];
+            usedFallback = !ctx.Legal.Contains(chosen);
+            return usedFallback ? ctx.Legal[0] : chosen;
         }
     }
 }

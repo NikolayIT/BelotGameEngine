@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Belot.Legacy.SharpAi</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../etc/Other implementations/SharpBelot/AIPlayers/AIPlayer.cs" />
+    <ProjectReference Include="../SharpBelot.Engine/SharpBelot.Engine.csproj" />
+  </ItemGroup>
+</Project>

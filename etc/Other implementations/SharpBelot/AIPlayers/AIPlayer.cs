@@ -84,6 +84,9 @@ namespace AIPlayers
 		{
 		}
 
+		// Benchmark adaptation: callers may supply a seeded generator for random ties.
+		public Random RandomSource { get; set; } = new Random();
+
 		public override Announcement MakeAnnouncement( AnnouncementManager manager )
 		{
 			_allAnnounces = manager.GetAllAnnouncements();
@@ -354,7 +357,7 @@ namespace AIPlayers
 				{
 					#region 2.1.2
 
-					Random rand = new Random();
+					Random rand = RandomSource;
 					selectedCard = validCards[ rand.Next( validCards.Count ) ] as Card;
 
 					#endregion

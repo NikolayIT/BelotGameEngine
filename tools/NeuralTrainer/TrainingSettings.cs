@@ -125,8 +125,14 @@
 
         public double FitLearningRate { get; set; } = 3e-4;
 
-        /// <summary>Gets or sets what "validate" plays against: smart, ismcts:ms or a folder of networks.</summary>
+        /// <summary>Gets or sets what "validate" plays against: smart, sharpbelot, belot206, ismcts:ms or a folder of networks.</summary>
         public string Opponent { get; set; } = "ismcts:100";
+
+        /// <summary>Gets or sets a separate neural weight folder for arena's opposing team (empty = In).</summary>
+        public string OpponentIn { get; set; } = string.Empty;
+
+        /// <summary>Gets or sets the candidate name for arena.</summary>
+        public string Player { get; set; } = "neural";
 
         /// <summary>Gets or sets the sampled worlds for an opponent loaded from a network folder.</summary>
         public int OpponentSearchDeals { get; set; }
@@ -146,6 +152,12 @@
 
         /// <summary>Gets or sets whether record-ppo reads training-only float32 actor snapshots.</summary>
         public bool PpoFloat { get; set; }
+
+        /// <summary>Gets or sets the comma-separated named opponents used by record-ppo.</summary>
+        public string PpoOpponents { get; set; } = string.Empty;
+
+        /// <summary>Gets or sets the fraction of PPO deals with a sampled external opposing team.</summary>
+        public double PpoOpponentChance { get; set; }
 
         /// <summary>Gets or sets the networks' MaxRegret in "validate", in game points.</summary>
         public double MaxRegret { get; set; } = double.PositiveInfinity;
