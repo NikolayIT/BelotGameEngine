@@ -1,6 +1,7 @@
 ﻿namespace Belot.NeuralTrainer
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
@@ -20,17 +21,24 @@
         public static void Run(TrainingSettings settings)
         {
             var models = string.IsNullOrEmpty(settings.In) ? NeuralModels.Embedded : NeuralModels.Load(settings.In);
-            var opponentModels = string.IsNullOrEmpty(settings.OpponentIn) ? models : NeuralModels.Load(settings.OpponentIn);
-            Console.WriteLine($"arena: {settings.Player} vs {settings.Opponent}, {settings.Pairs} pairs, seed {settings.Seed}, threads {settings.Threads}, weights {settings.In}");
+            var opponent = ResolveOpponent(settings, models);
+            Console.WriteLine($"arena: {settings.Player} vs {opponent.Name}, {settings.Pairs} pairs, seed {settings.Seed}, threads {settings.Threads}, weights {settings.In}");
+            Console.WriteLine(settings);
+            Console.WriteLine($"resolved opponent: {opponent.Name}, weights {(string.IsNullOrEmpty(opponent.In) ? "embedded" : opponent.In)}");
+            if (opponent.Settings != null)
+            {
+                Console.WriteLine($"opponent settings: {opponent.Settings}");
+            }
+
             var clock = Stopwatch.StartNew();
             var result = Play(
-                OpponentCatalog.Factory(settings.Player, models),
-                OpponentCatalog.Factory(settings.Opponent, opponentModels),
+                settings.Player == "candidate" ? seed => OpponentCatalog.Configured(settings, models, seed) : OpponentCatalog.Factory(settings.Player, models),
+                opponent.Create,
                 settings.Pairs,
                 settings.Threads,
                 checked(settings.Seed * 100_000),
                 done => Console.WriteLine($"{clock.Elapsed:hh\\:mm\\:ss} {done}/{settings.Pairs} pairs"));
-            Console.WriteLine($"{settings.Player} vs {settings.Opponent}: {result.Match} ({clock.Elapsed})");
+            Console.WriteLine($"{settings.Player} vs {opponent.Name}: {result.Match} ({clock.Elapsed})");
             Console.WriteLine($"legacy diagnostics A: {JsonSerializer.Serialize(result.TeamA)}; B: {JsonSerializer.Serialize(result.TeamB)}");
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(settings.Data)));
             var report = new
@@ -39,9 +47,12 @@
                 settings.Opponent,
                 settings.In,
                 settings.OpponentIn,
+                settings.OpponentConfig,
+                ResolvedOpponent = opponent,
                 settings.Seed,
                 settings.Pairs,
                 settings.Threads,
+                Settings = settings,
                 Result = result,
                 Seconds = clock.Elapsed.TotalSeconds,
             };
@@ -108,6 +119,71 @@
             };
         }
 
+        /// <summary>Resolves an independent configured neural opponent, or preserves the named catalog path.</summary>
+        internal static OpponentConfiguration ResolveOpponent(TrainingSettings settings, NeuralModels models)
+        {
+            TrainingSettings configured = null;
+            if (!string.IsNullOrEmpty(settings.OpponentConfig))
+            {
+                if (!string.Equals(settings.Opponent, TrainingSettings.DefaultOpponent, StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(settings.Opponent, "configured", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new ArgumentException("--opponent-config conflicts with a named --opponent; omit --opponent or use configured.", nameof(settings));
+                }
+
+                using var document = JsonDocument.Parse(File.ReadAllText(settings.OpponentConfig));
+                if (document.RootElement.ValueKind != JsonValueKind.Object)
+                {
+                    throw new JsonException("Opponent configuration must be a TrainingSettings JSON object.");
+                }
+
+                var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var property in document.RootElement.EnumerateObject())
+                {
+                    if (!names.Add(property.Name))
+                    {
+                        throw new JsonException($"Duplicate opponent setting: {property.Name}.");
+                    }
+                }
+
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+                    NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
+                };
+                configured = document.RootElement.Deserialize<TrainingSettings>(options);
+                if (!string.IsNullOrEmpty(configured.OpponentConfig))
+                {
+                    throw new ArgumentException("Opponent configuration cannot load another opponent configuration.", nameof(settings));
+                }
+            }
+
+            var input = !string.IsNullOrEmpty(configured?.In) ? configured.In : settings.OpponentIn;
+            var opponentModels = string.IsNullOrEmpty(input) ? models : NeuralModels.Load(input);
+            var resolvedInput = string.IsNullOrEmpty(input) ? settings.In : input;
+            resolvedInput = string.IsNullOrEmpty(resolvedInput) ? string.Empty : Path.GetFullPath(resolvedInput);
+            if (configured == null)
+            {
+                return new OpponentConfiguration
+                {
+                    Name = settings.Opponent,
+                    In = resolvedInput,
+                    Create = OpponentCatalog.Factory(settings.Opponent, opponentModels),
+                };
+            }
+
+            configured.In = resolvedInput;
+            configured.Player = "candidate";
+            return new OpponentConfiguration
+            {
+                Name = "configured",
+                In = resolvedInput,
+                Settings = configured,
+                Create = seed => OpponentCatalog.Configured(configured, opponentModels, seed),
+            };
+        }
+
         // Do not restart a player's RNG at the same sequence used to shuffle its deal.
         // Both teams still share player seeds for common random numbers in comparisons.
         private static int PlayerSeed(int dealSeed, int partner)
@@ -116,6 +192,18 @@
             value = unchecked((value ^ (value >> 16)) * 0x85EBCA6Bu);
             value = unchecked((value ^ (value >> 13)) * 0xC2B2AE35u);
             return unchecked((int)(value ^ (value >> 16)));
+        }
+
+        internal sealed class OpponentConfiguration
+        {
+            public string Name { get; init; }
+
+            public string In { get; init; }
+
+            public TrainingSettings Settings { get; init; }
+
+            [JsonIgnore]
+            public Func<int, IPlayer> Create { get; init; }
         }
 
         internal sealed class Result

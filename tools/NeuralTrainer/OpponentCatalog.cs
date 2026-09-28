@@ -35,11 +35,47 @@
                 "belot206" => seed => new Belot206Player(seed),
                 "neural" => seed => Neural(models, seed, false),
                 "fast" => seed => Neural(models, seed, true),
+                "sampled4" => seed => SampledFour(models, seed),
                 "expert" => seed => Expert(models, seed),
                 "master" => seed => Master(models, seed),
-                _ => throw new ArgumentException($"Unknown player '{name}'. Use random, dummy, smart, sharpbelot, belot206, neural, fast, expert, master or ismcts:100.", nameof(name)),
+                _ => throw new ArgumentException($"Unknown player '{name}'. Use random, dummy, smart, sharpbelot, belot206, neural, fast, sampled4, expert, master or ismcts:100.", nameof(name)),
             };
         }
+
+        public static ClaudePlayerNeural Configured(TrainingSettings settings, NeuralModels models, int seed) => new ClaudePlayerNeural(models)
+        {
+            Rng = new Random(seed),
+            MayDouble = settings.MayDouble,
+            Temperature = settings.Temperature,
+            MaxRegret = settings.MaxRegret,
+            SearchDeals = settings.SearchDeals,
+            SearchPriorDeals = settings.SearchPriorDeals,
+            SearchPruneMargin = settings.SearchPruneMargin,
+            SearchTimeLimitMilliseconds = settings.SearchMilliseconds,
+            SearchControlVariateDeals = settings.SearchControlVariateDeals,
+            SearchRolloutTricks = settings.SearchRolloutTricks,
+            SearchRolloutRootLeaf = settings.SearchRolloutRootLeaf,
+            SearchDoubleDummyTricks = settings.SearchDoubleDummyTricks,
+            SearchUseDeclarations = settings.SearchDeclarations,
+            SearchMinimumDeals = settings.SearchMinimumDeals,
+            UseEndgameSearch = settings.Endgame,
+            EndgameUseDeclarations = settings.EndgameDeclarations,
+            EndgameTricks = settings.EndgameTricks,
+            EndgameThreeTrickWorldLimit = settings.EndgameWorlds,
+            EndgameSampledWorlds = settings.EndgameSampledWorlds,
+            EndgameNodeLimit = settings.EndgameNodes,
+            EndgameTimeLimitMilliseconds = settings.EndgameMilliseconds,
+            EndgamePruneEquivalentCards = settings.EndgamePruning,
+            EndgameUseTranspositions = settings.EndgameTranspositions,
+            EndgamePolicyActions = settings.EndgamePolicyActions,
+            EndgamePolicyTemperature = settings.EndgamePolicyTemperature,
+            EndgamePolicyUniformMix = settings.EndgamePolicyUniformMix,
+            EndgamePolicyPower = settings.EndgamePolicyPower,
+            EndgameOwnershipModel = string.IsNullOrEmpty(settings.EndgameOwnership) ? null : CardOwnershipModel.LoadCached(settings.EndgameOwnership),
+            EndgameOwnershipPower = settings.EndgameOwnershipPower,
+            EndgameOwnershipUniformMix = settings.EndgameOwnershipUniformMix,
+            CardCorrectionModel = string.IsNullOrEmpty(settings.CardCorrection) ? null : LateCardCorrectionModel.LoadCached(settings.CardCorrection),
+        };
 
         private static ClaudePlayerNeural Neural(NeuralModels models, int seed, bool endgame) => new ClaudePlayerNeural(models ?? NeuralModels.Embedded)
         {
@@ -55,6 +91,16 @@
             var player = Neural(models, seed, true);
             player.Temperature = 1.5;
             player.MaxRegret = 4;
+            return player;
+        }
+
+        private static ClaudePlayerNeural SampledFour(NeuralModels models, int seed)
+        {
+            var player = Neural(models, seed, true);
+            player.EndgameTricks = 4;
+            player.EndgameThreeTrickWorldLimit = 1680;
+            player.EndgameSampledWorlds = 128;
+            player.EndgameNodeLimit = 250000;
             return player;
         }
 

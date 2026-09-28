@@ -82,21 +82,7 @@
             var models = string.IsNullOrEmpty(settings.In) ? NeuralModels.Embedded : NeuralModels.Load(settings.In);
             IPlayer Neural(int seed)
             {
-                var player = new ClaudePlayerNeural(models)
-                {
-                    MayDouble = settings.MayDouble,
-                    Temperature = settings.Temperature,
-                    MaxRegret = settings.MaxRegret,
-                    SearchDeals = settings.SearchDeals,
-                    UseEndgameSearch = settings.Endgame,
-                    EndgameUseDeclarations = settings.EndgameDeclarations,
-                    EndgameTricks = settings.EndgameTricks,
-                    EndgameThreeTrickWorldLimit = settings.EndgameWorlds,
-                    SearchPriorDeals = settings.SearchPriorDeals,
-                    SearchPruneMargin = settings.SearchPruneMargin,
-                    SearchTimeLimitMilliseconds = settings.SearchMilliseconds,
-                    Rng = new Random(seed),
-                };
+                var player = OpponentCatalog.Configured(settings, models, seed);
                 return settings.Bidding switch
                     {
                         "smart" => new MixedPlayer(new SmartPlayer(), player),
@@ -152,18 +138,7 @@
         // Card decisions through the engine, after warming up; excludes bidding and forced cards.
         private static void BenchCards(NeuralModels models, TrainingSettings settings)
         {
-            var players = Enumerable.Range(0, 4).Select(seat => new ClaudePlayerNeural(models)
-            {
-                SearchDeals = settings.SearchDeals,
-                UseEndgameSearch = settings.Endgame,
-                EndgameUseDeclarations = settings.EndgameDeclarations,
-                EndgameTricks = settings.EndgameTricks,
-                EndgameThreeTrickWorldLimit = settings.EndgameWorlds,
-                SearchPriorDeals = settings.SearchPriorDeals,
-                SearchPruneMargin = settings.SearchPruneMargin,
-                SearchTimeLimitMilliseconds = settings.SearchMilliseconds,
-                Rng = new Random(seat),
-            }).ToArray();
+            var players = Enumerable.Range(0, 4).Select(seat => OpponentCatalog.Configured(settings, models, seat)).ToArray();
             var warmupGames = settings.SearchDeals > 0 ? 1 : 20;
             for (var game = 0; game < warmupGames; game++)
             {
@@ -172,7 +147,18 @@
 
             var timed = players.Select(x => new TimedPlayer(x)).ToArray();
             var warmupEndgames = players.Sum(x => x.EndgameDecisions);
-            var games = settings.SearchDeals > 0 ? 4 : 100;
+            var warmupNodes = players.Sum(x => x.EndgameNodes);
+            var warmupWorlds = players.Sum(x => x.EndgameWorlds);
+            var warmupAttempts = players.Sum(x => x.EndgameSampleAttempts);
+            var warmupIncomplete = players.Sum(x => x.EndgameIncompleteWorlds);
+            var warmupLikelihood = players.Sum(x => x.EndgameLikelihoodEvaluations);
+            var warmupEffective = players.Sum(x => x.EndgameEffectiveWorlds);
+            var warmupProbes = players.Sum(x => x.EndgameTranspositionProbes);
+            var warmupHits = players.Sum(x => x.EndgameTranspositionHits);
+            var warmupCutoffs = players.Sum(x => x.EndgameTranspositionCutoffs);
+            var warmupNeuralVariance = players.Sum(x => x.SearchNeuralVariance);
+            var warmupResidualVariance = players.Sum(x => x.SearchResidualVariance);
+            var games = settings.BenchGames > 0 ? settings.BenchGames : settings.SearchDeals > 0 ? 4 : 100;
             for (var game = 0; game < games; game++)
             {
                 new Belot.Engine.BelotGame(timed[0], timed[1], timed[2], timed[3], new Random(game)).PlayGame();
@@ -180,6 +166,18 @@
 
             var decisions = timed.Sum(x => x.Decisions);
             var ticks = timed.Sum(x => x.Ticks);
+            var samples = timed.SelectMany(x => x.DecisionTicks).Order().ToArray();
+            double Micros(long value) => value * 1_000_000.0 / Stopwatch.Frequency;
+            double Percentile(double quantile) => Micros(samples[(int)Math.Ceiling(quantile * samples.Length) - 1]);
+            Console.WriteLine($"card latency us: p50={Percentile(.5):0.0}, p95={Percentile(.95):0.0}, p99={Percentile(.99):0.0}, max={Micros(samples[^1]):0.0}, over10ms={samples.Count(x => Micros(x) > 10000)}/{samples.Length}");
+            Console.WriteLine(settings);
+            Console.WriteLine($"endgame totals: {players.Sum(x => x.EndgameNodes) - warmupNodes} nodes, {players.Sum(x => x.EndgameWorlds) - warmupWorlds} worlds");
+            Console.WriteLine($"endgame sampling: {players.Sum(x => x.EndgameSampleAttempts) - warmupAttempts} attempts, {players.Sum(x => x.EndgameIncompleteWorlds) - warmupIncomplete} incomplete worlds");
+            Console.WriteLine($"endgame likelihood: {players.Sum(x => x.EndgameLikelihoodEvaluations) - warmupLikelihood} evaluations, {players.Sum(x => x.EndgameEffectiveWorlds) - warmupEffective:0.0} effective worlds");
+            Console.WriteLine($"endgame transpositions: {players.Sum(x => x.EndgameTranspositionProbes) - warmupProbes} probes, {players.Sum(x => x.EndgameTranspositionHits) - warmupHits} hits, {players.Sum(x => x.EndgameTranspositionCutoffs) - warmupCutoffs} cutoffs");
+            var neuralVariance = players.Sum(x => x.SearchNeuralVariance) - warmupNeuralVariance;
+            var residualVariance = players.Sum(x => x.SearchResidualVariance) - warmupResidualVariance;
+            Console.WriteLine($"control variate variance sums: neural={neuralVariance:0.000}, residual={residualVariance:0.000}, ratio={residualVariance / neuralVariance:0.000}");
             Console.WriteLine(
                 $"search {settings.SearchDeals} deals (prior {settings.SearchPriorDeals}, prune {settings.SearchPruneMargin}, "
                 + $"limit {settings.SearchMilliseconds} ms, endgame {settings.Endgame}/{settings.EndgameTricks}/{settings.EndgameWorlds}, declarations {settings.EndgameDeclarations}, "

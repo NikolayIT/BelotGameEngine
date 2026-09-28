@@ -12,6 +12,8 @@
     /// </summary>
     internal sealed class TrainingSettings
     {
+        public const string DefaultOpponent = "ismcts:100";
+
         /// <summary>Gets or sets the folder to start from ("" = random networks of <see cref="Sizes"/>).</summary>
         public string In { get; set; } = string.Empty;
 
@@ -126,10 +128,13 @@
         public double FitLearningRate { get; set; } = 3e-4;
 
         /// <summary>Gets or sets what "validate" plays against: smart, sharpbelot, belot206, ismcts:ms or a folder of networks.</summary>
-        public string Opponent { get; set; } = "ismcts:100";
+        public string Opponent { get; set; } = DefaultOpponent;
 
         /// <summary>Gets or sets a separate neural weight folder for arena's opposing team (empty = In).</summary>
         public string OpponentIn { get; set; } = string.Empty;
+
+        /// <summary>Gets or sets arena's independent neural opponent settings JSON (empty = named Opponent).</summary>
+        public string OpponentConfig { get; set; } = string.Empty;
 
         /// <summary>Gets or sets the candidate name for arena.</summary>
         public string Player { get; set; } = "neural";
@@ -172,6 +177,47 @@
         public int EndgameTricks { get; set; } = 2;
 
         public int EndgameWorlds { get; set; } = 8;
+
+        public int EndgameSampledWorlds { get; set; }
+
+        public int EndgameNodes { get; set; }
+
+        public int EndgameMilliseconds { get; set; }
+
+        public bool EndgamePruning { get; set; }
+
+        public bool EndgameTranspositions { get; set; }
+
+        public int EndgamePolicyActions { get; set; }
+
+        public double EndgamePolicyTemperature { get; set; } = 2;
+
+        public double EndgamePolicyUniformMix { get; set; } = 0.1;
+
+        public double EndgamePolicyPower { get; set; } = 0.5;
+
+        public string EndgameOwnership { get; set; } = string.Empty;
+
+        public double EndgameOwnershipPower { get; set; } = 0.5;
+
+        public double EndgameOwnershipUniformMix { get; set; } = 0.1;
+
+        public string CardCorrection { get; set; } = string.Empty;
+
+        public int SearchControlVariateDeals { get; set; }
+
+        public int SearchRolloutTricks { get; set; }
+
+        public bool SearchRolloutRootLeaf { get; set; } = true;
+
+        public int SearchDoubleDummyTricks { get; set; }
+
+        public bool SearchDeclarations { get; set; }
+
+        public int SearchMinimumDeals { get; set; } = 8;
+
+        /// <summary>Gets or sets measured engine games for bench (0 keeps the profile default).</summary>
+        public int BenchGames { get; set; }
 
         public double SearchPriorDeals { get; set; }
 

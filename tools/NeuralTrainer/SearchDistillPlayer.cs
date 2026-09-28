@@ -47,21 +47,22 @@
                 throw new ArgumentOutOfRangeException(nameof(settings), "Teacher play chance must be between zero and one.");
             }
 
-            this.teacher = new ClaudePlayerNeural(models)
-            {
-                SearchDeals = endgameTeacher ? 0 : settings.SearchDeals,
-                UseEndgameSearch = endgameTeacher,
-                EndgameUseDeclarations = settings.EndgameDeclarations,
-                EndgameTricks = settings.EndgameTricks,
-                EndgameThreeTrickWorldLimit = settings.EndgameWorlds,
-                Rng = new Random(seed),
-            };
+            this.teacher = OpponentCatalog.Configured(settings, models, seed);
+            this.teacher.SearchDeals = endgameTeacher ? 0 : settings.SearchDeals;
+            this.teacher.UseEndgameSearch = endgameTeacher;
             this.student = new ClaudePlayerNeural(models);
             this.buffers = buffers;
             this.random = new Random(seed ^ 0x5EED);
             this.labelChance = settings.CardLabelChance;
             this.teacherPlayChance = settings.TeacherPlayChance;
-            this.batched = policy == null || endgameTeacher ? null : new BatchedNeuralSearch(policy);
+
+            // The accelerator implements plain full-deal rollouts only. Preserve configured
+            // search semantics by using the managed teacher for every other search mode.
+            var plainSearch = settings.SearchPriorDeals == 0 && settings.SearchPruneMargin == 0
+                && settings.SearchMilliseconds == 0 && settings.SearchControlVariateDeals == 0
+                && settings.SearchRolloutTricks == 0 && settings.SearchDoubleDummyTricks == 0
+                && !settings.SearchDeclarations;
+            this.batched = policy == null || endgameTeacher || !plainSearch ? null : new BatchedNeuralSearch(policy);
         }
 
         public BidType GetBid(PlayerGetBidContext context) => this.student.GetBid(context);

@@ -22,6 +22,8 @@
 
         public long Ticks { get; private set; }
 
+        public List<long> DecisionTicks { get; } = new List<long>();
+
         public BidType GetBid(PlayerGetBidContext context) => this.player.GetBid(context);
 
         public IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context) => this.player.GetAnnounces(context);
@@ -30,7 +32,9 @@
         {
             var start = Stopwatch.GetTimestamp();
             var action = this.player.PlayCard(context);
-            this.Ticks += Stopwatch.GetTimestamp() - start;
+            var elapsed = Stopwatch.GetTimestamp() - start;
+            this.Ticks += elapsed;
+            this.DecisionTicks.Add(elapsed);
             this.Decisions++;
             return action;
         }
