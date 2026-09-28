@@ -21,6 +21,21 @@ import fit_ownership
 import joint_ownership
 
 
+def read_dataset(path, actor_tag, layout, data_format):
+    """Keep real public inputs and ownership labels, without synthesizing Q targets."""
+    if data_format == 'ppo':
+        if layout != 1:
+            raise ValueError('PPO ownership files contain only feature layout 1')
+        from ownership_rollout import read_ownership
+        rollout = read_ownership(path, actor_tag)
+        return rollout.x, rollout.owners
+    if data_format != 'samples':
+        raise ValueError('Unknown ownership data format')
+    features = fit_ownership.read_features(path, layout)
+    owners = fit_ownership.read_owners(str(path) + '.owners', len(features), layout)
+    return features, owners
+
+
 def validate_public_labels(features, owners, batch=8192):
     """Check target cards/capacities against public feature planes, before fitting.
 
@@ -114,6 +129,9 @@ def run(args):
     if device.type == 'cuda' and not torch.cuda.is_available():
         raise RuntimeError('CUDA is unavailable')
     objectives = ('ce', 'joint') if args.objective == 'both' else (args.objective,)
+    data_format = getattr(args, 'data_format', 'samples')
+    if data_format not in ('samples', 'ppo') or (data_format == 'ppo' and args.layout != 1):
+        raise ValueError('Invalid data format or unsupported PPO feature layout')
     output = Path(args.out)
     destinations = [output / objective for objective in objectives]
     destinations += [output / objective / f'epoch-{epoch:03}'
@@ -122,24 +140,32 @@ def run(args):
         raise ValueError('Output would overwrite the warm-start folder')
     output.mkdir(parents=True, exist_ok=True)
     report = dict(arguments=vars(args), torch=torch.__version__, sources={}, networks={})
+    if data_format == 'ppo':
+        report['collections'] = {}
+        for prefix in (args.data, args.validation_data):
+            manifest = Path(prefix + '.ppo.json')
+            if manifest.exists():
+                report['collections'][str(manifest)] = json.loads(manifest.read_text())
+                report['sources'][str(manifest)] = hashlib.sha256(manifest.read_bytes()).hexdigest()
     print(json.dumps(report), flush=True)
     for index, name in enumerate(fit_ownership.NAMES):
         tag = 11 + index
         source = Path(args.input) / (name + '.bin')
-        training_path = Path(args.data + '.' + name + '.samples')
-        validation_path = Path(args.validation_data + '.' + name + '.samples')
+        extension = '.ppo' if data_format == 'ppo' else '.samples'
+        training_path = Path(args.data + '.' + name + extension)
+        validation_path = Path(args.validation_data + '.' + name + extension)
         if training_path.resolve() == validation_path.resolve():
             raise ValueError('Training and validation must use separate files')
-        training = fit_ownership.read_features(training_path, args.layout)
-        validation = fit_ownership.read_features(validation_path, args.layout)
-        owners = fit_ownership.read_owners(str(training_path) + '.owners', len(training), args.layout)
-        validation_owners = fit_ownership.read_owners(str(validation_path) + '.owners', len(validation), args.layout)
+        training, owners = read_dataset(training_path, index + 1, args.layout, data_format)
+        validation, validation_owners = read_dataset(validation_path, index + 1, args.layout, data_format)
         if not len(training) or not len(validation):
             raise ValueError('Both datasets must contain samples')
         validate_public_labels(training, owners)
         validate_public_labels(validation, validation_owners)
-        for path in (source, training_path, Path(str(training_path) + '.owners'),
-                     validation_path, Path(str(validation_path) + '.owners')):
+        source_files = [source, training_path, validation_path]
+        if data_format == 'samples':
+            source_files += [Path(str(training_path) + '.owners'), Path(str(validation_path) + '.owners')]
+        for path in source_files:
             report['sources'][str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()
 
         allowed = None
@@ -199,6 +225,7 @@ if __name__ == '__main__':
     parser.add_argument('--input', required=True)
     parser.add_argument('--data', required=True)
     parser.add_argument('--validation-data', required=True)
+    parser.add_argument('--data-format', choices=('samples', 'ppo'), default='samples')
     parser.add_argument('--out', required=True)
     parser.add_argument('--layout', type=int, choices=(1, 2), default=1)
     parser.add_argument('--objective', choices=('both', 'ce', 'joint'), default='both')

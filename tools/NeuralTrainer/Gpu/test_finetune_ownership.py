@@ -15,6 +15,7 @@ import torch
 import fit
 import fit_ownership
 import finetune_ownership
+from test_ownership_rollout import position, write_rollout
 
 
 class FinetuneOwnershipTests(unittest.TestCase):
@@ -132,6 +133,35 @@ class FinetuneOwnershipTests(unittest.TestCase):
                     for epoch in ('', 'epoch-001', 'epoch-002'):
                         relative = Path(objective) / epoch / (name + '.bin')
                         self.assertEqual((output / relative).read_bytes(), (Path(args.out) / relative).read_bytes())
+
+    def test_ppo_reader_path_trains_from_real_labels_and_hashes_actual_files(self):
+        torch.manual_seed(493)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, output = root / 'source', root / 'output'
+            source.mkdir()
+            for index, name in enumerate(fit_ownership.NAMES):
+                fit.write_network(fit.Network(11 + index, 1, fit_ownership.SIZES), source / (name + '.bin'))
+                write_rollout(root / f'train.{name}.ppo', [position(2), position(5, partial=True), position(6)], index + 1)
+                write_rollout(root / f'valid.{name}.ppo', [position(3), position(6)], index + 1)
+            (root / 'train.ppo.json').write_text(json.dumps({'Seed': 7, 'Deals': 3}))
+            args = Namespace(input=str(source), data=str(root / 'train'), validation_data=str(root / 'valid'),
+                             out=str(output), layout=1, data_format='ppo', objective='ce', normalization='card',
+                             epochs=1, batch=2, learning_rate=.0001, seed=197, device='cpu',
+                             cache_device=False, cache_reserve_mib=1536)
+            with contextlib.redirect_stdout(io.StringIO()):
+                finetune_ownership.run(args)
+            report = json.loads((output / 'report.json').read_text())
+            self.assertEqual(len(report['sources']), 10)
+            self.assertEqual(report['collections'][str(root / 'train.ppo.json')]['Seed'], 7)
+            self.assertFalse(any(path.endswith('.samples') or path.endswith('.owners') for path in report['sources']))
+            for index, name in enumerate(fit_ownership.NAMES):
+                self.assertEqual(report['networks'][name]['ce']['initial']['states'], 2)
+                fit_ownership.read_network(output / 'ce' / (name + '.bin'), 11 + index, 1)
+                path = root / f'train.{name}.ppo'
+                self.assertEqual(report['sources'][str(path)], hashlib.sha256(path.read_bytes()).hexdigest())
+            with self.assertRaises(ValueError):
+                finetune_ownership.read_dataset(root / 'train.trump.ppo', 1, 2, 'ppo')
 
 
 if __name__ == '__main__':
