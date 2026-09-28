@@ -6,8 +6,10 @@
     using System.Linq;
     using System.Numerics;
 
+    using Belot.Engine.Players;
+
     /// <summary>
-    /// Predicts an unseen card's owner using only the ordinary seat features. The three
+    /// Predicts an unseen card's owner using public seat features and optional public history. The three
     /// outputs per card are the next seat, partner and previous seat. These are local weights;
     /// a sampler must still enforce public exclusions, known cards and remaining hand sizes.
     /// </summary>
@@ -17,7 +19,11 @@
 
         public const int FileBytes = 182884;
 
+        public const int HistoryFileBytes = 199268;
+
         private static readonly int[] Sizes = { FeatureEncoder.CardInputs, 128, 64, Outputs };
+
+        private static readonly int[] HistorySizes = { OwnershipFeatureEncoder.HistoryInputs, 128, 64, Outputs };
 
         private static readonly string[] Names = { "trump.bin", "notrumps.bin", "alltrumps.bin" };
 
@@ -29,10 +35,12 @@
         public CardOwnershipModel(NeuralNetwork trump, NeuralNetwork noTrumps, NeuralNetwork allTrumps)
         {
             this.networks = new[] { trump, noTrumps, allTrumps };
+            this.Layout = trump.Layout;
             for (var index = 0; index < this.networks.Length; index++)
             {
                 var network = this.networks[index];
-                if (network.Tag != 11 + index || network.Layout != FeatureEncoder.LayoutVersion || !network.GetSizes().SequenceEqual(Sizes))
+                var sizes = ExpectedSizes(network.Layout);
+                if (network.Tag != 11 + index || network.Layout != this.Layout || sizes == null || !network.GetSizes().SequenceEqual(sizes))
                 {
                     throw new InvalidDataException("Ownership network tag, feature layout or shape mismatch.");
                 }
@@ -47,6 +55,8 @@
                 }
             }
         }
+
+        public int Layout { get; }
 
         public static CardOwnershipModel Load(string directory)
         {
@@ -70,7 +80,13 @@
         /// <summary>Reads only the exact checked ownership format, before allocating network arrays.</summary>
         public static NeuralNetwork Read(Stream stream, int expectedTag)
         {
-            if (!stream.CanSeek || stream.Length - stream.Position != FileBytes || expectedTag < 11 || expectedTag > 13)
+            if (!stream.CanSeek || expectedTag < 11 || expectedTag > 13)
+            {
+                throw new InvalidDataException("Ownership network length or expected tag mismatch.");
+            }
+
+            var length = stream.Length - stream.Position;
+            if (length != FileBytes && length != HistoryFileBytes)
             {
                 throw new InvalidDataException("Ownership network length or expected tag mismatch.");
             }
@@ -78,12 +94,20 @@
             var start = stream.Position;
             using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, leaveOpen: true);
             if (reader.ReadInt32() != NeuralNetwork.FileMagic || reader.ReadInt32() != NeuralNetwork.FileVersion
-                || reader.ReadInt32() != expectedTag || reader.ReadInt32() != FeatureEncoder.LayoutVersion || reader.ReadInt32() != 3)
+                || reader.ReadInt32() != expectedTag)
             {
                 throw new InvalidDataException("Ownership network header mismatch.");
             }
 
-            foreach (var size in Sizes)
+            var layout = reader.ReadInt32();
+            var sizes = ExpectedSizes(layout);
+            var expectedBytes = layout == OwnershipFeatureEncoder.HistoryLayout ? HistoryFileBytes : FileBytes;
+            if (sizes == null || length != expectedBytes || reader.ReadInt32() != 3)
+            {
+                throw new InvalidDataException("Ownership network layout, length or layer count mismatch.");
+            }
+
+            foreach (var size in sizes)
             {
                 if (reader.ReadInt32() != size)
                 {
@@ -107,12 +131,15 @@
 
         public Evaluator CreateEvaluator() => new Evaluator(this);
 
+        private static int[] ExpectedSizes(int layout) =>
+            layout == FeatureEncoder.LayoutVersion ? Sizes : layout == OwnershipFeatureEncoder.HistoryLayout ? HistorySizes : null;
+
         /// <summary>One set of mutable inference buffers per player or thread.</summary>
         public sealed class Evaluator
         {
             private readonly CardOwnershipModel model;
-            private readonly int[] indices = new int[FeatureEncoder.MaxActive];
-            private readonly float[] features = new float[FeatureEncoder.MaxActive];
+            private readonly int[] indices = new int[OwnershipFeatureEncoder.MaxActive];
+            private readonly float[] features = new float[OwnershipFeatureEncoder.MaxActive];
 
             public Evaluator(CardOwnershipModel model)
             {
@@ -124,7 +151,7 @@
             /// from the deciding seat. Own and played cards get zero. Cards are unrotated here;
             /// probabilities are not masked, because the sampler owns the authoritative constraints.
             /// </summary>
-            public void Evaluate(in NeuralDeal deal, uint legal, Span<float> weights)
+            public void Evaluate(in NeuralDeal deal, uint legal, Span<float> weights, PlayerPlayCardContext context = null)
             {
                 if (weights.Length != Outputs)
                 {
@@ -132,7 +159,7 @@
                 }
 
                 Span<float> logits = stackalloc float[Outputs];
-                var count = FeatureEncoder.EncodeCard(in deal, legal, this.indices, this.features);
+                var count = OwnershipFeatureEncoder.Encode(in deal, legal, this.model.Layout, context, this.indices, this.features);
                 this.model.networks[FeatureEncoder.CardNetwork(deal.Kind)].Forward(this.indices.AsSpan(0, count), this.features.AsSpan(0, count), logits);
                 weights.Clear();
                 var rotation = FeatureEncoder.Rotation(deal.Kind);
