@@ -20,13 +20,12 @@
         public const double ExpertMaxRegret = ClaudePlayerProfiles.ExpertMaxRegret;
 
         /// <summary>
-        /// The Master plays each legal card out in this many deals of the unseen cards, with the
-        /// networks for every seat (ClaudePlayerNeural.SearchDeals): about 60 ms a card on a
-        /// desktop. It checks <see cref="MasterMilliseconds"/> between complete sampled deals,
-        /// after at least eight, so the budget is not a strict deadline.
+        /// The Master uses neural action values followed by bounded five-trick endings,
+        /// with a learned model of unseen card ownership. Full-deal rollouts are disabled.
         /// </summary>
         public const int MasterSearchDeals = ClaudePlayerProfiles.MasterSearchDeals;
 
+        /// <summary>The Master's endgame budget; managed execution is not a hard real-time deadline.</summary>
         public const int MasterMilliseconds = ClaudePlayerProfiles.MasterMilliseconds;
 
         // Pair ratings (two of a level against two of another) from the `elo` simulator round

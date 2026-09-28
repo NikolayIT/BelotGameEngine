@@ -22,6 +22,7 @@
   <ItemGroup>
     <!-- The trained networks (see NEURAL_NETWORK.md), built into the assembly. -->
     <EmbeddedResource Include="Neural\Weights\*.bin" LogicalName="Belot.AI.ClaudePlayer.Neural.Weights.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Neural\Weights\Ownership\*.bin" LogicalName="Belot.AI.ClaudePlayer.Neural.Weights.Ownership.%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Belot.Engine\Belot.Engine.csproj" />

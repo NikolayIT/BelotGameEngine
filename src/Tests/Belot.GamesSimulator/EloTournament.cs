@@ -26,7 +26,7 @@
         /// <summary>Plays the round robin and prints the ratings.</summary>
         /// <param name="parallelism">How many games run at once.</param>
         /// <param name="fastPairs">Mirrored pairs per matchup of the fast levels.</param>
-        /// <param name="slowPairs">Mirrored pairs per matchup with Master or ISMCTS, which search on every card.</param>
+        /// <param name="slowPairs">Mirrored pairs per matchup with ISMCTS, which searches on every card.</param>
         public static void Run(int parallelism, int fastPairs, int slowPairs)
         {
             var levels = new[]
@@ -41,9 +41,9 @@
                     isSlow: false),
                 new Level(
                     "claude",
-                    "Neural + search",
+                    "Neural + belief endgames",
                     ClaudePlayerProfiles.CreateMaster,
-                    isSlow: true),
+                    isSlow: false),
                 new Level("ismcts", "ClaudePlayerIsmcts", () => new ClaudePlayerIsmcts(), isSlow: true),
             };
 
@@ -51,7 +51,7 @@
             var wins = new double[n, n];
             var games = new double[n, n];
             var pairScores = new double[n * n][];
-            Console.WriteLine($"ELO round robin of the app's levels, pair vs pair: {fastPairs} mirrored pairs a matchup ({slowPairs} with search players)");
+            Console.WriteLine($"ELO round robin of the app's levels, pair vs pair: {fastPairs} mirrored pairs a matchup ({slowPairs} with ISMCTS)");
             Console.WriteLine(new string('=', Program.LineLength));
 
             var total = Stopwatch.StartNew();

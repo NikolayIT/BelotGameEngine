@@ -15,46 +15,59 @@
         [InlineData("fast")]
         [InlineData("expert")]
         [InlineData("master")]
+        [InlineData("rollout-master")]
         public void PublicFactoriesPreserveTheCurrentConfigurationAndReturnIndependentPlayers(string name)
         {
             Func<ClaudePlayerNeural> factory = name switch
             {
                 "fast" => ClaudePlayerProfiles.CreateFast,
                 "expert" => ClaudePlayerProfiles.CreateExpert,
+                "rollout-master" => ClaudePlayerProfiles.CreateRolloutMaster,
                 _ => ClaudePlayerProfiles.CreateMaster,
             };
             var first = factory();
             var second = factory();
             Assert.NotSame(first, second);
-            Assert.Equal(name != "master", first.UseEndgameSearch);
-            Assert.Equal(name == "master" ? 100 : 0, first.SearchDeals);
-            Assert.Equal(name == "master" ? 400 : 0, first.SearchTimeLimitMilliseconds);
+            var master = name == "master";
+            var rollout = name == "rollout-master";
+            Assert.Equal(!rollout, first.UseEndgameSearch);
+            Assert.Equal(rollout ? 100 : 0, first.SearchDeals);
+            Assert.Equal(rollout ? 400 : 0, first.SearchTimeLimitMilliseconds);
             Assert.Equal(name == "expert" ? 1.5 : 0, first.Temperature);
             Assert.Equal(name == "expert" ? 4 : double.PositiveInfinity, first.MaxRegret);
-            Assert.Equal(0, first.EndgameSampledWorlds);
-            Assert.Equal(0, first.EndgameNodeLimit);
-            Assert.Equal(0, first.EndgameTimeLimitMilliseconds);
+            Assert.Equal(master ? 128 : 0, first.EndgameSampledWorlds);
+            Assert.Equal(master ? 250000 : 0, first.EndgameNodeLimit);
+            Assert.Equal(master ? 8 : 0, first.EndgameTimeLimitMilliseconds);
             Assert.Equal(0, first.EndgamePolicyActions);
-            Assert.False(first.EndgameUseTranspositions);
-            if (name != "master")
+            Assert.Equal(master, first.EndgameUseTranspositions);
+            Assert.False(first.EndgamePruneEquivalentCards);
+            Assert.False(first.CardSuitEnsemble);
+            if (!rollout)
             {
                 Assert.True(first.EndgameUseDeclarations);
-                Assert.Equal(3, first.EndgameTricks);
-                Assert.Equal(90, first.EndgameThreeTrickWorldLimit);
+                Assert.Equal(master ? 5 : 3, first.EndgameTricks);
+                Assert.Equal(master ? 1680 : 90, first.EndgameThreeTrickWorldLimit);
+            }
+
+            if (master)
+            {
+                Assert.Equal(1, first.EndgameOwnershipPower);
+                Assert.Equal(0.1, first.EndgameOwnershipUniformMix);
             }
 
             first.Temperature = 7;
             first.SearchDeals = 17;
             first.EndgameTricks = 5;
             Assert.Equal(name == "expert" ? 1.5 : 0, second.Temperature);
-            Assert.Equal(name == "master" ? 100 : 0, second.SearchDeals);
-            Assert.Equal(name == "master" ? 2 : 3, second.EndgameTricks);
+            Assert.Equal(rollout ? 100 : 0, second.SearchDeals);
+            Assert.Equal(master ? 5 : rollout ? 2 : 3, second.EndgameTricks);
         }
 
         [Theory]
         [InlineData("fast")]
         [InlineData("expert")]
         [InlineData("master")]
+        [InlineData("rollout-master")]
         public void TrainerFactoriesKeepTheSuppliedModelsAndSeed(string name)
         {
             var models = RandomModels.Create(7331);

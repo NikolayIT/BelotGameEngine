@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "model": "ownership-ce12-seed9821",
+  "selectedProfile": "belief5-v1",
+  "format": "BNN1 version 1",
+  "featureLayout": 1,
+  "architecture": [
+    600,
+    128,
+    64,
+    96
+  ],
+  "relativeOwners": [
+    "next seat",
+    "partner",
+    "previous seat"
+  ],
+  "training": {
+    "seed": 9821,
+    "epochs": 12,
+    "selectedEpoch": 12,
+    "optimizer": "Adam",
+    "loss": "raw owner cross-entropy",
+    "batch": 1024,
+    "learningRateEpochs1To8": 0.001,
+    "learningRateEpochs9To12": 0.0003,
+    "gradientNormCap": 1,
+    "torch": "2.9.1+cu126"
+  },
+  "files": [
+    {
+      "file": "trump.bin",
+      "tag": 11,
+      "bytes": 182884,
+      "sha256": "20D7BEC4D4BF20F8FEEBDA74D3AD40A422CC50C8342FE3131E352A8B678D6239"
+    },
+    {
+      "file": "notrumps.bin",
+      "tag": 12,
+      "bytes": 182884,
+      "sha256": "1CA6B99A48A163F3B36BBE2F89EF0B8EC54B5AD787D30BFAA4074B00666463CC"
+    },
+    {
+      "file": "alltrumps.bin",
+      "tag": 13,
+      "bytes": 182884,
+      "sha256": "57F12BCA5A310EC1985880F196BF6B7F3D8722789ED1C1BFE2124550FF4D8F1C"
+    }
+  ],
+  "sourceSha256": {
+    "artifacts/neural-20260927/belief-selfplay/data.trump.samples": "4ece238f0b0d709c14932c2a3a5193c09b48ba621e1c06a56c8df14bb5a630c9",
+    "artifacts/neural-20260927/belief-selfplay/data.trump.samples.owners": "5343ab3bc0cc2ec7944a58ea9493990873b0a5aae857502352d55344e1bcb3ff",
+    "artifacts/neural-20260927/belief-validation/data.trump.samples": "b8f229c17dc9bddc12ebfbf73870a29db1fffbfde54efccab05ca94ff12d9f51",
+    "artifacts/neural-20260927/belief-validation/data.trump.samples.owners": "a90aca091de9b4e29f94a07c3f7db0a6d6f88feae4fcc365e6f8dcdccb1a2841",
+    "artifacts/neural-20260927/belief-selfplay/data.notrumps.samples": "63ad903a4dd96813ff27c93a103a4b15131421a012a0a35978b9ce92e3182b16",
+    "artifacts/neural-20260927/belief-selfplay/data.notrumps.samples.owners": "af4251fe8ac7cedd1131c56d25c2b125ec1b2aa512648ea62c4b7609ecae595b",
+    "artifacts/neural-20260927/belief-validation/data.notrumps.samples": "06d32205a0005e2d057930c044c691518c7813b4cea9703d31974d15d0f47476",
+    "artifacts/neural-20260927/belief-validation/data.notrumps.samples.owners": "d03fa062a78eb4b978c60f644b22691fb0ab246bb09dc6c9ce09a94a041165e5",
+    "artifacts/neural-20260927/belief-selfplay/data.alltrumps.samples": "10bd789ccc00ba8e653affdffa81b5b9452d3abc42d2b091fdd2ac198f7c22e3",
+    "artifacts/neural-20260927/belief-selfplay/data.alltrumps.samples.owners": "c58ef01ed879cff883c5eefce93b4675d2ac8ff36a4bfcd61a206e8077ae939c",
+    "artifacts/neural-20260927/belief-validation/data.alltrumps.samples": "923a91d0804d36309fb7c3bf78259f503a57df55e55c561b92f2ade78a42b10d",
+    "artifacts/neural-20260927/belief-validation/data.alltrumps.samples.owners": "9386c53b90850ff7284e21fab9c6c814335c65488970728de87698ef60fc651b"
+  },
+  "sourceReport": "artifacts/fast-bot-20260928/ownership-ce12-seed9821/report.json",
+  "selectionManifest": "artifacts/fast-bot-20260928/belief5-v1-manifest.json",
+  "reproduction": "artifacts/neural-20260927/torch-env/Scripts/python.exe tools/NeuralTrainer/Gpu/fit_ownership.py --data artifacts/neural-20260927/belief-selfplay/data --validation-data artifacts/neural-20260927/belief-validation/data --out <fresh-output-directory> --epochs 12 --batch 1024 --learning-rate .001 --seed 9821 --device cuda",
+  "ownershipBytes": 548652,
+  "totalActorAndOwnershipBytes": 3523482
+}

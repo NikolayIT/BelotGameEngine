@@ -27,6 +27,8 @@
 
         private static readonly string[] Names = { "trump.bin", "notrumps.bin", "alltrumps.bin" };
 
+        private static readonly Lazy<CardOwnershipModel> EmbeddedModel = new Lazy<CardOwnershipModel>(LoadEmbedded);
+
         private static readonly ConcurrentDictionary<string, Lazy<CardOwnershipModel>> Cache =
             new ConcurrentDictionary<string, Lazy<CardOwnershipModel>>(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
 
@@ -55,6 +57,9 @@
                 }
             }
         }
+
+        /// <summary>Gets the checked ownership models selected for the Master profile.</summary>
+        public static CardOwnershipModel Embedded => EmbeddedModel.Value;
 
         public int Layout { get; }
 
@@ -130,6 +135,21 @@
         }
 
         public Evaluator CreateEvaluator() => new Evaluator(this);
+
+        private static CardOwnershipModel LoadEmbedded()
+        {
+            var assembly = typeof(CardOwnershipModel).Assembly;
+            var networks = new NeuralNetwork[Names.Length];
+            for (var index = 0; index < networks.Length; index++)
+            {
+                var name = "Belot.AI.ClaudePlayer.Neural.Weights.Ownership." + Names[index];
+                using var stream = assembly.GetManifestResourceStream(name)
+                                   ?? throw new InvalidOperationException($"The ownership network {name} is not embedded in {assembly.GetName().Name}.");
+                networks[index] = Read(stream, 11 + index);
+            }
+
+            return new CardOwnershipModel(networks[0], networks[1], networks[2]);
+        }
 
         private static int[] ExpectedSizes(int layout) =>
             layout == FeatureEncoder.LayoutVersion ? Sizes : layout == OwnershipFeatureEncoder.HistoryLayout ? HistorySizes : null;

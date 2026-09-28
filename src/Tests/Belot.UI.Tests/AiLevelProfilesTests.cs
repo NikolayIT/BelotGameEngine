@@ -25,8 +25,15 @@
             Assert.Equal(3, expert.EndgameTricks);
             Assert.Equal(90, expert.EndgameThreeTrickWorldLimit);
             Assert.Equal(AiLevels.MasterSearchDeals, master.SearchDeals);
-            Assert.Equal(AiLevels.MasterMilliseconds, master.SearchTimeLimitMilliseconds);
-            Assert.False(master.UseEndgameSearch);
+            Assert.Equal(0, master.SearchTimeLimitMilliseconds);
+            Assert.Equal(AiLevels.MasterMilliseconds, master.EndgameTimeLimitMilliseconds);
+            Assert.True(master.UseEndgameSearch);
+            Assert.True(master.EndgameUseDeclarations);
+            Assert.Equal(5, master.EndgameTricks);
+            Assert.Equal(1680, master.EndgameThreeTrickWorldLimit);
+            Assert.Equal(128, master.EndgameSampledWorlds);
+            Assert.Equal(250000, master.EndgameNodeLimit);
+            Assert.True(master.EndgameUseTranspositions);
             Assert.NotSame(expert, expertLevel.CreatePlayer());
             Assert.NotSame(master, masterLevel.CreatePlayer());
         }

@@ -38,7 +38,8 @@
                 "sampled4" => seed => SampledFour(models, seed),
                 "expert" => seed => Seed(ClaudePlayerProfiles.CreateExpert(models), seed),
                 "master" => seed => Seed(ClaudePlayerProfiles.CreateMaster(models), seed),
-                _ => throw new ArgumentException($"Unknown player '{name}'. Use random, dummy, smart, sharpbelot, belot206, neural, fast, sampled4, expert, master or ismcts:100.", nameof(name)),
+                "rollout-master" => seed => Seed(ClaudePlayerProfiles.CreateRolloutMaster(models), seed),
+                _ => throw new ArgumentException($"Unknown player '{name}'. Use random, dummy, smart, sharpbelot, belot206, neural, fast, sampled4, expert, master, rollout-master or ismcts:100.", nameof(name)),
             };
         }
 

@@ -1,0 +1,186 @@
+{
+  "profile": "belief5-v1",
+  "date": "2026-09-29",
+  "uncertainty": "One empirical standard error across mirrored whole-game pairs; 95% normal intervals.",
+  "machine": "i7-12700K; other training, tests and matches stopped throughout each match.",
+  "settings": {
+    "Endgame": true,
+    "EndgameDeclarations": true,
+    "EndgameTricks": 5,
+    "EndgameWorlds": 1680,
+    "EndgameSampledWorlds": 128,
+    "EndgameNodes": 250000,
+    "EndgameMilliseconds": 8,
+    "EndgameTranspositions": true,
+    "EndgamePolicyActions": 0,
+    "EndgameOwnership": "ownership-ce12-seed9821",
+    "EndgameOwnershipPower": 1,
+    "EndgameOwnershipUniformMix": 0.1,
+    "SearchDeals": 0
+  },
+  "matches": [
+    {
+      "opponent": "ISMCTS 100 ms",
+      "seed": 751,
+      "pairs": 500,
+      "threads": 10,
+      "result": {
+        "Games": 1000,
+        "Score": 0.64,
+        "Sigma": 0.013005317241540333,
+        "PointsPerGame": 19.289,
+        "Elo": 99.95098928663998,
+        "EloSigma": 9.80579429410102,
+        "Lower95": 0.6145100465990632,
+        "Upper95": 0.6654899534009369
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 0,
+        "CardDecisions": 0,
+        "RejectedBids": 0,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 0
+      },
+      "seconds": 1185.9929726,
+      "source": "artifacts/fast-bot-20260928/belief5-v1-ismcts.arena.json"
+    },
+    {
+      "opponent": "Previous fast (three-trick endings)",
+      "seed": 757,
+      "pairs": 5000,
+      "threads": 10,
+      "result": {
+        "Games": 10000,
+        "Score": 0.5937,
+        "Sigma": 0.003230502937600683,
+        "PointsPerGame": 13.6802,
+        "Elo": 65.88809063985885,
+        "EloSigma": 2.3264866869165726,
+        "Lower95": 0.5873683305903519,
+        "Upper95": 0.6000316694096481
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 0,
+        "CardDecisions": 0,
+        "RejectedBids": 0,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 0
+      },
+      "seconds": 214.3602894,
+      "source": "artifacts/fast-bot-20260928/belief5-v1-fast-gate.arena.json"
+    },
+    {
+      "opponent": "Previous Master (100 rollouts, 400 ms cap)",
+      "seed": 761,
+      "pairs": 500,
+      "threads": 10,
+      "result": {
+        "Games": 1000,
+        "Score": 0.569,
+        "Sigma": 0.011032744123098782,
+        "PointsPerGame": 11.248,
+        "Elo": 48.2539984937358,
+        "EloSigma": 7.815167885878397,
+        "Lower95": 0.5473762188680804,
+        "Upper95": 0.5906237811319195
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 0,
+        "CardDecisions": 0,
+        "RejectedBids": 0,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 0
+      },
+      "seconds": 808.7136296,
+      "source": "artifacts/fast-bot-20260928/belief5-v1-master-gate.arena.json"
+    },
+    {
+      "opponent": "SmartPlayer",
+      "seed": 769,
+      "pairs": 5000,
+      "threads": 10,
+      "result": {
+        "Games": 10000,
+        "Score": 0.9253,
+        "Sigma": 0.0025288853378929574,
+        "PointsPerGame": 71.2831,
+        "Elo": 437.18478414082585,
+        "EloSigma": 6.355800796690573,
+        "Lower95": 0.9203434758166984,
+        "Upper95": 0.9302565241833016
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 0,
+        "CardDecisions": 0,
+        "RejectedBids": 0,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 0
+      },
+      "seconds": 219.8484392,
+      "source": "artifacts/fast-bot-20260928/belief5-v1-smart-gate.arena.json"
+    },
+    {
+      "opponent": "Adapted SharpBelot",
+      "seed": 773,
+      "pairs": 5000,
+      "threads": 10,
+      "result": {
+        "Games": 10000,
+        "Score": 0.8708,
+        "Sigma": 0.0032532428003061572,
+        "PointsPerGame": 63.2087,
+        "Elo": 331.4623626839966,
+        "EloSigma": 5.023192781216967,
+        "Lower95": 0.8644237612784357,
+        "Upper95": 0.8771762387215644
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 365713,
+        "CardDecisions": 1015508,
+        "RejectedBids": 0,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 530
+      },
+      "seconds": 211.700594,
+      "source": "artifacts/fast-bot-20260928/belief5-v1-sharpbelot-gate.arena.json"
+    },
+    {
+      "opponent": "Adapted Belot 2.06 (2001)",
+      "seed": 787,
+      "pairs": 5000,
+      "threads": 10,
+      "result": {
+        "Games": 10000,
+        "Score": 0.7642,
+        "Sigma": 0.0040352110955583645,
+        "PointsPerGame": 61.2577,
+        "Elo": 204.26529303732787,
+        "EloSigma": 3.890090702525313,
+        "Lower95": 0.7562911315826892,
+        "Upper95": 0.7721088684173107
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 391049,
+        "CardDecisions": 1030590,
+        "RejectedBids": 3911,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 0
+      },
+      "seconds": 214.0224947,
+      "source": "artifacts/fast-bot-20260928/belief5-v1-belot206-gate.arena.json"
+    }
+  ],
+  "idleBenchmark": {
+    "games": 100,
+    "warmupGamesExcluded": 20,
+    "cardDecisions": 21672,
+    "meanMicroseconds": 1426.9,
+    "medianMicroseconds": 31.3,
+    "p95Microseconds": 5540.3,
+    "p99Microseconds": 6088.7,
+    "maximumMicroseconds": 8006.1,
+    "over10Milliseconds": 0,
+    "source": "artifacts/fast-bot-20260928/bench-belief5-v1.log",
+    "limitation": "Observed warmed desktop callbacks; not a hard real-time bound on every device."
+  }
+}
