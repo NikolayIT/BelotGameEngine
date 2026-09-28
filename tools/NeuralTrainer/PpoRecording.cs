@@ -13,6 +13,7 @@
     using Belot.AI.ClaudePlayer.Neural;
     using Belot.AI.ClaudePlayer.Search;
     using Belot.Engine.Game;
+    using Belot.Engine.Players;
 
     /// <summary>Frozen on-policy batches of complete deals, with a trajectory for each seat.</summary>
     internal static class PpoRecording
@@ -28,10 +29,18 @@
 
             var clock = Stopwatch.StartNew();
             var models = PpoTrainingFiles.Load(settings.In, settings.PpoFloat);
+            var names = settings.PpoOpponents.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            var opponents = names.Select(name => OpponentCatalog.Factory(name)).ToArray();
+            if (!double.IsFinite(settings.PpoOpponentChance) || settings.PpoOpponentChance < 0 || settings.PpoOpponentChance > 1
+                || (settings.PpoOpponentChance > 0 && opponents.Length == 0))
+            {
+                throw new ArgumentException("A PPO opponent chance in [0,1] requires named opponents when positive.", nameof(settings));
+            }
+
             var workers = new Worker[settings.Threads];
             Parallel.For(0, workers.Length, new ParallelOptions { MaxDegreeOfParallelism = workers.Length }, index =>
             {
-                var worker = new Worker(models, unchecked(settings.Seed + (index * 104729)), settings.Temperature);
+                var worker = new Worker(models, unchecked(settings.Seed + (index * 104729)), settings.Temperature, opponents, settings.PpoOpponentChance);
                 workers[index] = worker;
                 for (var deal = index; deal < settings.Deals; deal += workers.Length)
                 {
@@ -79,6 +88,9 @@
                 settings.Threads,
                 settings.Temperature,
                 settings.PpoFloat,
+                settings.PpoOpponents,
+                settings.PpoOpponentChance,
+                OpponentDeals = names.Select((name, index) => new { Name = name, Deals = workers.Sum(worker => worker.OpponentDeals[index]) }).ToArray(),
                 Counts = counts,
                 Hashes = hashes,
                 Seconds = clock.Elapsed.TotalSeconds,
@@ -111,6 +123,9 @@
             private readonly NeuralEvaluator bidder;
             private readonly Random random;
             private readonly double temperature;
+            private readonly Func<int, IPlayer>[] opponents;
+            private readonly double opponentChance;
+            private readonly Random opponentRandom;
             private readonly BelotSimulator simulator = new BelotSimulator();
             private readonly DeclaredAnnounce[] announces = new DeclaredAnnounce[AnnounceScorer.MaxAnnounces];
             private readonly int[] deck = Enumerable.Range(0, 32).ToArray();
@@ -121,17 +136,27 @@
             private int hanging;
             private int southNorthTotal;
             private int eastWestTotal;
+            private IPlayer[] external;
+            private TrainingDealContext history;
 
-            public Worker(NeuralModels models, int seed, double temperature)
+            public Worker(NeuralModels models, int seed, double temperature, Func<int, IPlayer>[] opponents = null, double opponentChance = 0)
             {
                 this.models = models;
                 this.bidder = new NeuralEvaluator(models);
                 this.random = new Random(seed);
                 this.temperature = temperature;
                 this.first = this.random.Next(4);
+                this.opponents = opponents ?? Array.Empty<Func<int, IPlayer>>();
+                this.opponentChance = opponentChance;
+                this.opponentRandom = new Random(unchecked(seed ^ 0x51c87ad));
+                this.OpponentDeals = new int[this.opponents.Length];
             }
 
             public List<PpoSample>[] Samples { get; } = Enumerable.Range(0, 3).Select(_ => new List<PpoSample>()).ToArray();
+
+            public int[] OpponentDeals { get; }
+
+            public int LearnerMask { get; private set; } = 15;
 
             public void PlayDeal(int dealIndex)
             {
@@ -142,14 +167,50 @@
                 }
 
                 var deal = NeuralDeal.Deal(this.deck, this.first, this.hanging);
+                this.external = null;
+                this.history = null;
+                this.LearnerMask = 15;
+                if (this.opponentChance > 0 && this.opponentRandom.NextDouble() < this.opponentChance)
+                {
+                    var index = this.opponentRandom.Next(this.opponents.Length);
+                    this.OpponentDeals[index]++;
+                    this.external = new IPlayer[4];
+                    var parity = this.opponentRandom.Next(2);
+                    this.LearnerMask = parity == 0 ? 10 : 5;
+                    for (var seat = parity; seat < 4; seat += 2)
+                    {
+                        this.external[seat] = this.opponents[index](this.opponentRandom.Next());
+                    }
+
+                    this.history = new TrainingDealContext(dealIndex + 1, this.southNorthTotal, this.eastWestTotal);
+                }
+
                 while (!deal.AuctionFinished)
                 {
-                    deal.Bid(this.bidder.BestBid(in deal, this.values));
+                    if (this.history == null)
+                    {
+                        deal.Bid(this.bidder.BestBid(in deal, this.values));
+                    }
+                    else
+                    {
+                        var legal = deal.AvailableBids();
+                        var opponent = this.external[deal.ToBid];
+                        var bid = legal == BidType.Pass ? BidType.Pass : opponent == null
+                            ? this.bidder.BestBid(in deal, this.values) : opponent.GetBid(this.history.BidContext(in deal));
+                        if (bid != BidType.Pass && !legal.HasFlag(bid))
+                        {
+                            throw new InvalidOperationException("Training opponent returned an illegal bid.");
+                        }
+
+                        this.history.RecordBid(deal.ToBid, bid);
+                        deal.RecordBid(bid);
+                    }
                 }
 
                 if (deal.Contract != BidType.Pass)
                 {
                     deal.StartPlay(this.simulator, this.announces);
+                    this.history?.StartPlay(in deal);
                     this.PlayCards(dealIndex, ref deal);
                 }
 
@@ -179,9 +240,20 @@
                     deal.DeclareIfFirstCard();
                     var legal = this.simulator.LegalMoves(in deal.Play);
                     int card;
+                    var claimBelote = true;
                     if ((legal & (legal - 1)) == 0)
                     {
                         card = BitOperations.TrailingZeroCount(legal);
+                    }
+                    else if (this.external?[deal.Play.Turn] is IPlayer opponent)
+                    {
+                        var action = opponent.PlayCard(this.history.PlayContext(in deal, legal));
+                        card = action.Card.GetHashCode();
+                        claimBelote = action.Belote;
+                        if ((legal & (1u << card)) == 0)
+                        {
+                            throw new InvalidOperationException("Training opponent returned an illegal card.");
+                        }
                     }
                     else
                     {
@@ -216,7 +288,9 @@
                         card = FeatureEncoder.FromNetwork(action, rotation);
                     }
 
-                    deal.PlayCard(this.simulator, card, legal);
+                    var belote = claimBelote && this.simulator.IsBelote(in deal.Play, card, legal);
+                    this.history?.RecordCard(deal.Play.Turn, card, belote);
+                    deal.PlayCard(this.simulator, card, belote);
                 }
 
                 deal.Score(this.simulator, out var southNorth, out var eastWest, out _);

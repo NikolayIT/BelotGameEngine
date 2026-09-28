@@ -162,9 +162,34 @@ class PpoTests(unittest.TestCase):
                 ppo.restore(root / 'checkpoint/training.pt', actors, critics,
                             actor_optimizers, critic_optimizers, args)
             args.critic_sizes = '256,128'
+            args.opponents = 'smart,sharpbelot,belot206'
+            with self.assertRaisesRegex(ValueError, 'Resume changes opponents'):
+                ppo.restore(root / 'checkpoint/training.pt', actors, critics,
+                            actor_optimizers, critic_optimizers, args)
+            args.opponents = ''
+            args.opponent_chance = 0.5
+            with self.assertRaisesRegex(ValueError, 'Resume changes opponent_chance'):
+                ppo.restore(root / 'checkpoint/training.pt', actors, critics,
+                            actor_optimizers, critic_optimizers, args)
+            args.opponent_chance = 0.0
             (root / 'bid.bin').write_bytes(b'changed bid')
             with self.assertRaisesRegex(ValueError, 'source weights changed'):
                 ppo.restore(root / 'checkpoint/training.pt', actors, critics,
+                            actor_optimizers, critic_optimizers, args)
+
+            # Frozen neural opponents live in the collector assemblies, independently
+            # of the actor's source folder. A changed build must not silently replace them.
+            args.opponents = 'neural'
+            args.opponent_chance = 1
+            args.trainer = str(root / 'NeuralTrainer.dll')
+            assembly = root / 'Belot.AI.ClaudePlayer.dll'
+            assembly.write_bytes(b'frozen opponent')
+            ppo.checkpoint(root / 'external', actors, critics, actor_optimizers, critic_optimizers, 4, args)
+            ppo.restore(root / 'external/training.pt', actors, critics,
+                        actor_optimizers, critic_optimizers, args)
+            assembly.write_bytes(b'changed opponent')
+            with self.assertRaisesRegex(ValueError, 'opponent assemblies changed'):
+                ppo.restore(root / 'external/training.pt', actors, critics,
                             actor_optimizers, critic_optimizers, args)
 
     def test_helper_capacity_starts_at_the_same_public_value(self):

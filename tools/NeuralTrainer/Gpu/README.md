@@ -244,3 +244,29 @@ input folder. They are development checks. Promotion also requires independent
 mirrored whole games against ISMCTS at 100 ms, with training stopped, and an idle
 managed inference benchmark. Helper accuracy and training loss do not establish
 playing strength.
+
+### External opponent teams
+
+`--opponents neural,smart,sharpbelot,belot206 --opponent-chance 1` chooses one
+opposing team uniformly from that pool for each deal. Its two seats bid and play
+through public engine contexts. The other team uses the current stochastic actor;
+only its actions become PPO samples. A chance below one mixes these deals with
+ordinary four-seat self-play. The default is zero and preserves the old collector's
+output byte for byte. `neural` here means the frozen networks embedded in the copied
+trainer, so preserve that build throughout the run.
+
+`--resume` requires the same opponent list, order and chance. New checkpoints also
+reject changed opponent assemblies, including their embedded frozen neural weights.
+Older checkpoints remain readable. Run manifests record the assembly hashes;
+progress records count deals assigned to each pool
+member. The legacy adapters are training/evaluation dependencies only. They add
+nothing to the app. See [OPPONENTS_EXPERIMENT.md](../../../OPPONENTS_EXPERIMENT.md)
+for source fidelity, the matched control, results and complete reproduction commands.
+
+For evaluation, `NeuralTrainer arena --player neural --opponent sharpbelot` uses
+fresh seeded players for every mirrored leg and writes pair outcomes and adapter
+diagnostics to `<data>.arena.json`. Names also include `belot206`, `smart`, `random`,
+`dummy`, `fast`, `expert`, `master` and `ismcts:100`. `--in` chooses neural weights;
+`--opponent-in` chooses separate opposing neural weights. `validate` retains its
+individual search/temperature settings and now uses the same seeded match runner.
+Time-limited search still depends on machine load: run those comparisons idle.

@@ -251,6 +251,7 @@ def checkpoint(directory, actors, critics, actor_optimizers, critic_optimizers, 
     for model, name in zip(actors, fit.NAMES[1:]):
         fit.write_network(model, directory / (name + '.bin'))
     torch.save({'iteration': iteration, 'args': vars(args), 'source_hashes': source_hashes(args.input),
+                'opponent_assemblies': opponent_hashes(args.trainer) if getattr(args, 'opponent_chance', 0) > 0 else {},
                 'actors': [m.state_dict() for m in actors], 'critics': [m.state_dict() for m in critics],
                 'actor_optimizers': [o.state_dict() for o in actor_optimizers],
                 'critic_optimizers': [o.state_dict() for o in critic_optimizers],
@@ -263,6 +264,11 @@ def source_hashes(directory):
             for name in fit.NAMES}
 
 
+def opponent_hashes(trainer):
+    return {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in sorted(Path(trainer).parent.glob('Belot*.dll'))}
+
+
 def restore(path, actors, critics, actor_optimizers, critic_optimizers, args):
     saved = torch.load(path, map_location=args.device, weights_only=True)
     for key in ('critic', 'temperature', 'gae_lambda', 'seed', 'warmup', 'deals', 'threads'):
@@ -270,10 +276,16 @@ def restore(path, actors, critics, actor_optimizers, critic_optimizers, args):
             raise ValueError(f'Resume changes {key}')
     if saved['args'].get('critic_sizes', '256,128') != getattr(args, 'critic_sizes', '256,128'):
         raise ValueError('Resume changes helper architecture')
+    for key, default in (('opponents', ''), ('opponent_chance', 0.0)):
+        if saved['args'].get(key, default) != getattr(args, key, default):
+            raise ValueError(f'Resume changes {key}')
     if Path(saved['args']['input']).resolve() != Path(args.input).resolve():
         raise ValueError('Resume changes the frozen input reference')
     if 'source_hashes' in saved and saved['source_hashes'] != source_hashes(args.input):
         raise ValueError('Resume source weights changed')
+    if (saved.get('opponent_assemblies') is not None and getattr(args, 'opponent_chance', 0) > 0
+            and saved['opponent_assemblies'] != opponent_hashes(args.trainer)):
+        raise ValueError('Resume opponent assemblies changed')
     for objects, key in ((actors, 'actors'), (critics, 'critics'),
                          (actor_optimizers, 'actor_optimizers'), (critic_optimizers, 'critic_optimizers')):
         for target, state in zip(objects, saved[key]):
@@ -300,7 +312,8 @@ def run(args):
             or args.deals <= 0 or args.threads <= 0 or args.batch <= 0 or args.save_every <= 0
             or args.temperature <= 0 or args.actor_lr <= 0 or args.critic_lr <= 0
             or args.epochs <= 0 or args.critic_epochs <= 0 or args.target_kl <= 0
-            or not 0 < args.clip < 1 or not 0 <= args.gae_lambda <= 1):
+            or not 0 < args.clip < 1 or not 0 <= args.gae_lambda <= 1
+            or not 0 <= args.opponent_chance <= 1 or (args.opponent_chance > 0 and not args.opponents.strip())):
         raise ValueError('Invalid PPO settings')
     root = Path(args.out)
     root.mkdir(parents=True, exist_ok=True)
@@ -330,6 +343,7 @@ def run(args):
                   'device': torch.cuda.get_device_name(args.device) if str(args.device).startswith('cuda') else 'cpu',
                   'source_hashes': source_hashes(args.input),
                   'trainer_sha256': hashlib.sha256(Path(args.trainer).read_bytes()).hexdigest(),
+                  'opponent_assemblies': opponent_hashes(args.trainer),
                   'python_sources': {Path(path).name: hashlib.sha256(Path(path).read_bytes()).hexdigest()
                                      for path in (__file__, fit.__file__)}}
     (root / f'run-{start:04}.json').write_text(json.dumps(provenance, indent=2), encoding='utf-8')
@@ -341,13 +355,17 @@ def run(args):
         seed = (args.seed + step * 100003) % 2147483647
         collection = invoke(['dotnet', args.trainer, 'record-ppo', '--in', str(snapshot), '--ppo-float', 'true',
                              '--data', str(prefix), '--deals', str(args.deals), '--threads', str(args.threads),
-                             '--temperature', str(args.temperature), '--seed', str(seed)], root / 'collect.log')
+                             '--temperature', str(args.temperature), '--seed', str(seed),
+                             '--ppo-opponents', args.opponents, '--ppo-opponent-chance', str(args.opponent_chance)], root / 'collect.log')
         print(collection.strip(), flush=True)
         manifest = json.loads(Path(str(prefix) + '.ppo.json').read_text())
         hashes = [hashlib.sha256((snapshot / (name + ('.bin' if tag == 0 else '.f32'))).read_bytes()).hexdigest().upper()
                   for tag, name in enumerate(fit.NAMES)]
         if manifest['Hashes'] != hashes or manifest['Temperature'] != args.temperature:
             raise RuntimeError('Collector snapshot does not match PPO policy')
+        if (manifest.get('PpoOpponents', '') != args.opponents
+                or manifest.get('PpoOpponentChance', 0.0) != args.opponent_chance):
+            raise RuntimeError('Collector opponents do not match PPO settings')
         stats = []
         for tag, name in enumerate(fit.NAMES[1:], 1):
             data = read_rollout(str(prefix) + '.' + name + '.ppo', tag)
@@ -356,7 +374,8 @@ def run(args):
         iteration = step + 1
         record = {'iteration': iteration, 'phase': 'warmup' if step < args.warmup else 'ppo',
                   'seed': seed, 'deals': args.deals, 'seconds': time.monotonic() - iteration_clock,
-                  'elapsed': time.monotonic() - clock, 'networks': stats}
+                  'elapsed': time.monotonic() - clock, 'networks': stats,
+                  'opponent_deals': manifest.get('OpponentDeals', [])}
         with (root / 'progress.jsonl').open('a', encoding='utf-8') as file:
             file.write(json.dumps(record) + '\n')
         print(json.dumps(record), flush=True)
@@ -385,6 +404,8 @@ def arguments():
     parser.add_argument('--threads', type=int, default=12)
     parser.add_argument('--seed', type=int, default=4401)
     parser.add_argument('--temperature', type=float, default=1.0)
+    parser.add_argument('--opponents', default='', help='Comma-separated named opposing teams, e.g. smart,sharpbelot,belot206')
+    parser.add_argument('--opponent-chance', type=float, default=0.0, help='Fraction of deals using an external team; PPO records only current-policy seats')
     parser.add_argument('--epochs', type=int, default=3)
     parser.add_argument('--critic-epochs', type=int, default=3)
     parser.add_argument('--batch', type=int, default=2048)
