@@ -122,7 +122,9 @@ Ownership supervision at weights .01 and .1 and public-order inputs were impleme
 and tested. The four-epoch Q-only history fit ties; the stronger auxiliary objective
 regresses. These are short pilot results, not evidence against history or learned
 beliefs in general. A longer online run or explicit belief-conditioned policy would
-test different hypotheses. PPO with a privileged critic remains unimplemented.
+test different hypotheses. At this checkpoint, PPO with a privileged critic had
+not yet been implemented; the subsequent experiment is in
+[PPO_EXPERIMENT.md](../PPO_EXPERIMENT.md).
 
 A compact alternative from the PIMC literature has completed its first independent evaluation:
 solve the final two tricks, and three-trick positions with at most eight publicly
@@ -154,3 +156,21 @@ Some publicly different states therefore share the neural encoding. Preserving
 those details is a concrete future feature experiment, requiring a new layout
 version and parity checks. This observation does not establish why the tested
 students failed or predict the size of a playing gain.
+
+## September 28-29 follow-up
+
+The later [bounded-search experiment](../FAST_BOT_EXPERIMENT.md) tests the belief
+models directly in play: separate compact ownership networks weight complete
+legal hands, and an exact constrained sampler feeds bounded five-trick endings.
+That combination produces a substantial independently measured gain while
+retaining the actor weights. Longer public-history features, joint ownership
+loss, mixed-opponent ownership data and a four-component mixture did not justify
+replacing the selected model in their controlled pilots. This distinguishes the
+successful use of predicted ownership in search from the earlier unsuccessful
+auxiliary loss on the actor.
+
+Auction-preserving suit averaging also improves the frozen policy in whole-game
+comparisons. A controlled attempt to compress that teacher into one ordinary
+network improved imitation metrics but tied the frozen baseline. The current
+configuration, independent opponent results, timing, promotion decisions and app
+calibration are maintained in [NEURAL_NETWORK.md](../NEURAL_NETWORK.md#16-faster-master-with-learned-ownership-september-28-29-2026).

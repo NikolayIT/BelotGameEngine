@@ -171,6 +171,60 @@ architecture. It tests depth without discarding the warm start. Tests check exac
 prediction/export parity, gradients through new layers and invalid depth. Match
 strength and idle latency must be measured after fitting; deeper is not assumed better.
 
+## Distil the suit-ensemble teacher
+
+`distill_suit_ensemble.py` fits the frozen baseline's inference-time suit average
+into the original `600 -> 512 -> 256 -> 128 -> 32` card networks. It uses public
+layout-1 states from existing `.samples` files, discards their old Monte Carlo
+targets, and checks each action mask against the public legal-card plane. It
+reads no ownership sidecars. Bidding is copied byte for byte to every checkpoint.
+
+The teacher averages every permitted suit permutation, fixing trumps and every
+suit bid by any seat. All 16 card planes move together; scalar features stay
+fixed and outputs map back before averaging. For each legal action, its target is
+`ensembleQ - legalMean(ensembleQ) + legalMean(baselineQ)`. Targets remain float32
+in normalized Q units (one unit = 26 game points). The centered Huber objective
+uses mean-value weight 1. A separate `control/` branch fits baseline Q targets
+with the same half-weight warm start, fresh Adam, row order and learning rates.
+
+Run from the repository root after preserving the frozen source weights:
+
+```powershell
+& artifacts/neural-20260927/torch-env/Scripts/python.exe tools/NeuralTrainer/Gpu/distill_suit_ensemble.py --input artifacts/fast-bot-20260928/baseline --data artifacts/neural-20260927/belief-selfplay/data --validation-data artifacts/neural-20260927/belief-validation/data --out artifacts/fast-bot-20260928/ensemble-distill4-seed9851 --epochs 4 --batch 2048 --teacher-batch 4096 --learning-rate 0.00001 --seed 9851 --device cuda
+```
+
+The fixed pilot uses learning rate 1e-5 for epochs 1–2 and 3e-6 for epochs 3–4,
+gradient clipping at 1, two CPU threads and Windows power-throttling opt-out.
+`ensemble/` and `control/` each contain the four ordinary BNN1 files and all
+`epoch-NNN/` checkpoints. Wait until fitting finishes: contracts train in turn.
+`report.json` records source hashes, matched row-order hashes and diagnostics
+after reloading each actual half export. It checks that bidding remains unchanged.
+The predefined evaluated checkpoint was epoch 4, without heldout checkpoint selection.
+
+Seven focused tests cover complete suit groups, all fixed auction masks, an
+independent dense reference, legal-mean anchoring, old-target independence,
+units, matched orders and exported files. Actual managed/Python parity passed
+on 240 inputs and 7,680 outputs for the teacher and both final students, covering
+1/2/6/24-view groups; maximum error was below 7.2e-7 normalized Q. Top1 diagnostics
+use canonical card-index tie breaking, because the corpus omits physical trump
+rotation. `ensemble_optimal_choice_rate` accepts every zero-regret action;
+`ensemble_regret_game_points` is the principal heldout action metric.
+
+The September 29 pilot finished in 121.95 seconds including teacher preparation
+and both fits. Aggregate heldout teacher regret improved from .045554 to .038956
+game points, but the fixed epoch-4 student scored **50.035% +/- .175 percentage
+points against the frozen baseline over 20,000 mirrored whole games** (seed 853;
+95% interval [49.691%, 50.379%]). Against its matched self-distillation control it
+scored 50.505% +/- .177 pp over another 20,000 games (seed 857). Uncertainty is one
+empirical standard error across mirrored pairs. The control's strength against
+the baseline was not measured directly. With no demonstrated baseline gain,
+the pilot stopped without promoting weights or changing runtime defaults.
+
+The run folder contains `plan.json`, `run-screens.ps1`, exact screen arguments,
+arena reports, parity reports, training logs and `summary.json`. See
+[FAST_BOT_EXPERIMENT.md](../../../FAST_BOT_EXPERIMENT.md) for the complete results,
+including the stronger inference-time ensemble's separate opponent comparisons.
+
 ## Auxiliary card-location experiment
 
 `record-selfplay` freezes the supplied networks and records the existing true-deal
@@ -266,7 +320,101 @@ for source fidelity, the matched control, results and complete reproduction comm
 For evaluation, `NeuralTrainer arena --player neural --opponent sharpbelot` uses
 fresh seeded players for every mirrored leg and writes pair outcomes and adapter
 diagnostics to `<data>.arena.json`. Names also include `belot206`, `smart`, `random`,
-`dummy`, `fast`, `expert`, `master` and `ismcts:100`. `--in` chooses neural weights;
+`dummy`, `fast`, `expert`, `master`, `rollout-master` and `ismcts:100`. The `master`
+profile uses the promoted embedded ownership model and bounded five-trick
+endgames; `rollout-master` preserves the former 100-rollout/400-ms profile.
+`--in` chooses neural actor weights;
 `--opponent-in` chooses separate opposing neural weights. `validate` retains its
 individual search/temperature settings and now uses the same seeded match runner.
 Time-limited search still depends on machine load: run those comparisons idle.
+
+`bench --player master|rollout-master|fast|expert --bench-games 100` measures the
+same shared profile factories used by the app and arena. It reports effective
+settings, warmed engine-card latency percentiles, maximum time and counts above
+10 ms. Default `neural` and explicit `candidate` retain configured flag behavior.
+`--card-suit-ensemble true` averages the permitted suit permutations in ordinary
+card-network fallback only; successful searches, bids and rollout policies are
+unchanged. The option remains off unless explicitly enabled.
+
+### Separate ownership models and late corrections
+
+`fit_ownership.py` trains separate 600 -> 128 -> 64 -> 96 card-location networks
+from public actor features and ownership sidecars. Layout 2 accepts 664 inputs,
+adding public play chronology; it requires matching layout-2 data and sidecars.
+Ownership exports use checked BNN1 headers with tags 11/12/13. These models do
+not replace the actor or change its feature layout. `--history-features zero`
+provides the matched 664-input control.
+
+`finetune_ownership.py` can compare ordinary cross-entropy with exact conditional
+likelihood of the complete hidden assignment. Its dynamic program enforces
+public masks and remaining hand sizes. `--objective both` starts both branches
+from the same half-precision files, optimizer settings and data order; it retains
+every epoch. `--normalization card` averages per-state/card losses. This differs
+from weighting a state in proportion to its unseen-card count. Optional GPU
+caching checks a memory reserve before moving a contract's data.
+
+```powershell
+$python = 'artifacts/neural-20260927/torch-env/Scripts/python.exe'
+& $python tools/NeuralTrainer/Gpu/finetune_ownership.py --input artifacts/fast-bot-20260928/ownership-ce12-seed9821 --data artifacts/neural-20260927/belief-selfplay/data --validation-data artifacts/neural-20260927/belief-validation/data --out artifacts/fast-bot-20260928/ownership-joint4-lr1e4-b2048-seed9833 --objective both --normalization card --epochs 4 --batch 2048 --learning-rate .0001 --seed 9833 --device cuda --cache-device
+```
+
+The conditional objective matches untempered product weights before extra
+declaration filtering. Test runtime power 1 and uniform mix 0 when comparing
+that objective directly. More accurate labels or lower validation loss do not
+establish stronger play. The managed sampler only receives predicted weights,
+public hand sizes, visible cards and legal-play deductions.
+
+`ownership_rollout.read_ownership` reads existing `.ppo` files without action
+targets or additional playouts. It returns the same 600 public features and
+separate ownership labels, checked against public constraints. Source tags are
+actor tags 1/2/3. Deal/seat identifiers are metadata for grouped validation, not
+inputs. It does not create synthetic Q-value training files.
+
+`fit_mixture_ownership.py` is an offline four-component ownership experiment.
+It shares a `600 -> 128 -> 64` trunk, then emits four 96-logit ownership heads
+and four gate logits. Each head is normalized separately under public masks and
+remaining hand sizes before the gated mixture likelihood is computed. The
+runner checks source hashes, per-epoch row orders and learning rates against
+the existing K1 joint-training control. New checked export tags 14/15/16 and
+the 388-output shape are deliberately incompatible with the current ownership
+runtime; no runtime mixture sampler was added.
+
+```powershell
+& artifacts/neural-20260927/torch-env/Scripts/python.exe tools/NeuralTrainer/Gpu/fit_mixture_ownership.py --input artifacts/fast-bot-20260928/ownership-ce12-seed9821 --data artifacts/neural-20260927/belief-selfplay/data --validation-data artifacts/neural-20260927/belief-validation/data --control-report artifacts/fast-bot-20260928/ownership-joint4-lr1e4-b2048-seed9833/report.json --out artifacts/fast-bot-20260928/ownership-mixture4-joint4-lr1e4-b2048-seed9833 --epochs 4 --batch 2048 --learning-rate 0.0001 --seed 9833 --perturbation 0.05 --cache-device --cache-reserve-mib 1536 --device cuda
+```
+
+Fixed epoch 4 reduced aggregate late-phase joint NLL from 5.581697 to 5.570324
+nats/state over 55,265 heldout positions with at least three completed tricks.
+The .011373 reduction (0.204%) was below the predefined .03-nat criterion for
+prioritizing runtime integration. Every contract improved, and components did
+not collapse, but no K4 playing-strength or runtime-latency claim was made.
+The experiment was retained without integration. See
+[MIXTURE_BELIEF_NOTE.md](../../../MIXTURE_BELIEF_NOTE.md) for the mathematics,
+conditioning requirements, full tables and hashes.
+
+`fit_late_correction.py` freezes all base actor parameters and learns a separate
+600 -> 64 -> 32 correction for each contract, from endgame-teacher samples.
+Only nonforced choices after four completed tricks enter fitting. Corrections
+are centered across legal actions, remain in the actor's point/26 units, and are
+added only after ordinary network evaluation. Earlier decisions, illegal output
+slots and successful search values are unchanged. Checked export tags are
+21/22/23; each file is 81,120 bytes. Validation selects each contract's actual
+half-precision export by held-out teacher regret, followed by independent games.
+
+```powershell
+& $python tools/NeuralTrainer/Gpu/fit_late_correction.py --in artifacts/fast-bot-20260928/baseline --data artifacts/fast-bot-20260928/correction-train/data --validation-data artifacts/fast-bot-20260928/correction-validation/data --out artifacts/fast-bot-20260928/correction-fit --epochs 12 --batch 1024 --learning-rate .001 --seed 11921 --device cuda
+```
+
+`arena --player candidate --opponent-config opponent.json` compares two
+independently configured neural players. The JSON contains `TrainingSettings`
+properties such as `In`, `EndgameTricks`, `EndgameOwnership` and `CardCorrection`.
+Its `In` overrides outer `--opponent-in`, then falls back to candidate weights.
+Unknown/duplicate properties and nested opponent configurations are refused.
+The resolved opposing settings are printed and stored in the arena report.
+Use no wall-clock cap for development comparisons under shared machine load;
+measure the final time-capped configuration and timing with other work stopped.
+
+See [FAST_BOT_EXPERIMENT.md](../../../FAST_BOT_EXPERIMENT.md) for the frozen
+baseline, exact collection settings, independent seed ranges, results and
+failed configurations. Only the selected ownership-weighted endgame configuration
+is an app default; rejected fitting and rollout variants remain opt-in tooling.
