@@ -34,10 +34,10 @@
                 "sharpbelot" => seed => new SharpBelotPlayer(seed),
                 "belot206" => seed => new Belot206Player(seed),
                 "neural" => seed => Neural(models, seed, false),
-                "fast" => seed => Neural(models, seed, true),
+                "fast" => seed => Seed(ClaudePlayerProfiles.CreateFast(models), seed),
                 "sampled4" => seed => SampledFour(models, seed),
-                "expert" => seed => Expert(models, seed),
-                "master" => seed => Master(models, seed),
+                "expert" => seed => Seed(ClaudePlayerProfiles.CreateExpert(models), seed),
+                "master" => seed => Seed(ClaudePlayerProfiles.CreateMaster(models), seed),
                 _ => throw new ArgumentException($"Unknown player '{name}'. Use random, dummy, smart, sharpbelot, belot206, neural, fast, sampled4, expert, master or ismcts:100.", nameof(name)),
             };
         }
@@ -86,30 +86,24 @@
             EndgameThreeTrickWorldLimit = 90,
         };
 
-        private static ClaudePlayerNeural Expert(NeuralModels models, int seed)
+        private static ClaudePlayerNeural Seed(ClaudePlayerNeural player, int seed)
         {
-            var player = Neural(models, seed, true);
-            player.Temperature = 1.5;
-            player.MaxRegret = 4;
+            player.Rng = new Random(seed);
             return player;
         }
 
         private static ClaudePlayerNeural SampledFour(NeuralModels models, int seed)
         {
-            var player = Neural(models, seed, true);
-            player.EndgameTricks = 4;
-            player.EndgameThreeTrickWorldLimit = 1680;
-            player.EndgameSampledWorlds = 128;
-            player.EndgameNodeLimit = 250000;
-            return player;
-        }
-
-        private static ClaudePlayerNeural Master(NeuralModels models, int seed)
-        {
-            var player = Neural(models, seed, false);
-            player.SearchDeals = 100;
-            player.SearchTimeLimitMilliseconds = 400;
-            return player;
+            return new ClaudePlayerNeural(models ?? NeuralModels.Embedded)
+            {
+                Rng = new Random(seed),
+                UseEndgameSearch = true,
+                EndgameUseDeclarations = true,
+                EndgameTricks = 4,
+                EndgameThreeTrickWorldLimit = 1680,
+                EndgameSampledWorlds = 128,
+                EndgameNodeLimit = 250000,
+            };
         }
     }
 }

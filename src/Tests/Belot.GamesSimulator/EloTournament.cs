@@ -23,15 +23,6 @@
     {
         private const double AnchorElo = 1200d;
 
-        // The app's Expert and Master levels (Belot.UI's AiLevels).
-        private const double ExpertTemperature = 1.5;
-
-        private const double ExpertMaxRegret = 4;
-
-        private const int MasterSearchDeals = 100;
-
-        private const int MasterMilliseconds = 400;
-
         /// <summary>Plays the round robin and prints the ratings.</summary>
         /// <param name="parallelism">How many games run at once.</param>
         /// <param name="fastPairs">Mirrored pairs per matchup of the fast levels.</param>
@@ -46,20 +37,12 @@
                 new Level(
                     "expert",
                     "Neural/endgame (loose)",
-                    () => new ClaudePlayerNeural
-                    {
-                        Temperature = ExpertTemperature,
-                        MaxRegret = ExpertMaxRegret,
-                        UseEndgameSearch = true,
-                        EndgameUseDeclarations = true,
-                        EndgameTricks = 3,
-                        EndgameThreeTrickWorldLimit = 90,
-                    },
+                    ClaudePlayerProfiles.CreateExpert,
                     isSlow: false),
                 new Level(
                     "claude",
                     "Neural + search",
-                    () => new ClaudePlayerNeural { SearchDeals = MasterSearchDeals, SearchTimeLimitMilliseconds = MasterMilliseconds },
+                    ClaudePlayerProfiles.CreateMaster,
                     isSlow: true),
                 new Level("ismcts", "ClaudePlayerIsmcts", () => new ClaudePlayerIsmcts(), isSlow: true),
             };

@@ -15,9 +15,9 @@
         /// game points less than the best is chosen e^(-d / T) times as often, never one worse than the best
         /// by more than MaxRegret points (see ClaudePlayerNeural).
         /// </summary>
-        public const double ExpertTemperature = 1.5;
+        public const double ExpertTemperature = ClaudePlayerProfiles.ExpertTemperature;
 
-        public const double ExpertMaxRegret = 4;
+        public const double ExpertMaxRegret = ClaudePlayerProfiles.ExpertMaxRegret;
 
         /// <summary>
         /// The Master plays each legal card out in this many deals of the unseen cards, with the
@@ -25,9 +25,9 @@
         /// desktop. It checks <see cref="MasterMilliseconds"/> between complete sampled deals,
         /// after at least eight, so the budget is not a strict deadline.
         /// </summary>
-        public const int MasterSearchDeals = 100;
+        public const int MasterSearchDeals = ClaudePlayerProfiles.MasterSearchDeals;
 
-        public const int MasterMilliseconds = 400;
+        public const int MasterMilliseconds = ClaudePlayerProfiles.MasterMilliseconds;
 
         // Pair ratings (two of a level against two of another) from the `elo` simulator round
         // robin, anchored at Dummy = 1200 (September 27, 2026, elo 20000 60, PPO all-trump weights).
@@ -44,7 +44,7 @@
                 "Level_Expert_Tag",
                 4,
                 1600,
-                CreateExpertPlayer),
+                ClaudePlayerProfiles.CreateExpert),
             new AiLevel(
                 "claude",
                 "👑",
@@ -52,7 +52,7 @@
                 "Level_Claude_Tag",
                 5,
                 1760,
-                () => new ClaudePlayerNeural { SearchDeals = MasterSearchDeals, SearchTimeLimitMilliseconds = MasterMilliseconds }),
+                ClaudePlayerProfiles.CreateMaster),
         };
 
         /// <summary>The level with this id, or the Smart one for an unknown id.</summary>
@@ -63,20 +63,6 @@
             All.FirstOrDefault(o => string.Equals(o.Id, id, StringComparison.OrdinalIgnoreCase));
 
         /// <summary>The validated fast profile used for hints and as the basis of Expert.</summary>
-        public static ClaudePlayerNeural CreateFastPlayer() => new ClaudePlayerNeural
-        {
-            UseEndgameSearch = true,
-            EndgameUseDeclarations = true,
-            EndgameTricks = 3,
-            EndgameThreeTrickWorldLimit = 90,
-        };
-
-        private static ClaudePlayerNeural CreateExpertPlayer()
-        {
-            var player = CreateFastPlayer();
-            player.Temperature = ExpertTemperature;
-            player.MaxRegret = ExpertMaxRegret;
-            return player;
-        }
+        public static ClaudePlayerNeural CreateFastPlayer() => ClaudePlayerProfiles.CreateFast();
     }
 }

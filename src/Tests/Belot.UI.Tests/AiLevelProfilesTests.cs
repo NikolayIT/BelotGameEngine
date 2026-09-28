@@ -1,0 +1,51 @@
+﻿namespace Belot.UI.Tests
+{
+    using Belot.AI.ClaudePlayer;
+    using Belot.UI.Game;
+
+    using Xunit;
+
+    [Collection(AppState.Name)]
+    public class AiLevelProfilesTests
+    {
+        public AiLevelProfilesTests() => AppState.Reset();
+
+        [Fact]
+        public void AppLevelsUseTheSharedExpertAndMasterFactories()
+        {
+            var expertLevel = AiLevels.ById("expert");
+            var masterLevel = AiLevels.ById("claude");
+            Assert.Equal(typeof(ClaudePlayerProfiles), expertLevel.Factory.Method.DeclaringType);
+            Assert.Equal(typeof(ClaudePlayerProfiles), masterLevel.Factory.Method.DeclaringType);
+            var expert = Assert.IsType<ClaudePlayerNeural>(expertLevel.CreatePlayer());
+            var master = Assert.IsType<ClaudePlayerNeural>(masterLevel.CreatePlayer());
+            Assert.Equal(AiLevels.ExpertTemperature, expert.Temperature);
+            Assert.Equal(AiLevels.ExpertMaxRegret, expert.MaxRegret);
+            Assert.True(expert.UseEndgameSearch);
+            Assert.Equal(3, expert.EndgameTricks);
+            Assert.Equal(90, expert.EndgameThreeTrickWorldLimit);
+            Assert.Equal(AiLevels.MasterSearchDeals, master.SearchDeals);
+            Assert.Equal(AiLevels.MasterMilliseconds, master.SearchTimeLimitMilliseconds);
+            Assert.False(master.UseEndgameSearch);
+            Assert.NotSame(expert, expertLevel.CreatePlayer());
+            Assert.NotSame(master, masterLevel.CreatePlayer());
+        }
+
+        [Fact]
+        public void HintsKeepTheirCheapIndependentFastProfile()
+        {
+            var first = AiLevels.CreateFastPlayer();
+            var second = AiLevels.CreateFastPlayer();
+            Assert.NotSame(first, second);
+            Assert.True(first.UseEndgameSearch);
+            Assert.True(first.EndgameUseDeclarations);
+            Assert.Equal(3, first.EndgameTricks);
+            Assert.Equal(90, first.EndgameThreeTrickWorldLimit);
+            Assert.Equal(0, first.SearchDeals);
+            Assert.Equal(0, first.EndgameSampledWorlds);
+            Assert.Equal(0, first.Temperature);
+            first.EndgameTricks = 5;
+            Assert.Equal(3, second.EndgameTricks);
+        }
+    }
+}
