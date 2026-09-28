@@ -1,6 +1,7 @@
 ﻿namespace Belot.AI.ClaudePlayer.Tests
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
 
     using Belot.Engine.Game;
@@ -13,6 +14,28 @@
 
     public class LegacyOpponentsTests
     {
+        [Fact]
+        public void PlayerRandomStreamsAreSeparateFromTheDealAndRepeatInTheMirror()
+        {
+            const int dealSeed = 68100000;
+            var seeds = new List<int>();
+            var dummy = OpponentCatalog.Factory("dummy");
+            Arena.Play(
+                seed =>
+                {
+                    seeds.Add(seed);
+                    return dummy(seed);
+                },
+                dummy,
+                20,
+                1,
+                dealSeed);
+            Assert.Equal(80, seeds.Count);
+            Assert.Equal(40, seeds.Distinct().Count());
+            Assert.All(seeds.GroupBy(seed => seed), group => Assert.Equal(2, group.Count()));
+            Assert.All(seeds, seed => Assert.DoesNotContain(Math.Abs((long)seed), Enumerable.Range(dealSeed, 20).Select(value => (long)value)));
+        }
+
         [Theory]
         [InlineData("sharpbelot")]
         [InlineData("belot206")]

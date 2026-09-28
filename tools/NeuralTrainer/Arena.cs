@@ -65,10 +65,12 @@
             {
                 var pairSeed = unchecked(seed + pair);
                 var firstToPlay = (PlayerPosition)(1 << (pair % 4));
+                var firstPlayerSeed = PlayerSeed(pairSeed, 0);
+                var secondPlayerSeed = PlayerSeed(pairSeed, 1);
                 for (var leg = 0; leg < 2; leg++)
                 {
-                    var a = new[] { teamA(pairSeed), teamA(unchecked(pairSeed + 104729)) };
-                    var b = new[] { teamB(pairSeed), teamB(unchecked(pairSeed + 104729)) };
+                    var a = new[] { teamA(firstPlayerSeed), teamA(secondPlayerSeed) };
+                    var b = new[] { teamB(firstPlayerSeed), teamB(secondPlayerSeed) };
                     var game = leg == 0 ? new BelotGame(a[0], b[0], a[1], b[1], new Random(pairSeed))
                         : new BelotGame(b[0], a[0], b[1], a[1], new Random(pairSeed));
                     var outcome = game.PlayGame(firstToPlay);
@@ -104,6 +106,16 @@
                 TeamA = diagnosticsA,
                 TeamB = diagnosticsB,
             };
+        }
+
+        // Do not restart a player's RNG at the same sequence used to shuffle its deal.
+        // Both teams still share player seeds for common random numbers in comparisons.
+        private static int PlayerSeed(int dealSeed, int partner)
+        {
+            var value = unchecked((uint)dealSeed + 0x9E3779B9u + ((uint)partner * 0x85EBCA6Bu));
+            value = unchecked((value ^ (value >> 16)) * 0x85EBCA6Bu);
+            value = unchecked((value ^ (value >> 13)) * 0xC2B2AE35u);
+            return unchecked((int)(value ^ (value >> 16)));
         }
 
         internal sealed class Result
