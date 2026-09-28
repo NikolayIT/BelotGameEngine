@@ -75,6 +75,7 @@
             EndgameOwnershipPower = settings.EndgameOwnershipPower,
             EndgameOwnershipUniformMix = settings.EndgameOwnershipUniformMix,
             CardCorrectionModel = string.IsNullOrEmpty(settings.CardCorrection) ? null : LateCardCorrectionModel.LoadCached(settings.CardCorrection),
+            CardSuitEnsemble = settings.CardSuitEnsemble,
         };
 
         private static ClaudePlayerNeural Neural(NeuralModels models, int seed, bool endgame) => new ClaudePlayerNeural(models ?? NeuralModels.Embedded)

@@ -35,6 +35,7 @@
         private readonly float[] cardValues = new float[FeatureEncoder.CardOutputs];
         private readonly float[] bidValues = new float[FeatureEncoder.BidOutputs];
         private LateCardCorrectionModel.Evaluator lateCorrection;
+        private SuitEnsembleEvaluator suitEnsemble;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ClaudePlayerNeural"/> class with the
@@ -79,6 +80,13 @@
 
         /// <summary>Gets or sets a value indicating whether the player may double and redouble.</summary>
         public bool MayDouble { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether ordinary card values average every suit
+        /// permutation that fixes trump and all suits bid in the auction. Disabled by default;
+        /// bidding, successful search results and rollout policies retain their existing paths.
+        /// </summary>
+        public bool CardSuitEnsemble { get; set; }
 
         /// <summary>
         /// Gets or sets how many deals a card decision plays out (<see cref="NeuralSearch"/>): 0,
@@ -436,7 +444,16 @@
                 return true;
             }
 
-            this.evaluator.EvaluateCards(in deal, legal, this.cardValues);
+            if (this.CardSuitEnsemble)
+            {
+                this.suitEnsemble ??= new SuitEnsembleEvaluator();
+                this.suitEnsemble.EvaluateCards(in deal, legal, this.evaluator, this.cardValues);
+            }
+            else
+            {
+                this.evaluator.EvaluateCards(in deal, legal, this.cardValues);
+            }
+
             this.lateCorrection?.Apply(in deal, legal, this.cardValues);
             return true;
         }

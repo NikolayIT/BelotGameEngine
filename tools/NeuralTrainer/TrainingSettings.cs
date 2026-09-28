@@ -204,6 +204,8 @@
 
         public string CardCorrection { get; set; } = string.Empty;
 
+        public bool CardSuitEnsemble { get; set; }
+
         public int SearchControlVariateDeals { get; set; }
 
         public int SearchRolloutTricks { get; set; }
