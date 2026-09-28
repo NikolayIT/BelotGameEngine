@@ -50,8 +50,9 @@ dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimula
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- elo
 
 # Train the neural player's networks (tools/NeuralTrainer, not in the sln; see NEURAL_NETWORK.md):
-# distill | fit | train | validate | bench, every setting as --name value
+# distill | fit | train | validate | arena | bench, every setting as --name value
 dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- validate --in <folder> --opponent ismcts:100
+dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- arena --player fast --opponent belot206 --pairs 10000 --seed 611 --data artifacts/fast-206
 
 # The MAUI app (needs the MAUI workloads): run it on Windows, or build it for Android
 dotnet build src/UI/Belot.UI/Belot.UI.csproj -f net10.0-windows10.0.19041.0 -t:Run
@@ -242,10 +243,10 @@ network, with the original other three networks, still ties ClaudePlayerIsmcts
 `EndgameThreeTrickWorldLimit = 90`. It scores **54.100% +/- 1.386 pp over 1,000 games**
 against ISMCTS, 95% interval [51.384%, 56.816%], and **50.620% +/- .187 pp over
 20,000 games** against the previous fast profile (about +4 Elo). The latest idle
-means are **27.6 us/card** for this profile and **15.2 us** for networks alone.
+means (September 28) are **30.5 us/card** for this profile and **14.7 us** for networks alone.
 Only `alltrumps.bin` changed; total weights remain 2,974,830 bytes. The default
 constructor still uses networks alone. Master retains 100-deal search with a
-400-ms budget, measured at 56.20 ms/card. It scores 51.500% +/- 1.099 pp against
+400-ms budget, measured at 58.37 ms/card on September 28. It scores 51.500% +/- 1.099 pp against
 the new fast profile and 50.000% +/- 1.184 pp against the original Master, each
 over 1,000 games. The former is the higher point estimate but its 95% interval
 includes 50%; the latter finds no significant change. Earlier, adding endgames
@@ -302,7 +303,7 @@ combination remains unpromoted.
   and 50.620% +/- .187 pp with bounded endgames on both sides in 20,000 games.
   Hidden hands improve critic prediction but did not beat the matched public
   control in the initial experiment. The pure policy still ties ISMCTS100:
-  50.000% +/- .978 pp in 2,000 games. Its latest idle timing is 15.2 us/card,
+  50.000% +/- .978 pp in 2,000 games. September 27 idle timing was 15.2 us/card,
   or 27.6 us with bounded endgames. That fast profile passes the ISMCTS gate at
   54.100% +/- 1.386 pp in 1,000 games (95% [51.384%, 56.816%]). Its all-trump
   weights are embedded; the other three files remain original. App ratings were
@@ -310,6 +311,20 @@ combination remains unpromoted.
   97 AI and 72 UI tests; Windows and Android builds have zero warnings or errors.
   The PPO tooling also passes all 28 Python tests.
   See `PPO_EXPERIMENT.md` and `NEURAL_NETWORK.md` section 14 for results and commands.
+  `tools/LegacyOpponents` adapts SharpBelot and the C# transcription of Belot 2.06
+  for comparison and PPO training, without adding app dependencies. `arena`
+  supports named profiles (including smart, sharpbelot, belot206, neural, fast,
+  expert, master and ismcts:100), fresh seeded players per mirrored leg, pair
+  JSON and adapter diagnostics. `--opponent-in` loads separate opposing neural
+  weights. `validate` also uses the seeded runner and accepts both legacy names.
+  PPO's `--opponents` / `--opponent-chance` mix in external opposing teams;
+  only learner actions become PPO samples. Named neural opponents use the copied
+  collector's frozen embedded weights. Resume checks pool settings and, in new
+  checkpoints, opponent assembly hashes. The initial uniform four-bot pool on
+  every deal regressed: 49.250% +/- .205 pp against the current NN over 20,000
+  games. No new weights or app ratings were promoted. All 110 AI tests, 741 engine
+  tests, 72 UI tests and 28 Python tests pass; both app targets build cleanly.
+  See `OPPONENTS_EXPERIMENT.md` and `NEURAL_NETWORK.md` section 15.
   Search-teacher students have not earned promotion. A separate bounded-endgame
   implementation (`Neural/EndgameSearch`) was first tested with the original networks and averages
   perfect-information endings over publicly consistent hands. Its eight-world

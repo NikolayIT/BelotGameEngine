@@ -4,7 +4,7 @@
 learning in self-play. It values **every action open to it** (each bid, each legal card) in game
 points and can be made weaker on purpose by sometimes taking a nearly best action. The
 strongest validated fast configuration uses a PPO-improved all-trump network with bounded
-endgame search, averaging **27.6 microseconds per card** in the latest idle engine benchmark.
+endgame search, averaging **30.5 microseconds per card** in the September 28 idle engine benchmark.
 
 This document explains what it is, how it is trained, how to reproduce and improve it, and how
 to keep it working.
@@ -35,7 +35,7 @@ new ClaudePlayerNeural
 ```
 
 The default constructor still uses networks alone: **50.000% +/- .978 pp in
-2,000 games** against ISMCTS100, at **15.2 us/card**. It has not established a
+2,000 games** against ISMCTS100, at **14.7 us/card** in the September 28 timing check. It has not established a
 search-free win against ISMCTS. Against the original pure networks, the selected
 PPO weights score 50.628% +/- .135 pp in 40,000 held-out games. The endgame configuration
 solves all publicly consistent endings within its world limit, using perfect
@@ -1270,3 +1270,70 @@ validation, actor export parity and reproducible resume.
 Full experiment settings, follow-ups and reproduction commands are in
 [PPO_EXPERIMENT.md](PPO_EXPERIMENT.md) and
 [Gpu/README.md](tools/NeuralTrainer/Gpu/README.md#ppo-with-a-helper-critic).
+
+## 15. Legacy opponents and mixed-opponent PPO (September 28)
+
+SharpBelot and the reconstructed 2001 Belot 2.06 AI now work as seeded `IPlayer`
+adapters in `tools/LegacyOpponents`. `SmartPlayer` is the user's own bot. The
+trainer's `arena` command compares any named profile against any other, using
+fresh players for each mirrored leg. It saves individual pair outcomes and
+counts rule adaptations. `validate` now uses that seeded runner too. Timed search
+remains dependent on machine load and is measured with training stopped.
+
+Against SharpBelot and the 2.06 port, respectively, the current pure NN wins
+**79.545% +/- .273 pp** and **67.665% +/- .307 pp**; bounded endgames score
+**82.990% +/- .255 pp** and **72.075% +/- .298 pp**. Each entry is 20,000 whole
+games, seed 611, with one empirical standard error across mirrored pairs. The
+2.06 adapter uses the C# transcription, not the original executable, and all
+players follow the current engine's rules. Full comparisons, including app
+levels, Master and ISMCTS, and adapter fidelity limits are in
+[OPPONENTS_EXPERIMENT.md](OPPONENTS_EXPERIMENT.md).
+
+The search profiles played 1,000 games per legacy opponent, seed 619. ISMCTS100
+scores **89.400% +/- .947 pp** against SharpBelot and **75.400% +/- 1.214 pp**
+against 2.06; Master scores **84.100% +/- 1.108 pp** and **70.800% +/- 1.311 pp**.
+These opponents expose a broader weakness that the fast profile's favorable
+head-to-head result against ISMCTS alone does not capture. Neither comparison
+establishes a Master advantage over the cheaper bounded-endgame profile.
+
+**Research test:** opponent populations can expose self-play blind spots, as
+motivated by [PSRO](https://arxiv.org/abs/1711.00832) and
+[Kita et al.'s bridge PPO work](https://arxiv.org/html/2406.10306v1). Test this
+directly with equal-budget PPO runs: a frozen-NN opposing team versus a uniform
+pool of frozen NN, SmartPlayer, SharpBelot and 2.06. Each run uses 622,592 deals,
+12 warmup batches plus 64 updates, seed 9901, GAE lambda .5, and the existing
+training-only helper critic. External decisions never become PPO actor samples.
+Only the two current-policy seats are trained; public actor inputs and BNN1
+inference remain unchanged.
+
+**Result:** the diverse all-card update regresses, scoring **49.250% +/- .205 pp**
+against the current NN and **49.365% +/- .203 pp** against the matched control,
+20,000 games each. Updating only all trumps scores **49.885% +/- .158 pp** against
+the current NN, also 20,000 games. The control itself ties at **49.970% +/- .188 pp**
+for all cards and **50.005% +/- .127 pp** for all trumps, 20,000 games each. The
+diverse policy's small improvement against Smart is accompanied by inconclusive
+legacy differences and a regression against the current neural player. These are
+development results from one training seed, not evidence against every possible
+opponent mix.
+
+No candidate passes the first promotion requirement, so none advances to the
+ISMCTS gate. Embedded weights, app levels and Elo ratings remain unchanged.
+Keep the adapters and configurable pool; do not adopt this 100%-external uniform
+mix as a training default. Smaller fractions and stronger past-policy pools
+remain untested. The full table, sample counts, commands and failure record are
+in the experiment note. New options are:
+
+```powershell
+dotnet run -c Release --project tools/NeuralTrainer -- arena --player neural --opponent sharpbelot --pairs 10000 --threads 10 --seed 611 --data artifacts/neural-sharp
+dotnet run -c Release --project tools/NeuralTrainer -- arena --player fast --opponent belot206 --pairs 10000 --threads 10 --seed 611 --data artifacts/fast-206
+# In Gpu/ppo.py, add: --opponents neural,smart,sharpbelot,belot206 --opponent-chance 1
+# Use --opponents neural with the same budget for the frozen-opponent control.
+```
+
+Idle engine-card means with the unchanged baseline are **14.7 us** for pure NN
+(21,187 decisions / 100 games), **30.5 us** for bounded endgames (21,225 / 100),
+and **58.37 ms** for Master (669 / 4); warmup is excluded. The latest checks pass
+741 engine, 110 AI and 72 UI tests, 28 Python tests, and Windows/Android builds
+with zero warnings and errors. Golden 2.06 checks pass again, including all
+17,499 bid and 5,160 card vectors. Zero-chance collection and mixed-pool resume
+also preserve the expected binary output exactly.
