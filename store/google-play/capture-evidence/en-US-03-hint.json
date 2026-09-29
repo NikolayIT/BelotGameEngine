@@ -1,14 +1,14 @@
 {
   "file": "store/google-play/screenshots/en-US/03-hint.png",
   "locale": "en-US",
-  "captured_at_unix": 1790689142.4912188,
+  "captured_at_unix": 1790693276.4124508,
   "serial": "127.0.0.1:5575",
   "package": "com.nksolutions.belot",
   "width": 1080,
   "height": 1920,
   "format": "24-bit RGB PNG, opaque",
-  "sha256": "b1eef3f035b1a622d0ea371adcf0e5c9b7c2d36e2a8afe6f1039926f648140ce",
-  "raw_sha256": "1dad1a9ca6659c0604ce0113db65bb2aff0bbcafcf88b6bae4cb933fbd41fb3e",
-  "rgb_sha256": "2d38ae104aebf43ccf3a679ee02087928bcd043f51e310c46beac2f5793203e6",
-  "size_bytes": 610841
+  "sha256": "6343e00e1835d2e90565b3220b582416f94ad800c1f80f740df9e6e9b8118c1a",
+  "raw_sha256": "0118d21ddd82391de811ebb8be864ef5ee28a0a32a88ef2487db8ed75a289521",
+  "rgb_sha256": "16d53436e6420351719f9c5934bab48f68f1de3e4bcc063a5ec19a0586e088ae",
+  "size_bytes": 459203
 }

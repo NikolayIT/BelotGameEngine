@@ -1,14 +1,14 @@
 {
   "file": "store/google-play/screenshots/bg/05-result.png",
   "locale": "bg",
-  "captured_at_unix": 1790688741.3271585,
+  "captured_at_unix": 1790693040.995147,
   "serial": "127.0.0.1:5575",
   "package": "com.nksolutions.belot",
   "width": 1080,
   "height": 1920,
   "format": "24-bit RGB PNG, opaque",
-  "sha256": "f3343bfc6e972b3eb2742e6c8db2f900130c8762b3b6f1c4476a42720d03945e",
-  "raw_sha256": "a8947ab685c0492a5dcb51bfd91033feef5ba2bb3359a09ca9261d94389f5114",
-  "rgb_sha256": "cabdebd4394bd76b3d8724bf94ce9c8547b7e37730a72b6d235fbdb37e74be8a",
-  "size_bytes": 104398
+  "sha256": "d7324d43a9e25cae668e0748e89f15772ffb19a4c89375799c044c1cf69f691f",
+  "raw_sha256": "ae7cf0d0a57358fd9fc9c686a9b996b4bc3c0c053c978314dba1cf9426854f73",
+  "rgb_sha256": "3c7788f467a79b3608224f2ec6ab6cb5df13a1c47e8a1069ed79b8d459ac2c89",
+  "size_bytes": 95327
 }

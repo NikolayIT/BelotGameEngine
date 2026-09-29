@@ -1,14 +1,14 @@
 {
   "file": "store/google-play/screenshots/en-US/07-statistics.png",
   "locale": "en-US",
-  "captured_at_unix": 1790689087.8099508,
+  "captured_at_unix": 1790693261.0381167,
   "serial": "127.0.0.1:5575",
   "package": "com.nksolutions.belot",
   "width": 1080,
   "height": 1920,
   "format": "24-bit RGB PNG, opaque",
-  "sha256": "8d02befc4150599bc1563dc75c13ba3ca7fe5b070c5f2f48616a75d5db1631e2",
-  "raw_sha256": "29a6d1b1d5f03b610f6e2073a2c44b32b5be29bbbd47b340de152ef43efee8b3",
-  "rgb_sha256": "76ef5b6cdba291490a721bebc220d97245def327d15b5724d862ade64352492b",
-  "size_bytes": 147117
+  "sha256": "e64698f010a93a4ac7052095ebdd798f33228497a87e17bc9f62f4d94c8ba624",
+  "raw_sha256": "318ad71827f6ccd5065c37dd5840ce986711174925e1c300ffb4c25c833f0e6a",
+  "rgb_sha256": "98767690868c61ca52bd178ec2c356bf4066f53920aa724886afd35811a8464a",
+  "size_bytes": 147324
 }

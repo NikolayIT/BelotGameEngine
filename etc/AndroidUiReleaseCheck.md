@@ -2,6 +2,8 @@
 
 September 29, 2026. Scope: the MAUI app in `src/UI/Belot.UI`; engine rules and AI weights are unchanged. App version remains **1.0 (build 1)**.
 
+Latest installed APK and validation: see **Manual human cards and gentle dimming — follow-up** below. It supersedes the earlier APK: **275 UI / 746 engine / 361 AI tests**, both Release builds clean, and all 16 Google Play screenshots refreshed from it.
+
 ## Bugs and fixes
 
 “Device” means reproduced on the authorized BlueStacks Test instance. Other entries cover deterministic test reproductions and source-identified layout constraints; coverage and device-check limits are listed separately.
@@ -41,7 +43,7 @@ September 29, 2026. Scope: the MAUI app in `src/UI/Belot.UI`; engine rules and A
 
 A `FlexLayout` candidate made Settings buttons invisible on the native device and was reverted to explicit adaptive grids. It did not pass native review. Black illegal-card overlays, lowered cards, numeric opponent counters and whole-table scrolling were also removed; their earlier screenshots are not final release evidence.
 
-## Validation status
+## Earlier UI audit validation
 
 - **272/272 UI tests passed**; baseline was 74. Engine **741** and AI **361** tests passed in the earlier verification run.
 - Final Release builds passed with **zero warnings and errors**: Android **2:07.38**, Windows **38.90 seconds**.

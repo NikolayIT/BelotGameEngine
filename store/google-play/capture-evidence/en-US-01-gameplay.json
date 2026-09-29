@@ -1,14 +1,14 @@
 {
   "file": "store/google-play/screenshots/en-US/01-gameplay.png",
   "locale": "en-US",
-  "captured_at_unix": 1790689137.8800855,
+  "captured_at_unix": 1790693274.4101388,
   "serial": "127.0.0.1:5575",
   "package": "com.nksolutions.belot",
   "width": 1080,
   "height": 1920,
   "format": "24-bit RGB PNG, opaque",
-  "sha256": "88ed9d8f50e83b86e28fcde0b346c0f6c4c5989c21549c771062279aa18b15dd",
-  "raw_sha256": "6eaf8a484ad6a2be6ac46002d1e437ddb774a34ec70e9a3eda5c56a282c30c1f",
-  "rgb_sha256": "a8c265c70e693a8f4c78a97504bad13e040c81728dcc70a9c5953074120f8759",
-  "size_bytes": 556524
+  "sha256": "8a0ae07e32df201371071dfe052176919237a2b8e63dd378b2297cefd32af96b",
+  "raw_sha256": "210fce316fa4319f12ea44274bdd55fa6554c5b222926f002a813bea5ce31570",
+  "rgb_sha256": "43680737af841f40d899b300c0130376c822788a4249ff5437967dfddc9c0fd9",
+  "size_bytes": 458404
 }

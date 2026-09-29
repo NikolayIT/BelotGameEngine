@@ -1,14 +1,14 @@
 {
   "file": "store/google-play/screenshots/en-US/06-setup.png",
   "locale": "en-US",
-  "captured_at_unix": 1790689073.2698,
+  "captured_at_unix": 1790693256.0802865,
   "serial": "127.0.0.1:5575",
   "package": "com.nksolutions.belot",
   "width": 1080,
   "height": 1920,
   "format": "24-bit RGB PNG, opaque",
-  "sha256": "d9f38f127863e98d89635c702ee70ec017bccdb6bccfdd4c6201066e0fb37e78",
-  "raw_sha256": "039ab1eedc69b76be962d82756c3ebe235e3b89f3a14b7670e948fc00da3d9c7",
-  "rgb_sha256": "bc7edf5056cf05df6eba80a1e88179556cd727ac16e57a9507d1fd772cc8a8ae",
-  "size_bytes": 83512
+  "sha256": "55099e023776c5f30a51aa95c346d68ccfa49c29e778bb420c17ad65ed58e656",
+  "raw_sha256": "5c64447b941609cb0c7bed6471a009305238f62b1b9be257b60faf66fa4902d9",
+  "rgb_sha256": "569d08b0d0cc6769ca6c559cef3318a47727123aab3af7f9550d91842e37ee81",
+  "size_bytes": 79887
 }
