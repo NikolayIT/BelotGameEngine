@@ -55,7 +55,9 @@ $configPath = Join-Path $scratchPath 'NuGet.Config'
   <packageSourceMapping><packageSource key="release"><package pattern="BelotGameEngine" /></packageSource></packageSourceMapping>
 </configuration>
 "@)
-dotnet restore $projectPath --configfile $configPath --packages (Join-Path $scratchPath 'packages') --force --no-cache
+$packageHash = (Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash.ToLowerInvariant()
+$packageCache = Join-Path $scratchPath "packages/$packageHash"
+dotnet restore $projectPath --configfile $configPath --packages $packageCache --force --no-cache
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 dotnet run --project $projectPath -c Release --no-restore
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
