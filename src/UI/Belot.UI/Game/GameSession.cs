@@ -249,8 +249,16 @@
             // One hint at a time: the hint player is one object.
             var hint = HintAsync(this.hinting, player, view);
             this.hinting = hint;
-            var action = await hint;
-            return turn == this.turnId && this.pendingMove != null ? action : null;
+            try
+            {
+                var action = await hint;
+                return turn == this.turnId && this.pendingMove != null ? action : null;
+            }
+            catch (Exception) when (turn != this.turnId || this.pendingMove == null)
+            {
+                // A stale hint's failure belongs to a decision that is no longer displayed.
+                return null;
+            }
         }
 
         /// <summary>The whole game, hidden cards included, once it is over.</summary>
@@ -386,7 +394,7 @@
                 // A stopped run has nobody left to tell.
                 if (id == this.runId)
                 {
-                    this.IsRunning = false;
+                    this.Stop();
                     this.GameError?.Invoke(ex);
                 }
             }

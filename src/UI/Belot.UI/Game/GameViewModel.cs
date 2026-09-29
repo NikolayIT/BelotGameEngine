@@ -88,6 +88,10 @@
 
         private string ratingChangeText = string.Empty;
 
+        private bool isLeaving;
+
+        private bool isDisposed;
+
         private int ourMatchWins;
 
         private int themMatchWins;
@@ -321,10 +325,24 @@
 
         public SeatViewModel Seat(PlayerPosition seat) => this.seats[seat.Index()];
 
-        public void StartGame() => this.session.Start();
+        public void StartGame()
+        {
+            if (!this.isDisposed && !this.isLeaving)
+            {
+                this.session.Start();
+            }
+        }
 
         public void Dispose()
         {
+            if (this.isDisposed)
+            {
+                return;
+            }
+
+            this.isDisposed = true;
+            this.hintVersion++;
+            this.toastVersion++;
             this.session.RoundStarted -= this.OnRoundStarted;
             this.session.TurnStarted -= this.OnTurnStarted;
             this.session.BidMade -= this.OnBidMade;
@@ -342,7 +360,7 @@
         /// <summary>Asks for a hint and shows it for a while; awaitable for tests.</summary>
         internal async Task ShowHintAsync()
         {
-            if (!this.IsHintVisible || this.IsHintBusy)
+            if (this.isDisposed || this.isLeaving || !this.IsHintVisible || this.IsHintBusy)
             {
                 return;
             }
@@ -369,16 +387,7 @@
 
                         break;
                     case BelotActionType.Announce:
-                        // The engine's announces do not show their cards: match the hinted kinds in order.
-                        var kinds = hint.Announces.Select(x => x.Type).ToList();
-                        foreach (var announce in this.AnnounceOptions)
-                        {
-                            var hinted = kinds.Remove(announce.Announce.Type);
-                            announce.IsSelected = hinted;
-                            announce.IsHinted = hinted;
-                        }
-
-                        this.Raise(nameof(this.DeclareButtonText));
+                        this.ApplyAnnounceHint(hint);
                         break;
                     default:
                         var slot = this.MyHand.FirstOrDefault(x => x.Card == hint.Card);
@@ -398,14 +407,53 @@
                     }
                 });
             }
+            catch (Exception)
+            {
+                // A failed hint must not end the game or fault the fire-and-forget command.
+                if (!this.isDisposed && !this.isLeaving && this.IsMyTurn)
+                {
+                    this.ShowToast(LocalizationManager.Instance["Hint_Unavailable"]);
+                }
+            }
             finally
             {
-                this.IsHintBusy = false;
+                if (!this.isDisposed)
+                {
+                    this.IsHintBusy = false;
+                }
             }
         }
 
         private static bool Conflict(BelotAnnounce first, BelotAnnounce second) =>
             AnnouncesService.HaveCommonCards(new Announce(first.Type, first.Card), new Announce(second.Type, second.Card));
+
+        private void ApplyAnnounceHint(BelotAction hint)
+        {
+            foreach (var option in this.AnnounceOptions)
+            {
+                option.IsSelected = false;
+                option.IsHinted = false;
+            }
+
+            var selected = new List<BelotAnnounce>();
+            foreach (var announce in hint.Announces)
+            {
+                // Announce keeps its card internal. Its public, invariant text identifies both
+                // rank and suit, including two offered sequences of the same length.
+                var option = this.AnnounceOptions.FirstOrDefault(x =>
+                    new Announce(x.Announce.Type, x.Announce.Card).ToString() == announce.ToString());
+                if (option != null && selected.All(x => !Conflict(x, option.Announce)))
+                {
+                    // The engine accepts the first of any overlapping combinations in the
+                    // returned order; show the same selection instead of checking both.
+                    option.IsSelected = true;
+                    option.IsHinted = true;
+                    selected.Add(option.Announce);
+                }
+            }
+
+            this.Raise(nameof(this.DeclareButtonText));
+        }
 
         private void OnRoundStarted(DealInfo deal)
         {
@@ -664,7 +712,13 @@
             this.IsBidPanelVisible = false;
             this.IsAnnouncePanelVisible = false;
             this.IsRoundOverlayVisible = false;
-            this.IsMyTurn = false;
+            this.EndMyTurn();
+            foreach (var seat in this.seats)
+            {
+                seat.IsToMove = false;
+            }
+
+            this.StatusMessage = string.Empty;
             this.GameOverlayIcon = "⚠️";
             this.GameOverlayTitle = LocalizationManager.Instance["Error_Title"];
             this.GameOverlayBody = error.Message;
@@ -674,23 +728,24 @@
 
         private void OnTapCard(CardSlot? slot)
         {
-            if (slot?.Card != null && this.session.IsAwaiting(BelotDecision.PlayCard))
+            if (!this.isDisposed && !this.isLeaving && slot?.Card != null && this.session.TryPlay(slot.Card))
             {
-                this.session.TryPlay(slot.Card);
+                this.EndMyTurn();
             }
         }
 
         private void OnBid(BidOption? option)
         {
-            if (option is { IsEnabled: true } && this.session.IsAwaiting(BelotDecision.Bid))
+            if (!this.isDisposed && !this.isLeaving && option is { IsEnabled: true } && this.session.TryBid(option.Bid))
             {
-                this.session.TryBid(option.Bid);
+                this.EndMyTurn();
             }
         }
 
         private void OnToggleAnnounce(AnnounceOption? option)
         {
-            if (option == null)
+            if (this.isDisposed || this.isLeaving || !this.session.IsAwaiting(BelotDecision.Announce)
+                || option == null || !this.AnnounceOptions.Contains(option))
             {
                 return;
             }
@@ -713,14 +768,20 @@
 
         private void OnDeclare()
         {
-            if (this.session.IsAwaiting(BelotDecision.Announce))
+            if (!this.isDisposed && !this.isLeaving
+                && this.session.TryDeclare(this.AnnounceOptions.Where(x => x.IsSelected).Select(x => x.Announce).ToArray()))
             {
-                this.session.TryDeclare(this.AnnounceOptions.Where(x => x.IsSelected).Select(x => x.Announce).ToArray());
+                this.EndMyTurn();
             }
         }
 
         private void OnRoundOverlayContinue()
         {
+            if (this.isDisposed || this.isLeaving || !this.IsRoundOverlayVisible)
+            {
+                return;
+            }
+
             this.IsRoundOverlayVisible = false;
             this.session.Continue();
         }
@@ -728,7 +789,7 @@
         private void OnPlayAgain()
         {
             // A second tap on the same button must not deal another game.
-            if (!this.IsGameOverlayVisible)
+            if (this.isDisposed || this.isLeaving || !this.IsGameOverlayVisible)
             {
                 return;
             }
@@ -740,6 +801,13 @@
 
         private void OnLeave()
         {
+            if (this.isDisposed || this.isLeaving)
+            {
+                return;
+            }
+
+            this.isLeaving = true;
+            this.EndMyTurn();
             this.session.Stop();
             this.host.Leave();
         }
@@ -747,6 +815,8 @@
         private void EndMyTurn()
         {
             this.IsMyTurn = false;
+            this.IsBidPanelVisible = false;
+            this.IsAnnouncePanelVisible = false;
             this.ClearHints();
             foreach (var slot in this.MyHand)
             {
