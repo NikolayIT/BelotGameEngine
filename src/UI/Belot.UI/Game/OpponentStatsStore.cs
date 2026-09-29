@@ -19,9 +19,9 @@
 
         public static (int Games, int Wins) For(string opponentId)
         {
-            var games = SettingsStore.Current.Get(GamesKeyPrefix + opponentId, 0);
+            var games = Math.Max(0, SettingsStore.Current.Get(GamesKeyPrefix + opponentId, 0));
             var wins = SettingsStore.Current.Get(WinsKeyPrefix + opponentId, 0);
-            return (games, Math.Min(wins, games));
+            return (games, Math.Clamp(wins, 0, games));
         }
 
         public static void Record(string opponentId, bool won)
@@ -33,10 +33,7 @@
 
             var (games, wins) = For(opponentId);
             SettingsStore.Current.Set(GamesKeyPrefix + opponentId, games + 1);
-            if (won)
-            {
-                SettingsStore.Current.Set(WinsKeyPrefix + opponentId, wins + 1);
-            }
+            SettingsStore.Current.Set(WinsKeyPrefix + opponentId, wins + (won ? 1 : 0));
 
             Changed?.Invoke();
         }

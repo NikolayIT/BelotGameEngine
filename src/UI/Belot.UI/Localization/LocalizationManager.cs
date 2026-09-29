@@ -44,14 +44,17 @@
         public void SetLanguage(string value)
         {
             var normalized = value == Bulgarian ? Bulgarian : English;
+
+            // An explicit choice must survive a later change to the device language, even when
+            // the chosen language is already active because it was the initial device default.
+            SettingsStore.Current.Set(LanguageKey, normalized);
+            ApplyThreadCulture(normalized);
             if (this.language == normalized)
             {
                 return;
             }
 
             this.language = normalized;
-            SettingsStore.Current.Set(LanguageKey, normalized);
-            ApplyThreadCulture(normalized);
 
             // Empty name = "all properties changed" (refresh every bound value); the indexer name
             // is raised too for binding stacks that track it specifically.

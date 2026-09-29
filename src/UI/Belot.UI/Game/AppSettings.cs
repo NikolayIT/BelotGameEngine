@@ -25,8 +25,8 @@
 
         public static GameSpeed Speed
         {
-            get => (GameSpeed)SettingsStore.Current.Get(SpeedKey, (int)GameSpeed.Normal);
-            set => SettingsStore.Current.Set(SpeedKey, (int)value);
+            get => NormalizeSpeed((GameSpeed)SettingsStore.Current.Get(SpeedKey, (int)GameSpeed.Normal));
+            set => SettingsStore.Current.Set(SpeedKey, (int)NormalizeSpeed(value));
         }
 
         public static bool HapticsEnabled
@@ -75,5 +75,8 @@
             GameSpeed.Fast => new GamePace(200, 600, 150),
             _ => new GamePace(500, 1100, 300),
         };
+
+        private static GameSpeed NormalizeSpeed(GameSpeed speed) =>
+            speed is GameSpeed.Relaxed or GameSpeed.Normal or GameSpeed.Fast ? speed : GameSpeed.Normal;
     }
 }

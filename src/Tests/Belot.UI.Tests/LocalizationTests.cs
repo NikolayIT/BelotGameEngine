@@ -23,6 +23,15 @@
         public LocalizationTests() => AppState.Reset();
 
         [Fact]
+        public void ChoosingTheCurrentLanguageShouldStillPersistTheExplicitChoice()
+        {
+            SettingsStore.Current.Remove("app.language");
+            LocalizationManager.Instance.SetLanguage(LocalizationManager.English);
+
+            Assert.Equal(LocalizationManager.English, SettingsStore.Current.Get("app.language", string.Empty));
+        }
+
+        [Fact]
         public void BothLanguagesShouldHaveTheSameStrings()
         {
             var english = AppStrings.Table(LocalizationManager.English).Keys.OrderBy(k => k, StringComparer.Ordinal);

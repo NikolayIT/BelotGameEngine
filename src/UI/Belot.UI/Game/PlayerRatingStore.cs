@@ -25,19 +25,19 @@
 
         public static int CurrentElo => SettingsStore.Current.Get(EloKey, DefaultElo);
 
-        public static int GamesPlayed => SettingsStore.Current.Get(GamesKey, 0);
+        public static int GamesPlayed => Math.Max(0, SettingsStore.Current.Get(GamesKey, 0));
 
-        public static int Wins => SettingsStore.Current.Get(WinsKey, 0);
+        public static int Wins => Math.Clamp(SettingsStore.Current.Get(WinsKey, 0), 0, GamesPlayed);
 
         public static int Losses => Math.Max(0, GamesPlayed - Wins);
 
         /// <summary>Gets the highest rating ever reached (never below the current or starting rating).</summary>
-        public static int PeakElo => Math.Max(CurrentElo, SettingsStore.Current.Get(PeakEloKey, DefaultElo));
+        public static int PeakElo => Math.Max(DefaultElo, Math.Max(CurrentElo, SettingsStore.Current.Get(PeakEloKey, DefaultElo)));
 
         /// <summary>Gets the signed run of results: +n = n wins in a row, -n = n losses in a row.</summary>
-        public static int CurrentStreak => SettingsStore.Current.Get(StreakKey, 0);
+        public static int CurrentStreak => Math.Clamp(SettingsStore.Current.Get(StreakKey, 0), -Losses, Wins);
 
-        public static int BestWinStreak => SettingsStore.Current.Get(BestStreakKey, 0);
+        public static int BestWinStreak => Math.Clamp(Math.Max(CurrentStreak, SettingsStore.Current.Get(BestStreakKey, 0)), 0, Wins);
 
         /// <summary>The chance that the person's side wins: (person + partner) / 2 against the rivals.</summary>
         /// <param name="personElo">The person's rating.</param>
@@ -50,21 +50,22 @@
         public static RatingChange RecordResult(int partnerElo, int rivalsElo, bool won)
         {
             var oldElo = CurrentElo;
+            var peak = PeakElo;
+            var games = GamesPlayed;
+            var wins = Wins;
+            var streak = CurrentStreak;
+            var bestStreak = BestWinStreak;
             var expected = ExpectedScore(oldElo, partnerElo, rivalsElo);
             var newElo = (int)Math.Round(oldElo + (KFactor * ((won ? 1.0 : 0.0) - expected)));
 
             SettingsStore.Current.Set(EloKey, newElo);
-            SettingsStore.Current.Set(GamesKey, GamesPlayed + 1);
-            SettingsStore.Current.Set(PeakEloKey, Math.Max(PeakElo, newElo));
+            SettingsStore.Current.Set(GamesKey, games + 1);
+            SettingsStore.Current.Set(WinsKey, wins + (won ? 1 : 0));
+            SettingsStore.Current.Set(PeakEloKey, Math.Max(peak, newElo));
 
-            var streak = CurrentStreak;
             streak = won ? (streak > 0 ? streak + 1 : 1) : (streak < 0 ? streak - 1 : -1);
             SettingsStore.Current.Set(StreakKey, streak);
-            if (won)
-            {
-                SettingsStore.Current.Set(WinsKey, Wins + 1);
-                SettingsStore.Current.Set(BestStreakKey, Math.Max(BestWinStreak, streak));
-            }
+            SettingsStore.Current.Set(BestStreakKey, Math.Max(bestStreak, streak));
 
             return new RatingChange(oldElo, newElo, won);
         }

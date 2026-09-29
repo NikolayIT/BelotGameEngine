@@ -13,6 +13,51 @@
     {
         public MatchHistoryTests() => AppState.Reset();
 
+        [Theory]
+        [InlineData("1|invalid|90|smart|smart|smart|2026-09-26T10:30:00.0000000Z")]
+        [InlineData("1|151|-90|smart|smart|smart|2026-09-26T10:30:00.0000000Z")]
+        [InlineData("maybe|151|90|smart|smart|smart|2026-09-26T10:30:00.0000000Z")]
+        [InlineData("1|151|90|smart|smart|smart|invalid")]
+        [InlineData("1|151|90||smart|smart|2026-09-26T10:30:00.0000000Z")]
+        [InlineData("1|151|90|smart|smart|smart|2026-09-26T10:30:00.0000000Z|extra")]
+        public void DamagedHistoryShouldNotInventAResultOrTodaysDate(string damaged)
+        {
+            var valid = "1|151|90|smart|claude|dummy|2026-09-26T10:30:00.0000000Z";
+            SettingsStore.Current.Set("match.history", damaged + "\n" + valid);
+
+            var entry = Assert.Single(MatchHistoryStore.All());
+
+            Assert.Equal(151, entry.UsPoints);
+            Assert.Equal("claude", entry.WestId);
+            Assert.Equal(new DateTime(2026, 9, 26, 10, 30, 0, DateTimeKind.Utc), entry.WhenUtc);
+        }
+
+        [Fact]
+        public void ReadingAnOversizedHistoryShouldKeepOnlyTheNewestHundredEntries()
+        {
+            var records = Enumerable.Range(0, 105).Select(i => $"1|{151 + i}|90|smart|smart|smart|2026-09-26T10:30:00.0000000Z");
+            SettingsStore.Current.Set("match.history", string.Join("\n", records));
+
+            var entries = MatchHistoryStore.All();
+
+            Assert.Equal(100, entries.Count);
+            Assert.Equal(151, entries[0].UsPoints);
+            Assert.Equal(250, entries[^1].UsPoints);
+        }
+
+        [Theory]
+        [InlineData("old|bot")]
+        [InlineData("old\nbot")]
+        [InlineData("old\rbot")]
+        public void AnUnknownLevelIdShouldNotInjectHistoryFieldsOrLines(string id)
+        {
+            MatchHistoryStore.Add(new MatchHistoryEntry(id, "smart", "smart", 151, 0, true, DateTime.UtcNow));
+
+            var entry = Assert.Single(MatchHistoryStore.All());
+
+            Assert.Equal("old bot", entry.PartnerId);
+        }
+
         // A game is kept with its levels' ids: the lists name them in the current language, the
         // rivals as a pair ("Master & Beginner") or once when both are the same level.
         [Fact]

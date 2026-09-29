@@ -30,7 +30,10 @@
             {
                 // won|us|them|partner|west|east|when
                 var fields = record.Split(FieldSeparator);
-                if (fields.Length < 7)
+                if (fields.Length != 7 || (fields[0] != "0" && fields[0] != "1")
+                    || !TryPoints(fields[1], out var us) || !TryPoints(fields[2], out var them)
+                    || string.IsNullOrWhiteSpace(fields[3]) || string.IsNullOrWhiteSpace(fields[4]) || string.IsNullOrWhiteSpace(fields[5])
+                    || !DateTime.TryParse(fields[6], CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var when))
                 {
                     continue;
                 }
@@ -39,10 +42,14 @@
                     fields[3],
                     fields[4],
                     fields[5],
-                    ParseInt(fields[1]),
-                    ParseInt(fields[2]),
+                    us,
+                    them,
                     fields[0] == "1",
-                    ParseDate(fields[6])));
+                    when));
+                if (list.Count == MaxEntries)
+                {
+                    break;
+                }
             }
 
             return list;
@@ -73,12 +80,9 @@
             e.WhenUtc.ToString("o", CultureInfo.InvariantCulture));
 
         private static string Sanitize(string value) =>
-            value.Replace(FieldSeparator, ' ').Replace(RecordSeparator, ' ');
+            value.Replace(FieldSeparator, ' ').Replace(RecordSeparator, ' ').Replace('\r', ' ');
 
-        private static int ParseInt(string s) =>
-            int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : 0;
-
-        private static DateTime ParseDate(string s) =>
-            DateTime.TryParse(s, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var v) ? v : DateTime.UtcNow;
+        private static bool TryPoints(string s, out int points) =>
+            int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out points) && points >= 0;
     }
 }
