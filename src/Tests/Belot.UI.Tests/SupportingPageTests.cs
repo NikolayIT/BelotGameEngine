@@ -225,6 +225,7 @@
         [Theory]
         [InlineData("StartPage", "OnOpenStatistics", 2)]
         [InlineData("SettingsPage", "OnOpenGitHub", 1)]
+        [InlineData("SettingsPage", "OnOpenPrivacyPolicy", 1)]
         public void PageLinksShouldBeNativeButtonsInsteadOfGestureOnlyText(string page, string handler, int count)
         {
             var document = ReadPage(page);
@@ -259,6 +260,28 @@
             Assert.Contains("Browser.Default.OpenAsync(url, BrowserLaunchMode.SystemPreferred)", handler);
             Assert.Contains("text[\"Start_OnlineUnavailable\"]", handler);
             Assert.Contains("this.DisplayAlertAsync", handler);
+        }
+
+        [Fact]
+        public void PrivacyPolicyUsesTheSettingsGateAndLocalizedBrowserFailure()
+        {
+            var page = ReadPage("SettingsPage");
+            var button = page.Descendants().Single(e => (string?)e.Attribute("Clicked") == "OnOpenPrivacyPolicy");
+            Assert.Equal("{loc:Tr Settings_PrivacyPolicy}", (string?)button.Attribute("Text"));
+            Assert.Equal("{loc:Tr Settings_PrivacyPolicyHint}", (string?)button.Attribute("SemanticProperties.Hint"));
+            Assert.Contains(button.Ancestors(), e => e.Name.LocalName == "ScrollView");
+
+            var code = File.ReadAllText(Path.Combine(PagesDirectory(), "SettingsPage.xaml.cs"));
+            var start = code.IndexOf("private async void OnOpenPrivacyPolicy", StringComparison.Ordinal);
+            var end = code.IndexOf("private async void OnOpenGitHub", start, StringComparison.Ordinal);
+            var handler = code[start..end];
+            Assert.Contains("PrivacyPolicy.OpenAsync(", handler);
+            Assert.Contains("this.actions,", handler);
+            Assert.Contains("Browser.Default.OpenAsync(url, BrowserLaunchMode.SystemPreferred)", handler);
+            Assert.Contains("text[\"Settings_PrivacyPolicyUnavailable\"]", handler);
+            Assert.Contains("this.DisplayAlertAsync", handler);
+            Assert.Contains("this.actions.Activate();", code);
+            Assert.Contains("this.actions.Deactivate();", code);
         }
 
         [Fact]

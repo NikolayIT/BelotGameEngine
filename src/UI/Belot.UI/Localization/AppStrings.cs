@@ -217,6 +217,9 @@
             ["Settings_Version"] = "Belot {0}",
             ["Settings_EngineNote"] = "The game and its computer players run on your device, with no connection.",
             ["Settings_OpenSource"] = "Open source on GitHub",
+            ["Settings_PrivacyPolicy"] = "Privacy policy",
+            ["Settings_PrivacyPolicyHint"] = "Opens the privacy policy in your browser",
+            ["Settings_PrivacyPolicyUnavailable"] = "The browser could not open. Try again, or visit https://nksolutions.com/belot/privacy-policy.html.",
 
             // Statistics
             ["Stats_Title"] = "Statistics",
@@ -462,6 +465,9 @@
             ["Settings_Version"] = "Белот {0}",
             ["Settings_EngineNote"] = "Играта и компютърните играчи работят на устройството ти, без връзка.",
             ["Settings_OpenSource"] = "Отворен код в GitHub",
+            ["Settings_PrivacyPolicy"] = "Политика за поверителност",
+            ["Settings_PrivacyPolicyHint"] = "Отваря политиката за поверителност в браузъра",
+            ["Settings_PrivacyPolicyUnavailable"] = "Браузърът не се отвори. Опитай отново или отвори https://nksolutions.com/belot/privacy-policy.html.",
 
             // Statistics
             ["Stats_Title"] = "Статистика",

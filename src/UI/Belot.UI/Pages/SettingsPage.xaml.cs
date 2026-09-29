@@ -152,6 +152,18 @@
                 });
         }
 
+        private async void OnOpenPrivacyPolicy(object? sender, EventArgs e)
+        {
+            await PrivacyPolicy.OpenAsync(
+                this.actions,
+                url => Browser.Default.OpenAsync(url, BrowserLaunchMode.SystemPreferred),
+                () =>
+                {
+                    var text = LocalizationManager.Instance;
+                    return this.DisplayAlertAsync(text["Settings_PrivacyPolicy"], text["Settings_PrivacyPolicyUnavailable"], "OK");
+                });
+        }
+
         private async void OnOpenGitHub(object? sender, EventArgs e)
         {
             try

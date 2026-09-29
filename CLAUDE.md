@@ -512,6 +512,27 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   after an illegal tap. Illegal-card backgrounds measured RGB 209/209/209, legal backgrounds
   255/255/255. The report distinguishes the earlier full-game audit from these latest checks.
 
+## Google Play release
+
+- Store listing source, BG/EN screenshots and graphics live in `store/google-play/`.
+- `tools/PlayRelease/build-android.ps1` requires an existing upload keystore and two
+  protected password files. It publishes a signed AAB, rejects Android Debug keys,
+  checks the signing certificate, package/version/API 36 and both arm64/x64 ABIs.
+  Password values never belong in command arguments, logs or Git.
+- `tools/PlayRelease/play-release.mjs` uses an explicitly supplied Play service-account
+  key. It targets only `com.nksolutions.belot`; `listings`, `upload`, and `complete`
+  are remote mutations. `inspect` and `verify` discard their temporary edit.
+  `upload` prepares version 1 as a draft; `complete` selects a 100% production release.
+  The API requires automatic review submission for this app. Always inspect Console
+  afterward: saved drafts and completed rollout configuration do not prove approval
+  or public availability. It refuses to cancel an existing review.
+- Settings links to `https://nksolutions.com/belot/privacy-policy.html` through the
+  same page-action gate as online play. The publisher site at
+  `https://nksolutions.com/belot/` has BG/EN product and privacy pages.
+  `PrivacyPolicyTests` covers launch success/failure, repeated taps and stale visits.
+  The release-preparation UI suite passes 287 tests; Android and Windows builds have
+  zero warnings/errors. Native Test checks the exact AAB content under its existing
+  test signature to preserve local statistics; this is separate from Play delivery.
 ## Conventions
 
 - **StyleCop.Analyzers** (`stylecop.json` + `Rules.ruleset`) is enforced on every project. The
