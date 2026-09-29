@@ -4,6 +4,17 @@ Belot card game engine written in C#
 
 Belot (Bridge-Belot or Belote) is a 32-card, trick-taking game popular in Bulgaria, France, Armenia, Croatia, Cyprus, Greece, Moldova, North Macedonia and also in Saudi Arabia.
 
+## Engine package
+
+```sh
+dotnet add package BelotGameEngine --version 2.0.0
+```
+
+The NuGet package contains only the managed `Belot.Engine` library for .NET Standard 2.0,
+with no bots, neural weights, UI or third-party runtime dependencies. See the
+[engine README](src/Belot.Engine/README.md) for the `BelotMatch` API and migration from 1.1.
+[Publishing instructions](tools/NuGetRelease/README.md) describe the trusted GitHub workflow.
+
 ## Play
 
 `src/UI/Belot.UI` is a .NET MAUI app for Android and Windows, in English and Bulgarian: you play

@@ -541,6 +541,21 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   remain unverified. The user completed the declarations with target audience 9+.
   Submission and artifact evidence: `store/google-play/releases/1.0.md`.
 
+## NuGet engine release
+
+- `src/Belot.Engine/Belot.Engine.csproj` is the only NuGet release project. Version 2.0.0
+  keeps `netstandard2.0`, MIT and no runtime package dependencies. Its packaged README
+  documents the push API and migration from 1.1; AI projects and weights are excluded.
+- `.github/workflows/publish.yml` tests the engine and its consumers, packs only the engine,
+  validates the archive and runs its README example through an isolated package consumer.
+  A release tag must exactly match `<Version>` (for example `2.0.0`). Publication runs on
+  a published GitHub release or manual dispatch on that tag, never on a branch push.
+- NuGet trusted publishing is scoped to `NikolayIT/BelotGameEngine`, `publish.yml`, environment
+  `release`, and only new versions of the exact `BelotGameEngine` package. The environment
+  permits only tags matching `*.*.*`; only the publish job has `id-token: write`.
+  No long-lived NuGet key is required. See `tools/NuGetRelease/README.md` for verification
+  and release commands. Check the live NuGet version after the push succeeds.
+
 ## Conventions
 
 - **StyleCop.Analyzers** (`stylecop.json` + `Rules.ruleset`) is enforced on every project. The

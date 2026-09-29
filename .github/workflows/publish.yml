@@ -1,0 +1,108 @@
+name: Publish engine to NuGet
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nuget-engine-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  package:
+    name: Test and pack the engine
+    if: github.repository == 'NikolayIT/BelotGameEngine' && github.ref_type == 'tag'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Match the stable release tag to the package version
+        shell: pwsh
+        run: |
+          $version = (Select-Xml -Path src/Belot.Engine/Belot.Engine.csproj -XPath '//Version').Node.InnerText
+          if ($env:GITHUB_REF_NAME -notmatch '^\d+\.\d+\.\d+$' -or $env:GITHUB_REF_NAME -ne $version) {
+            throw "Release tag must exactly match the engine package version ($version)."
+          }
+
+      - name: Build and test engine and its consumers
+        shell: pwsh
+        run: |
+          foreach ($project in @('Belot.Engine.Tests', 'Belot.AI.ClaudePlayer.Tests', 'Belot.UI.Tests')) {
+            dotnet test "src/Tests/$project/$project.csproj" -c Release -p:ContinuousIntegrationBuild=true -warnaserror --logger "trx;LogFileName=$project.trx"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
+      - name: Pack only Belot.Engine
+        run: dotnet pack src/Belot.Engine/Belot.Engine.csproj -c Release --no-build -p:ContinuousIntegrationBuild=true -warnaserror -o artifacts/nuget
+
+      - name: Verify package scope and metadata
+        run: python tools/NuGetRelease/verify-package.py artifacts/nuget --version $env:GITHUB_REF_NAME --commit $env:GITHUB_SHA
+
+      - name: Test package verification
+        run: python -m unittest discover -s tools/NuGetRelease -p "test_*.py"
+
+      - name: Run the packaged README example as an isolated consumer
+        run: ./tools/NuGetRelease/smoke-test.ps1 -PackageDirectory artifacts/nuget -Version $env:GITHUB_REF_NAME
+
+      - name: Upload verified engine package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: engine-nuget
+          path: artifacts/nuget/*
+          if-no-files-found: error
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: nuget-test-results
+          path: '**/TestResults/*.trx'
+          if-no-files-found: warn
+
+  publish:
+    name: Publish BelotGameEngine
+    needs: package
+    runs-on: windows-latest
+    timeout-minutes: 10
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Download verified engine package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: engine-nuget
+          path: artifacts/nuget
+
+      - name: NuGet login using GitHub OIDC
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
+        with:
+          user: Nikolay.IT
+
+      - name: Publish only the engine package
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push "artifacts/nuget/BelotGameEngine.$env:GITHUB_REF_NAME.nupkg" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
