@@ -526,9 +526,11 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   The API requires automatic review submission for this app. Always inspect Console
   afterward: saved drafts and completed rollout configuration do not prove approval
   or public availability. It refuses to cancel an existing review.
-- Settings links to `https://nksolutions.com/belot/privacy-policy.html` through the
-  same page-action gate as online play. The publisher site at
-  `https://nksolutions.com/belot/` has BG/EN product and privacy pages.
+- The canonical publisher site is `https://belot.nksolutions.com/`; its BG/EN privacy
+  page is `https://belot.nksolutions.com/privacy-policy.html`. Play Console uses these
+  addresses. Settings in the signed 1.0 bundle retains its original
+  `https://nksolutions.com/belot/privacy-policy.html` link through the page-action gate;
+  the publisher Worker permanently redirects this legacy address to the canonical page.
   `PrivacyPolicyTests` covers launch success/failure, repeated taps and stale visits.
   The release-preparation UI suite passes 287 tests; Android and Windows builds have
   zero warnings/errors. Native Test checks the exact AAB content under its existing
