@@ -1,0 +1,14 @@
+{
+  "file": "store/google-play/screenshots/bg/07-statistics.png",
+  "locale": "bg",
+  "captured_at_unix": 1790688618.667713,
+  "serial": "127.0.0.1:5575",
+  "package": "com.nksolutions.belot",
+  "width": 1080,
+  "height": 1920,
+  "format": "24-bit RGB PNG, opaque",
+  "sha256": "3f141ecc800795417d21e69a7de61eda413556460787799d39d4065b9804d023",
+  "raw_sha256": "bdf64418467f56ea9c36b3fcc7bedbad72875a96136e1013ee827dad30100ef7",
+  "rgb_sha256": "c0233b21d6265626a48e9d38d2d7499438af330222672d1ce82c82bac17d0d02",
+  "size_bytes": 141432
+}

@@ -1,0 +1,14 @@
+{
+  "file": "store/google-play/screenshots/en-US/03-hint.png",
+  "locale": "en-US",
+  "captured_at_unix": 1790689142.4912188,
+  "serial": "127.0.0.1:5575",
+  "package": "com.nksolutions.belot",
+  "width": 1080,
+  "height": 1920,
+  "format": "24-bit RGB PNG, opaque",
+  "sha256": "b1eef3f035b1a622d0ea371adcf0e5c9b7c2d36e2a8afe6f1039926f648140ce",
+  "raw_sha256": "1dad1a9ca6659c0604ce0113db65bb2aff0bbcafcf88b6bae4cb933fbd41fb3e",
+  "rgb_sha256": "2d38ae104aebf43ccf3a679ee02087928bcd043f51e310c46beac2f5793203e6",
+  "size_bytes": 610841
+}

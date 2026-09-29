@@ -1,0 +1,14 @@
+{
+  "file": "store/google-play/screenshots/en-US/02-bidding.png",
+  "locale": "en-US",
+  "captured_at_unix": 1790689119.8767893,
+  "serial": "127.0.0.1:5575",
+  "package": "com.nksolutions.belot",
+  "width": 1080,
+  "height": 1920,
+  "format": "24-bit RGB PNG, opaque",
+  "sha256": "dfe311e088d0597e75ca1fa4b3f1088280b8caf9e6b422ec27594c17be2144a1",
+  "raw_sha256": "66721cb18a73a2aab86575dfe5ffe8aaffe2b8942f9ef165863020c6440dc170",
+  "rgb_sha256": "469c922061838e11ed5903128aa04357cb5027554395c4ea2b046d45d725370d",
+  "size_bytes": 368593
+}

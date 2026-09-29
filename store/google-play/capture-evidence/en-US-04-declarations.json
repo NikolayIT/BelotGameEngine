@@ -1,0 +1,14 @@
+{
+  "file": "store/google-play/screenshots/en-US/04-declarations.png",
+  "locale": "en-US",
+  "captured_at_unix": 1790689216.6591115,
+  "serial": "127.0.0.1:5575",
+  "package": "com.nksolutions.belot",
+  "width": 1080,
+  "height": 1920,
+  "format": "24-bit RGB PNG, opaque",
+  "sha256": "1fef0185abdfb2c83a4a88f0922ad78930982c60b4793b901d84edde8961db65",
+  "raw_sha256": "e99a2e8bd8ec57e8a346fea2168a16e3cc64891be8a98f4bb8f8784bf2a38964",
+  "rgb_sha256": "7c47a0e080025d7d08f533041b4f8c2b9666c71fc9d06053722417373e53bb90",
+  "size_bytes": 424005
+}

@@ -1,0 +1,14 @@
+{
+  "file": "store/google-play/screenshots/bg/08-rules.png",
+  "locale": "bg",
+  "captured_at_unix": 1790688629.41463,
+  "serial": "127.0.0.1:5575",
+  "package": "com.nksolutions.belot",
+  "width": 1080,
+  "height": 1920,
+  "format": "24-bit RGB PNG, opaque",
+  "sha256": "3c9f8a93b61298a9d68bfd7e8f2286df3f9deebc615f0583ee65b1f3468b8e1a",
+  "raw_sha256": "a6bc54a74b7e1257c9015e4d74d13a4f8690a062aac89720412b3298a6296056",
+  "rgb_sha256": "c7d1d4eea8a3370342c39d4272025721448b8768ccdeebd99310495b19a30018",
+  "size_bytes": 215555
+}

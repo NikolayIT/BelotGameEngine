@@ -1,0 +1,14 @@
+{
+  "file": "store/google-play/screenshots/bg/05-result.png",
+  "locale": "bg",
+  "captured_at_unix": 1790688741.3271585,
+  "serial": "127.0.0.1:5575",
+  "package": "com.nksolutions.belot",
+  "width": 1080,
+  "height": 1920,
+  "format": "24-bit RGB PNG, opaque",
+  "sha256": "f3343bfc6e972b3eb2742e6c8db2f900130c8762b3b6f1c4476a42720d03945e",
+  "raw_sha256": "a8947ab685c0492a5dcb51bfd91033feef5ba2bb3359a09ca9261d94389f5114",
+  "rgb_sha256": "cabdebd4394bd76b3d8724bf94ce9c8547b7e37730a72b6d235fbdb37e74be8a",
+  "size_bytes": 104398
+}

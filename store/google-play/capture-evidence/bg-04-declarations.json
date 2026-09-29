@@ -1,0 +1,14 @@
+{
+  "file": "store/google-play/screenshots/bg/04-declarations.png",
+  "locale": "bg",
+  "captured_at_unix": 1790688834.3836172,
+  "serial": "127.0.0.1:5575",
+  "package": "com.nksolutions.belot",
+  "width": 1080,
+  "height": 1920,
+  "format": "24-bit RGB PNG, opaque",
+  "sha256": "65b8ec6479f36807b45a86d3df020868e0146a242540b7cce26e575e1ad4d4e8",
+  "raw_sha256": "23a2a25fac348f68144987bc2384782a020163d4c05c7079218030f5bd6e1576",
+  "rgb_sha256": "1819322c4324fdefe1474fdec131d6f8ab586d6964b402a4f304cc75a6f9ce9f",
+  "size_bytes": 457270
+}

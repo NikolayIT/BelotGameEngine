@@ -1,0 +1,14 @@
+{
+  "file": "store/google-play/screenshots/en-US/05-result.png",
+  "locale": "en-US",
+  "captured_at_unix": 1790689162.402016,
+  "serial": "127.0.0.1:5575",
+  "package": "com.nksolutions.belot",
+  "width": 1080,
+  "height": 1920,
+  "format": "24-bit RGB PNG, opaque",
+  "sha256": "ada1f41f7abc879c392caa183b3515618644147d920db7ea290f4e5eea4b532c",
+  "raw_sha256": "a37d05be4d20d6c7cd8c2ebf5710a2f87f6827f8fe8d015f55de575d391e2cf8",
+  "rgb_sha256": "8b88aa523eb78a7311f0ff67546c3e47d88306b1794854183252ba6e10e4f7ca",
+  "size_bytes": 108656
+}
