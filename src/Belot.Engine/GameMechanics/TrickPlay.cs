@@ -30,6 +30,8 @@
 
         private readonly Bid contract;
 
+        private readonly PlayerPosition manualCardPlaySeats;
+
         private readonly List<Announce> announces;
 
         private readonly List<PlayCardAction> actions;
@@ -64,11 +66,13 @@
             IReadOnlyList<CardCollection> playerCards,
             IList<Bid> bids,
             Bid contract,
-            int hangingPoints = 0)
+            int hangingPoints = 0,
+            PlayerPosition manualCardPlaySeats = PlayerPosition.Unknown)
         {
             this.observers = observers;
             this.playerCards = playerCards;
             this.contract = contract;
+            this.manualCardPlaySeats = manualCardPlaySeats;
             this.announces = new List<Announce>(12);
             this.southNorthTricks = new CardCollection();
             this.eastWestTricks = new CardCollection();
@@ -308,7 +312,7 @@
                 }
 
                 this.availableCards = ValidCardsService.GetValidCards(this.playerCards[index], this.contract.Type, this.trickActions);
-                if (this.availableCards.Count > 1)
+                if (this.availableCards.Count > 1 || (this.manualCardPlaySeats & this.current) != PlayerPosition.Unknown)
                 {
                     this.playContext.MyPosition = this.current;
                     this.playContext.MyCards = this.playerCards[index];

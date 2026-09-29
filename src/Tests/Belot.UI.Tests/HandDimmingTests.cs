@@ -4,6 +4,7 @@
     using System.ComponentModel;
     using System.Linq;
 
+    using Belot.Engine.Cards;
     using Belot.Engine.Game;
     using Belot.Engine.GameMechanics;
     using Belot.UI.Game;
@@ -14,6 +15,26 @@
     public class HandDimmingTests
     {
         public HandDimmingTests() => AppState.Reset();
+
+        [Fact]
+        public void LegalityChangesNotifyTheDisplayedFaceOpacityInBothDirections()
+        {
+            var slot = new CardSlot(Card.GetCard(CardSuit.Heart, CardType.Ace));
+            var opacities = new List<double>();
+            slot.PropertyChanged += (_, change) =>
+            {
+                if (change.PropertyName == nameof(CardSlot.FaceOpacity))
+                {
+                    opacities.Add(slot.FaceOpacity);
+                }
+            };
+
+            slot.IsPlayable = false;
+            slot.IsPlayable = false;
+            slot.IsPlayable = true;
+
+            Assert.Equal(new[] { 0.82, 1.0 }, opacities);
+        }
 
         [Theory]
         [InlineData(true)]
@@ -93,6 +114,7 @@
                 var legal = view.PlayableCards.Contains(slot.Card!);
                 Assert.Equal(legal, slot.IsPlayable);
                 Assert.Equal(!legal, slot.IsDimmed);
+                Assert.Equal(legal ? 1.0 : 0.82, slot.FaceOpacity);
                 Assert.False(slot.IsFaceDown);
             });
 
@@ -108,11 +130,17 @@
 
             var hand = table.MyHand.ToArray();
             var renderedDimming = hand.ToDictionary(slot => slot, slot => slot.IsDimmed);
+            var renderedOpacity = hand.ToDictionary(slot => slot, slot => slot.FaceOpacity);
             void TrackDimming(object? sender, PropertyChangedEventArgs change)
             {
                 if (change.PropertyName == nameof(CardSlot.IsDimmed) && sender is CardSlot slot)
                 {
                     renderedDimming[slot] = slot.IsDimmed;
+                }
+
+                if (change.PropertyName == nameof(CardSlot.FaceOpacity) && sender is CardSlot face)
+                {
+                    renderedOpacity[face] = face.FaceOpacity;
                 }
             }
 
@@ -128,6 +156,7 @@
                 Assert.False(session.IsAwaiting(BelotDecision.PlayCard));
                 AssertHandUndimmed(table);
                 Assert.All(renderedDimming.Values, dimmed => Assert.False(dimmed));
+                Assert.All(renderedOpacity.Values, opacity => Assert.Equal(1.0, opacity));
             }
             finally
             {
@@ -144,6 +173,7 @@
         {
             Assert.True(slot.IsPlayable);
             Assert.False(slot.IsDimmed);
+            Assert.Equal(1.0, slot.FaceOpacity);
             Assert.False(slot.IsFaceDown);
         });
     }

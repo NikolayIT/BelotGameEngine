@@ -1,4 +1,4 @@
-# CLAUDE.md
+﻿# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -396,11 +396,15 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
 - **The game is one async flow on the UI thread, never a thread of its own.** `Game/GameSession.cs`
   drives a `BelotMatch`: the person's decision is an awaited `TaskCompletionSource`, registered
   before `TurnStarted` is raised (`TryBid`/`TryDeclare`/`TryPlay`, checked with
-  `BelotMatch.Validate`; the person's belote is always claimed); a computer seat decides with
+  `BelotMatch.Validate`; the person's belote is always claimed). The UI opts South into the
+  internal `ManualCardPlaySeats` option: every card waits for a tap, including a single legal
+  card and the last card. The engine's public API and default automatic moves are unchanged;
+  friend access is limited to the UI and its tests. A computer seat decides with
   `Task.Run(() => player.Decide(view))` during the think pause (the only work off the UI thread;
   each seat has its own player, built per game by `Lineup.CreatePlayer`); a finished trick stays
   for the settle pause, the passes and cards the rules make wait for the auto-move pause, and a
-  finished deal waits for `Continue`. Once stopped or restarted, a run raises nothing more: it
+  finished deal waits for `Continue`. The UI's manual seat interrupts forced-card replay before
+  each human card. Once stopped or restarted, a run raises nothing more: it
   checks for the stop after every await and every raised event. **Don't reintroduce a game
   thread, blocking waits or `Thread.Sleep` pacing.**
 - **One `Act` is many things at the table**: after a bid the seats that can only pass pass; a card
@@ -450,8 +454,10 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   ReDouble share a slot between all trumps and Pass. Declarations keep their title and Declare
   button visible; only the choices list scrolls, up to 90 table design units. One choice keeps
   its natural height. Result overlays scroll. Bounded name/score columns keep Hint and Menu
-  separate. Hand faces stay fully visible in their normal positions; legality remains enforced
-  by `IsPlayable` and the engine. A fixed three-unit hint border overlays the card inside its
+  separate. Illegal hand faces use `FaceOpacity = 0.82` over an opaque rounded black backing;
+  legal faces use 1.0. Dimming changes only the image, so overlapped faces cannot bleed through
+  and the hand does not move. No black overlay covers the cards; `IsPlayable` and the engine
+  enforce legality. A fixed three-unit hint border overlays the card inside its
   fixed-size grid, so showing a hint does not resize or shift the hand.
 - **Accessible state follows the visible state**: native hand/suit/declaration controls have
   spoken labels. Current and last-trick cards include the seat name; expanded back stacks
@@ -498,10 +504,13 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   state; native builds and device checks verify Android behavior. Tests that touch static app
   state run in the non-parallel `AppState` collection on a fresh in-memory store. Keep the game
   and localization files MAUI-free. See `etc/AndroidUiReleaseCheck.md` for reproduction commands
-  and the recorded verification scope. September 29, 2026: UI 272/272, engine 741 and AI 361
-  tests passed; Android and Windows Release builds have zero warnings/errors. Native Test
-  checks include a complete game on identical game/table code and final-APK home, browser,
-  hint and tablet review; the report distinguishes artifact scopes and untested native states.
+  and the recorded verification scope. September 29, 2026 manual-card follow-up: UI 275/275,
+  engine 746 and AI 361 tests passed; Android and Windows Release builds have zero warnings/errors.
+  `ManualCardPlayTests` compares 72 complete records with default automatic behavior; UI tests
+  verify all eight human taps per deal through replay. Native Test completed two deals with
+  16 explicit human card taps, five-second waits on forced/final cards, and unchanged hands
+  after an illegal tap. Illegal-card backgrounds measured RGB 209/209/209, legal backgrounds
+  255/255/255. The report distinguishes the earlier full-game audit from these latest checks.
 
 ## Conventions
 

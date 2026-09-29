@@ -188,7 +188,9 @@
                     break;
                 default:
                     var playable = this.table.MyHand.Where(s => s.IsPlayable).ToList();
-                    this.table.TapCardCommand.Execute(playable[this.random.Next(playable.Count)]);
+
+                    // A newly explicit forced move must not shift later seeded choices.
+                    this.table.TapCardCommand.Execute(playable[playable.Count == 1 ? 0 : this.random.Next(playable.Count)]);
                     break;
             }
         }

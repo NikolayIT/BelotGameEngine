@@ -156,14 +156,16 @@
         }
 
         [Fact]
-        public void IllegalCardsShouldKeepUncoveredFacesWithoutMovingTheCards()
+        public void IllegalCardsShouldKeepReadableFacesWithoutMovingTheCards()
         {
             var hand = Named(LoadPage(), "HandStack");
             Assert.DoesNotContain(hand.Descendants(), e => e.Name.LocalName == "BoxView");
             var image = Assert.Single(hand.Descendants().Where(e => e.Name.LocalName == "ImageButton"));
-            Assert.Null(image.Attribute("Opacity"));
+            Assert.Equal("{Binding FaceOpacity}", (string?)image.Attribute("Opacity"));
             Assert.Equal("{Binding ImageSource}", (string?)image.Attribute("Source"));
             var border = image.Parent!.Parent!;
+            Assert.Equal("Black", (string?)border.Attribute("BackgroundColor"));
+            Assert.Null(border.Attribute("Opacity"));
             Assert.Null(border.Attribute("Margin"));
             Assert.DoesNotContain(border.Descendants(), e => (string?)e.Attribute("Binding") == "{Binding IsPlayable}"
                 || (string?)e.Attribute("Property") is "Margin" or "TranslationY" or "Opacity");

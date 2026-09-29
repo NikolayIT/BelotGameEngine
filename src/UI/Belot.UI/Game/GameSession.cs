@@ -164,6 +164,7 @@
             {
                 FirstToPlay = Seats.All[this.random.Next(4)],
                 Random = new Random(this.random.Next()),
+                ManualCardPlaySeats = Seats.Person,
             });
 
             this.match = game;

@@ -95,7 +95,7 @@
             {
                 BelotDecision.Bid => this.session.TryBid(RandomMoves.ChooseBid(view, this.random)),
                 BelotDecision.Announce => this.session.TryDeclare(RandomMoves.ChooseAnnounces(view, this.random)),
-                _ => this.session.TryPlay(view.PlayableCards[this.random.Next(view.PlayableCards.Count)]),
+                _ => this.session.TryPlay(view.PlayableCards[view.PlayableCards.Count == 1 ? 0 : this.random.Next(view.PlayableCards.Count)]),
             };
             Assert.True(accepted, $"The person's {decision} was refused.");
         }

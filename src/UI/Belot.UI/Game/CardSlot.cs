@@ -50,10 +50,13 @@
         public bool IsPlayable
         {
             get => this.isPlayable;
-            set => this.SetField(ref this.isPlayable, value, nameof(this.IsPlayable), nameof(this.IsDimmed), nameof(this.Description));
+            set => this.SetField(ref this.isPlayable, value, nameof(this.IsPlayable), nameof(this.IsDimmed), nameof(this.FaceOpacity), nameof(this.Description));
         }
 
         public bool IsDimmed => !this.IsPlayable;
+
+        /// <summary>Gets the face opacity over its opaque black backing, keeping illegal cards readable.</summary>
+        public double FaceOpacity => this.IsDimmed ? 0.82 : 1.0;
 
         /// <summary>Gets or sets a value indicating whether the hint suggests this card (gold outline).</summary>
         public bool IsHinted

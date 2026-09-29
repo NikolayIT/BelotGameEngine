@@ -34,6 +34,8 @@
 
         private readonly int hangingPoints;
 
+        private readonly PlayerPosition manualCardPlaySeats;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Round"/> class and deals: the deck is
         /// shuffled, the hands (which the round plays from) emptied, and five cards dealt to each
@@ -48,7 +50,8 @@
             int southNorthPoints,
             int eastWestPoints,
             int hangingPoints,
-            bool recordDeal = false)
+            bool recordDeal = false,
+            PlayerPosition manualCardPlaySeats = PlayerPosition.Unknown)
         {
             this.observers = observers;
             this.deck = deck;
@@ -58,6 +61,7 @@
             this.southNorthPoints = southNorthPoints;
             this.eastWestPoints = eastWestPoints;
             this.hangingPoints = hangingPoints;
+            this.manualCardPlaySeats = manualCardPlaySeats;
 
             deck.Shuffle();
             if (recordDeal)
@@ -158,7 +162,8 @@
                 this.playerCards,
                 this.Auction.Bids,
                 contract,
-                this.hangingPoints);
+                this.hangingPoints,
+                this.manualCardPlaySeats);
             this.AfterPlay();
         }
 

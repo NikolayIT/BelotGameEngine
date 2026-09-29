@@ -25,5 +25,8 @@
         /// tricks, results), which the views and the record need. On by default.
         /// </summary>
         public bool RecordHistory { get; set; } = true;
+
+        /// <summary>Gets or sets the UI seats that must explicitly play even a single legal card.</summary>
+        internal PlayerPosition ManualCardPlaySeats { get; set; }
     }
 }

@@ -492,17 +492,17 @@
             <HorizontalStackLayout Grid.Row="5" x:Name="HandStack" HorizontalOptions="Center" Margin="{ui:TableSize '0,2,0,2'}" BindableLayout.ItemsSource="{Binding MyHand}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="game:CardSlot">
-                        <Border StrokeThickness="0" Stroke="Transparent" StrokeShape="RoundRectangle 6" BackgroundColor="Transparent">
+                        <Border StrokeThickness="0" Stroke="Transparent" StrokeShape="RoundRectangle 6" BackgroundColor="Black">
                             <Border.Shadow>
                                 <Shadow Brush="Black" Opacity="0.6" Radius="8" Offset="2,3" />
                             </Border.Shadow>
                             <Grid WidthRequest="{ui:TableSize 70}" HeightRequest="{ui:TableSize 98}">
-                                <ImageButton Source="{Binding ImageSource}" WidthRequest="{ui:TableSize 70}" HeightRequest="{ui:TableSize 98}" Aspect="AspectFit"
+                                <ImageButton Source="{Binding ImageSource}" Opacity="{Binding FaceOpacity}" WidthRequest="{ui:TableSize 70}" HeightRequest="{ui:TableSize 98}" Aspect="AspectFit"
                                              BackgroundColor="Transparent" Padding="{ui:TableSize 0}" SemanticProperties.Description="{Binding Description}"
                                              Command="{Binding Source={x:Reference ThePage}, Path=BindingContext.TapCardCommand}" CommandParameter="{Binding}" />
                                 <Border IsVisible="{Binding IsHinted}" InputTransparent="True" BackgroundColor="Transparent"
                                         Stroke="{StaticResource GoldHighlight}" StrokeThickness="3" StrokeShape="RoundRectangle 6" />
-                                <!-- Keep every face readable and in place; legality is enforced by the command. -->
+                                <!-- Dim the face over an opaque backing so overlapping cards cannot show through. -->
                                 <Border IsVisible="{Binding HasBadge}" StrokeShape="RoundRectangle 6" StrokeThickness="0" BackgroundColor="{StaticResource GoldHighlight}"
                                         InputTransparent="True" Padding="{ui:TableSize '4,1'}" HorizontalOptions="Start" VerticalOptions="End" Margin="{ui:TableSize '3,0,0,5'}">
                                     <Label Text="{Binding BadgeText}" TextColor="#1A1006" FontAutoScalingEnabled="False" FontSize="{ui:TableTextSize 10}" FontAttributes="Bold" />

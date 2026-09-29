@@ -24,6 +24,7 @@
         {
             BelotDecision.Bid => BelotAction.Bid(ChooseBid(view, random)),
             BelotDecision.Announce => BelotAction.Declare(ChooseAnnounces(view, random).Select(a => new Announce(a.Type, a.Card))),
+            BelotDecision.PlayCard when view.PlayableCards.Count == 1 => BelotAction.PlayCard(view.PlayableCards[0]),
             _ => BelotAction.PlayCard(view.PlayableCards[random.Next(view.PlayableCards.Count)], random.Next(4) != 0),
         };
 

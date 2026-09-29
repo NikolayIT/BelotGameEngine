@@ -51,6 +51,8 @@
 
         private readonly bool recordHistory;
 
+        private readonly PlayerPosition manualCardPlaySeats;
+
         private readonly List<BelotRoundRecord> finishedRounds = new List<BelotRoundRecord>();
 
         private Round round;
@@ -84,7 +86,8 @@
                 new Deck((options ?? new BelotMatchOptions()).Random),
                 (options ?? new BelotMatchOptions()).FirstToPlay,
                 null,
-                (options ?? new BelotMatchOptions()).RecordHistory)
+                (options ?? new BelotMatchOptions()).RecordHistory,
+                (options ?? new BelotMatchOptions()).ManualCardPlaySeats)
         {
         }
 
@@ -93,7 +96,8 @@
             Deck deck,
             PlayerPosition firstToPlay,
             Func<int, PlayerPosition, int, int, int, RoundResult> scriptedRounds,
-            bool recordHistory = false)
+            bool recordHistory = false,
+            PlayerPosition manualCardPlaySeats = PlayerPosition.Unknown)
         {
             if (firstToPlay != PlayerPosition.South && firstToPlay != PlayerPosition.East
                                                     && firstToPlay != PlayerPosition.North
@@ -106,6 +110,7 @@
             this.deck = deck;
             this.scriptedRounds = scriptedRounds;
             this.recordHistory = recordHistory;
+            this.manualCardPlaySeats = manualCardPlaySeats;
             this.firstInRound = firstToPlay;
         }
 
@@ -672,7 +677,8 @@
                 this.SouthNorthPoints,
                 this.EastWestPoints,
                 this.HangingPoints,
-                this.recordHistory);
+                this.recordHistory,
+                this.manualCardPlaySeats);
         }
 
         // Adds the deal to the score and ends the match or deals the next one; true when the match
