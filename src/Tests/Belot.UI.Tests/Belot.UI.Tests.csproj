@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -37,6 +37,8 @@
     <Compile Include="..\..\UI\Belot.UI\Game\*.cs" Exclude="..\..\UI\Belot.UI\Game\PreferencesSettingsStore.cs" LinkBase="App\Game" />
     <Compile Include="..\..\UI\Belot.UI\Localization\AppStrings.cs" Link="App\Localization\AppStrings.cs" />
     <Compile Include="..\..\UI\Belot.UI\Localization\LocalizationManager.cs" Link="App\Localization\LocalizationManager.cs" />
+    <!-- Exercise the real configuration callback against the platform contracts in AndroidPlatformDoubles.cs. -->
+    <Compile Include="..\..\UI\Belot.UI\Platforms\Android\MainActivity.cs" Link="App\Platforms\MainActivity.cs" />
   </ItemGroup>
 
   <ItemGroup>
