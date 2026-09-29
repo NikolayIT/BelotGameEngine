@@ -31,6 +31,19 @@
         /// <summary>A card as "K♠" ("Р♠" in Bulgarian).</summary>
         public static string CardText(Card card) => Text[RankKeys[(int)card.Type]] + SuitGlyph(card.Suit);
 
+        /// <summary>A card's spoken name, without relying on suit glyphs or abbreviated ranks.</summary>
+        public static string CardDescription(Card card)
+        {
+            var suitKey = card.Suit switch
+            {
+                CardSuit.Club => "Bid_Clubs",
+                CardSuit.Diamond => "Bid_Diamonds",
+                CardSuit.Heart => "Bid_Hearts",
+                _ => "Bid_Spades",
+            };
+            return Text.Format("Card_Format", Text[RankKeys[(int)card.Type].Replace("Rank_", "Card_")], Text[suitKey]);
+        }
+
         /// <summary>A bid as said at the table: "♥ Hearts", "No trumps", "Double", "Pass".</summary>
         public static string BidText(BidType bid) => bid switch
         {

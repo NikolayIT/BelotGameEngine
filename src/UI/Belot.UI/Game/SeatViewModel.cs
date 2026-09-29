@@ -3,6 +3,7 @@
     using System.Collections.ObjectModel;
 
     using Belot.Engine.Players;
+    using Belot.UI.Localization;
 
     /// <summary>One seat at the table as the screen shows it.</summary>
     public sealed class SeatViewModel : ObservableObject
@@ -50,7 +51,7 @@
             get => this.cardCount;
             set
             {
-                if (!this.SetField(ref this.cardCount, value, nameof(this.CardCount), nameof(this.HasCards)))
+                if (!this.SetField(ref this.cardCount, value, nameof(this.CardCount), nameof(this.HasCards), nameof(this.CardsDescription)))
                 {
                     return;
                 }
@@ -69,6 +70,8 @@
 
         public bool HasCards => this.cardCount > 0;
 
+        public string CardsDescription => LocalizationManager.Instance.Format("Card_Count", this.cardCount);
+
         /// <summary>Gets or sets what the seat said last: its bid during the auction, then its declarations.</summary>
         public string BubbleText
         {
@@ -76,7 +79,8 @@
             set => this.SetField(ref this.bubbleText, value ?? string.Empty, nameof(this.BubbleText), nameof(this.HasBubble));
         }
 
-        public bool HasBubble => this.bubbleText.Length > 0;
+        // Declared combinations already have a persistent label below the name.
+        public bool HasBubble => this.bubbleText.Length > 0 && !this.HasDeclared;
 
         /// <summary>Gets or sets the card the seat has on the table in the trick in progress.</summary>
         public CardSlot? PlayedCard
@@ -125,7 +129,7 @@
         public string DeclaredText
         {
             get => this.declaredText;
-            set => this.SetField(ref this.declaredText, value ?? string.Empty, nameof(this.DeclaredText), nameof(this.HasDeclared));
+            set => this.SetField(ref this.declaredText, value ?? string.Empty, nameof(this.DeclaredText), nameof(this.HasDeclared), nameof(this.HasBubble));
         }
 
         public bool HasDeclared => this.declaredText.Length > 0;

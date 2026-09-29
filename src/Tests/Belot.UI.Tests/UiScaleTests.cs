@@ -11,6 +11,7 @@
 
     // Everything is drawn at a design size times a scale that follows the window (UiScale), so the
     // app looks the same on a phone, a tablet, an emulator at any density or a desktop window.
+    [Collection(AppState.Name)]
     public class UiScaleTests
     {
         // Phones, a tablet held upright (and an emulator like BlueStacks), desktop windows, landscape.
@@ -27,6 +28,128 @@
             { 1400, 800 },
             { 2200, 1180 },
         };
+
+        public UiScaleTests()
+        {
+            UiScale.Current.UpdateSystemFontScale(1);
+            UiScale.Current.Update(UiScale.TableDesignWidth, UiScale.TableDesignHeight);
+        }
+
+        [Theory]
+        [InlineData(312, 1, 2)]
+        [InlineData(312, 1.3, 1)]
+        [InlineData(312, 2, 1)]
+        [InlineData(600, 2, 2)]
+        [InlineData(279, 1, 1)]
+        [InlineData(280, 1, 2)]
+        [InlineData(240, 0.85, 2)]
+        [InlineData(0, 1, 1)]
+        [InlineData(double.NaN, 1, 1)]
+        [InlineData(double.PositiveInfinity, 1, 1)]
+        [InlineData(312, double.NaN, 2)]
+        [InlineData(312, 0, 2)]
+        public void StatisticTilesShouldStackWhenTheirScaledNumbersNeedMoreRoom(double width, double fontScale, int columns)
+        {
+            Assert.Equal(columns, UiScale.StatisticColumnsFor(width, fontScale));
+        }
+
+        [Theory]
+        [InlineData(280, 1, 2, 2)]
+        [InlineData(280, 1, 3, 3)]
+        [InlineData(280, 2, 2, 1)]
+        [InlineData(280, 2, 3, 1)]
+        [InlineData(560, 2, 2, 2)]
+        [InlineData(540, 2, 3, 3)]
+        [InlineData(240, 1, 3, 1)]
+        [InlineData(double.NaN, 1, 2, 1)]
+        [InlineData(280, double.NaN, 3, 3)]
+        [InlineData(280, 0, 2, 2)]
+        public void SettingsChoicesShouldKeepCompactRowsAtNormalTextAndStackAtLargeText(double width, double fontScale, int choices, int columns)
+        {
+            Assert.Equal(columns, UiScale.SettingsChoiceColumnsFor(width, fontScale, choices));
+        }
+
+        [Theory]
+        [InlineData(0.85, 0.85)]
+        [InlineData(1, 1)]
+        [InlineData(1.3, 1.3)]
+        [InlineData(2, 1.3)]
+        [InlineData(double.MaxValue, 1.3)]
+        public void OnlyTableTextShouldApplyTheBoundedSystemFontScale(double systemScale, double textScale)
+        {
+            var scale = UiScale.Current;
+            scale.Update(600, 1000);
+            var page = scale.Page;
+            var table = scale.Table;
+            var spacing = scale.HandSpacing;
+            try
+            {
+                scale.UpdateSystemFontScale(systemScale);
+
+                Assert.Equal(systemScale, scale.SystemFontScale);
+                Assert.Equal(table * textScale, scale.TableText, 10);
+                Assert.Equal(page, scale.Page);
+                Assert.Equal(table, scale.Table);
+                Assert.Equal(spacing, scale.HandSpacing);
+            }
+            finally
+            {
+                scale.UpdateSystemFontScale(1);
+                scale.Update(UiScale.TableDesignWidth, UiScale.TableDesignHeight);
+            }
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        [InlineData(double.NaN)]
+        [InlineData(double.PositiveInfinity)]
+        [InlineData(double.NegativeInfinity)]
+        public void InvalidSystemFontScalesShouldRestoreTheDefaultFactor(double invalid)
+        {
+            var scale = UiScale.Current;
+            scale.UpdateSystemFontScale(1.3);
+            scale.UpdateSystemFontScale(invalid);
+
+            Assert.Equal(1, scale.SystemFontScale);
+            Assert.Equal(scale.Table, scale.TableText);
+        }
+
+        [Fact]
+        public void TableTextBindingsShouldRefreshForFontAndWindowChanges()
+        {
+            var scale = UiScale.Current;
+            var changed = new System.Collections.Generic.List<string>();
+            scale.PropertyChanged += Changed;
+            try
+            {
+                scale.UpdateSystemFontScale(2);
+                Assert.Equal(new[] { nameof(UiScale.SystemFontScale), nameof(UiScale.TableText) }, changed);
+
+                changed.Clear();
+                scale.Update(600, 1000);
+                Assert.Contains(nameof(UiScale.Table), changed);
+                Assert.Contains(nameof(UiScale.TableText), changed);
+                Assert.Equal(UiScale.MaximumTableScale * 1.3, scale.TableText, 10);
+
+                changed.Clear();
+                scale.UpdateSystemFontScale(3);
+                Assert.Equal(new[] { nameof(UiScale.SystemFontScale), nameof(UiScale.TableText) }, changed);
+
+                changed.Clear();
+                scale.UpdateSystemFontScale(3);
+                scale.Update(600, 1000);
+                Assert.Empty(changed);
+            }
+            finally
+            {
+                scale.PropertyChanged -= Changed;
+                scale.UpdateSystemFontScale(1);
+                scale.Update(UiScale.TableDesignWidth, UiScale.TableDesignHeight);
+            }
+
+            void Changed(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => changed.Add(e.PropertyName!);
+        }
 
         // The table fits: its fixed rows (header, North, the side seats with eight cards, the South
         // bar and the hand) leave room for the trick in the middle, and eight cards fit the width.
@@ -52,15 +175,15 @@
         }
 
         // Text is never smaller than on the small phone the pages are designed for, and it grows
-        // with the screen (a tablet shows the table bigger, not a small table in a big window).
+        // modestly with the screen, without magnifying the whole interface on a tablet.
         [Fact]
         public void BiggerScreensShouldDrawEverythingBigger()
         {
             Assert.Equal(1, UiScale.TableScaleFor(UiScale.TableDesignWidth, UiScale.TableDesignHeight), 3);
-            Assert.True(UiScale.TableScaleFor(600, 1000) > 1.5);
-            Assert.True(UiScale.TableScaleFor(800, 1230) > 1.9);
+            Assert.Equal(UiScale.MaximumTableScale, UiScale.TableScaleFor(600, 1000));
+            Assert.Equal(UiScale.MaximumTableScale, UiScale.TableScaleFor(800, 1230));
             Assert.True(UiScale.PageScaleFor(360, 640) >= 1);
-            Assert.True(UiScale.PageScaleFor(600, 1000) >= 1.5);
+            Assert.Equal(UiScale.MaximumPageScale, UiScale.PageScaleFor(600, 1000));
 
             // A landscape window is limited by its height.
             Assert.Equal(UiScale.TableScaleFor(2000, 800), UiScale.TableScaleFor(1000, 800));
@@ -85,6 +208,8 @@
 
                 scale.Update(0, 0);
                 scale.Update(double.NaN, 500);
+                scale.Update(double.PositiveInfinity, 500);
+                scale.Update(500, double.PositiveInfinity);
                 Assert.Equal(Math.Round(UiScale.TableScaleFor(600, 1000), 3), scale.Table);
             }
             finally

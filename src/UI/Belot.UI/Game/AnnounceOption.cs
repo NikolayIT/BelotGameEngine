@@ -1,6 +1,7 @@
 ﻿namespace Belot.UI.Game
 {
     using Belot.Engine.GameMechanics;
+    using Belot.UI.Localization;
 
     /// <summary>A combination the person may declare, with its check box.</summary>
     public sealed class AnnounceOption : ObservableObject
@@ -20,10 +21,12 @@
 
         public int Points => this.Announce.Value;
 
+        public string Description => $"{this.Text}, {this.Points}. {LocalizationManager.Instance[this.IsSelected ? "Common_Selected" : "Common_NotSelected"]}";
+
         public bool IsSelected
         {
             get => this.isSelected;
-            set => this.SetField(ref this.isSelected, value, nameof(this.IsSelected), nameof(this.Mark));
+            set => this.SetField(ref this.isSelected, value, nameof(this.IsSelected), nameof(this.Mark), nameof(this.Description));
         }
 
         public string Mark => this.isSelected ? "☑" : "☐";
