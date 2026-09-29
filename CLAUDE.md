@@ -409,20 +409,58 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   comparing South's view before and after it; a finished deal's auction and tricks come from
   `PreviousRounds[^1]` (`BelotRoundSummary.Bids`/`Tricks`). **`GameViewModel` renders from the
   events only** (the live view is already past them while they are replayed) and re-syncs from
-  `GetView(South)` at each of the person's turns.
+  `GetView(South)` at each of the person's turns. Live cards and the last-trick miniature bind
+  to each seat's chronological Z index; publish the index before the card/animation notification.
 - **The game layer is MAUI-free**: all of `Game/` except `PreferencesSettingsStore.cs`, plus
   `Localization/AppStrings.cs` (English and Bulgarian, in code; `{loc:Tr Key}` in XAML) and
   `LocalizationManager.cs`. MAUI sits behind two seams: `ISettingsStore` (`SettingsStore.Current`,
   MAUI `Preferences`, set first thing in `MauiProgram`) and `IGameTableHost` (UI timers, vibration,
   leaving the page; `GamePage` implements it). The value converters live in `Converters/`.
-- **Sizes follow the window**: every size in the pages (fonts, cards, gaps, buttons, paddings)
-  is a design size for a small phone written `{ui:Size n}` (the scrolling pages) or
-  `{ui:TableSize n}` (the game table), a binding to `Game/UiScale.cs` that the pages update from
-  their size: the table is designed for 360 x 640 and fits whichever side is short, the scrolling
-  pages grow with the width (views built in code use `Scaling/Ui.Size`). So a phone, a tablet, an
-  emulator at any density and a desktop window show the same picture, never small text in a big
-  empty screen. **No fixed sizes and no `OnIdiom` in the XAML** (`UiScaleTests` checks); the
-  table is capped at 600 design units wide so a landscape window keeps the seats together.
+- **Compact home and guarded navigation**: three native pickers select the partner, West and
+  East levels; `Game/LineupSelection.cs` keeps the saved level ids. Beside each selector, an
+  optional name is saved independently in `AppSettings`. `SeatNames.Create` supplies custom names
+  or localized seat roles in engine order; difficulty labels never become in-game names. `Game/PageActions.cs`
+  serializes navigation and dialogs on the supporting pages and rejects confirmations from an
+  earlier page visit. `UiScale.StartColumnsFor` keeps the compact two-column setup at normal
+  phone text size; larger text gives the title a full row and stacks each name above its picker.
+  Reflow preserves the existing controls, text and selection, and observes scale changes only
+  while the page is active. Keep Play ahead of optional history and explanatory text. The secondary
+  online-play button uses `Game/OnlinePlay.cs` to open `https://ednaigra.com/play?game=belot`
+  in the system browser, with a localized launch-failure notice tied to the current visit.
+  This is a browser handoff; the app's game engine has no multiplayer/network integration.
+- **Sizes follow the window with upper limits**: `{ui:Size n}` (scrolling pages) and
+  `{ui:TableSize n}` (table geometry) bind design sizes to `Game/UiScale.cs`; code uses
+  `Scaling/Ui.Size`. Page scale caps at 1.1 and table scale at 1.25. The 360 x 640 phone design
+  stays centered within 480 x 760 design units. Sizes use these helpers rather than fixed
+  pixels or `OnIdiom`. Explicit `SafeAreaEdges` respect system bars and the setup keyboard;
+  the table measures its content host. Live table text uses `{ui:TableTextSize n}` with a
+  system-font multiplier capped at 1.3 and native auto-scaling disabled to avoid applying it
+  twice. Font scaling does not enlarge the cards. Supporting pages and result overlays retain
+  full system font scaling. Settings choice grids and the statistics metrics grid reduce
+  their column count when large text needs more room. With stacked metrics, the Statistics
+  heading spans a separate full-width row to keep the Bulgarian title intact without truncation.
+- **Decisions stay above the fixed hand**: `TableGrid` is a bounded direct child of `TableHost`
+  and does not scroll; North, West and East retain their expanded `Backs` stacks. Side seats
+  use `Auto,Auto,Auto,*` rows so `Controls/VerticalCardBackLayout` fits the backs below the
+  labels. Its MAUI-free `VerticalCardBackGeometry` keeps 38 x 53 cards and a 13-unit step when
+  space permits, reduces the step toward two units, then scales proportionally if necessary.
+  North's horizontal backs and the person's hand are unchanged. Declared combinations keep
+  their persistent summary and suppress the duplicate speech bubble; bidding bubbles remain.
+  Bidding occupies an inline `Auto` row: suit buttons above a single action row, where Double and
+  ReDouble share a slot between all trumps and Pass. Declarations keep their title and Declare
+  button visible; only the choices list scrolls, up to 90 table design units. One choice keeps
+  its natural height. Result overlays scroll. Bounded name/score columns keep Hint and Menu
+  separate. Hand faces stay fully visible in their normal positions; legality remains enforced
+  by `IsPlayable` and the engine. A fixed three-unit hint border overlays the card inside its
+  fixed-size grid, so showing a hint does not resize or shift the hand.
+- **Accessible state follows the visible state**: native hand/suit/declaration controls have
+  spoken labels. Current and last-trick cards include the seat name; expanded back stacks
+  announce the seat and public card count, with decorative backs excluded. Settings language
+  and speed buttons announce selected/not-selected state and refresh it after language changes.
+- **Android font changes preserve the active game**: `MainActivity` handles `FontScale` without
+  recreating the activity. After the base callback it updates `UiScale.SystemFontScale`,
+  refreshes existing MAUI font mappings and invalidates measurement, including formatted spans.
+  The current match survives; this does not restore a match after process death.
 - **Rating**: an on-device ELO (`PlayerRatingStore`, start 1000, K = 32) by the team formula:
   expected = 1 / (1 + 10^((rivals − (person + partner) / 2) / 400)), the rivals rated as the
   average of their two levels (`Lineup.RivalsElo`). The levels' ratings in `AiLevels` are pair
@@ -448,9 +486,22 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   `GameTableTests` through `TableTester` (it plays through the view model's commands like a person
   and checks the screen against the person's view at every decision, then every deal's result
   screen, the game over, the rating, history and records), plus the strings (both languages, and
-  every key the app uses), the hand order and the history. Tests that touch the static app state
-  run in the non-parallel `AppState` collection on a fresh in-memory store. Keep the linked files
-  MAUI-free.
+  every key the app uses), the hand order and the history. Regression tests cover immediate
+  control closure after accepted moves, repeated or late commands, hint failures and disposal,
+  declaration selection, stale page confirmations, picker persistence, damaged saved settings
+  and statistics, chronological card layers, fixed hint bounds, semantic labels, bounded table
+  text and adaptive supporting-page grids. `VerticalCardBackGeometryTests` checks 1-8 cards
+  within short/full bounds; `SeatPresentationTests` covers declaration/bid visibility and
+  `StartPageLayoutTests` covers home reflow, normal-size compactness and lifecycle wiring.
+  `AndroidConfigurationTests` compiles
+  the actual activity against test doubles to check callback order, font refresh and retained
+  state; native builds and device checks verify Android behavior. Tests that touch static app
+  state run in the non-parallel `AppState` collection on a fresh in-memory store. Keep the game
+  and localization files MAUI-free. See `etc/AndroidUiReleaseCheck.md` for reproduction commands
+  and the recorded verification scope. September 29, 2026: UI 272/272, engine 741 and AI 361
+  tests passed; Android and Windows Release builds have zero warnings/errors. Native Test
+  checks include a complete game on identical game/table code and final-APK home, browser,
+  hint and tablet review; the report distinguishes artifact scopes and untested native states.
 
 ## Conventions
 
