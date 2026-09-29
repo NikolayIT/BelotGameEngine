@@ -1,4 +1,4 @@
-﻿# Android 1.0 UI release check
+# Android 1.0 UI release check
 
 September 29, 2026. Scope: the MAUI app in `src/UI/Belot.UI`; engine rules and AI weights are unchanged. App version remains **1.0 (build 1)**.
 
@@ -131,3 +131,10 @@ UI test drivers now skip random-number draws for a sole legal card, preserving t
 - An illegal tap left the whole hand unchanged (`dimmed-before-invalid-tap.png`, `dimmed-after-invalid-tap.png`). Visual review confirms readable grey faces and unchanged card positions. Pixel analysis of the visible card background found **RGB 209/209/209** for all six illegal cards and **255/255/255** for both legal cards; `dimming-pixels.json` records each card and bound.
 - Native verification used the original Test DPI 240 and system font 1.0. It did not complete or rate the unfinished match.
 - Follow-up evidence: `artifacts/ui-manual-cards-20260929/`.
+## Google Play release content — follow-up, 29 September 2026
+
+Settings now includes a localized privacy-policy button. The release-preparation UI suite passes **287/287** tests; Android signed publish and Windows Release build both completed with **zero warnings and errors**. Game/table code is unchanged from the manual-card follow-up above.
+
+The exact production AAB was converted to a universal APK and installed on Test using its existing test signature, preserving local statistics. Both languages' privacy buttons opened the correct HTTPS policy, and both policy translations were checked. This verifies release content; it does not verify installation under the production certificate or delivery through Google Play. Static 16 KB checks passed for all native libraries, without a runtime test on a 16 KB device.
+
+The signed AAB hash, certificate, build logs, device-check evidence and current Google Play submission status are recorded in [the 1.0 release record](../store/google-play/releases/1.0.md). That record supersedes the earlier audit's statement that release signing and store upload had not yet occurred.
