@@ -1,6 +1,6 @@
 # Legacy opponents and PPO diversity (September 28, 2026)
 
-Starting weights: master `8bf1eeb`, including the promoted all-trump PPO file.
+Starting actor weights: branch `master` at `8bf1eeb`, including the promoted all-trump PPO file.
 The user's own bot is `SmartPlayer`. External adapters are development tooling in
 `tools/LegacyOpponents`; the app and inference library acquire no new dependency.
 
@@ -37,13 +37,16 @@ outcomes, a paired normal 95% interval, points/game and diagnostic counts. It al
 writes the individual pair results to `<data>.arena.json`. All numbers below are
 whole games; `+/-` is one standard error in percentage points.
 
-## Current-player comparisons
+## Historical player comparisons (September 28, 2026)
 
-20,000 games per fast matchup, seed 611, 10 threads, Release. Current weights are
+20,000 games per fast matchup, seed 611, 10 threads, Release. The historical weights are
 frozen in `artifacts/opponents-20260928/baseline`. These deterministic comparisons
 may overlap development work; their elapsed times are not inference benchmarks.
-The timed Master and ISMCTS matchups each use 1,000 games, seed 619 and 10 workers,
+The timed former Master and ISMCTS matchups each use 1,000 games, seed 619 and 10 workers,
 with training and build jobs stopped. The entire suite runs sequentially.
+Here, **former Master** means the 100-rollout, 400-ms profile now named
+`rollout-master`. These historical results do not describe the current `master`
+profile; its September 29 results appear separately below.
 
 | Our player | vs SharpBelot | vs Belot 2.06 C# port | Games per opponent |
 |---|---|---|---|
@@ -53,7 +56,7 @@ with training and build jobs stopped. The entire suite runs sequentially.
 | Neural, no search | 79.545% +/- .273 | 67.665% +/- .307 | 20,000 |
 | Neural, bounded endgames / hints | 82.990% +/- .255 | 72.075% +/- .298 | 20,000 |
 | Expert, T=1.5, MaxRegret=4, bounded endgames | 62.630% +/- .318 | 48.830% +/- .325 | 20,000 |
-| Master, search 100, 400-ms cap | 84.100% +/- 1.108 | 70.800% +/- 1.311 | 1,000 |
+| Former Master / `rollout-master`, search 100, 400-ms cap | 84.100% +/- 1.108 | 70.800% +/- 1.311 | 1,000 |
 | ISMCTS, 100 ms/card | 89.400% +/- .947 | 75.400% +/- 1.214 | 1,000 |
 
 SharpBelot needs the host legal set in 0.06-0.15% of card decisions across these
@@ -63,24 +66,62 @@ and denominators are in each arena JSON, so these adaptations remain visible.
 
 With training stopped, warmed engine callbacks average 14.7 us/card for the
 pure NN (21,187 decisions, 100 games), 30.5 us for bounded endgames (21,225,
-100 games), and 58.37 ms for Master (669, 4 games). These are mean latencies,
+100 games), and 58.37 ms for former Master / `rollout-master` (669, 4 games). These are mean latencies,
 not game-strength measurements; no latency uncertainty was collected.
 
 The different matchups motivate diversity: Smart beats SharpBelot, yet the neural
 policy wins fewer games against SharpBelot than against Smart. One scalar rating
 does not describe every pairing.
-ISMCTS also performs better than neural Master against both legacy opponents in
+ISMCTS also performs better than the former neural Master against both legacy opponents in
 these checks. Its paired differences are +5.300 +/- 1.348 pp against SharpBelot
 and +4.600 +/- 1.722 pp against 2.06 (1,000 games per profile and opponent).
 The existing fast-versus-ISMCTS head-to-head gate does not
 establish that the neural policy is stronger against every opponent.
-Neither legacy comparison establishes a Master advantage over the much cheaper
-bounded-endgame profile; the smaller timed samples have wider uncertainty.
+Neither historical legacy comparison establishes an advantage for the former
+Master over the much cheaper bounded-endgame profile; the smaller timed samples
+have wider uncertainty.
 
 In their direct match, the 2.06 port beats SharpBelot **69.440% +/- .294 pp** over
 20,000 games, seed 611. That run also has zero card fallbacks; 3,228 of 858,939
 2.06 bids become passes and SharpBelot's move predicate differs at 1,912 of
 2,222,500 card decisions.
+
+## Current Master update (September 29, 2026)
+
+The current `master` profile is **belief5-v2-ensemble**: the frozen actor plus
+the CE12 ownership model, five-trick endgame search with transpositions and an
+8-ms budget, and suit averaging on ordinary card-network fallback. It uses no
+full-deal rollout search. The former Master remains available as `rollout-master`.
+The profiles' results are kept separate throughout this note.
+
+These independent whole-game gates use ten workers with competing training and
+build jobs stopped. Each uncertainty is one empirical standard error across
+mirrored pairs, expressed in percentage points. Time-capped search depends on
+machine load, so the seed alone does not guarantee identical results.
+
+| Opponent | Current Master win rate +/- SE | Games | Seed |
+|---|---:|---:|---:|
+| SmartPlayer | 92.520% +/- .253 pp | 10,000 | 879 |
+| SharpBelot | 87.080% +/- .324 pp | 10,000 | 881 |
+| Belot 2.06 C# port | 77.150% +/- .395 pp | 10,000 | 883 |
+| ISMCTS, 100 ms/card | 62.000% +/- 1.247 pp | 1,000 | 867 |
+| Former Master / `rollout-master` | 59.100% +/- 1.152 pp | 1,000 | 871 |
+
+The SmartPlayer, ISMCTS and former Master reports record zero rejected bids,
+card fallbacks and legal-set differences for both teams. SharpBelot records
+zero rejected bids in 363,797 bid decisions, zero card fallbacks in 1,008,667
+card decisions, and 510 differences from its own legal-set predicate. The
+adapter uses the host legal set, as in the historical comparison.
+The Belot206 port records 3,887 rejected bids in 388,333 bid decisions, zero
+card fallbacks in 1,024,658 card decisions, and zero legal-set differences.
+Current Master's diagnostic counters are zero in both legacy matchups.
+Exact settings, individual pair outcomes and diagnostics are in
+`artifacts/fast-bot-20260928/belief5-v2-{smart,sharpbelot,belot206,ismcts,rollout-master}-gate.arena.json`.
+The frozen candidate settings include `EndgameTricks=5`, `EndgameWorlds=1680`,
+`EndgameSampledWorlds=128`, `EndgameNodes=250000`, `EndgameMilliseconds=8`,
+`EndgameDeclarations=true`, `EndgamePruning=false`, `EndgameTranspositions=true`,
+ownership power 1, ownership uniform mix .1,
+`CardSuitEnsemble=true`, and `SearchDeals=0`.
 
 ## Training design and fixed pilot
 
@@ -143,9 +184,9 @@ SharpBelot and +.215 +/- .280 pp against 2.06, paired by seed. These are develop
 from one training seed; errors describe game sampling, not variation across
 training runs, and no multiple-comparison correction is applied.
 
-**No new weights are promoted.** None of the four candidates establishes a win
+**That PPO pilot promoted no new weights.** None of the four candidates establishes a win
 against the current network, so none advances to the expensive ISMCTS promotion
-test. App levels and ratings retain the previously validated weights and settings.
+test. At that point, app levels and ratings retained the previously validated weights and settings.
 The adapters and configurable pool are retained for future training and comparison.
 This experiment rejects replacing the opposing team with this uniform pool on
 every deal at this training budget. It does not establish that all diversity is
@@ -164,18 +205,19 @@ in [PSRO](https://arxiv.org/abs/1711.00832) and the PPO/opponent-pool recipe in
 [Kita et al.'s bridge bidding work](https://arxiv.org/html/2406.10306v1). Neither
 paper establishes a gain for Belot card play; that is what the comparisons test.
 
-## Reproduction
+## Reproducing the September 28 experiment
 
 ```powershell
 New-Item -ItemType Directory -Path artifacts/baseline -Force
-Copy-Item src/AI/Belot.AI.ClaudePlayer/Neural/Weights/*.bin artifacts/baseline
-# For the reported runs these are the unchanged weights from master 8bf1eeb.
+Copy-Item artifacts/opponents-20260928/baseline/*.bin artifacts/baseline
+# Preserve the archived actor weights from branch master at 8bf1eeb for historical reproduction.
 dotnet build tools/NeuralTrainer/NeuralTrainer.csproj -c Release -o artifacts/opponents-bin
-dotnet artifacts/opponents-bin/NeuralTrainer.dll arena --player neural --opponent sharpbelot --pairs 10000 --threads 10 --seed 611 --data artifacts/neural-sharp
-dotnet artifacts/opponents-bin/NeuralTrainer.dll arena --player fast --opponent belot206 --pairs 10000 --threads 10 --seed 611 --data artifacts/fast-206
-# Also: random, dummy, smart, expert, master, ismcts:100. --in overrides the neural weights.
+dotnet artifacts/opponents-bin/NeuralTrainer.dll arena --in artifacts/baseline --player neural --opponent sharpbelot --pairs 10000 --threads 10 --seed 611 --data artifacts/neural-sharp
+dotnet artifacts/opponents-bin/NeuralTrainer.dll arena --in artifacts/baseline --player fast --opponent belot206 --pairs 10000 --threads 10 --seed 611 --data artifacts/fast-206
+# Also: random, dummy, smart, expert, rollout-master, ismcts:100. Preserve each historical profile's recorded settings.
+# Current master is belief5-v2-ensemble and does not reproduce the former Master row.
 # validate also accepts --opponent sharpbelot and --opponent belot206.
-dotnet artifacts/opponents-bin/NeuralTrainer.dll arena --in artifacts/baseline --player master --opponent sharpbelot --pairs 500 --threads 10 --seed 619 --data artifacts/master-sharp
+dotnet artifacts/opponents-bin/NeuralTrainer.dll arena --in artifacts/baseline --player rollout-master --opponent sharpbelot --pairs 500 --threads 10 --seed 619 --data artifacts/rollout-master-sharp
 dotnet artifacts/opponents-bin/NeuralTrainer.dll arena --in artifacts/baseline --player ismcts:100 --opponent sharpbelot --pairs 500 --threads 10 --seed 619 --data artifacts/ismcts-sharp
 # Repeat these two timed commands with --opponent belot206 and distinct --data prefixes.
 # For distinct neural folders in arena:
@@ -188,7 +230,7 @@ artifacts/neural-20260927/torch-env/Scripts/python.exe -X utf8 tools/NeuralTrain
 Timed-search matches must run without competing training or build jobs. Training
 uses the existing isolated CUDA environment documented in the GPU README.
 
-## Verification
+## Verification of the September 28 experiment
 
 - 741 engine, 110 AI and 72 UI tests pass. This adds seven adapter/runner cases and six
   training-context/learner-trajectory cases. Windows and Android builds have zero

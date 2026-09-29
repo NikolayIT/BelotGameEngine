@@ -3,7 +3,7 @@
 The current endgame solver maximizes the deal's point difference. It does not
 use the public cumulative match scores. This can favor a capot that continues
 the match over a smaller noncapot score that wins it immediately. No utility
-change is part of the promoted belief5-v1 profile.
+change is part of the selected belief5-v1 or belief5-v2-ensemble profiles.
 
 A bounded follow-up would use terminal utility 1 for a legal match win, 0 for
 a legal loss, and a calibrated continuation win probability otherwise. Match

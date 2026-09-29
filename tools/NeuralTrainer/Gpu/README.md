@@ -334,7 +334,8 @@ settings, warmed engine-card latency percentiles, maximum time and counts above
 10 ms. Default `neural` and explicit `candidate` retain configured flag behavior.
 `--card-suit-ensemble true` averages the permitted suit permutations in ordinary
 card-network fallback only; successful searches, bids and rollout policies are
-unchanged. The option remains off unless explicitly enabled.
+unchanged. The constructor and fast/Expert profiles leave it off; the shared
+Master enables it after the independent belief5-v2-ensemble validation.
 
 ### Separate ownership models and late corrections
 

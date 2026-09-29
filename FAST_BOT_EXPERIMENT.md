@@ -16,6 +16,13 @@ Reference: commit `cba8cb3`, with unchanged embedded weights copied to
 previous experiment provides the reference executable. The initial setup check
 is 200 mirrored pairs against ISMCTS100, seed 701, ten workers, otherwise idle.
 
+The completed independent gates select **belief5-v2-ensemble**: unchanged actor
+weights, separate learned ownership, bounded five-trick endings and suit averaging
+on neural fallback. The decisive comparisons, measured latency and frozen evidence
+are in [the final validation section](#independent-check-of-the-eight-millisecond-ensemble-candidate).
+The notes below preserve development order, including rejected variants and the
+earlier v1 checkpoint; intermediate pending statuses refer to those checkpoints.
+
 ## Initial hypotheses
 
 1. **Extend double-dummy endings.** The successful existing profile only solves
@@ -1105,3 +1112,134 @@ seeds and ordering are in `belief5-v2-independent-plan.json` and
 `run-belief5-v2-independent.ps1`; each completed match retains its arguments,
 log, pair scores and full arena JSON. External results are pending at this
 checkpoint; the app factory still selects v1.
+
+The independent ISMCTS100 check then passed at **62.000% +/- 1.247 pp over
+1,000 games**, seed 867, 95% interval **[59.556%, 64.444%]**, +16.635
+points/game and +85.04 +/- 9.19 Elo, in 19:48.980. This is the exact v2
+configuration with the eight-millisecond cap. The earlier v1 check used a
+different seed, so its 64% score is not a paired estimate of the ensemble's
+effect; that effect is measured by the independent direct v2-v1 comparison.
+
+All eight independent v2 matches are now complete. The selected profile passes
+the predeclared gates and the additional frozen-fast/pure-NN checks:
+
+| Opponent | Seed | Games | Win rate +/- one pair SE | 95% interval | Points/game |
+|---|---:|---:|---:|---:|---:|
+| Previous belief5-v1 | 863 | 20,000 | 50.930% +/- .217 pp | [50.505%, 51.355%] | +1.3 |
+| ISMCTS 100 ms | 867 | 1,000 | 62.000% +/- 1.247 pp | [59.556%, 64.444%] | +16.6 |
+| Previous Master, 100 rollouts / 400 ms cap | 871 | 1,000 | 59.100% +/- 1.152 pp | [56.842%, 61.358%] | +13.8 |
+| Previous fast, three-trick endings | 873 | 10,000 | 60.120% +/- .343 pp | [59.449%, 60.791%] | +14.5 |
+| Frozen pure neural policy | 875 | 10,000 | 63.730% +/- .349 pp | [63.046%, 64.414%] | +20.7 |
+| SmartPlayer | 879 | 10,000 | 92.520% +/- .253 pp | [92.023%, 93.017%] | +71.6 |
+| Adapted SharpBelot | 881 | 10,000 | 87.080% +/- .324 pp | [86.444%, 87.716%] | +63.5 |
+| Adapted Belot 2.06 (2001) | 883 | 10,000 | 77.150% +/- .395 pp | [76.375%, 77.925%] | +62.5 |
+
+The new Master averages 1.4491 ms/card in the idle timing table above, with
+6.0827-ms p99 and an observed maximum of 8.0060 ms over 21,246 callbacks. The
+full 100-rollout search is no longer the app's Master configuration. It remains
+available as `rollout-master` for comparison. `CreateMaster()` now enables the
+suit ensemble; the constructor, fast hint profile and Expert remain unchanged.
+The four actor and three ownership files are identical between v1 and v2.
+
+SharpBelot had zero rejected bids in 363,797 decisions, zero card fallbacks in
+1,008,667 decisions, and 510 legal-set differences. Belot 2.06 had 3,887 rejected
+proposals in 388,333 bid decisions, zero card fallbacks in 1,024,658 decisions,
+and zero card legal-set differences. The same adapter/rules qualifications as
+the v1 comparisons apply; these are not native-executable tournaments.
+
+`Neural/Weights/Ownership/validation-v2.json` preserves every match's complete
+statistics, seeds, counts, diagnostics, exact settings, frozen executable/model
+hashes and final idle benchmark. The earlier `validation.json` remains v1
+evidence; the ownership training provenance now names the selected v2 profile.
+The pure-ensemble ISMCTS follow-up and final app round robin remain pending at
+this checkpoint. The former is a separate search-free configuration and is not
+substituted for any Master result.
+
+The final separate pure-ensemble check completed at **51.100% +/- 1.418 pp
+against ISMCTS100 over 1,000 games**, seed 887, 95% **[48.320%, 53.880%]**,
++.24 points/game and +7.64 +/- 9.86 Elo. It took 19:48.515 on the otherwise idle
+machine. This does not pass the independent ISMCTS gate, so the constructor and
+cheap fast/Expert profiles retain their settings. The pure ensemble remains an
+opt-in tool; its same-lineage and external heuristic-opponent improvements do
+not establish the required ISMCTS gain. Artifacts are
+`ensemble-pure-ismcts887.arguments.json`, `.log` and `.arena.json`.
+
+### Final app Elo calibration (2026-09-29)
+
+The completed round robin used source
+`f5f950ad9bce62361d8af62dd31c6a781dc84030` and the frozen copied simulator at
+`artifacts/fast-bot-20260928/elo-bin-v2/Belot.GamesSimulator.dll`. Master was
+`belief5-v2-ensemble`; the former 100-rollout Master was not in this six-player
+suite. All other training, builds, tests and matches were stopped throughout.
+The run finished in **01:03:02**, with **400,600 games**: 20,000 mirrored pairs
+for each of ten non-ISMCTS matchups, and 60 pairs for each of five ISMCTS
+matchups.
+
+| App level / player | Elo +/- one sigma | Games involving this player |
+|---|---:|---:|
+| Master (`belief5-v2-ensemble`) | 1838 +/- 2.5 | 160,120 |
+| ClaudePlayerIsmcts | 1758 +/- 17.7 | 600 |
+| Expert (Temperature 1.5, MaxRegret 4) | 1611 +/- 2.2 | 160,120 |
+| Skilled / SmartPlayer | 1462 +/- 1.7 | 160,120 |
+| Beginner / DummyPlayer | 1200 (fixed anchor) | 160,120 |
+| RandomPlayer | 669 +/- 3.0 | 160,120 |
+
+Rating errors use **1,000 shared-seed mirrored-pair bootstrap samples**; the
+DummyPlayer anchor is fixed. Player counts overlap because each game involves
+two profiles. These ratings describe this opponent pool; the larger independent
+ISMCTS promotion check above remains the primary strength evidence.
+
+Expert retains **Temperature 1.5 and MaxRegret 4**: its calibrated rating of
+1611 sits between Skilled (1462) and Master (1838). Master retains the five-trick
+belief search with suit ensembling and an eight-millisecond cap. The app rating
+constants are updated to this table.
+
+All 15 raw matchups are preserved below. Win rates and their printed errors are
+copied from the simulator log; these are separate from the bootstrap rating
+errors above. The left-hand player is the numerator in each win rate.
+
+| Left player | Right player | Wins, left-right | Games | Left win rate +/- printed error |
+|---|---|---:|---:|---:|
+| Dummy | Random | 38,940-1,060 | 40,000 | 97.350% +/- .080 pp |
+| Dummy | Smart | 4,699-35,301 | 40,000 | 11.748% +/- .156 pp |
+| Dummy | Expert | 5,274-34,726 | 40,000 | 13.185% +/- .163 pp |
+| Dummy | Master | 682-39,318 | 40,000 | 1.705% +/- .064 pp |
+| Dummy | ISMCTS | 3-117 | 120 | 2.500% +/- 1.419 pp |
+| Random | Smart | 269-39,731 | 40,000 | .673% +/- .041 pp |
+| Random | Expert | 312-39,688 | 40,000 | .780% +/- .044 pp |
+| Random | Master | 17-39,983 | 40,000 | .043% +/- .010 pp |
+| Random | ISMCTS | 0-120 | 120 | .000% +/- .000 pp |
+| Smart | Expert | 10,350-29,650 | 40,000 | 25.875% +/- .202 pp |
+| Smart | Master | 3,047-36,953 | 40,000 | 7.618% +/- .128 pp |
+| Smart | ISMCTS | 19-101 | 120 | 15.833% +/- 3.028 pp |
+| Expert | Master | 9,257-30,743 | 40,000 | 23.143% +/- .189 pp |
+| Expert | ISMCTS | 39-81 | 120 | 32.500% +/- 3.531 pp |
+| Master | ISMCTS | 70-50 | 120 | 58.333% +/- 3.789 pp |
+
+A printed zero error at 0/120 is a boundary estimate, not certainty that the
+underlying win probability is zero. The full output, including matchup timings,
+is in [final-elo.log](artifacts/fast-bot-20260928/final-elo.log).
+[final-elo-manifest.json](artifacts/fast-bot-20260928/final-elo-manifest.json)
+records the source commit, copied DLL SHA-256 hashes, arguments and idle-machine
+conditions. The copied Release simulator build passed with zero warnings and
+errors in `final-elo-build-v2.log`.
+
+The executed command (PowerShell, from the repository root) was:
+
+```powershell
+dotnet artifacts/fast-bot-20260928/elo-bin-v2/Belot.GamesSimulator.dll elo 20000 60 |
+  & 'C:/Program Files/Git/usr/bin/iconv.exe' -f UTF-16LE -t UTF-8 > artifacts/fast-bot-20260928/final-elo.log
+```
+
+The saved runner, `artifacts/fast-bot-20260928/run-final-elo.ps1`, creates the
+manifest and refuses to overwrite existing evidence. Use a separate output path
+for a rerun.
+
+Final validation is complete: **741 engine, 361 AI, 74 UI and 78 Python tests
+passed**. UI tests were rerun after updating the ratings. Both final MAUI builds
+passed with **zero warnings and zero errors**: Windows in 18.31 seconds and
+Android in 18.58 seconds. Evidence is under `artifacts/fast-bot-20260928/` in
+`final-engine-tests.log`, `final-ai-v2-tests.log`, `final-ui-ratings-tests.log`,
+`final-python-tests.log`, `final-windows-v2-build.log` and
+`final-android-v2-build.log`. The final source audit found zero BOM/CRLF
+violations across 46 changed C# files; engine source remains unchanged.
