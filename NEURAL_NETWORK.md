@@ -1,51 +1,53 @@
 # The Belot Neural Player
 
-`ClaudePlayerNeural` plays Belot with four small neural networks trained by reinforcement
-learning in self-play. It values **every action open to it** (each bid, each legal card) in game
-points and can be made weaker on purpose by sometimes taking a nearly best action. The
-strongest validated fast configuration uses a PPO-improved all-trump network with bounded
-endgame search, averaging **30.5 microseconds per card** in the September 28 idle engine benchmark.
+`ClaudePlayerNeural` values every legal bid and card in game points. Its default
+constructor uses the four small actor networks; `Temperature` and `MaxRegret`
+allow weaker play. The strongest validated profile combines that policy with
+separate ownership predictions and bounded endgame search.
 
-This document explains what it is, how it is trained, how to reproduce and improve it, and how
-to keep it working.
+**Current Master, September 29, 2026: belief5-v2-ensemble.** On the i7-12700K, all of the
+following were independent mirrored whole-game comparisons with other jobs
+stopped. The errors are one empirical standard error over mirrored pairs:
 
-**Validated fast configuration, September 27, 2026** (i7-12700K; uncertainties are
-one standard error across mirrored pairs of whole games):
+| Opponent | Win rate +/- one SE | Games |
+|---|---:|---:|
+| ClaudePlayerIsmcts, 100 ms/card | **62.000% +/- 1.247 pp** | 1,000 |
+| Previous Master, 100 neural rollouts | **59.100% +/- 1.152 pp** | 1,000 |
+| Previous fast profile, three-trick endings | **60.120% +/- .343 pp** | 10,000 |
+| Frozen pure network | **63.730% +/- .349 pp** | 10,000 |
+| SmartPlayer | **92.520% +/- .253 pp** | 10,000 |
+| Adapted SharpBelot | **87.080% +/- .324 pp** | 10,000 |
+| Adapted Belot 2.06 (2001) | **77.150% +/- .395 pp** | 10,000 |
+| belief5-v1, without suit averaging | **50.930% +/- .217 pp** | 20,000 |
 
-| Opponent | Win rate | Games | Elo difference |
-|---|---|---|---|
-| ClaudePlayerIsmcts, 100 ms/card | **54.100% +/- 1.386 pp** | **1,000** | +29 +/- 10 |
-| Previous bounded fast profile | **50.620% +/- .187 pp** | 20,000 | +4 +/- 1 |
-| SmartPlayer | **89.835% +/- .205 pp** | 20,000 | +379 +/- 4 |
-
-The independent ISMCTS 95% interval is **[51.384%, 56.816%]**, passing the
-predeclared promotion gate. PPO changes only `alltrumps.bin`; bidding, suit and
-no-trump weights remain unchanged. All four files still total 2,974,830 bytes.
-The PPO gain is small: about +4 Elo against the preceding fast profile.
-Enable the validated fast configuration with:
+The idle card benchmark averages **1.449 ms**, with **6.083-ms p99**, an observed
+maximum of **8.006 ms**, and **0/21,246 decisions above 10 ms**. The profile has
+an 8-ms search cap; scheduling and garbage collection prevent a universal hard
+real-time guarantee. All seven embedded files total **3,523,482 bytes** and
+inference is pure managed C#. Enable the exact app profile with:
 
 ```csharp
-new ClaudePlayerNeural
-{
-    UseEndgameSearch = true,
-    EndgameUseDeclarations = true,
-    EndgameTricks = 3,
-    EndgameThreeTrickWorldLimit = 90,
-};
+ClaudePlayerProfiles.CreateMaster();
 ```
 
-The default constructor still uses networks alone: **50.000% +/- .978 pp in
-2,000 games** against ISMCTS100, at **14.7 us/card** in the September 28 timing check. It has not established a
-search-free win against ISMCTS. Against the original pure networks, the selected
-PPO weights score 50.628% +/- .135 pp in 40,000 held-out games. The endgame configuration
-solves all publicly consistent endings within its world limit, using perfect
-information inside each hypothetical world. It assumes the bots' declare-all
-policy; a withheld own meld, no fitting world, or overflow causes a fallback.
-See [the implementation note](ENDGAME_EXPERIMENT.md) for these limits. Hints use
-this fast profile. Expert uses temperature 1.5 and MaxRegret 4; Master retains
-100-deal search with a 400-ms budget. The latest Master-versus-fast check gives
-51.500% +/- 1.099 pp in 1,000 games: a higher point estimate, with an inconclusive
-95% interval. See section 14 for the PPO controls, limitations and reproduction.
+The original actor files are unchanged. The default pure network previously
+measured **50.000% +/- .978 pp against ISMCTS100 over 2,000 games**; its fresh idle
+benchmark is **13.6 us per card**. Its three-trick/90-world fast profile previously
+passed at 54.100% +/- 1.386 pp over 1,000 games and now measures 27.4 us/card. Hints retain that
+cheap profile; Expert adds temperature 1.5 and MaxRegret 4. The previous Master
+remains available as `ClaudePlayerProfiles.CreateRolloutMaster()`.
+
+The final app calibration is complete: **400,600 games** in **1:03:02**,
+with Master rated **1838 +/- 2.5**, Expert **1611 +/- 2.2** and Skilled
+**1462 +/- 1.7** (160,120 games involving each). Expert retains its settings
+because it remains between Skilled and Master. The complete ratings, bootstrap
+uncertainty and reproduction command are in [the final calibration](#final-v2-app-calibration).
+
+Section 16 records the new promotion, controls and follow-ups. See
+[FAST_BOT_EXPERIMENT.md](FAST_BOT_EXPERIMENT.md) for complete results, failed
+experiments and reproduction commands; section 14 preserves the earlier PPO
+promotion and its small all-trump gain. This document also explains the original
+architecture, training and measurement conventions below.
 
 **Earlier measurements** (September 2026, mirrored pairs, i7-12700K):
 
@@ -175,9 +177,11 @@ of the tuning record (§10).
 Network evaluation uses one forward pass over the sparse inputs: the first layer sums only the weight rows
 of the non-zero inputs (≈60–120 of 600), the hidden layers skip the units the ReLU zeroed, and
 the rows are added a SIMD vector of outputs at a time (Santase's layout: weights transposed,
-four vector accumulators). The latest warmed engine-card benchmark measured **16.2 us/card**
-for networks alone and **31.1 us/card** for the promoted bounded-endgame profile, each on one
-desktop core over 100 games. ISMCTS uses 100 ms/card. Older self-play timings include bidding
+four vector accumulators). The final September 29 warmed engine-card benchmarks measured
+**13.6 us/card** for networks alone, **27.4 us/card** for the three-trick hint profile,
+and **1.449 ms/card** for the selected Master, each on one desktop core over 100 games.
+The search-free suit ensemble measures **68.9 us/card**. ISMCTS uses 100 ms/card.
+Older self-play timings include bidding
 and omit some engine-context work; use the corrected engine-card benchmark for comparisons.
 
 ## 7. Training
@@ -972,7 +976,8 @@ MaxRegret 4. Master uses SearchDeals 100, a 400-ms budget, and no endgames.
 | Beginner / DummyPlayer | 1200 (fixed anchor) | 120,240 |
 | RandomPlayer | **660 +/- 3.1** | 120,240 |
 
-These are the ratings in `AiLevels.cs`. They use the existing Bradley-Terry fit
+These were the pre-PPO ratings in `AiLevels.cs`; section 16 records the current
+calibration. They use the existing Bradley-Terry fit
 and 1% fifty-fifty prior. The new uncertainty calculation uses 1,000 bootstrap
 replicates of complete mirrored pairs, sharing sampled seed indexes across matchups
 and preserving the common 60-pair and additional fast-pair strata. Counts in the
@@ -1246,7 +1251,8 @@ Dummy is the fixed anchor.
 | Beginner / DummyPlayer | 1200 (fixed) | 120,240 |
 | RandomPlayer | 656 +/- 3.1 | 120,240 |
 
-The ratings are copied to `AiLevels.cs`. **Expert keeps temperature 1.5 and
+These PPO-era ratings were copied to `AiLevels.cs`; section 16 records the current
+calibration. **Expert keeps temperature 1.5 and
 MaxRegret 4**: its measured strength remains between Skilled and Master. Relevant
 direct matchups from the same tournament are:
 
@@ -1337,3 +1343,219 @@ and **58.37 ms** for Master (669 / 4); warmup is excluded. The latest checks pas
 with zero warnings and errors. Golden 2.06 checks pass again, including all
 17,499 bid and 5,160 card vectors. Zero-chance collection and mixed-pool resume
 also preserve the expected binary output exactly.
+
+
+## 16. Faster Master with learned ownership (September 28-29, 2026)
+
+The user expanded the move budget to 10 ms and authorized eight hours of machine
+experiments. [FAST_BOT_EXPERIMENT.md](FAST_BOT_EXPERIMENT.md) records the research
+basis, controls, every attempted variant, artifacts and reproduction commands.
+The frozen reference is commit `cba8cb3`; its unchanged actor files were copied
+to `artifacts/fast-bot-20260928/baseline`. A fresh 400-game setup check reproduced
+current fast versus ISMCTS100 at 58.000% +/- 2.198 pp. This small control sample
+was not treated as an improvement.
+
+### First promoted profile: belief5-v1
+
+The main gain comes from estimating the unseen hands and solving longer endings.
+Three separate 600 -> 128 -> 64 -> 96 networks predict each unseen card's owner.
+A dynamic program samples hands with the public exclusions and hand sizes,
+then filters public declarations. Five-trick perfect-information minimax uses
+128 sampled worlds, 250,000 nodes, a transposition table and an 8-ms search cap;
+three-trick positions enumerate at most 1,680 worlds. Ownership power is 1,
+with uniform mix .1. Every legal action shares the same completed worlds.
+Interrupted sampled worlds contribute no values; interrupted exact enumeration
+falls back entirely. Earlier play uses the original actor.
+
+The actor weights and layout remain unchanged. The CE12 ownership exports add
+548,652 bytes, bringing all seven embedded files to **3,523,482 bytes**. Inputs
+remain public and inference remains managed C#. `ClaudePlayerProfiles.CreateMaster`
+first used this configuration and now adds the validated suit ensemble below;
+`CreateRolloutMaster` preserves the previous 100-rollout,
+400-ms profile. Expert and hints retain their cheaper three-trick/90-world search.
+
+All independent comparisons below used the same frozen candidate, ten workers,
+mirrored whole games and no competing training, builds or game jobs. Uncertainty
+is one empirical standard error over mirrored pairs, in percentage points:
+
+| Opponent | Games | Seed | Win rate +/- one SE | 95% interval |
+|---|---:|---:|---:|---:|
+| ISMCTS, 100 ms/card | 1,000 | 751 | **64.000% +/- 1.301 pp** | [61.451%, 66.549%] |
+| Previous Master, 100 neural rollouts | 1,000 | 761 | **56.900% +/- 1.103 pp** | [54.738%, 59.062%] |
+| Previous fast, three-trick endings | 10,000 | 757 | **59.370% +/- .323 pp** | [58.737%, 60.003%] |
+| SmartPlayer | 10,000 | 769 | **92.530% +/- .253 pp** | [92.034%, 93.026%] |
+| Adapted SharpBelot | 10,000 | 773 | **87.080% +/- .325 pp** | [86.442%, 87.718%] |
+| Adapted Belot 2.06 (2001) | 10,000 | 787 | **76.420% +/- .404 pp** | [75.629%, 77.211%] |
+
+The gains against ISMCTS, old Master and previous fast are respectively
++100 +/- 10, +48 +/- 8 and +66 +/- 2 Elo; point differences are +19.3, +11.2
+and +13.7 per game. These independent results pass the strength gates. External
+rates apply to the checked repository adapters and their documented compatibility
+filters; there were no card fallbacks. Full diagnostics are in the research note.
+
+An otherwise-idle 100-game benchmark, excluding 20 warmup games, measured
+**21,672 card decisions**: mean **1.4269 ms**, median .0313 ms, p95 5.5403 ms,
+p99 **6.0887 ms**, maximum **8.0061 ms**, and **0 decisions above 10 ms**.
+These are observed desktop callback times, not a hard real-time bound on every
+device. This is a neural policy with learned beliefs and bounded search; the
+unchanged pure actor alone is not claimed to have these win rates.
+
+Provenance and compact validation reports are checked in beside the ownership
+weights. To reproduce using the current shared profile (use the frozen artifact
+runner and full flags in the research note for an exact historical configuration):
+
+```powershell
+dotnet run -c Release --project tools/NeuralTrainer -- arena --player master --opponent ismcts:100 --pairs 500 --threads 10 --seed 867 --data artifacts/master-ismcts
+dotnet run -c Release --project tools/NeuralTrainer -- arena --player master --opponent rollout-master --pairs 500 --threads 10 --seed 871 --data artifacts/master-previous
+dotnet run -c Release --project tools/NeuralTrainer -- bench --player master --bench-games 100
+```
+
+### What did not justify adoption
+
+- Control-variate rollouts increased action-difference variance by about 34%
+  and exceeded 10 ms on 88/695 measured decisions. Truncated neural rollouts
+  scored only about 39-40% against previous fast (2,000 games per variant).
+- A 664-input ownership model with public chronology, diverse-opponent ownership
+  data and historical-play likelihoods did not establish an additional gain over
+  the selected ownership model. Direct comparisons and matched controls are in
+  the research note.
+- Exact joint ownership loss reduced heldout assignment NLL, but with the
+  intended uniform mix .1 it scored 49.450% +/- .545 pp against CE12 over 2,000
+  games. The predeclared trigger for a larger match failed.
+- A four-component normalized ownership mixture improved late-phase NLL by
+  only .01137 nats/state (0.204%), below the predefined .03 follow-up threshold.
+  No runtime mixture was added and no playing-strength gain is claimed;
+  [MIXTURE_BELIEF_NOTE.md](MIXTURE_BELIEF_NOTE.md) has the mathematical details.
+- A search-free late correction trained on 92,240 positions lowered heldout
+  teacher regret but scored **49.000% +/- .494 pp against the frozen pure NN
+  over 2,000 games** (seed 823, 95% [48.031%, 49.969%]). It is rejected.
+  Checked managed/Python half-forward parity passed 192 states / 6,144 outputs.
+
+At the integration checkpoint, 741 engine, 361 AI, 74 UI and 78 Python tests
+passed, and Windows and Android builds had zero warnings and errors. The
+follow-ups below and final level calibration are now complete; final post-rating
+verification is recorded at the end of this section.
+
+### Suit-ensemble follow-up
+
+An optional inference-time suit ensemble improves the frozen pure network without
+retraining: **52.030% +/- .220 pp over 20,000 games** against the original pure
+network (independent seed 798, 95% [51.599%, 52.461%], +2.8 points/game,
++14 +/- 2 Elo). The initial 2,000-game screen scored 51.550% +/- .675 pp
+(seed 797). It averages 1/2/6/24 suit permutations that fix trump and every suit
+mentioned in the auction, mapping all 16 card planes and outputs together.
+The observed auction stays legal, but a learned bidding policy can still treat
+unbid suits differently; exact Bayesian invariance is not claimed. This tests
+inference averaging separately from the earlier failed augmentation/retraining
+experiments. `--card-suit-ensemble true` affects ordinary card-network fallback
+only; bidding, successful searches and rollout policies stay unchanged. The
+option remains off in the constructor and fast/Expert profiles. Master enables
+it after the independent checks below. Its 23 tests and seven named-benchmark tests pass
+within the complete 361-test AI suite, with a zero-warning copied trainer build.
+Adding the ensemble only to neural fallback in the ownership/TT five-trick
+profile scores **50.895% +/- .219 pp over 20,000 games** against the identical
+profile without it (independent seed 799, 95% [50.465%, 51.325%], +1.2 points/game,
++6 +/- 2 Elo). Both sides disable the wall-clock cap for this comparison while
+retaining 128 worlds and 250,000 nodes. The initial 2,000-game hybrid screen was
+50.750% +/- .691 pp (seed 709). This fixed-work result triggered the separate
+idle timing and actual eight-millisecond validation below.
+
+The pure ensemble also transfers to independent opponents. Paired comparisons
+against Smart, SharpBelot and Belot 2.06 improve by respectively **1.410 +/- .290,
+1.880 +/- .326 and 2.350 +/- .416 percentage points**, with 10,000 games per
+variant per opponent. A matched four-epoch attempt to distil the exact ensemble
+into one ordinary network improved teacher regret but scored only **50.035% +/-
+.175 pp against the frozen baseline over 20,000 games**. It was not promoted.
+The control, target construction, parity checks and commands are in the full note.
+
+### Selected profile: belief5-v2-ensemble
+
+The final profile adds suit averaging only to ordinary neural fallback in v1.
+It changes no weights, search parameters, bidding or rollout policies. On a fresh
+20,000-game match with the actual eight-millisecond cap on both sides, it scores
+**50.930% +/- .217 pp against v1**, 95% [50.505%, 51.355%], seed 863. The external
+checks in the opening table then pass the ISMCTS, previous Master and frozen-fast
+gates. ISMCTS and previous Master have 95% intervals [59.556%, 64.444%] and
+[56.842%, 61.358%]. Different seed sets mean the v1/v2 scores against a third bot
+are not a paired estimate of the ensemble effect.
+
+The independently frozen v2 executable and settings, all eight matches, full
+uncertainty, adapter diagnostics and the idle benchmark are preserved in
+`Neural/Weights/Ownership/validation-v2.json`. The earlier `validation.json`
+remains v1 evidence. All results use mirrored whole games; the timed matches ran
+sequentially on an otherwise idle machine. The fresh 100-game v2 benchmark,
+excluding 20 warmup games, covers 21,246 card callbacks: mean 1.4491 ms, median
+.0708 ms, p95 5.5719 ms, p99 6.0827 ms and maximum 8.0060 ms, with none above
+10 ms. The pure suit ensemble costs 68.9 us/card, so it exceeds the original
+50-us pure-network target. The shared Master adopts it within the expanded
+10-ms budget; the default constructor, hints and Expert keep their existing
+profiles. The final round robin retains Expert's temperature 1.5 and maximum
+regret 4 because its fitted rating remains between Skilled and Master.
+
+The separate pure-ensemble ISMCTS100 check scores **51.100% +/- 1.418 pp over
+1,000 games**, seed 887, 95% [48.320%, 53.880%], +.24 points/game. It does not
+pass the independent ISMCTS gate. Its gains against the frozen NN and three
+external heuristic bots remain valid comparisons, but the substantial Master
+gain requires the learned-ownership/endgame combination measured above.
+
+### Final v2 app calibration
+
+The otherwise-idle `elo 20000 60` round robin completed on September 29 in
+**1:03:02**, covering **400,600 whole games**. Master now uses the fast matchup
+count: every pair of non-ISMCTS levels plays 20,000 mirrored pairs / 40,000 games.
+Only matchups involving ISMCTS use 60 pairs / 120 games. All five fast levels
+therefore appear in 160,120 games each; ISMCTS appears in 600. Per-level counts
+overlap because each game involves two levels.
+
+| App level / reference | Pair Elo +/- 1 sigma | Games involving this level |
+|---|---:|---:|
+| Master / belief5-v2-ensemble | **1838 +/- 2.5** | 160,120 |
+| ClaudePlayerIsmcts, 100 ms | 1758 +/- 17.7 | 600 |
+| Expert, T=1.5 / MaxRegret=4 | **1611 +/- 2.2** | 160,120 |
+| Skilled / SmartPlayer | **1462 +/- 1.7** | 160,120 |
+| Beginner / DummyPlayer | 1200 (fixed anchor) | 160,120 |
+| RandomPlayer | **669 +/- 3.0** | 160,120 |
+
+The Bradley-Terry fit retains the 1% fifty-fifty prior and Dummy's fixed 1200
+anchor. Rating errors are one standard deviation from 1,000 shared-seed
+mirrored-pair bootstrap samples. The ratings are copied into `AiLevels.cs`.
+Expert retains temperature 1.5 and maximum regret 4: it beats Skilled at
+**74.125% +/- .202 pp** and scores **23.143% +/- .189 pp** against Master,
+with **40,000 games per comparison** and one empirical pair standard error.
+The small rating-suite Master/ISMCTS matchup is **58.333% +/- 3.789 pp over
+120 games**; the separate **62.000% +/- 1.247 pp over 1,000 games** remains
+the independent promotion test. These samples are not pooled.
+
+The recorded run used the frozen `f5f950a` simulator copy. Its executable and
+dependency hashes, arguments and idle-run conditions are in
+`artifacts/fast-bot-20260928/final-elo-manifest.json`; all 15 matchup results and
+the fitted ratings are in `final-elo.log` in that folder. The copied Release
+build log is `final-elo-build-v2.log`, and `run-final-elo.ps1` records the original
+invocation. Reproduce from a fresh output folder, preserving the original logs:
+
+```powershell
+dotnet build src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -c Release -o artifacts/master-elo-recheck
+dotnet artifacts/master-elo-recheck/Belot.GamesSimulator.dll elo 20000 60 | & 'C:/Program Files/Git/usr/bin/iconv.exe' -f UTF-16LE -t UTF-8 > artifacts/master-elo-recheck/final-elo.log
+```
+
+The equivalent direct invocation is `dotnet run -c Release --project
+src/Tests/Belot.GamesSimulator -- elo 20000 60`, with the same `iconv` conversion.
+Stop other training, tests, builds and matches for either run because Master and
+ISMCTS have wall-clock search budgets.
+
+Final verification is complete:
+
+| Check | Result | Local evidence |
+|---|---|---|
+| Engine tests | 741 passed | `final-engine-tests.log` |
+| AI / trainer tests for v2 | 361 passed | `final-ai-v2-tests.log` |
+| UI tests after final rating changes | 74 passed | `final-ui-ratings-tests.log` |
+| GPU training-tool Python tests | 78 passed | `final-python-tests.log` |
+| Windows app build | Zero warnings/errors; 18.31 s | `final-windows-v2-build.log` |
+| Android app build | Zero warnings/errors; 18.58 s | `final-android-v2-build.log` |
+
+All evidence files are under `artifacts/fast-bot-20260928/`. The actor files and
+engine/Python source are unchanged by final rating calibration. All 46 changed
+C# files since the frozen baseline were checked for UTF-8 BOM and CRLF, with no
+violations. Engine production source and the NuGet engine API are unchanged.
+Earlier tables in this document retain their original profiles and game counts.

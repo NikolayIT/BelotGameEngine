@@ -45,7 +45,8 @@ dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimula
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- neural-ab 5000 <folder> -
 
 # The app's levels (and ISMCTS for reference) in a pair-vs-pair round robin, printing the ratings
-# for Game/AiLevels.cs: elo [fast pairs] [pairs with the slow levels] (defaults 20000 and 150).
+# for Game/AiLevels.cs: elo [fast pairs] [ISMCTS pairs] (defaults 20000 and 150).
+# Master now belongs to the fast group; only ISMCTS uses the smaller matchup count.
 # The simulator writes UTF-16 to the console: pipe it through iconv -f UTF-16LE to grep it.
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- elo
 
@@ -235,23 +236,36 @@ games (+375 ELO, +64 points a game), and one of it with a SmartPlayer partner wi
 
 ## ClaudePlayerNeural design (the app's Master)
 
-`AI/Belot.AI.ClaudePlayer/ClaudePlayerNeural.cs` and `Neural/`; the full story (inputs, training,
-results, reproduction, promotion) is `NEURAL_NETWORK.md`. The PPO-updated all-trump
-network, with the original other three networks, still ties ClaudePlayerIsmcts
-(100 ms): 50.000% +/- .978 pp in 2,000 games. The validated fast configuration adds bounded endgames:
-`UseEndgameSearch = true`, `EndgameUseDeclarations = true`, `EndgameTricks = 3`,
-`EndgameThreeTrickWorldLimit = 90`. It scores **54.100% +/- 1.386 pp over 1,000 games**
-against ISMCTS, 95% interval [51.384%, 56.816%], and **50.620% +/- .187 pp over
-20,000 games** against the previous fast profile (about +4 Elo). The latest idle
-means (September 28) are **30.5 us/card** for this profile and **14.7 us** for networks alone.
-Only `alltrumps.bin` changed; total weights remain 2,974,830 bytes. The default
-constructor still uses networks alone. Master retains 100-deal search with a
-400-ms budget, measured at 58.37 ms/card on September 28. It scores 51.500% +/- 1.099 pp against
-the new fast profile and 50.000% +/- 1.184 pp against the original Master, each
-over 1,000 games. The former is the higher point estimate but its 95% interval
-includes 50%; the latter finds no significant change. Earlier, adding endgames
-to Master scored 52.8% +/- 1.667 pp over 500 games, also inconclusive, so that
-combination remains unpromoted.
+`AI/Belot.AI.ClaudePlayer/ClaudePlayerNeural.cs` and `Neural/`; see
+`NEURAL_NETWORK.md` for training and promotion history, and `FAST_BOT_EXPERIMENT.md`
+for the September 28-29 experiments. Shared `ClaudePlayerProfiles` factories keep
+app, trainer and Elo configurations identical. Master now uses the frozen actor
+plus three compact ownership networks and bounded five-trick endgames: 128 sampled
+worlds, 1,680-world exact three-trick limit, 250,000 nodes, declarations,
+transpositions and an 8-ms cap. Ownership power is 1 with uniform mix .1.
+Ordinary neural fallback averages auction-preserving suit permutations.
+This **belief5-v2-ensemble** profile scores **62.000% +/- 1.247 pp against ISMCTS100** and
+**59.100% +/- 1.152 pp against the former 100-rollout Master**, each over 1,000
+independent mirrored games. It also scores **60.120% +/- .343 pp against the
+previous fast profile over 10,000 games**. Its idle 100-game benchmark has a
+1.449-ms card mean, 6.083-ms p99, 8.006-ms observed maximum and no callback above
+10 ms. This is a measured desktop result, not a hard real-time guarantee.
+
+The four actor files remain unchanged; their pure policy still uses one forward
+pass by default. `CreateFast` and hints retain three-trick/90-world endings;
+Expert adds temperature 1.5 and maximum regret 4. `CreateRolloutMaster` preserves
+the previous 100-rollout/400-ms profile. The three checked CE12 ownership files
+are embedded under `Neural/Weights/Ownership/`; all seven files total 3,523,482
+bytes. Ownership inputs are public, and actor feature layout remains 1.
+
+The final September 29 `elo 20000 60` calibration completed 400,600 games in
+1:03:02. Master is 1838 +/- 2.5, Expert 1611 +/- 2.2 and Skilled 1462 +/- 1.7,
+each from 160,120 games; Expert therefore retains temperature 1.5 / MaxRegret 4.
+The full rating table, uncertainty method and reproduction command are in
+`NEURAL_NETWORK.md` section 16. V2 validation passes 741 engine, 361 AI,
+74 UI and 78 Python tests. The post-rating UI tests pass again, and final Windows
+and Android builds both have zero warnings and errors. All 46 changed C# files
+have UTF-8 BOM and CRLF; engine production source and its NuGet API are unchanged.
 
 - **Four multilayer perceptrons value every action in game points** (the team's points from the
   deal minus the other team's, hanging points included): a bidding network (97 inputs → pass, the
@@ -346,6 +360,24 @@ combination remains unpromoted.
 - **Changing the inputs** (`FeatureEncoder`): bump `LayoutVersion` and retrain. **Lesson**: judge
   a change against ClaudePlayerIsmcts, not only against earlier networks, whose head-to-head gains
   overstated the real ones several times over.
+- **Ten-millisecond research**: `FAST_BOT_EXPERIMENT.md` records the frozen
+  baseline, all attempted variants, independent opponents and rejection results.
+  The selected Master combines an exact constrained-hand sampler, separate
+  ownership predictions and a bounded minimax transposition table. Interrupted
+  sampled worlds contribute no root-action values; interrupted exact enumeration
+  falls back entirely. Extra history, joint-loss ownership, diverse ownership
+  data, control variates, truncated rollouts and late neural corrections did not
+  justify replacing the selected profile. `MIXTURE_BELIEF_NOTE.md` records the
+  offline K4 pilot; it has no runtime integration. Optional `CardSuitEnsemble`
+  averages auction-preserving suit permutations only in ordinary network
+  fallback. Master enables it after independent capped matches; the constructor,
+  fast profile and Expert leave it off. Exact-teacher distillation into one
+  network improved imitation metrics but tied the frozen actor in 20,000 games.
+  `arena --player candidate` applies all trainer settings; `--opponent-config`
+  accepts an independent checked settings JSON. `master`, `rollout-master`,
+  `fast` and `expert` use shared factories in both `arena` and `bench --player`.
+  `sampled4` remains the frozen four-trick development control. Use an otherwise
+  idle machine for timing and any wall-clock-budget opponent.
 
 ## The MAUI app (`src/UI/Belot.UI`)
 
@@ -355,7 +387,8 @@ picks the level of each other seat separately: the partner (North) and the rival
 left) and East (on the right), from `Game/AiLevels.cs`: Random (`RandomPlayer`), Beginner
 (`DummyPlayer`), Skilled (`SmartPlayer`), Expert (`ClaudePlayerNeural` played loose,
 `Temperature` 1.5, `MaxRegret` 4, plus the validated bounded endgames) and Master
-(`ClaudePlayerNeural` with `SearchDeals` 100 and a 400-ms search budget). Hints use
+(`ClaudePlayerProfiles.CreateMaster()`, with learned ownership and an 8-ms
+five-trick endgame budget). Hints use
 `AiLevels.CreateFastPlayer()`, the unrestricted neural/endgame profile. The Master keeps the id
 `claude` it had as ClaudePlayerIsmcts, so people's history and records carry over. The app
 references the three AI projects, so an `IPlayer` break in any of them breaks the app build too.
@@ -395,12 +428,17 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   average of their two levels (`Lineup.RivalsElo`). The levels' ratings in `AiLevels` are pair
   ratings from the simulator's `elo` suite (`EloTournament`: two of a level against two of
   another in mirrored pairs, a Bradley-Terry fit anchored at Dummy = 1200; ClaudePlayerIsmcts
-  plays too, for reference). Latest run (September 27, 2026, PPO weights, `elo 20000 60`,
-  20:55, 241,080 games): Random 656 +/- 3.1, Beginner 1200 (fixed anchor),
-  Skilled 1466 +/- 1.7, Expert 1600 +/- 2.2, Master 1760 +/- 23.1, and
-  ClaudePlayerIsmcts 1762 +/- 20.9. Errors are one standard
+  plays too, for reference). Latest run (September 29, 2026, belief5-v2-ensemble,
+  `elo 20000 60`, 1:03:02, 400,600 games): Random 669 +/- 3.0,
+  Beginner 1200 (fixed anchor), Skilled 1462 +/- 1.7, Expert 1611 +/- 2.2,
+  Master 1838 +/- 2.5, and ClaudePlayerIsmcts 1758 +/- 17.7. Errors are one standard
   deviation from 1,000 shared-seed mirrored-pair bootstrap samples. Fast levels each played
-  120,240 games; Master and ISMCTS each played 600 (120 per matchup). Re-run the suite
+  160,120 games, including Master; ISMCTS played 600 (120 per matchup). Fast matchups
+  use 20,000 pairs / 40,000 games; only ISMCTS matchups use 60 pairs / 120 games.
+  The local log and frozen-run manifest are `artifacts/fast-bot-20260928/final-elo.log`
+  and `artifacts/fast-bot-20260928/final-elo-manifest.json`; section 16 of
+  `NEURAL_NETWORK.md` gives the exact
+  command with UTF-16LE conversion through `iconv`. Re-run the suite
   and re-paste ratings if the players change. Expert retains temperature 1.5 /
   MaxRegret 4 after this check: its measured rating lies between Skilled and Master.
 - **`src/Tests/Belot.UI.Tests`** compiles those files and plays whole games on a UI-like
