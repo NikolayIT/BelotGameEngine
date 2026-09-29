@@ -29,20 +29,20 @@
         public const int MasterMilliseconds = ClaudePlayerProfiles.MasterMilliseconds;
 
         // Pair ratings (two of a level against two of another) from the `elo` simulator round
-        // robin, anchored at Dummy = 1200 (September 27, 2026, elo 20000 60, PPO all-trump weights).
+        // robin, anchored at Dummy = 1200 (September 29, 2026, elo 20000 60, belief5-v2 Master).
         // Re-run that suite and update these if the players change; uncertainty is in NEURAL_NETWORK.md.
         public static IReadOnlyList<AiLevel> All { get; } = new[]
         {
-            new AiLevel("random", "🎲", "Level_Random_Name", "Level_Random_Tag", 1, 656, () => new RandomPlayer()),
+            new AiLevel("random", "🎲", "Level_Random_Name", "Level_Random_Tag", 1, 669, () => new RandomPlayer()),
             new AiLevel("dummy", "🙂", "Level_Dummy_Name", "Level_Dummy_Tag", 2, 1200, () => new DummyPlayer()),
-            new AiLevel("smart", "🃏", "Level_Smart_Name", "Level_Smart_Tag", 3, 1466, () => new SmartPlayer()),
+            new AiLevel("smart", "🃏", "Level_Smart_Name", "Level_Smart_Tag", 3, 1462, () => new SmartPlayer()),
             new AiLevel(
                 "expert",
                 "🎓",
                 "Level_Expert_Name",
                 "Level_Expert_Tag",
                 4,
-                1600,
+                1611,
                 ClaudePlayerProfiles.CreateExpert),
             new AiLevel(
                 "claude",
@@ -50,7 +50,7 @@
                 "Level_Claude_Name",
                 "Level_Claude_Tag",
                 5,
-                1760,
+                1838,
                 ClaudePlayerProfiles.CreateMaster),
         };
 
