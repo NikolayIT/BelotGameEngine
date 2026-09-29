@@ -1,0 +1,6 @@
+First release of Belot:
+• Offline play with five difficulty levels and a separate setting for each computer player.
+• Hints, built-in rules, rating and match history.
+• Every card you play waits for a tap.
+• Bulgarian and English interfaces.
+• A button to play online Belot at ednaigra.com in your browser.
