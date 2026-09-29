@@ -463,6 +463,8 @@
             this.SetContract(BidType.Pass, deal.FirstToPlay);
             foreach (var seat in this.seats)
             {
+                seat.PlayedCardZIndex = 0;
+                seat.LastTrickZIndex = 0;
                 seat.PlayedCard = null;
                 seat.BubbleText = string.Empty;
                 seat.DeclaredText = string.Empty;
@@ -610,6 +612,8 @@
                 }
             }
 
+            // Publish the stacking order before PlayedCard starts the page's pop animation.
+            seat.PlayedCardZIndex = played.IndexInTrick;
             seat.PlayedCard = new CardSlot(played.Card);
             seat.CardCount--;
             if (played.Seat == Seats.Person)
@@ -635,12 +639,19 @@
 
         private void OnTrickCollected(TrickInfo trick)
         {
+            // The miniature overlaps too; preserve play order before replacing its images.
+            for (var index = 0; index < trick.Cards.Count; index++)
+            {
+                this.Seat(trick.Cards[index].Seat).LastTrickZIndex = index;
+            }
+
             this.LastTrickEast = Slot(trick.CardOf(PlayerPosition.East));
             this.LastTrickNorth = Slot(trick.CardOf(PlayerPosition.North));
             this.LastTrickWest = Slot(trick.CardOf(PlayerPosition.West));
             this.LastTrickSouth = Slot(trick.CardOf(PlayerPosition.South));
             foreach (var seat in this.seats)
             {
+                seat.PlayedCardZIndex = 0;
                 seat.PlayedCard = null;
             }
 

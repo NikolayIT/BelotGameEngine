@@ -15,6 +15,10 @@
 
         private CardSlot? playedCard;
 
+        private int playedCardZIndex;
+
+        private int lastTrickZIndex;
+
         private bool isToMove;
 
         private bool isDealer;
@@ -82,6 +86,20 @@
         }
 
         public bool HasPlayedCard => this.playedCard != null;
+
+        /// <summary>Gets or sets the card's zero-based play order; later cards appear above earlier ones.</summary>
+        public int PlayedCardZIndex
+        {
+            get => this.playedCardZIndex;
+            set => this.SetField(ref this.playedCardZIndex, value, nameof(this.PlayedCardZIndex));
+        }
+
+        /// <summary>Gets or sets this seat's play order in the last collected trick.</summary>
+        public int LastTrickZIndex
+        {
+            get => this.lastTrickZIndex;
+            set => this.SetField(ref this.lastTrickZIndex, value, nameof(this.LastTrickZIndex));
+        }
 
         public bool IsToMove
         {
