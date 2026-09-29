@@ -535,6 +535,12 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   The release-preparation UI suite passes 287 tests; Android and Windows builds have
   zero warnings/errors. Native Test checks the exact AAB content under its existing
   test signature to preserve local statistics; this is separate from Play delivery.
+- Version 1.0 was submitted in Console on 29 September 2026: 13 changes under
+  Changes in review, BG/EN listings, 100% production rollout and managed publishing off.
+  Quick checks were still running at the final capture; approval/public availability
+  remain unverified. The user completed the declarations with target audience 9+.
+  Submission and artifact evidence: `store/google-play/releases/1.0.md`.
+
 ## Conventions
 
 - **StyleCop.Analyzers** (`stylecop.json` + `Rules.ruleset`) is enforced on every project. The
