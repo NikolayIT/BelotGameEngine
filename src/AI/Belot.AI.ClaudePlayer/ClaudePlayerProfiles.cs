@@ -53,6 +53,7 @@
 
         internal static ClaudePlayerNeural CreateMaster(NeuralModels models) => new ClaudePlayerNeural(models ?? NeuralModels.Embedded)
         {
+            CardSuitEnsemble = true,
             SearchDeals = MasterSearchDeals,
             UseEndgameSearch = true,
             EndgameUseDeclarations = true,

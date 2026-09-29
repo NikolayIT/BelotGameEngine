@@ -25,6 +25,7 @@
             var fromView = ClaudePlayerProfiles.CreateMaster();
             var reference = new ClaudePlayerNeural
             {
+                CardSuitEnsemble = true,
                 UseEndgameSearch = true,
                 EndgameUseDeclarations = true,
                 EndgameTricks = 5,
@@ -43,10 +44,11 @@
             fromView.EndgameTimeLimitMilliseconds = 0;
             var match = new BelotMatch(new BelotMatchOptions { Random = new Random(17031 + contractIndex) });
             var smart = new SmartPlayer.SmartPlayer();
+            var neuralFallback = false;
             var sampled = false;
             var exact = false;
             match.Start();
-            while (!match.IsFinished && (!sampled || !exact))
+            while (!match.IsFinished && (!neuralFallback || !sampled || !exact))
             {
                 var seat = match.ToMove;
                 if (match.Decision == BelotDecision.Bid)
@@ -62,9 +64,10 @@
                 else
                 {
                     var context = match.CreatePlayCardContext();
+                    var early = context.CurrentTrickNumber < 4;
                     var fiveTricks = context.CurrentTrickNumber == 4;
                     var twoTricks = context.CurrentTrickNumber == 7;
-                    if (context.AvailableCardsToPlay.Count > 1 && ((fiveTricks && !sampled) || (twoTricks && !exact)))
+                    if (context.AvailableCardsToPlay.Count > 1 && ((early && !neuralFallback) || (fiveTricks && !sampled) || (twoTricks && !exact)))
                     {
                         var view = match.GetView(seat);
                         fromContext.Rng = new Random(18031);
@@ -85,6 +88,14 @@
                         var copiedAction = fromView.Decide(view);
                         Assert.Equal(action.Card, copiedAction.Card);
                         Assert.Equal(action.Belote, copiedAction.Belote);
+                        if (early)
+                        {
+                            Assert.Equal(0, fromContext.EndgameDecisions);
+                            Assert.Equal(0, fromView.EndgameDecisions);
+                            Assert.Equal(0, reference.EndgameDecisions);
+                        }
+
+                        neuralFallback |= early;
                         sampled |= fiveTricks;
                         exact |= twoTricks;
                     }
@@ -94,7 +105,7 @@
                 }
             }
 
-            Assert.True(sampled && exact);
+            Assert.True(neuralFallback && sampled && exact);
             Assert.True(fromContext.EndgameDecisions > 0);
             Assert.True(fromContext.EndgameSampleAttempts > 0);
             Assert.Equal(0, fromContext.Fallbacks + fromView.Fallbacks + reference.Fallbacks);

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "model": "ownership-ce12-seed9821",
-  "selectedProfile": "belief5-v1",
+  "selectedProfile": "belief5-v2-ensemble",
   "format": "BNN1 version 1",
   "featureLayout": 1,
   "architecture": [
@@ -62,7 +62,7 @@
     "artifacts/neural-20260927/belief-validation/data.alltrumps.samples.owners": "9386c53b90850ff7284e21fab9c6c814335c65488970728de87698ef60fc651b"
   },
   "sourceReport": "artifacts/fast-bot-20260928/ownership-ce12-seed9821/report.json",
-  "selectionManifest": "artifacts/fast-bot-20260928/belief5-v1-manifest.json",
+  "selectionManifest": "artifacts/fast-bot-20260928/belief5-v2-manifest.json",
   "reproduction": "artifacts/neural-20260927/torch-env/Scripts/python.exe tools/NeuralTrainer/Gpu/fit_ownership.py --data artifacts/neural-20260927/belief-selfplay/data --validation-data artifacts/neural-20260927/belief-validation/data --out <fresh-output-directory> --epochs 12 --batch 1024 --learning-rate .001 --seed 9821 --device cuda",
   "ownershipBytes": 548652,
   "totalActorAndOwnershipBytes": 3523482

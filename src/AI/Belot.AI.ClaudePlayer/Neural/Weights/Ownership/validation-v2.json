@@ -1,0 +1,255 @@
+{
+  "profile": "belief5-v2-ensemble",
+  "date": "2026-09-29",
+  "uncertainty": "One empirical standard error across mirrored whole-game pairs; 95% normal intervals.",
+  "machine": "i7-12700K; other training, tests, builds and matches stopped throughout each match.",
+  "settings": {
+    "Endgame": true,
+    "EndgameDeclarations": true,
+    "EndgameTricks": 5,
+    "EndgameWorlds": 1680,
+    "EndgameSampledWorlds": 128,
+    "EndgameNodes": 250000,
+    "EndgameMilliseconds": 8,
+    "EndgameTranspositions": true,
+    "EndgamePolicyActions": 0,
+    "EndgameOwnership": "ownership-ce12-seed9821",
+    "EndgameOwnershipPower": 1,
+    "EndgameOwnershipUniformMix": 0.1,
+    "SearchDeals": 0,
+    "CardSuitEnsemble": true
+  },
+  "matches": [
+    {
+      "opponent": "Previous belief5-v1",
+      "seed": 863,
+      "pairs": 10000,
+      "threads": 10,
+      "result": {
+        "Games": 20000,
+        "Score": 0.5093,
+        "Sigma": 0.0021660609829869293,
+        "PointsPerGame": 1.34565,
+        "Elo": 6.463047278105059,
+        "EloSigma": 1.505654227940149,
+        "Lower95": 0.5050545984850282,
+        "Upper95": 0.5135454015149717
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 0,
+        "CardDecisions": 0,
+        "RejectedBids": 0,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 0
+      },
+      "seconds": 851.8874494,
+      "source": "artifacts/fast-bot-20260928/belief5-v2-v1-gate.arena.json"
+    },
+    {
+      "opponent": "ISMCTS 100 ms",
+      "seed": 867,
+      "pairs": 500,
+      "threads": 10,
+      "result": {
+        "Games": 1000,
+        "Score": 0.62,
+        "Sigma": 0.012470405849213084,
+        "PointsPerGame": 16.635,
+        "Elo": 85.04323715257749,
+        "EloSigma": 9.194954919197414,
+        "Lower95": 0.5955584536629447,
+        "Upper95": 0.6444415463370553
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 0,
+        "CardDecisions": 0,
+        "RejectedBids": 0,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 0
+      },
+      "seconds": 1189.000593,
+      "source": "artifacts/fast-bot-20260928/belief5-v2-ismcts-gate.arena.json"
+    },
+    {
+      "opponent": "Previous Master (100 rollouts, 400 ms cap)",
+      "seed": 871,
+      "pairs": 500,
+      "threads": 10,
+      "result": {
+        "Games": 1000,
+        "Score": 0.591,
+        "Sigma": 0.011519696472287231,
+        "PointsPerGame": 13.791,
+        "Elo": 63.94566914956539,
+        "EloSigma": 8.278936469395788,
+        "Lower95": 0.5684218098014839,
+        "Upper95": 0.613578190198516
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 0,
+        "CardDecisions": 0,
+        "RejectedBids": 0,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 0
+      },
+      "seconds": 806.0863393,
+      "source": "artifacts/fast-bot-20260928/belief5-v2-rollout-master-gate.arena.json"
+    },
+    {
+      "opponent": "Previous fast (three-trick endings)",
+      "seed": 873,
+      "pairs": 5000,
+      "threads": 10,
+      "result": {
+        "Games": 10000,
+        "Score": 0.6012,
+        "Sigma": 0.0034255012497096237,
+        "PointsPerGame": 14.5497,
+        "Elo": 71.30552891010093,
+        "EloSigma": 2.4819573332465503,
+        "Lower95": 0.5944861409215721,
+        "Upper95": 0.6079138590784278
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 0,
+        "CardDecisions": 0,
+        "RejectedBids": 0,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 0
+      },
+      "seconds": 223.1065921,
+      "source": "artifacts/fast-bot-20260928/belief5-v2-fast-gate.arena.json"
+    },
+    {
+      "opponent": "Frozen pure neural policy",
+      "seed": 875,
+      "pairs": 5000,
+      "threads": 10,
+      "result": {
+        "Games": 10000,
+        "Score": 0.6373,
+        "Sigma": 0.0034902977574537,
+        "PointsPerGame": 20.668,
+        "Elo": 97.9185451597726,
+        "EloSigma": 2.6231027744198725,
+        "Lower95": 0.6304591421000698,
+        "Upper95": 0.6441408578999301
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 0,
+        "CardDecisions": 0,
+        "RejectedBids": 0,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 0
+      },
+      "seconds": 220.3183024,
+      "source": "artifacts/fast-bot-20260928/belief5-v2-neural-gate.arena.json"
+    },
+    {
+      "opponent": "SmartPlayer",
+      "seed": 879,
+      "pairs": 5000,
+      "threads": 10,
+      "result": {
+        "Games": 10000,
+        "Score": 0.9252,
+        "Sigma": 0.0025342210746680076,
+        "PointsPerGame": 71.6131,
+        "Elo": 436.93361049364825,
+        "EloSigma": 6.3613835115358475,
+        "Lower95": 0.9202330179647883,
+        "Upper95": 0.9301669820352118
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 0,
+        "CardDecisions": 0,
+        "RejectedBids": 0,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 0
+      },
+      "seconds": 220.9545357,
+      "source": "artifacts/fast-bot-20260928/belief5-v2-smart-gate.arena.json"
+    },
+    {
+      "opponent": "Adapted SharpBelot",
+      "seed": 881,
+      "pairs": 5000,
+      "threads": 10,
+      "result": {
+        "Games": 10000,
+        "Score": 0.8708,
+        "Sigma": 0.0032440062754784255,
+        "PointsPerGame": 63.4533,
+        "Elo": 331.4623626839966,
+        "EloSigma": 5.0089310590873355,
+        "Lower95": 0.8644418645344404,
+        "Upper95": 0.8771581354655597
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 363797,
+        "CardDecisions": 1008667,
+        "RejectedBids": 0,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 510
+      },
+      "seconds": 213.1539177,
+      "source": "artifacts/fast-bot-20260928/belief5-v2-sharpbelot-gate.arena.json"
+    },
+    {
+      "opponent": "Adapted Belot 2.06 (2001)",
+      "seed": 883,
+      "pairs": 5000,
+      "threads": 10,
+      "result": {
+        "Games": 10000,
+        "Score": 0.7715,
+        "Sigma": 0.003953564990641814,
+        "PointsPerGame": 62.4951,
+        "Elo": 211.3798903973192,
+        "EloSigma": 3.8959291482967386,
+        "Lower95": 0.7637511550078036,
+        "Upper95": 0.7792488449921964
+      },
+      "opponentDiagnostics": {
+        "BidDecisions": 388333,
+        "CardDecisions": 1024658,
+        "RejectedBids": 3887,
+        "CardFallbacks": 0,
+        "LegalSetDifferences": 0
+      },
+      "seconds": 217.3442944,
+      "source": "artifacts/fast-bot-20260928/belief5-v2-belot206-gate.arena.json"
+    }
+  ],
+  "idleBenchmark": {
+    "games": 100,
+    "warmupGamesExcluded": 20,
+    "cardDecisions": 21246,
+    "meanMicroseconds": 1449.1,
+    "medianMicroseconds": 70.8,
+    "p95Microseconds": 5571.9,
+    "p99Microseconds": 6082.7,
+    "maximumMicroseconds": 8006.0,
+    "over10Milliseconds": 0,
+    "source": "artifacts/fast-bot-20260928/final-bench-master-v2-ensemble.log",
+    "limitation": "Observed warmed desktop callbacks; not a hard real-time bound on every device."
+  },
+  "frozenManifest": {
+    "profile": "belief5-v2-ensemble",
+    "sourceCommit": "dd9c8d6",
+    "settings": "Exact v1 plus CardSuitEnsemble=true; see independent-plan JSON",
+    "hashes": {
+      "artifacts/fast-bot-20260928/ensemble-bin/NeuralTrainer.dll": "f8e743974963d6eb40f8b7e5effa57fa85ecfb6021724f13f0d4748a42c3883e",
+      "artifacts/fast-bot-20260928/ensemble-bin/Belot.AI.ClaudePlayer.dll": "4bc9122c040eaadf31a39725dfb2c51257d45911d0cc045f9fa8973675553c2e",
+      "artifacts/fast-bot-20260928/baseline/alltrumps.bin": "2c8c7e15682b764a231dff74b461f6b70df1099c1974c0d30d20fc2675b1e5cb",
+      "artifacts/fast-bot-20260928/baseline/bid.bin": "f5d9d336494d59157d0a10a230963dc972aa77bb990171198c40b38674bb89bb",
+      "artifacts/fast-bot-20260928/baseline/notrumps.bin": "23df4f4b50c1332ae22cf374357a13f8ed4a2923e56703e9ae5dd2b071fad54c",
+      "artifacts/fast-bot-20260928/baseline/trump.bin": "287319b8d0167892bd24a85b44208175f123cedfd0fafe51e59d695ff53c458a",
+      "artifacts/fast-bot-20260928/ownership-ce12-seed9821/alltrumps.bin": "57f12bca5a310ec1985880f196bf6b7f3d8722789ed1c1bfe2124550ff4d8f1c",
+      "artifacts/fast-bot-20260928/ownership-ce12-seed9821/notrumps.bin": "1ca6b99a48a163f3b36bbe2f89ef0b8ec54b5ad787d30bfaa4074b00666463cc",
+      "artifacts/fast-bot-20260928/ownership-ce12-seed9821/trump.bin": "20d7bec4d4bf20f8feebda74d3ad40a422cc50c8342fe3131e352a8b678d6239"
+    }
+  },
+  "independentPlan": "artifacts/fast-bot-20260928/belief5-v2-independent-plan.json",
+  "previousProfileEvidence": "validation.json"
+}

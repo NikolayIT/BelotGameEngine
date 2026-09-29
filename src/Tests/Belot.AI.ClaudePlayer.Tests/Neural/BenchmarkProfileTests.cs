@@ -34,7 +34,7 @@
         [InlineData("expert")]
         public void NamedBenchmarksUseTheExactProfileInsteadOfConflictingFlags(string name)
         {
-            var settings = new TrainingSettings { Player = name, SearchDeals = 17, Endgame = false, CardSuitEnsemble = true, Temperature = 7 };
+            var settings = new TrainingSettings { Player = name, SearchDeals = 17, Endgame = false, CardSuitEnsemble = name != "master", Temperature = 7 };
             var models = RandomModels.Create(7213);
             var expected = Assert.IsType<ClaudePlayerNeural>(OpponentCatalog.Factory(name, models)(7214));
             var actual = Program.CreateBenchmarkPlayer(settings, models, 7214);
@@ -47,6 +47,7 @@
             Assert.Equal(expected.EndgameTimeLimitMilliseconds, actual.EndgameTimeLimitMilliseconds);
             Assert.Equal(expected.Temperature, actual.Temperature);
             Assert.Equal(expected.CardSuitEnsemble, actual.CardSuitEnsemble);
+            Assert.NotEqual(settings.CardSuitEnsemble, actual.CardSuitEnsemble);
         }
 
         [Fact]

@@ -70,7 +70,7 @@
         /// <param name="names">The seats' names, by seat index (South, East, North, West).</param>
         /// <param name="createBot">Builds the player of a computer seat (East, North or West) for each game.</param>
         /// <param name="pace">The pauses.</param>
-        /// <param name="hintFactory">Builds the player that answers the person's hints; null for the strongest one.</param>
+        /// <param name="hintFactory">Builds the player that answers the person's hints; null for the validated fast hint profile.</param>
         /// <param name="random">The source of the deals and of who deals first; null for a new one.</param>
         public GameSession(
             IReadOnlyList<string> names,

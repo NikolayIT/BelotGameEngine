@@ -41,7 +41,7 @@
             Assert.Equal(0, first.EndgamePolicyActions);
             Assert.Equal(master, first.EndgameUseTranspositions);
             Assert.False(first.EndgamePruneEquivalentCards);
-            Assert.False(first.CardSuitEnsemble);
+            Assert.Equal(master, first.CardSuitEnsemble);
             if (!rollout)
             {
                 Assert.True(first.EndgameUseDeclarations);
@@ -58,9 +58,11 @@
             first.Temperature = 7;
             first.SearchDeals = 17;
             first.EndgameTricks = 5;
+            first.CardSuitEnsemble = !master;
             Assert.Equal(name == "expert" ? 1.5 : 0, second.Temperature);
             Assert.Equal(rollout ? 100 : 0, second.SearchDeals);
             Assert.Equal(master ? 5 : rollout ? 2 : 3, second.EndgameTricks);
+            Assert.Equal(master, second.CardSuitEnsemble);
         }
 
         [Theory]
@@ -76,6 +78,7 @@
             var other = Assert.IsType<ClaudePlayerNeural>(factory(7332));
             Assert.NotSame(player, other);
             Assert.NotSame(player.Rng, other.Rng);
+            Assert.Equal(name == "master", player.CardSuitEnsemble);
             Assert.Equal(new Random(7332).Next(), player.Rng.Next());
             var match = new BelotMatch(new BelotMatchOptions { Random = new Random(7333) });
             match.Start();
