@@ -248,3 +248,47 @@ uses the existing isolated CUDA environment documented in the GPU README.
   every win rate, paired standard error and points/game from the saved pair
   outcomes agrees with the reports. All runs have zero card-selection fallbacks.
   Embedded weight hashes still match the frozen baseline exactly.
+
+## Website Master integration (September 29)
+
+ednaigra.com level 6 uses `ClaudePlayerProfiles.CreateMaster()` with
+`EndgameTimeLimitMilliseconds = 0`. Its bot interface requires the same view and
+random state to produce the same action regardless of thread scheduling. The
+128-world / 250,000-node bounds, ownership models, declarations, transpositions
+and suit ensemble are retained. Levels 1-5 keep their existing fast profiles.
+
+An independent engine-arena check of this exact player configuration against
+`belot206`, seed **919**, eight workers, gives **76.720% +/- .398 percentage
+points** over **10,000 whole games / 5,000 mirrored pairs**. The 95% interval is
+**75.941-77.499%**, points per game **+62.5466**, and Elo difference
+**+207.17 +/- 3.87**. Errors are one empirical standard error over paired games.
+All 5,000 pair outcomes and seven weight hashes are published in
+[`etc/Benchmarks/website-master-20260929.json`](etc/Benchmarks/website-master-20260929.json).
+The run used source commit `5e29d53942689eb1d9a604ec9ec9df264d20f53f` and took
+262.6 seconds. These independent games do not estimate the effect of disabling
+the deadline by subtracting the earlier 77.150% result, which used another seed.
+
+The original program is **Bridge Belot Multiplayer 2.06**, shown in its executable
+as **Bridge Belot v2.06 MP**, by **Valentin Tsekov / Валентин Цеков**. Its
+[original homepage](https://belot.hit.bg/) names the version and copyright 2001;
+the local executable and help file agree. The comparison runs the C# reconstruction
+under this engine's rules. It does not execute the original Windows program.
+The adapter rejected 3,954 of 390,260 bid proposals (converted to passes), with
+zero card fallbacks or legal-card-set differences across 1,031,071 card decisions.
+
+Reproduce from that engine revision, using a copied Release runner:
+
+```powershell
+dotnet build tools/NeuralTrainer/NeuralTrainer.csproj -c Release -o artifacts/website-master-20260929/bin
+dotnet artifacts/website-master-20260929/bin/NeuralTrainer.dll arena --player candidate --opponent belot206 --in src/AI/Belot.AI.ClaudePlayer/Neural/Weights --endgame true --endgame-declarations true --endgame-tricks 5 --endgame-worlds 1680 --endgame-sampled-worlds 128 --endgame-nodes 250000 --endgame-milliseconds 0 --endgame-transpositions true --endgame-ownership src/AI/Belot.AI.ClaudePlayer/Neural/Weights/Ownership --endgame-ownership-power 1 --endgame-ownership-uniform-mix 0.1 --card-suit-ensemble true --search-deals 0 --pairs 5000 --threads 8 --seed 919 --data artifacts/website-master-20260929/website-master-206
+```
+
+The website's serialized-view adapter is checked separately for equality with
+engine decisions, legal whole games and seeded sequential/parallel determinism.
+Its new level 6 beats the recreated previous 3-trick/90-world profile **59.600%
++/- 1.067 pp in 1,000 mirrored games** (seed 2,992,026). Single-thread timing
+through view creation, JSON, decision and action serialization averages **1.501 ms**
+per card; p99 **6.505 ms**, maximum **10.846 ms**, with **1 of 22,127** callbacks
+above 10 ms across 100 measured games after 20 warmup games. This fixed-work
+website variant has no hard wall-clock limit. The engine's 8-ms Master remains
+unchanged. Website methods and results are recorded in its `docs/belot-bots.md`.

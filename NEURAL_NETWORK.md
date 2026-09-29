@@ -1559,3 +1559,18 @@ engine/Python source are unchanged by final rating calibration. All 46 changed
 C# files since the frozen baseline were checked for UTF-8 BOM and CRLF, with no
 violations. Engine production source and the NuGet engine API are unchanged.
 Earlier tables in this document retain their original profiles and game counts.
+
+### Website integration follow-up (September 29)
+
+ednaigra.com now selects the shared Master for level 6, retaining its local AI
+package version 1.0.0-local.1. The website requires deterministic seeded
+decisions, so it disables the wall-clock cutoff while preserving the fixed
+128-world / 250,000-node bounds. This leaves the engine's capped Master unchanged.
+
+The exact website player configuration wins **76.720% +/- .398 pp** against the
+adapted Belot 2.06 player over **10,000 independent mirrored games**, seed 919.
+The serialized website adapter wins **59.600% +/- 1.067 pp** against the recreated
+previous Fast profile over **1,000 games**. Its measured mean card time including
+JSON is **1.501 ms**, p99 **6.505 ms**, maximum **10.846 ms**, with 1 of 22,127
+callbacks above 10 ms. See [the full method, adapter diagnostics and public pair
+outcomes](OPPONENTS_EXPERIMENT.md#website-master-integration-september-29).
