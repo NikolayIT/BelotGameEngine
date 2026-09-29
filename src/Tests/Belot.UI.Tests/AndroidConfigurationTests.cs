@@ -8,6 +8,8 @@
     using Android.Content.PM;
     using Android.Content.Res;
 
+    using Belot.UI.Game;
+
     using Microsoft.Maui;
 
     using Xunit;
@@ -17,6 +19,8 @@
     [Collection(AppState.Name)]
     public class AndroidConfigurationTests
     {
+        public AndroidConfigurationTests() => UiScale.Current.UpdateSystemFontScale(1);
+
         [Fact]
         public void FontScaleChangesAreHandledWithoutRecreatingTheActivity()
         {
@@ -44,7 +48,12 @@
                 var label = new TextView("label", calls);
                 var button = new TextView("button", calls);
                 var detachedText = new TextView("detached", calls);
-                var handler = new FontHandler(() => Assert.Same(configuration, activity.LastConfiguration));
+                var handler = new FontHandler(() =>
+                {
+                    Assert.Same(configuration, activity.LastConfiguration);
+                    Assert.Equal((double)scale, UiScale.Current.SystemFontScale);
+                    Assert.Equal(UiScale.Current.Table * Math.Min(scale, UiScale.MaximumTableTextScale), UiScale.Current.TableText, 10);
+                });
                 label.Handler = handler;
                 button.Handler = handler;
                 table.Children.Add(label);
@@ -66,17 +75,61 @@
             finally
             {
                 Microsoft.Maui.Controls.Application.Current = null;
+                UiScale.Current.UpdateSystemFontScale(1);
             }
         }
 
-        [Fact]
-        public void ConfigurationBeforeTheMauiWindowExistsStillCallsThePlatform()
+        [Theory]
+        [InlineData(0.85f)]
+        [InlineData(2f)]
+        public void ConfigurationBeforeTheMauiWindowExistsPublishesTheScaleAfterThePlatformCallback(float scale)
         {
             Microsoft.Maui.Controls.Application.Current = null;
             var activity = new MainActivity();
-            var configuration = new Configuration { FontScale = 1.3f };
+            var configuration = new Configuration { FontScale = scale };
+            var published = false;
+            UiScale.Current.PropertyChanged += Changed;
+            try
+            {
+                activity.OnConfigurationChanged(configuration);
+                Assert.Same(configuration, activity.LastConfiguration);
+                Assert.Equal((double)scale, UiScale.Current.SystemFontScale);
+                Assert.True(published);
+            }
+            finally
+            {
+                UiScale.Current.PropertyChanged -= Changed;
+                UiScale.Current.UpdateSystemFontScale(1);
+            }
+
+            void Changed(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+            {
+                if (e.PropertyName == nameof(UiScale.SystemFontScale))
+                {
+                    Assert.Same(configuration, activity.LastConfiguration);
+                    published = true;
+                }
+            }
+        }
+
+        [Theory]
+        [InlineData(0f)]
+        [InlineData(-1f)]
+        [InlineData(float.NaN)]
+        [InlineData(float.PositiveInfinity)]
+        [InlineData(float.NegativeInfinity)]
+        public void InvalidPlatformFontScalesShouldLeaveUsableTableText(float invalid)
+        {
+            Microsoft.Maui.Controls.Application.Current = null;
+            UiScale.Current.UpdateSystemFontScale(1.3);
+            var activity = new MainActivity();
+            var configuration = new Configuration { FontScale = invalid };
+
             activity.OnConfigurationChanged(configuration);
+
             Assert.Same(configuration, activity.LastConfiguration);
+            Assert.Equal(1, UiScale.Current.SystemFontScale);
+            Assert.Equal(UiScale.Current.Table, UiScale.Current.TableText);
         }
 
         private class TestView : IVisualTreeElement, IView

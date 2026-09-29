@@ -1,10 +1,11 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Belot.UI.Localization"
              xmlns:ui="clr-namespace:Belot.UI.Scaling"
              x:Class="Belot.UI.Pages.StatisticsPage"
              Shell.NavBarIsVisible="False"
+             SafeAreaEdges="Container"
              BackgroundColor="{StaticResource FeltDark}">
 
     <Grid>
@@ -23,12 +24,13 @@
                                  VerticalOptions="Start">
 
                 <!-- Header -->
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{ui:Size '10'}">
-                    <Button Grid.Column="0"
+                <Grid x:Name="HeadingGrid" RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*" ColumnSpacing="{ui:Size '10'}">
+                    <Button LineBreakMode="WordWrap" Grid.Column="0"
                             Text="‹"
+                            SemanticProperties.Description="{loc:Tr Common_Back}"
                             Clicked="OnBack"
-                            HeightRequest="{ui:Size '36'}"
-                            WidthRequest="{ui:Size '40'}"
+                            MinimumHeightRequest="{ui:Size '48'}"
+                            WidthRequest="{ui:Size '48'}"
                             Padding="{ui:Size '0,0,0,4'}"
                             FontSize="{ui:Size '22'}"
                             FontAttributes="Bold"
@@ -37,7 +39,7 @@
                             BorderColor="#3FE2B864"
                             BorderWidth="1"
                             TextColor="{StaticResource GoldHighlight}" />
-                    <Label Grid.Column="1"
+                    <Label x:Name="StatisticsHeading" Grid.Column="1"
                            Text="{loc:Tr Stats_Title}"
                            FontSize="{ui:Size '24'}"
                            FontAttributes="Bold"
@@ -52,30 +54,30 @@
                        CharacterSpacing="3"
                        Margin="{ui:Size '0,8,0,0'}" />
 
-                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="{ui:Size '10'}" RowSpacing="{ui:Size '10'}">
-                    <Border Grid.Row="0" Grid.Column="0" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
+                <Grid x:Name="MetricsGrid" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="{ui:Size '10'}" RowSpacing="{ui:Size '10'}">
+                    <Border x:Name="CurrentMetric" Grid.Row="0" Grid.Column="0" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
                         <VerticalStackLayout Spacing="{ui:Size '2'}">
                             <Label Text="{loc:Tr Stats_Current}" FontSize="{ui:Size '11'}" TextColor="#C7D2BD" />
-                            <Label x:Name="CurrentEloLabel" FontSize="{ui:Size '26'}" FontAttributes="Bold" TextColor="{StaticResource GoldHighlight}" />
+                            <Label x:Name="CurrentEloLabel" FontSize="{ui:Size '26'}" LineBreakMode="NoWrap" FontAttributes="Bold" TextColor="{StaticResource GoldHighlight}" />
                         </VerticalStackLayout>
                     </Border>
-                    <Border Grid.Row="0" Grid.Column="1" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
+                    <Border x:Name="PeakMetric" Grid.Row="0" Grid.Column="1" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
                         <VerticalStackLayout Spacing="{ui:Size '2'}">
                             <Label Text="{loc:Tr Stats_Peak}" FontSize="{ui:Size '11'}" TextColor="#C7D2BD" />
-                            <Label x:Name="PeakEloLabel" FontSize="{ui:Size '26'}" FontAttributes="Bold" TextColor="{StaticResource GoldHighlight}" />
+                            <Label x:Name="PeakEloLabel" FontSize="{ui:Size '26'}" LineBreakMode="NoWrap" FontAttributes="Bold" TextColor="{StaticResource GoldHighlight}" />
                         </VerticalStackLayout>
                     </Border>
-                    <Border Grid.Row="1" Grid.Column="0" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
+                    <Border x:Name="GamesMetric" Grid.Row="1" Grid.Column="0" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
                         <VerticalStackLayout Spacing="{ui:Size '2'}">
                             <Label Text="{loc:Tr Stats_Games}" FontSize="{ui:Size '11'}" TextColor="#C7D2BD" />
-                            <Label x:Name="GamesLabel" FontSize="{ui:Size '26'}" FontAttributes="Bold" TextColor="White" />
+                            <Label x:Name="GamesLabel" FontSize="{ui:Size '26'}" LineBreakMode="NoWrap" FontAttributes="Bold" TextColor="White" />
                             <Label x:Name="WinLossLabel" FontSize="{ui:Size '11'}" TextColor="#B9C7B0" />
                         </VerticalStackLayout>
                     </Border>
-                    <Border Grid.Row="1" Grid.Column="1" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
+                    <Border x:Name="WinRateMetric" Grid.Row="1" Grid.Column="1" StrokeShape="RoundRectangle 14" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '16,12'}">
                         <VerticalStackLayout Spacing="{ui:Size '2'}">
                             <Label Text="{loc:Tr Stats_WinRate}" FontSize="{ui:Size '11'}" TextColor="#C7D2BD" />
-                            <Label x:Name="WinRateLabel" FontSize="{ui:Size '26'}" FontAttributes="Bold" TextColor="White" />
+                            <Label x:Name="WinRateLabel" FontSize="{ui:Size '26'}" LineBreakMode="NoWrap" FontAttributes="Bold" TextColor="White" />
                             <Label x:Name="StreakLabel" FontSize="{ui:Size '11'}" TextColor="#B9C7B0" />
                         </VerticalStackLayout>
                     </Border>

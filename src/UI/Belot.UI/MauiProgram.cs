@@ -9,6 +9,10 @@
             // Before anything reads a setting (the language is resolved on first use).
             Game.SettingsStore.Current = new Game.PreferencesSettingsStore();
 
+#if ANDROID
+            Game.UiScale.Current.UpdateSystemFontScale(global::Android.App.Application.Context.Resources?.Configuration?.FontScale ?? 1);
+#endif
+
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()

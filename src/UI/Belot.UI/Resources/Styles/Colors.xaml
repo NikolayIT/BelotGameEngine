@@ -43,9 +43,9 @@
     <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}"/>
 
     <!-- Belot felt-table palette -->
-    <Color x:Key="FeltDark">#0B3D1A</Color>
-    <Color x:Key="FeltMid">#0E5A2E</Color>
-    <Color x:Key="FeltLight">#127A40</Color>
+    <Color x:Key="FeltDark">#0C2823</Color>
+    <Color x:Key="FeltMid">#124137</Color>
+    <Color x:Key="FeltLight">#1A5748</Color>
     <Color x:Key="FeltAccent">#1FA15A</Color>
     <Color x:Key="GoldAccent">#E2B864</Color>
     <Color x:Key="GoldHighlight">#F4D586</Color>

@@ -4,104 +4,112 @@
              xmlns:loc="clr-namespace:Belot.UI.Localization"
              xmlns:ui="clr-namespace:Belot.UI.Scaling"
              x:Class="Belot.UI.Pages.StartPage"
-             x:Name="ThePage"
              Shell.NavBarIsVisible="False"
+             SafeAreaEdges="All"
              BackgroundColor="{StaticResource FeltDark}">
 
-    <Grid>
-        <Grid.Background>
-            <RadialGradientBrush Center="0.5,0.35" Radius="0.95">
-                <GradientStop Color="{StaticResource FeltLight}" Offset="0.0" />
-                <GradientStop Color="{StaticResource FeltMid}" Offset="0.55" />
-                <GradientStop Color="{StaticResource FeltDark}" Offset="1.0" />
-            </RadialGradientBrush>
-        </Grid.Background>
+    <ScrollView>
+        <VerticalStackLayout x:Name="ContentColumn" Padding="{ui:Size '18,12,18,24'}" Spacing="{ui:Size '10'}"
+                             HorizontalOptions="Center" VerticalOptions="Start">
 
-        <ScrollView>
-            <VerticalStackLayout x:Name="ContentColumn" Padding="{ui:Size '24,20,24,32'}" Spacing="{ui:Size '16'}" HorizontalOptions="Center" VerticalOptions="Start">
+            <Grid x:Name="HeaderGrid" ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="{ui:Size '4'}">
+                <Label x:Name="TitleLabel" Text="{loc:Tr Start_Title}" FontSize="{ui:Size '24'}" FontAttributes="Bold" CharacterSpacing="2"
+                       VerticalOptions="Center" TextColor="{StaticResource GoldHighlight}" />
+                <Button Grid.Column="1" x:Name="LangButton" Clicked="OnToggleLanguage" LineBreakMode="WordWrap"
+                        MinimumHeightRequest="{ui:Size '48'}" Padding="{ui:Size '10,0'}" FontSize="{ui:Size '12'}"
+                        BackgroundColor="Transparent" TextColor="#C7D2BD" />
+                <Button Grid.Column="2" x:Name="SettingsButton" Text="⚙" SemanticProperties.Description="{loc:Tr Settings_Title}" Clicked="OnOpenSettings"
+                        LineBreakMode="WordWrap" MinimumHeightRequest="{ui:Size '48'}" WidthRequest="{ui:Size '48'}"
+                        Padding="{ui:Size '0'}" FontSize="{ui:Size '20'}" BackgroundColor="Transparent" TextColor="#C7D2BD" />
+            </Grid>
 
-                <!-- Top bar: language toggle + settings -->
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{ui:Size '8'}">
-                    <Button Grid.Column="1" x:Name="LangButton" Clicked="OnToggleLanguage" HeightRequest="{ui:Size '34'}" MinimumWidthRequest="{ui:Size '92'}" Padding="{ui:Size '14,0'}"
-                            FontSize="{ui:Size '13'}" FontAttributes="Bold" CornerRadius="{ui:Size '17'}" BackgroundColor="#26000000"
-                            BorderColor="{StaticResource GoldAccent}" BorderWidth="1" TextColor="{StaticResource GoldHighlight}" />
-                    <Button Grid.Column="2" Text="⚙" Clicked="OnOpenSettings" HeightRequest="{ui:Size '34'}" WidthRequest="{ui:Size '40'}" Padding="{ui:Size '0'}" FontSize="{ui:Size '16'}" CornerRadius="{ui:Size '17'}"
-                            BackgroundColor="#26000000" BorderColor="{StaticResource GoldAccent}" BorderWidth="1" TextColor="{StaticResource GoldHighlight}" />
-                </Grid>
-
-                <!-- Title -->
-                <VerticalStackLayout Spacing="{ui:Size '6'}" HorizontalOptions="Center">
-                    <HorizontalStackLayout Spacing="{ui:Size '10'}" HorizontalOptions="Center">
-                        <Label Text="♠ ♥" FontSize="{ui:Size '16'}" LineBreakMode="NoWrap" VerticalOptions="Center" TextColor="{StaticResource GoldAccent}" />
-                        <Label Text="{loc:Tr Start_Title}" FontSize="{ui:Size '30'}" FontAttributes="Bold" CharacterSpacing="3" LineBreakMode="NoWrap" VerticalOptions="Center" TextColor="{StaticResource GoldHighlight}" />
-                        <Label Text="♦ ♣" FontSize="{ui:Size '16'}" LineBreakMode="NoWrap" VerticalOptions="Center" TextColor="{StaticResource GoldAccent}" />
-                    </HorizontalStackLayout>
-                    <Label Text="{loc:Tr Start_Subtitle}" FontSize="{ui:Size '13'}" HorizontalOptions="Center" TextColor="#D9CFAE" CharacterSpacing="2" />
-                </VerticalStackLayout>
-
-                <!-- Rating card (tap: statistics) -->
-                <Border StrokeShape="RoundRectangle 16" StrokeThickness="0" BackgroundColor="#26000000" Padding="{ui:Size '20,12'}">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnOpenStatistics" />
-                    </Border.GestureRecognizers>
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{ui:Size '10'}">
-                        <VerticalStackLayout Grid.Column="0" Spacing="{ui:Size '2'}" HorizontalOptions="Center">
-                            <Label x:Name="RatingCaptionLabel" FontSize="{ui:Size '11'}" CharacterSpacing="2" HorizontalOptions="Center" TextColor="{StaticResource GoldAccent}" />
-                            <Label x:Name="RatingLabel" FontSize="{ui:Size '30'}" FontAttributes="Bold" HorizontalOptions="Center" TextColor="{StaticResource GoldHighlight}" />
-                            <Label x:Name="RecordLabel" FontSize="{ui:Size '11'}" HorizontalOptions="Center" TextColor="#B9C7B0" />
+            <Grid>
+                <Border AutomationProperties.ExcludedWithChildren="True" StrokeShape="RoundRectangle 12" StrokeThickness="0"
+                        BackgroundColor="#26000000" Padding="{ui:Size '12,8'}">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{ui:Size '8'}">
+                        <VerticalStackLayout Spacing="{ui:Size '2'}">
+                            <Label x:Name="RatingLabel" FontSize="{ui:Size '17'}" FontAttributes="Bold" TextColor="{StaticResource GoldHighlight}" />
+                            <Label x:Name="RecordLabel" FontSize="{ui:Size '11'}" TextColor="#AEBFAB" />
                         </VerticalStackLayout>
-                        <VerticalStackLayout Grid.Column="1" Spacing="{ui:Size '0'}" VerticalOptions="Center">
-                            <Label Text="📊" FontSize="{ui:Size '18'}" HorizontalOptions="Center" />
-                            <Label Text="{loc:Tr Start_Statistics}" FontSize="{ui:Size '10'}" TextColor="#D9CFAE" />
-                        </VerticalStackLayout>
+                        <Label Grid.Column="1" Text="{loc:Tr Start_StatisticsLink}" FontSize="{ui:Size '12'}" VerticalOptions="Center" TextColor="#C7D2BD" />
                     </Grid>
                 </Border>
+                <Button x:Name="RatingButton" Clicked="OnOpenStatistics" LineBreakMode="WordWrap"
+                        MinimumHeightRequest="{ui:Size '48'}" Padding="{ui:Size '0'}" CornerRadius="{ui:Size '12'}"
+                        BackgroundColor="Transparent" BorderWidth="0" SemanticProperties.Hint="{loc:Tr Start_Statistics}" />
+            </Grid>
 
-                <Button Text="{loc:Tr Start_HowToPlay}" Clicked="OnOpenRules" HeightRequest="{ui:Size '44'}" FontSize="{ui:Size '14'}" CornerRadius="{ui:Size '12'}"
-                        BackgroundColor="#22000000" BorderColor="#3FE2B864" BorderWidth="1" TextColor="#EDE3C3" />
-
-                <!-- Your name -->
-                <VerticalStackLayout Spacing="{ui:Size '6'}">
-                    <Label Text="{loc:Tr Start_YourName}" FontSize="{ui:Size '11'}" TextColor="{StaticResource GoldAccent}" CharacterSpacing="3" />
-                    <Entry x:Name="NameEntry" Placeholder="{loc:Tr Start_DefaultName}" TextColor="White" PlaceholderColor="#7FFFFFFF"
-                           BackgroundColor="#22000000" Unfocused="OnPlayerNameChanged" />
-                </VerticalStackLayout>
-
-                <!-- A level for each of the other three seats -->
-                <VerticalStackLayout Spacing="{ui:Size '8'}">
-                    <Label Text="{loc:Tr Start_Partner}" FontSize="{ui:Size '11'}" TextColor="{StaticResource GoldAccent}" CharacterSpacing="3" />
-                    <Grid x:Name="PartnerHost" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="{ui:Size '6'}" />
-                </VerticalStackLayout>
-                <VerticalStackLayout Spacing="{ui:Size '8'}">
-                    <Label Text="{loc:Tr Start_West}" FontSize="{ui:Size '11'}" TextColor="{StaticResource GoldAccent}" CharacterSpacing="3" />
-                    <Grid x:Name="WestHost" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="{ui:Size '6'}" />
-                </VerticalStackLayout>
-                <VerticalStackLayout Spacing="{ui:Size '8'}">
-                    <Label Text="{loc:Tr Start_East}" FontSize="{ui:Size '11'}" TextColor="{StaticResource GoldAccent}" CharacterSpacing="3" />
-                    <Grid x:Name="EastHost" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="{ui:Size '6'}" />
-                </VerticalStackLayout>
-                <VerticalStackLayout Spacing="{ui:Size '2'}">
-                    <Label x:Name="TaglineLabel" FontSize="{ui:Size '12'}" TextColor="#C7D2BD" HorizontalTextAlignment="Center" />
-                    <Label x:Name="LevelRecordLabel" FontSize="{ui:Size '11'}" TextColor="{StaticResource GoldHighlight}" HorizontalTextAlignment="Center" />
-                </VerticalStackLayout>
-
-                <Button Text="{loc:Tr Start_Play}" Clicked="OnPlay" HeightRequest="{ui:Size '54'}" FontSize="{ui:Size '18'}" FontAttributes="Bold" CornerRadius="{ui:Size '14'}"
-                        BackgroundColor="{StaticResource GoldAccent}" TextColor="#1A1006" />
-
-                <!-- Recent games -->
-                <Grid ColumnDefinitions="*,Auto" Margin="{ui:Size '0,6,0,0'}">
-                    <Label Grid.Column="0" Text="{loc:Tr Start_RecentGames}" FontSize="{ui:Size '11'}" TextColor="{StaticResource GoldAccent}" CharacterSpacing="3" VerticalOptions="Center" />
-                    <Label Grid.Column="1" x:Name="SeeAllLabel" FontSize="{ui:Size '12'}" TextColor="#D9CFAE" VerticalOptions="Center">
-                        <Label.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnOpenStatistics" />
-                        </Label.GestureRecognizers>
-                    </Label>
+            <Border StrokeShape="RoundRectangle 12" StrokeThickness="1" Stroke="#304F6255" BackgroundColor="#18000000" Padding="{ui:Size '12,0'}">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{ui:Size '12'}">
+                    <Label Text="{loc:Tr Start_NameLabel}" FontSize="{ui:Size '12'}" TextColor="#AEBFAB" VerticalOptions="Center" />
+                    <Entry Grid.Column="1" x:Name="NameEntry" SemanticProperties.Description="{loc:Tr Start_YourName}"
+                           Placeholder="{loc:Tr Start_DefaultName}" TextColor="White" PlaceholderColor="#80FFFFFF"
+                           MinimumHeightRequest="{ui:Size '48'}" FontSize="{ui:Size '14'}" BackgroundColor="Transparent" Unfocused="OnPlayerNameChanged" />
                 </Grid>
-                <Label x:Name="NoHistoryLabel" Text="{loc:Tr Start_NoHistory}" FontSize="{ui:Size '12'}" TextColor="#99FFFFFF" />
-                <VerticalStackLayout x:Name="HistoryList" Spacing="{ui:Size '6'}" />
+            </Border>
 
-                <Label x:Name="FooterLabel" FontSize="{ui:Size '10'}" HorizontalOptions="Center" TextColor="#80FFFFFF" Margin="{ui:Size '0,8,0,0'}" />
+            <Border x:Name="LineupBorder" StrokeShape="RoundRectangle 12" StrokeThickness="1" Stroke="#304F6255" BackgroundColor="#18000000" Padding="{ui:Size '12,2'}">
+                <Grid x:Name="LineupGrid" ColumnDefinitions="*,1.2*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="{ui:Size '8'}" RowSpacing="{ui:Size '4'}">
+                    <VerticalStackLayout x:Name="PartnerNameGroup" Grid.Row="0" Spacing="{ui:Size '0'}" Padding="{ui:Size '0,5,0,0'}">
+                        <Label Text="{loc:Tr Start_PartnerShort}" FontSize="{ui:Size '10'}" TextColor="#AEBFAB" />
+                        <Entry x:Name="PartnerNameEntry" Placeholder="{loc:Tr Start_OptionalName}" SemanticProperties.Description="{loc:Tr Start_PartnerName}"
+                               Unfocused="OnBotNameChanged" MinimumHeightRequest="{ui:Size '48'}" FontSize="{ui:Size '14'}"
+                               TextColor="White" PlaceholderColor="#80FFFFFF" BackgroundColor="Transparent" />
+                    </VerticalStackLayout>
+                    <Picker Grid.Row="0" Grid.Column="1" x:Name="PartnerPicker" Title="{loc:Tr Start_Partner}"
+                            SemanticProperties.Description="{loc:Tr Start_Partner}" SelectedIndexChanged="OnPartnerChanged"
+                            MinimumHeightRequest="{ui:Size '48'}" FontSize="{ui:Size '14'}" TextColor="White" BackgroundColor="Transparent" VerticalOptions="Center" />
+                    <VerticalStackLayout x:Name="WestNameGroup" Grid.Row="1" Spacing="{ui:Size '0'}" Padding="{ui:Size '0,5,0,0'}">
+                        <Label Text="{loc:Tr Start_WestShort}" FontSize="{ui:Size '10'}" TextColor="#AEBFAB" />
+                        <Entry x:Name="WestNameEntry" Placeholder="{loc:Tr Start_OptionalName}" SemanticProperties.Description="{loc:Tr Start_WestName}"
+                               Unfocused="OnBotNameChanged" MinimumHeightRequest="{ui:Size '48'}" FontSize="{ui:Size '14'}"
+                               TextColor="White" PlaceholderColor="#80FFFFFF" BackgroundColor="Transparent" />
+                    </VerticalStackLayout>
+                    <Picker Grid.Row="1" Grid.Column="1" x:Name="WestPicker" Title="{loc:Tr Start_West}"
+                            SemanticProperties.Description="{loc:Tr Start_West}" SelectedIndexChanged="OnWestChanged"
+                            MinimumHeightRequest="{ui:Size '48'}" FontSize="{ui:Size '14'}" TextColor="White" BackgroundColor="Transparent" VerticalOptions="Center" />
+                    <VerticalStackLayout x:Name="EastNameGroup" Grid.Row="2" Spacing="{ui:Size '0'}" Padding="{ui:Size '0,5,0,0'}">
+                        <Label Text="{loc:Tr Start_EastShort}" FontSize="{ui:Size '10'}" TextColor="#AEBFAB" />
+                        <Entry x:Name="EastNameEntry" Placeholder="{loc:Tr Start_OptionalName}" SemanticProperties.Description="{loc:Tr Start_EastName}"
+                               Unfocused="OnBotNameChanged" MinimumHeightRequest="{ui:Size '48'}" FontSize="{ui:Size '14'}"
+                               TextColor="White" PlaceholderColor="#80FFFFFF" BackgroundColor="Transparent" />
+                    </VerticalStackLayout>
+                    <Picker Grid.Row="2" Grid.Column="1" x:Name="EastPicker" Title="{loc:Tr Start_East}"
+                            SemanticProperties.Description="{loc:Tr Start_East}" SelectedIndexChanged="OnEastChanged"
+                            MinimumHeightRequest="{ui:Size '48'}" FontSize="{ui:Size '14'}" TextColor="White" BackgroundColor="Transparent" VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
+            <Button x:Name="PlayButton" Text="{loc:Tr Start_Play}" Clicked="OnPlay" LineBreakMode="WordWrap"
+                    MinimumHeightRequest="{ui:Size '48'}" FontSize="{ui:Size '17'}" FontAttributes="Bold" CornerRadius="{ui:Size '12'}"
+                    BackgroundColor="{StaticResource GoldAccent}" TextColor="#1A1006" />
+
+            <VerticalStackLayout Spacing="{ui:Size '2'}">
+                <Button x:Name="OnlinePlayButton" Text="{loc:Tr Start_PlayOnline}" Clicked="OnPlayOnline" LineBreakMode="WordWrap"
+                        SemanticProperties.Hint="{loc:Tr Start_OnlineHint}" MinimumHeightRequest="{ui:Size '48'}"
+                        Padding="{ui:Size '10,4'}" FontSize="{ui:Size '14'}" CornerRadius="{ui:Size '12'}"
+                        BackgroundColor="Transparent" BorderColor="#708F9974" BorderWidth="1" TextColor="{StaticResource GoldHighlight}" />
+                <Label Text="ednaigra.com" FontSize="{ui:Size '10'}" TextColor="#8FA695" HorizontalOptions="Center" />
             </VerticalStackLayout>
-        </ScrollView>
-    </Grid>
+
+            <VerticalStackLayout Spacing="{ui:Size '3'}">
+                <Label x:Name="TaglineLabel" FontSize="{ui:Size '11'}" TextColor="#AEBFAB" />
+                <Label x:Name="LevelRecordLabel" FontSize="{ui:Size '11'}" TextColor="{StaticResource GoldHighlight}" />
+            </VerticalStackLayout>
+
+            <Button Text="{loc:Tr Start_HowToPlay}" Clicked="OnOpenRules" LineBreakMode="WordWrap"
+                    MinimumHeightRequest="{ui:Size '48'}" Padding="{ui:Size '8,0'}" FontSize="{ui:Size '13'}"
+                    BackgroundColor="Transparent" TextColor="#C7D2BD" />
+
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Text="{loc:Tr Start_RecentGames}" FontSize="{ui:Size '10'}" CharacterSpacing="1" TextColor="#AEBFAB" VerticalOptions="Center" />
+                <Button Grid.Column="1" x:Name="SeeAllButton" FontSize="{ui:Size '12'}" TextColor="#C7D2BD" VerticalOptions="Center"
+                        Clicked="OnOpenStatistics" LineBreakMode="WordWrap" MinimumHeightRequest="{ui:Size '48'}"
+                        Padding="{ui:Size '4,0'}" BackgroundColor="Transparent" BorderWidth="0" />
+            </Grid>
+            <Label x:Name="NoHistoryLabel" Text="{loc:Tr Start_NoHistory}" FontSize="{ui:Size '11'}" TextColor="#8FA695" />
+            <VerticalStackLayout x:Name="HistoryList" Spacing="{ui:Size '6'}" />
+            <Label x:Name="FooterLabel" FontSize="{ui:Size '10'}" TextColor="#708779" HorizontalOptions="Center" Margin="{ui:Size '0,8,0,0'}" />
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

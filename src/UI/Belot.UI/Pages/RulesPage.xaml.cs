@@ -24,7 +24,7 @@
         };
 
         // A double tap on Back goes back once.
-        private readonly OneAtATime navigation = new();
+        private readonly PageActions actions = new();
 
         public RulesPage()
         {
@@ -34,7 +34,14 @@
         protected override void OnAppearing()
         {
             base.OnAppearing();
+            this.actions.Activate();
             this.BuildSections();
+        }
+
+        protected override void OnDisappearing()
+        {
+            this.actions.Deactivate();
+            base.OnDisappearing();
         }
 
         // Sizes follow the window (see UiScale); the lists built in code are rebuilt at a new scale.
@@ -52,7 +59,7 @@
 
         private async void OnBack(object? sender, EventArgs e)
         {
-            await this.navigation.RunAsync(() => Shell.Current.GoToAsync(".."));
+            await this.actions.RunAsync(() => Shell.Current.GoToAsync(".."));
         }
 
         // Rebuilt on every appearance so a language switch is reflected.

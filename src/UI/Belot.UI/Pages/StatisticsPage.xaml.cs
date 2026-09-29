@@ -1,6 +1,7 @@
 ﻿namespace Belot.UI.Pages
 {
     using System;
+    using System.ComponentModel;
     using System.Globalization;
     using System.Linq;
 
@@ -13,7 +14,9 @@
     public partial class StatisticsPage : ContentPage
     {
         // A double tap on Back goes back once.
-        private readonly OneAtATime navigation = new();
+        private readonly PageActions actions = new();
+
+        private int metricColumns;
 
         public StatisticsPage()
         {
@@ -23,7 +26,18 @@
         protected override void OnAppearing()
         {
             base.OnAppearing();
+            this.actions.Activate();
+            UiScale.Current.PropertyChanged -= this.OnScaleChanged;
+            UiScale.Current.PropertyChanged += this.OnScaleChanged;
             this.Populate();
+            this.UpdateMetricLayout();
+        }
+
+        protected override void OnDisappearing()
+        {
+            this.actions.Deactivate();
+            UiScale.Current.PropertyChanged -= this.OnScaleChanged;
+            base.OnDisappearing();
         }
 
         // Sizes follow the window (see UiScale); the lists built in code are rebuilt at a new scale.
@@ -37,6 +51,8 @@
             {
                 this.Populate();
             }
+
+            this.UpdateMetricLayout();
         }
 
         private static string BuildStreakText(LocalizationManager mgr)
@@ -169,7 +185,7 @@
                 TextColor = Color.FromArgb("#C7D2BD"),
                 FontSize = Ui.Size(13),
                 VerticalOptions = LayoutOptions.Center,
-                LineBreakMode = LineBreakMode.TailTruncation,
+                LineBreakMode = LineBreakMode.WordWrap,
             };
 
             var when = new Label
@@ -183,9 +199,10 @@
             var grid = new Grid
             {
                 ColumnSpacing = Ui.Size(12),
+                RowSpacing = Ui.Size(4),
+                RowDefinitions = { new RowDefinition(GridLength.Auto), new RowDefinition(GridLength.Auto) },
                 ColumnDefinitions =
                 {
-                    new ColumnDefinition(GridLength.Auto),
                     new ColumnDefinition(GridLength.Auto),
                     new ColumnDefinition(GridLength.Star),
                     new ColumnDefinition(GridLength.Auto),
@@ -193,8 +210,9 @@
             };
             grid.Add(chip, 0, 0);
             grid.Add(score, 1, 0);
-            grid.Add(versus, 2, 0);
-            grid.Add(when, 3, 0);
+            grid.Add(when, 2, 0);
+            grid.Add(versus, 0, 1);
+            Grid.SetColumnSpan(versus, 3);
 
             return new Border
             {
@@ -208,7 +226,49 @@
 
         private async void OnBack(object? sender, EventArgs e)
         {
-            await this.navigation.RunAsync(() => Shell.Current.GoToAsync(".."));
+            await this.actions.RunAsync(() => Shell.Current.GoToAsync(".."));
+        }
+
+        private void OnScaleChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName is nameof(UiScale.SystemFontScale) or nameof(UiScale.Page))
+            {
+                this.UpdateMetricLayout();
+            }
+        }
+
+        private void UpdateMetricLayout()
+        {
+            var scale = UiScale.Current;
+            var width = PageColumn.Width(this.Width) - this.ContentColumn.Padding.HorizontalThickness;
+            var columns = UiScale.StatisticColumnsFor(width / scale.Page, scale.SystemFontScale);
+            if (columns == this.metricColumns)
+            {
+                return;
+            }
+
+            this.metricColumns = columns;
+            Grid.SetRow(this.StatisticsHeading, columns == 1 ? 1 : 0);
+            Grid.SetColumn(this.StatisticsHeading, columns == 1 ? 0 : 1);
+            Grid.SetColumnSpan(this.StatisticsHeading, columns == 1 ? 2 : 1);
+            this.MetricsGrid.ColumnDefinitions.Clear();
+            for (var column = 0; column < columns; column++)
+            {
+                this.MetricsGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            }
+
+            var metrics = new[] { this.CurrentMetric, this.PeakMetric, this.GamesMetric, this.WinRateMetric };
+            this.MetricsGrid.RowDefinitions.Clear();
+            for (var row = 0; row < metrics.Length / columns; row++)
+            {
+                this.MetricsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            }
+
+            for (var index = 0; index < metrics.Length; index++)
+            {
+                Grid.SetRow(metrics[index], index / columns);
+                Grid.SetColumn(metrics[index], index % columns);
+            }
         }
 
         private void Populate()

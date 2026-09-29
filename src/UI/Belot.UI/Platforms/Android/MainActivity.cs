@@ -4,6 +4,8 @@
     using Android.Content.PM;
     using Android.Content.Res;
 
+    using Belot.UI.Game;
+
     using Microsoft.Maui;
 
     // Portrait only: four seats around a table need the height.
@@ -13,10 +15,11 @@
         public override void OnConfigurationChanged(Configuration newConfig)
         {
             base.OnConfigurationChanged(newConfig);
+            UiScale.Current.UpdateSystemFontScale(newConfig.FontScale);
 
             // Keep the existing Shell, table and match when accessibility text size changes.
-            // MAUI's Font mapping reapplies SP sizes using Android's updated resources, including
-            // formatted spans, without changing FontAutoScalingEnabled or multiplying sizes.
+            // Board text bindings use the bounded factor above. Other text keeps native SP
+            // scaling; refresh its handlers and formatted spans using the updated resources.
             if (Microsoft.Maui.Controls.Application.Current is not { } application)
             {
                 return;

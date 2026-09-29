@@ -1,10 +1,11 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:Belot.UI.Localization"
              xmlns:ui="clr-namespace:Belot.UI.Scaling"
              x:Class="Belot.UI.Pages.RulesPage"
              Shell.NavBarIsVisible="False"
+             SafeAreaEdges="Container"
              BackgroundColor="{StaticResource FeltDark}">
 
     <Grid>
@@ -24,11 +25,12 @@
 
                 <!-- Header -->
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{ui:Size '10'}">
-                    <Button Grid.Column="0"
+                    <Button LineBreakMode="WordWrap" Grid.Column="0"
                             Text="‹"
+                            SemanticProperties.Description="{loc:Tr Common_Back}"
                             Clicked="OnBack"
-                            HeightRequest="{ui:Size '36'}"
-                            WidthRequest="{ui:Size '40'}"
+                            MinimumHeightRequest="{ui:Size '48'}"
+                            WidthRequest="{ui:Size '48'}"
                             Padding="{ui:Size '0,0,0,4'}"
                             FontSize="{ui:Size '22'}"
                             FontAttributes="Bold"

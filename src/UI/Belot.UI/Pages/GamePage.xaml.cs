@@ -24,6 +24,9 @@
 
         public GamePage()
         {
+#if ANDROID
+            UiScale.Current.UpdateSystemFontScale(global::Android.App.Application.Context.Resources?.Configuration?.FontScale ?? 1);
+#endif
             this.InitializeComponent();
 
             // The hand's cards overlap more on a narrow screen, so all eight fit the width.
@@ -64,16 +67,8 @@
             }
 
             this.started = true;
-            var text = LocalizationManager.Instance;
             var lineup = new Lineup(AiLevels.ById(this.PartnerId), AiLevels.ById(this.WestId), AiLevels.ById(this.EastId));
-            var name = string.IsNullOrWhiteSpace(this.PlayerName) ? text["Start_DefaultName"] : this.PlayerName;
-            var names = new[]
-            {
-                name,
-                text.Format("Seat_East", lineup.East.DisplayName),
-                text.Format("Seat_Partner", lineup.Partner.DisplayName),
-                text.Format("Seat_West", lineup.West.DisplayName),
-            };
+            var names = SeatNames.Create(this.PlayerName, AppSettings.PartnerName, AppSettings.WestName, AppSettings.EastName);
             this.session = new GameSession(names, lineup.CreatePlayer, AppSettings.Pace);
             this.viewModel = new GameViewModel(this.session, lineup, this);
             this.viewModel.PropertyChanged += this.OnViewModelPropertyChanged;
@@ -104,19 +99,6 @@
 
             this.session = null;
             this.started = false;
-        }
-
-        // Everything on the table is sized for this page's size (see UiScale).
-        protected override void OnSizeAllocated(double width, double height)
-        {
-            base.OnSizeAllocated(width, height);
-            UiScale.Current.Update(width, height);
-
-            // The whole width, but never wider than a tall tablet: a wide window keeps the four seats together.
-            if (width > 0)
-            {
-                this.TableGrid.WidthRequest = Math.Min(width, UiScale.TableMaxDesignWidth * UiScale.Current.Table);
-            }
         }
 
         protected override bool OnBackButtonPressed()
@@ -160,6 +142,25 @@
             catch
             {
                 // Not supported on this platform: fine to ignore.
+            }
+        }
+
+        // Page dimensions can include Android system bars. Measure the actual content host.
+        private void OnTableHostSizeChanged(object? sender, EventArgs e)
+        {
+            var width = this.TableHost.Width;
+            var height = this.TableHost.Height;
+            UiScale.Current.Update(width, height);
+
+            // Keep the seats together on tablets without extending into the system bars.
+            if (width > 0)
+            {
+                this.TableGrid.WidthRequest = Math.Min(width, UiScale.TableMaxDesignWidth * UiScale.Current.Table);
+            }
+
+            if (height > 0)
+            {
+                this.TableGrid.HeightRequest = Math.Min(height, UiScale.TableMaxDesignHeight * UiScale.Current.Table);
             }
         }
 
