@@ -19,6 +19,9 @@
         private const string HapticsKey = "settings.haptics";
         private const string AssistsKey = "settings.assists";
         private const string PlayerNameKey = "settings.playerName";
+        private const string PartnerNameKey = "settings.partnerName";
+        private const string WestNameKey = "settings.westName";
+        private const string EastNameKey = "settings.eastName";
         private const string PartnerKey = "settings.partner";
         private const string WestKey = "settings.west";
         private const string EastKey = "settings.east";
@@ -46,6 +49,24 @@
         {
             get => SettingsStore.Current.Get(PlayerNameKey, string.Empty);
             set => SettingsStore.Current.Set(PlayerNameKey, value ?? string.Empty);
+        }
+
+        public static string PartnerName
+        {
+            get => SettingsStore.Current.Get(PartnerNameKey, string.Empty);
+            set => SettingsStore.Current.Set(PartnerNameKey, value?.Trim() ?? string.Empty);
+        }
+
+        public static string WestName
+        {
+            get => SettingsStore.Current.Get(WestNameKey, string.Empty);
+            set => SettingsStore.Current.Set(WestNameKey, value?.Trim() ?? string.Empty);
+        }
+
+        public static string EastName
+        {
+            get => SettingsStore.Current.Get(EastNameKey, string.Empty);
+            set => SettingsStore.Current.Set(EastNameKey, value?.Trim() ?? string.Empty);
         }
 
         /// <summary>Gets or sets the id of the partner's level last chosen (see <see cref="AiLevels"/>).</summary>
