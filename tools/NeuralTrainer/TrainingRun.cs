@@ -71,7 +71,7 @@
         /// <summary>Plays the networks against SmartPlayer and ClaudePlayerIsmcts.</summary>
         public static (MatchResult Smart, MatchResult Ismcts) Measure(NeuralModels models, TrainingSettings settings, int seed)
         {
-            IPlayer Neural() => new ClaudePlayerNeural(models);
+            IPlayer Neural() => new ClaudePlayerNeural(models) { NaturalBidding = settings.NaturalBidding };
             IPlayer Smart() => new SmartPlayer();
             IPlayer Ismcts() => new ClaudePlayerIsmcts { TimeLimitMilliseconds = settings.IsmctsMilliseconds };
             var smart = settings.SmartPairs > 0

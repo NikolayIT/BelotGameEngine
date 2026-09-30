@@ -3,6 +3,7 @@
     using System;
     using System.Numerics;
 
+    using Belot.AI.ClaudePlayer.Human;
     using Belot.AI.ClaudePlayer.Neural;
     using Belot.AI.ClaudePlayer.Search;
     using Belot.Engine.Game;
@@ -84,7 +85,7 @@
             while (!deal.AuctionFinished)
             {
                 var seat = deal.ToBid;
-                var candidates = NeuralEvaluator.BidCandidates(deal.AvailableBids());
+                var candidates = this.Candidates(in deal);
                 if ((learners & (1 << seat)) != 0 && this.random.NextDouble() < this.settings.BidLabelChance)
                 {
                     this.LabelBids(in deal, candidates, buffers[NeuralModels.BidTag]);
@@ -92,7 +93,7 @@
 
                 var bid = this.random.NextDouble() < this.settings.BidExploration
                     ? FeatureEncoder.BidOfIndex(this.RandomBit(candidates))
-                    : this.seats[seat].BestBid(in deal, this.values);
+                    : this.BestBid(in deal, this.values);
                 deal.Bid(bid);
                 this.Decisions++;
             }
@@ -185,7 +186,7 @@
                 copy.Bid(FeatureEncoder.BidOfIndex(index));
                 while (!copy.AuctionFinished)
                 {
-                    copy.Bid(this.seats[copy.ToBid].BestBid(in copy, this.rolloutValues));
+                    copy.Bid(this.BestBid(in copy, this.rolloutValues));
                     this.RolloutDecisions++;
                 }
 
@@ -204,6 +205,23 @@
             {
                 this.BidSamples++;
             }
+        }
+
+        // The bids open to the seat to bid: all of them, or with NaturalBidding those a person could read.
+        private uint Candidates(in NeuralDeal deal) => this.settings.NaturalBidding
+            ? NaturalBidding.Candidates(deal.AvailableBids(), deal.Play.Hands[deal.ToBid])
+            : NeuralEvaluator.BidCandidates(deal.AvailableBids());
+
+        // The best bid of the seat to bid among its candidates.
+        private BidType BestBid(in NeuralDeal deal, float[] bidValues)
+        {
+            if (!this.settings.NaturalBidding)
+            {
+                return this.seats[deal.ToBid].BestBid(in deal, bidValues);
+            }
+
+            this.seats[deal.ToBid].EvaluateBids(in deal, bidValues);
+            return FeatureEncoder.BidOfIndex(NeuralEvaluator.Best(bidValues, this.Candidates(in deal)));
         }
 
         // Plays the rest of the deal as the seats' networks would.

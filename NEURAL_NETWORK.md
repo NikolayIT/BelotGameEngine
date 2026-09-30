@@ -1574,3 +1574,49 @@ previous Fast profile over **1,000 games**. Its measured mean card time includin
 JSON is **1.501 ms**, p99 **6.505 ms**, maximum **10.846 ms**, with 1 of 22,127
 callbacks above 10 ms. See [the full method, adapter diagnostics and public pair
 outcomes](OPPONENTS_EXPERIMENT.md#website-master-integration-september-29).
+
+## 17. The human-style Master (September 30, 2026)
+
+People found the belief5-v2-ensemble Master foolish in play despite its ratings:
+it threw high cards to tricks the opponents were winning and never signalled to
+its partner. `HUMAN_PLAY.md` records the diagnosis (`audit`: exact endgame ties
+broken by card order, and network noise of a few tenths of a point), the fix
+(`HumanStyle` tie-breaking by a strong player's technique and conventions, raw
+card points ordering equal endgame results, partner-signal reading) and the
+strength gain (the network's best three cards played out in the first three
+tricks, networks to the last five tricks and exact from there, in
+ownership-weighted worlds). `CreateMaster` is the new profile and
+`CreateNeuralMaster` the belief5-v2-ensemble one; the trainer names them `master`
+and `neural-master`.
+
+The audit also found that the networks had invented a private bidding relay in
+self-play: 30% of their suit bids held neither the suit's jack nor its nine
+(clubs meant "a strong hand", answered with no trumps or all trumps). A person
+reads bids naturally, so `NaturalBidding` (on by default) allows only a suit with
+its jack or nine and another card, no trumps with an ace and all trumps with a
+jack, and **all four actor networks were fine-tuned for it** in 2.5 hours of
+self-play in which every seat bids naturally:
+
+```
+train --in <Sept 29 networks> --natural-bidding true --hours 2.5 --actors 15 --learners 4
+      --learning-rate 3e-5 --final-learning-rate 5e-6 --bid-label-chance 1
+      --card-label-chance 0.25 --pool-chance 0 --seed 1301
+```
+
+The three ownership networks were refitted on 100,000 deals of the fine-tuned
+networks' natural self-play (the CE12 recipe). These seven files are now
+embedded (3,523,482 bytes in all, feature layout 1); the September 29 files are
+kept locally under `artifacts/natural-20260930/`. The bare fine-tuned networks
+score 49.1% +/- 0.41 pp against the September 29 networks with their relay
+(10,000 games): between bots the relay is worth about 6 Elo. With a natural
+partner (Belot 2.06 or SmartPlayer on both teams) the bare networks of the
+60-minute checkpoint already scored 62.0% and 63.9% against the relay networks,
+and the full Master with Belot 2.06 scores 64.8% +/- 0.6 pp against the
+September 29 Master with Belot 2.06 (4,000 games). Networks trained with
+the relay must be run with `NaturalBidding = false`; the fine-tuned ones no
+longer value unnatural bids. `HUMAN_PLAY.md` has all measurements.
+
+The app's levels were recalibrated with `elo 20000 60 3000` (September 30, 1:26:04):
+Random 646 +/- 3.2, Beginner 1200 (anchor), Skilled 1490 +/- 1.9, Expert 1647 +/- 2.5,
+Master 1886 +/- 4.6 and ClaudePlayerIsmcts 1786 +/- 17.6 (local log
+`artifacts/natural-20260930/final-elo.log`).

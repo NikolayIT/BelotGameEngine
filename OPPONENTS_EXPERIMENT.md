@@ -292,3 +292,11 @@ per card; p99 **6.505 ms**, maximum **10.846 ms**, with **1 of 22,127** callback
 above 10 ms across 100 measured games after 20 warmup games. This fixed-work
 website variant has no hard wall-clock limit. The engine's 8-ms Master remains
 unchanged. Website methods and results are recorded in its `docs/belot-bots.md`.
+
+**September 30 change.** `CreateMaster()` is now the human-style Master
+(`HUMAN_PLAY.md`), and the embedded networks are their natural-bidding fine-tune.
+The configuration measured above is `CreateNeuralMaster()` (on the new networks
+unless the September 29 files are loaded). The new `CreateMaster()` also has a
+wall-clock cap on its early-trick rollouts, so a deterministic host must set
+`SearchTimeLimitMilliseconds = 0` as well as `EndgameTimeLimitMilliseconds = 0`;
+it then takes about 14 ms a card on an idle desktop (p99 41 ms).

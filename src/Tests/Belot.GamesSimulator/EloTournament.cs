@@ -23,35 +23,44 @@
     {
         private const double AnchorElo = 1200d;
 
+        // How long a level's games take, which decides its matchups' pair counts.
+        private enum Tier
+        {
+            Fast,
+            Master,
+            Slow,
+        }
+
         /// <summary>Plays the round robin and prints the ratings.</summary>
         /// <param name="parallelism">How many games run at once.</param>
         /// <param name="fastPairs">Mirrored pairs per matchup of the fast levels.</param>
         /// <param name="slowPairs">Mirrored pairs per matchup with ISMCTS, which searches on every card.</param>
-        public static void Run(int parallelism, int fastPairs, int slowPairs)
+        /// <param name="masterPairs">Mirrored pairs per matchup with the Master, whose early tricks search.</param>
+        public static void Run(int parallelism, int fastPairs, int slowPairs, int masterPairs)
         {
             var levels = new[]
             {
-                new Level("dummy", "DummyPlayer", () => new DummyPlayer(), isSlow: false),
-                new Level("random", "RandomPlayer", () => new RandomPlayer(), isSlow: false),
-                new Level("smart", "SmartPlayer", () => new SmartPlayer(), isSlow: false),
+                new Level("dummy", "DummyPlayer", () => new DummyPlayer(), Tier.Fast),
+                new Level("random", "RandomPlayer", () => new RandomPlayer(), Tier.Fast),
+                new Level("smart", "SmartPlayer", () => new SmartPlayer(), Tier.Fast),
                 new Level(
                     "expert",
-                    "Neural/endgame (loose)",
+                    "Human-style Expert",
                     ClaudePlayerProfiles.CreateExpert,
-                    isSlow: false),
+                    Tier.Fast),
                 new Level(
                     "claude",
-                    "Neural + belief endgames",
+                    "Human-style Master",
                     ClaudePlayerProfiles.CreateMaster,
-                    isSlow: false),
-                new Level("ismcts", "ClaudePlayerIsmcts", () => new ClaudePlayerIsmcts(), isSlow: true),
+                    Tier.Master),
+                new Level("ismcts", "ClaudePlayerIsmcts", () => new ClaudePlayerIsmcts(), Tier.Slow),
             };
 
             var n = levels.Length;
             var wins = new double[n, n];
             var games = new double[n, n];
             var pairScores = new double[n * n][];
-            Console.WriteLine($"ELO round robin of the app's levels, pair vs pair: {fastPairs} mirrored pairs a matchup ({slowPairs} with ISMCTS)");
+            Console.WriteLine($"ELO round robin of the app's levels, pair vs pair: {fastPairs} mirrored pairs a matchup ({masterPairs} with the Master, {slowPairs} with ISMCTS)");
             Console.WriteLine(new string('=', Program.LineLength));
 
             var total = Stopwatch.StartNew();
@@ -59,7 +68,8 @@
             {
                 for (var j = i + 1; j < n; j++)
                 {
-                    var pairs = levels[i].IsSlow || levels[j].IsSlow ? slowPairs : fastPairs;
+                    var tier = (Tier)Math.Max((int)levels[i].Tier, (int)levels[j].Tier);
+                    var pairs = tier == Tier.Slow ? slowPairs : tier == Tier.Master ? masterPairs : fastPairs;
                     var stopwatch = Stopwatch.StartNew();
                     var (winsI, scores) = PlayMirroredPairs(levels[i].Create, levels[j].Create, pairs, parallelism);
                     pairScores[(i * n) + j] = scores;
@@ -126,12 +136,12 @@
 
         private sealed class Level
         {
-            public Level(string id, string name, Func<IPlayer> create, bool isSlow)
+            public Level(string id, string name, Func<IPlayer> create, Tier tier)
             {
                 this.Id = id;
                 this.Name = name;
                 this.Create = create;
-                this.IsSlow = isSlow;
+                this.Tier = tier;
             }
 
             public string Id { get; }
@@ -140,7 +150,7 @@
 
             public Func<IPlayer> Create { get; }
 
-            public bool IsSlow { get; }
+            public Tier Tier { get; }
         }
     }
 }

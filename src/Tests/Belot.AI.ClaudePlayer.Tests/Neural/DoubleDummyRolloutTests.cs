@@ -138,7 +138,7 @@
             var simulator = new BelotSimulator();
             var deal = default(NeuralDeal);
             var values = new float[32];
-            foreach (var tricks in new[] { -1, 1, 4 })
+            foreach (var tricks in new[] { -1, 1, 6 })
             {
                 var search = new NeuralSearch { DoubleDummyTricks = tricks };
                 Assert.Throws<ArgumentOutOfRangeException>(() => search.Evaluate(null, in deal, 3, 4, evaluator, simulator, new Random(1), values));

@@ -230,6 +230,13 @@
         /// <summary>Gets or sets a value indicating whether the networks may double ("validate").</summary>
         public bool MayDouble { get; set; } = true;
 
+        /// <summary>
+        /// Gets or sets a value indicating whether every seat bids only natural contracts (see
+        /// NaturalBidding), in self-play and in evaluation. On by default, as the embedded networks
+        /// were fine-tuned for it; turn it off for the September 29 networks.
+        /// </summary>
+        public bool NaturalBidding { get; set; } = true;
+
         /// <summary>Gets or sets who bids for the networks in "validate": net, smart or ismcts (to judge the card play alone).</summary>
         public string Bidding { get; set; } = "net";
 

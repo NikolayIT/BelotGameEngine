@@ -21,8 +21,8 @@
         [InlineData(6)]
         public void PromotedMasterMatchesTheFrozenConfigurationAndPublicView(int contractIndex)
         {
-            var fromContext = ClaudePlayerProfiles.CreateMaster();
-            var fromView = ClaudePlayerProfiles.CreateMaster();
+            var fromContext = ClaudePlayerProfiles.CreateNeuralMaster();
+            var fromView = ClaudePlayerProfiles.CreateNeuralMaster();
             var reference = new ClaudePlayerNeural
             {
                 CardSuitEnsemble = true,

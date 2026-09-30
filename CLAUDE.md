@@ -11,8 +11,10 @@ core engine ships as the `BelotGameEngine` NuGet package. The repository's real 
 workflow" below, the single most important thing to understand about it), the much stronger
 search player `ClaudePlayerIsmcts` (see "ClaudePlayerIsmcts design"), and the neural player
 `ClaudePlayerNeural`, trained by reinforcement learning in self-play (see "ClaudePlayerNeural
-design" and `NEURAL_NETWORK.md`), measured in mirrored matches. People play them in the MAUI app
-for Android and Windows (see "The MAUI app"). The full rules are in `etc/Rules.md`.
+design" and `NEURAL_NETWORK.md`), measured in mirrored matches. The app's Master is that neural
+player with search in every trick and a strong human player's technique and conventions (see
+"The human-style Master" and `HUMAN_PLAY.md`). People play them in the MAUI app for Android and
+Windows (see "The MAUI app"). The full rules are in `etc/Rules.md`.
 
 ## Commands
 
@@ -44,16 +46,22 @@ dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimula
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- neural 500 100
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- neural-ab 5000 <folder> -
 
-# The app's levels (and ISMCTS for reference) in a pair-vs-pair round robin, printing the ratings
-# for Game/AiLevels.cs: elo [fast pairs] [ISMCTS pairs] (defaults 20000 and 150).
-# Master now belongs to the fast group; only ISMCTS uses the smaller matchup count.
+# The app's levels (and ISMCTS for reference) in a pair-vs-pair round robin,
+# printing the ratings for Game/AiLevels.cs: elo [fast pairs] [ISMCTS pairs] [Master pairs]
+# (defaults 20000, 150 and 3000: the Master searches in every trick, ISMCTS on every card).
 # The simulator writes UTF-16 to the console: pipe it through iconv -f UTF-16LE to grep it.
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- elo
 
 # Train the neural player's networks (tools/NeuralTrainer, not in the sln; see NEURAL_NETWORK.md):
-# distill | fit | train | validate | arena | bench, every setting as --name value
+# distill | fit | train | validate | arena | bench | audit | outcomes | equity, every setting as --name value
 dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- validate --in <folder> --opponent ismcts:100
 dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- arena --player fast --opponent belot206 --pairs 10000 --seed 611 --data artifacts/fast-206
+# Player names in arena/audit/bench: master, neural-master (Sept 29), fast, expert, smart, belot206,
+# ismcts:100, ...; "bidder|player" mixes one's bids with another's play; "profile+option=value+..."
+# changes settings (see OpponentCatalog.Modify), e.g. master+ms=40+worlds=256.
+# The audit flags human-obvious mistakes (with hindsight costs), the auction and the conventions;
+# --deals N prints N whole deals for reading.
+dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- audit --player master --opponent neural-master --pairs 300 --deals 5 --data artifacts/audit
 
 # The MAUI app (needs the MAUI workloads): run it on Windows, or build it for Android
 dotnet build src/UI/Belot.UI/Belot.UI.csproj -f net10.0-windows10.0.19041.0 -t:Run
@@ -234,7 +242,69 @@ games (+375 ELO, +64 points a game), and one of it with a SmartPlayer partner wi
   30 ms: 49%, and 84% vs 86.5% against SmartPlayer): the greedy rollout's judgement, not the
   number of deals searched, is the limit, so that is where the next gains are.
 
-## ClaudePlayerNeural design (the app's Master)
+## The human-style Master (the app's Master since September 30)
+
+`ClaudePlayerProfiles.CreateMaster()`; `HUMAN_PLAY.md` has the full account. People found the
+September 29 Master (now `CreateNeuralMaster`, below) foolish despite its ratings: it gave a ten
+to a trick the opponents were winning when a seven would do, and never signalled to its partner.
+The `audit` trainer command measured it (6.5-16.7 such "same-suit donations" per 1,000 decisions
+against 0 for Belot 2.06) and showed why: **exact ties** in the endgame solver (rounded game
+points; a decided contract makes every card equal) broken by the lowest card index (the nine
+and ten come before the king and ace), and **network noise** of a few tenths of a point in the
+first three tricks. What changed:
+
+- **`HumanStyle`**: among the cards valued within a tolerance of the best (0.3 game points for
+  network and rollout values, 0.02 for exact endgame values, 0.5 for a discard while the
+  opponents hold the trick) the player takes the one `Human/HumanPreference` prefers: points
+  given or won, what keeping a card is worth (masters, guards, trumps, belote pairs), smears
+  onto a partner's sure trick, discards from the suit with nothing in it (the signal), leads of
+  the partner's suit and never the one it threw away, trumps drawn by the declarers and not led
+  by the defenders, a belote declared. The preference alone plays only at SmartPlayer's level:
+  it must never overrule a real value difference (a wider 0.8 tolerance loses 9 Elo, a one-point
+  tolerance for leads 13 Elo). **`HumanDominance`** (on): before the exact endgames, in a trick
+  surely lost, never a card when a lower one of the same suit with no more points loses as well
+  (`HumanPreference.Dominated`); it removed the rollouts' noisy donations in tricks 1-3.
+- **`EndgameRawTieBreak`**: results equal in game points are ordered by raw card points
+  (1/1024 of a point each). **`EndgameSignalWeight`** 0.3: worlds where the partner holds an
+  honour of a suit it threw away count 0.3 times as much. **`DoubleMargin`** 2 (no cost).
+- **Strength: early-trick search.** In tricks 1-3 the network's best three cards within three
+  points (`SearchCandidateCards`/`Margin`) are played out in up to 32 ownership-weighted worlds
+  (`SearchOwnershipModel`), all seats by the network to the last five tricks, then solved exactly
+  (`SearchDoubleDummyTricks` 5, a transposition-table `EndgameSearch` leaf solver); 40 ms, at
+  least 12 deals. The candidate filter is essential: unfiltered it is 50.9%, uniform worlds 43.5%,
+  rollouts to the end ~ the network itself (they estimate what it already predicts). Later tricks
+  keep the belief-weighted five-trick endgame with 256 worlds, 1.5M nodes, 24 ms.
+- **Natural bidding** (`NaturalBidding`, `Human/NaturalBidding.cs`): the audit found the networks
+  had invented a private relay in self-play (30% of their suit bids held neither the suit's jack
+  nor its nine: clubs meant "strong hand", answered with no trumps or all trumps), useless or
+  harmful with a human partner. Only bids a person can read are allowed: a suit with its jack or
+  nine and another card, no trumps with an ace, all trumps with a jack. The embedded networks are
+  fine-tuned for it (`train --natural-bidding true`, 2.5 hours, every seat natural; ownership
+  refitted on the new self-play). All neural profiles that use them must set `NaturalBidding`:
+  the outputs of unnatural bids are no longer trained. With a natural partner (Belot 2.06
+  standing in for a person) the new networks' team beats the relay networks' team 62-64%.
+- Rejected (see `HUMAN_PLAY.md`): six-trick endgames, a network filter in the endgames (-15 Elo),
+  match-equity leaves (`PlayForMatch`, +4 +/- 4 Elo, not adopted), rollouts through trick 4.
+- **Validation** (fresh seeds, idle machine, mirrored whole matches): 51.71% +/- 0.41 pp against
+  the September 29 Master over 10,000 games (+12 Elo, although between bots the old networks'
+  relay still helps them); **64.8% +/- 0.6 pp (+106 Elo) when both teams have Belot 2.06 as the
+  partner**, the case of a person's partner; 63.6% against ISMCTS100 (the Sept 29 Master 62.0%),
+  79.5% against Belot 2.06, 90.4% SharpBelot, 93.7% SmartPlayer. The dominance rule costs
+  nothing (49.8% +/- 0.6 pp against the Master without it). The audit finds no unnatural bids
+  and no same-suit donations in tricks 1-3. Idle desktop timing: 13.1 ms a card on average,
+  p99 40 ms, maximum 44.5 ms; the wall-clock caps make slower phones search less, not longer.
+  Against the former 100-rollout Master: 60.8% +/- 1.7 pp (600 games).
+- **Deterministic hosts** (ednaigra.com level 6 runs `CreateMaster()` with
+  `EndgameTimeLimitMilliseconds = 0`) must now also set `SearchTimeLimitMilliseconds = 0`:
+  fixed work then decides the same from a context and a view (`HumanMasterTests`) and takes
+  14.2 ms a card on average, p99 41 ms, maximum 65 ms (idle desktop; Sept 29 Master ~1.5 ms).
+- **Checks** (September 30): 391 AI, 746 engine and 287 UI tests pass; Windows and Android
+  Release builds have zero warnings and errors; the 32 changed C# files have UTF-8 BOM and
+  CRLF. The engine's source and NuGet API are unchanged.
+- The Expert (`CreateExpert`) is the fast profile with the human style and a 5-point tolerance:
+  weaker, never absurd, no random choices. Hints use the fast profile with the human style.
+
+## ClaudePlayerNeural design (the September 29 Master, now `CreateNeuralMaster`)
 
 `AI/Belot.AI.ClaudePlayer/ClaudePlayerNeural.cs` and `Neural/`; see
 `NEURAL_NETWORK.md` for training and promotion history, and `FAST_BOT_EXPERIMENT.md`
@@ -251,12 +321,17 @@ previous fast profile over 10,000 games**. Its idle 100-game benchmark has a
 1.449-ms card mean, 6.083-ms p99, 8.006-ms observed maximum and no callback above
 10 ms. This is a measured desktop result, not a hard real-time guarantee.
 
-The four actor files remain unchanged; their pure policy still uses one forward
-pass by default. `CreateFast` and hints retain three-trick/90-world endings;
-Expert adds temperature 1.5 and maximum regret 4. `CreateRolloutMaster` preserves
-the previous 100-rollout/400-ms profile. The three checked CE12 ownership files
-are embedded under `Neural/Weights/Ownership/`; all seven files total 3,523,482
-bytes. Ownership inputs are public, and actor feature layout remains 1.
+On September 29 these were the embedded files. **Since September 30 the embedded
+actor networks are their natural-bidding fine-tune and the ownership networks were
+refitted on natural-bidding self-play** (see the human-style Master above and
+`HUMAN_PLAY.md`); the September 29 files are frozen under
+`artifacts/natural-20260930/sept29-weights` and `sept29-ownership` (local, not in git),
+and the trainer rebuilds that Master exactly with `--opponent neural-master+own=<sept29-ownership>
+--opponent-in <sept29-weights>`. `CreateNeuralMaster` keeps its configuration on the current
+networks. `CreateFast` and hints retain three-trick/90-world endings.
+`CreateRolloutMaster` preserves the previous 100-rollout/400-ms profile. All seven
+embedded files total 3,523,482 bytes. Ownership inputs are public, and actor feature
+layout remains 1.
 
 The final September 29 `elo 20000 60` calibration completed 400,600 games in
 1:03:02. Master is 1838 +/- 2.5, Expert 1611 +/- 2.2 and Skilled 1462 +/- 1.7,
@@ -385,11 +460,11 @@ Android and Windows (`net10.0-android`; `net10.0-windows10.0.19041.0` only when 
 Windows), modelled file for file on the Santase engine's `Santase.UI`. The person plays South and
 picks the level of each other seat separately: the partner (North) and the rivals West (on the
 left) and East (on the right), from `Game/AiLevels.cs`: Random (`RandomPlayer`), Beginner
-(`DummyPlayer`), Skilled (`SmartPlayer`), Expert (`ClaudePlayerNeural` played loose,
-`Temperature` 1.5, `MaxRegret` 4, plus the validated bounded endgames) and Master
-(`ClaudePlayerProfiles.CreateMaster()`, with learned ownership and an 8-ms
-five-trick endgame budget). Hints use
-`AiLevels.CreateFastPlayer()`, the unrestricted neural/endgame profile. The Master keeps the id
+(`DummyPlayer`), Skilled (`SmartPlayer`), Expert (`ClaudePlayerProfiles.CreateExpert()`: the
+network with bounded endgames choosing the most natural card within 5 game points of the best)
+and Master (`ClaudePlayerProfiles.CreateMaster()`, the human-style Master above: early-trick
+rollouts in 40 ms and belief-weighted endgames in 24 ms). Hints use
+`AiLevels.CreateFastPlayer()`, the human-style neural/endgame profile. The Master keeps the id
 `claude` it had as ClaudePlayerIsmcts, so people's history and records carry over. The app
 references the three AI projects, so an `IPlayer` break in any of them breaks the app build too.
 
@@ -472,19 +547,16 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   average of their two levels (`Lineup.RivalsElo`). The levels' ratings in `AiLevels` are pair
   ratings from the simulator's `elo` suite (`EloTournament`: two of a level against two of
   another in mirrored pairs, a Bradley-Terry fit anchored at Dummy = 1200; ClaudePlayerIsmcts
-  plays too, for reference). Latest run (September 29, 2026, belief5-v2-ensemble,
-  `elo 20000 60`, 1:03:02, 400,600 games): Random 669 +/- 3.0,
-  Beginner 1200 (fixed anchor), Skilled 1462 +/- 1.7, Expert 1611 +/- 2.2,
-  Master 1838 +/- 2.5, and ClaudePlayerIsmcts 1758 +/- 17.7. Errors are one standard
-  deviation from 1,000 shared-seed mirrored-pair bootstrap samples. Fast levels each played
-  160,120 games, including Master; ISMCTS played 600 (120 per matchup). Fast matchups
-  use 20,000 pairs / 40,000 games; only ISMCTS matchups use 60 pairs / 120 games.
-  The local log and frozen-run manifest are `artifacts/fast-bot-20260928/final-elo.log`
-  and `artifacts/fast-bot-20260928/final-elo-manifest.json`; section 16 of
-  `NEURAL_NETWORK.md` gives the exact
-  command with UTF-16LE conversion through `iconv`. Re-run the suite
-  and re-paste ratings if the players change. Expert retains temperature 1.5 /
-  MaxRegret 4 after this check: its measured rating lies between Skilled and Master.
+  plays too, for reference). Latest run (September 30, 2026, human-style Expert and Master,
+  `elo 20000 60 3000`, 1:26:04): Random 646 +/- 3.2, Beginner 1200 (fixed anchor),
+  Skilled 1490 +/- 1.9, Expert 1647 +/- 2.5, Master 1886 +/- 4.6, and ClaudePlayerIsmcts
+  1786 +/- 17.6. Errors are one standard deviation from 1,000 shared-seed mirrored-pair
+  bootstrap samples. Fast matchups use 20,000 pairs / 40,000 games (the fast levels each
+  played 126,120 games), the Master's 3,000 pairs / 6,000 games (24,120 in all: it searches in
+  every trick) and ISMCTS's 60 pairs / 120 games (600). The local log is
+  `artifacts/natural-20260930/final-elo.log`; the previous run (September 29, Master 1838)
+  and its method are in section 16 of `NEURAL_NETWORK.md`, with the UTF-16LE conversion
+  through `iconv`. Re-run the suite and re-paste ratings if the players change.
 - **`src/Tests/Belot.UI.Tests`** compiles those files and plays whole games on a UI-like
   single-threaded `SynchronizationContext`: `ActReplayTests` (every act of 300 engine matches
   replays into exactly `GetRecord()`), `GameSessionTests` (every level, the table's event order,

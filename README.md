@@ -29,6 +29,10 @@ level on the device.
 - `ClaudePlayerNeural`: neural networks trained by reinforcement learning in self-play, which
   value every bid and every card. Alone they tie ClaudePlayerIsmcts at about 10 µs a decision;
   with a small search on top (`SearchDeals`) they beat it. See [NEURAL_NETWORK.md](NEURAL_NETWORK.md).
+- The app's Master (`ClaudePlayerProfiles.CreateMaster`): the networks with search in every trick
+  and a strong human player's technique and conventions (it bids naturally, keeps its high cards,
+  signals to its partner and reads its partner's signals); it beats every other bot here. See
+  [HUMAN_PLAY.md](HUMAN_PLAY.md).
 
 ## Build status
 

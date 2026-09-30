@@ -32,7 +32,22 @@
         private readonly double[] neuralDifferenceSquares = new double[FeatureEncoder.CardOutputs];
         private readonly double[] residualDifferenceSums = new double[FeatureEncoder.CardOutputs];
         private readonly double[] residualDifferenceSquares = new double[FeatureEncoder.CardOutputs];
+        private readonly float[] ownershipWeights = new float[CardOwnershipModel.Outputs];
         private DeclaredWorldSampler declaredSampler;
+        private WeightedWorldSampler weightedSampler;
+        private bool weighted;
+        private uint searched;
+
+        /// <summary>
+        /// Gets or sets the card ownership model that weights the worlds (null deals the unseen
+        /// cards uniformly): its predictions, from the auction and the play, make the likely hands
+        /// likelier, as the endgame's worlds are.
+        /// </summary>
+        public CardOwnershipModel.Evaluator Ownership { get; set; }
+
+        public double OwnershipPower { get; set; } = 1;
+
+        public double OwnershipUniformMix { get; set; } = 0.1;
 
         /// <summary>
         /// Gets or sets a value indicating whether worlds after the first trick are uniform
@@ -75,6 +90,24 @@
         /// near the end. This is an approximate imperfect-information evaluator, not a Q bootstrap.
         /// </summary>
         public int DoubleDummyTricks { get; set; }
+
+        /// <summary>Gets or sets the solver of the double-dummy leaves (null: plain minimax, fine for two or three tricks).</summary>
+        public EndgameSearch LeafSolver { get; set; }
+
+        /// <summary>
+        /// Gets or sets how many of the cards the network values best are played out (0: all);
+        /// the others keep the network's value less a thousand points, so they are never chosen.
+        /// </summary>
+        public int CandidateCards { get; set; }
+
+        /// <summary>Gets or sets how far below the network's best a card may be and still be played out (0: no limit).</summary>
+        public double CandidateMargin { get; set; }
+
+        /// <summary>
+        /// Gets or sets the suit ensemble that values the cards for the candidates and the prior
+        /// (null: one forward pass); the rollouts themselves always use the plain network.
+        /// </summary>
+        public SuitEnsembleEvaluator PriorEnsemble { get; set; }
 
         public int DoubleDummyLeaves { get; private set; }
 
@@ -146,9 +179,9 @@
                 throw new ArgumentOutOfRangeException(nameof(this.RolloutTricks), "Rollout tricks must be between zero and eight.");
             }
 
-            if (this.DoubleDummyTricks != 0 && this.DoubleDummyTricks != 2 && this.DoubleDummyTricks != 3)
+            if (this.DoubleDummyTricks != 0 && (this.DoubleDummyTricks < 2 || this.DoubleDummyTricks > 5))
             {
-                throw new ArgumentOutOfRangeException(nameof(this.DoubleDummyTricks), "Double-dummy tricks must be zero, two or three.");
+                throw new ArgumentOutOfRangeException(nameof(this.DoubleDummyTricks), "Double-dummy tricks must be zero or two to five.");
             }
 
             if (this.DoubleDummyTricks > 0 && (this.RolloutTricks > 0 || this.ControlVariateDeals > 0 || this.PruneMargin > 0))
@@ -197,6 +230,22 @@
                 return false;
             }
 
+            this.weighted = false;
+            if (!conditionDeclarations && this.Ownership != null && this.OwnershipPower > 0)
+            {
+                this.Ownership.Evaluate(in deal, legal, this.ownershipWeights, context);
+                for (var i = 0; i < this.ownershipWeights.Length; i++)
+                {
+                    this.ownershipWeights[i] = (float)Math.Pow(
+                        (this.OwnershipUniformMix / 3) + ((1 - this.OwnershipUniformMix) * this.ownershipWeights[i]),
+                        this.OwnershipPower);
+                }
+
+                this.weightedSampler ??= new WeightedWorldSampler();
+                this.weighted = this.weightedSampler.Configure(this.knowledge, this.ownershipWeights);
+            }
+
+            this.searched = legal;
             if (this.ControlVariateDeals > 0)
             {
                 this.EvaluateControlVariate(in deal, legal, deals, evaluator, simulator, random, cardValues);
@@ -204,15 +253,24 @@
             }
 
             var team = deal.Play.Turn & 1;
+            this.LeafSolver?.BeginWorlds(simulator, team, context);
             var lastTrick = this.RolloutTricks == 0 ? 8 : Math.Min(8, deal.Play.TricksPlayed + this.RolloutTricks);
             Array.Clear(this.sums);
             Array.Clear(this.counts);
-            if (this.PriorDeals > 0)
+            if (this.PriorDeals > 0 || this.CandidateCards > 0 || this.CandidateMargin > 0)
             {
-                evaluator.EvaluateCards(in deal, legal, this.prior);
+                if (this.PriorEnsemble != null)
+                {
+                    this.PriorEnsemble.EvaluateCards(in deal, legal, evaluator, this.prior);
+                }
+                else
+                {
+                    evaluator.EvaluateCards(in deal, legal, this.prior);
+                }
             }
 
-            var playing = legal;
+            var playing = this.CandidateCards > 0 || this.CandidateMargin > 0 ? this.Candidates(legal) : legal;
+            this.searched = playing;
             var start = Stopwatch.GetTimestamp();
             var limit = (long)this.TimeLimitMilliseconds * Stopwatch.Frequency / 1000L;
             var proposalLimit = (int)Math.Min(100000L, Math.Max(64L, 64L * deals));
@@ -253,6 +311,10 @@
                     {
                         break;
                     }
+                }
+                else if (this.weighted)
+                {
+                    this.weightedSampler.Sample(ref state, random);
                 }
                 else
                 {
@@ -316,11 +378,15 @@
                     if (copy.IsFinished)
                     {
                         copy.Score(simulator, out var southNorth, out var eastWest, out _);
-                        this.sums[card] += team == 0 ? southNorth - eastWest : eastWest - southNorth;
+                        this.sums[card] += this.LeafSolver != null
+                            ? this.LeafSolver.FinishedValue(southNorth, eastWest, copy.Play.SouthNorthTricks == 0 || copy.Play.EastWestTricks == 0)
+                            : team == 0 ? southNorth - eastWest : eastWest - southNorth;
                     }
                     else if (this.DoubleDummyTricks > 0)
                     {
-                        this.sums[card] += EndgameSearch.Solve(in copy.Play, simulator, team, copy.SouthNorthAnnounces, copy.EastWestAnnounces);
+                        this.sums[card] += this.LeafSolver != null
+                            ? this.LeafSolver.SolveWorld(in copy.Play, copy.SouthNorthAnnounces, copy.EastWestAnnounces)
+                            : EndgameSearch.Solve(in copy.Play, simulator, team, copy.SouthNorthAnnounces, copy.EastWestAnnounces);
                         this.DoubleDummyLeaves++;
                     }
                     else
@@ -466,12 +532,48 @@
             }
         }
 
+        // The best cards by the network's values: at most CandidateCards, within CandidateMargin.
+        private uint Candidates(uint legal)
+        {
+            var best = NeuralEvaluator.Best(this.prior, legal);
+            var chosen = 1u << best;
+            var limit = this.CandidateCards > 0 ? this.CandidateCards : 32;
+            while (BitOperations.PopCount(chosen) < limit)
+            {
+                var next = -1;
+                for (var rest = legal & ~chosen; rest != 0; rest &= rest - 1)
+                {
+                    var card = BitOperations.TrailingZeroCount(rest);
+                    if ((this.CandidateMargin <= 0 || this.prior[card] >= this.prior[best] - this.CandidateMargin)
+                        && (next < 0 || this.prior[card] > this.prior[next]))
+                    {
+                        next = card;
+                    }
+                }
+
+                if (next < 0)
+                {
+                    break;
+                }
+
+                chosen |= 1u << next;
+            }
+
+            return chosen;
+        }
+
         // Each card's average so far, the network's value counted as PriorDeals deals.
         private void Averages(uint legal, float[] cardValues)
         {
             for (var rest = legal; rest != 0; rest &= rest - 1)
             {
                 var card = BitOperations.TrailingZeroCount(rest);
+                if ((this.searched & (1u << card)) == 0)
+                {
+                    cardValues[card] = this.prior[card] - 1000;
+                    continue;
+                }
+
                 var weight = this.PriorDeals > 0 ? this.PriorDeals : 0;
                 var total = this.sums[card] + (weight * this.prior[card]);
                 cardValues[card] = (float)(total / Math.Max(1e-9, this.counts[card] + weight));

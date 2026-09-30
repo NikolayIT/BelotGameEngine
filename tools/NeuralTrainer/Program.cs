@@ -68,6 +68,15 @@
                 case "bench":
                     Bench(settings);
                     break;
+                case "outcomes":
+                    Outcomes.Run(settings);
+                    break;
+                case "equity":
+                    Equity();
+                    break;
+                case "audit":
+                    Audit.Run(settings);
+                    break;
                 default:
                     Console.WriteLine($"Unknown command {args[0]}.");
                     return 1;
@@ -81,9 +90,25 @@
             return settings.Player.ToLowerInvariant() switch
             {
                 "candidate" or "neural" => OpponentCatalog.Configured(settings, models, seed),
-                "master" or "rollout-master" or "fast" or "expert" => (ClaudePlayerNeural)OpponentCatalog.Factory(settings.Player, models)(seed),
-                _ => throw new ArgumentException($"Unknown benchmark player '{settings.Player}'. Use candidate, neural, master, rollout-master, fast or expert.", nameof(settings)),
+                _ => OpponentCatalog.Factory(settings.Player, models)(seed) as ClaudePlayerNeural
+                     ?? throw new ArgumentException($"Unknown benchmark player '{settings.Player}'. Use candidate, neural or a neural profile.", nameof(settings)),
             };
+        }
+
+        // The embedded match equity table: how long it takes to build and some of its values.
+        private static void Equity()
+        {
+            var clock = Stopwatch.StartNew();
+            var equity = Belot.AI.ClaudePlayer.Search.MatchEquity.Embedded;
+            Console.WriteLine($"built in {clock.Elapsed.TotalMilliseconds:0} ms");
+            var scores = new[] { 0, 50, 100, 120, 130, 140, 145, 150 };
+            Console.WriteLine("ours \\ theirs " + string.Join(string.Empty, scores.Select(x => $"{x,7}")));
+            foreach (var ours in scores)
+            {
+                Console.WriteLine($"{ours,14} " + string.Join(string.Empty, scores.Select(theirs => $"{equity.Win(ours, theirs),7:0.000}")));
+            }
+
+            Console.WriteLine($"points per match at 0-0: {equity.PointsPerEquity(0, 0):0}, at 100-100: {equity.PointsPerEquity(100, 100):0}, at 140-140: {equity.PointsPerEquity(140, 140):0}");
         }
 
         // Two of the networks against two of the opponent, in mirrored pairs of games.

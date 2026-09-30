@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Numerics;
 
+    using Belot.AI.ClaudePlayer.Human;
     using Belot.AI.ClaudePlayer.Neural;
     using Belot.AI.ClaudePlayer.Search;
     using Belot.AI.SmartPlayer;
@@ -34,7 +35,10 @@
         private readonly EndgameSearch endgame = new EndgameSearch();
         private readonly float[] cardValues = new float[FeatureEncoder.CardOutputs];
         private readonly float[] bidValues = new float[FeatureEncoder.BidOutputs];
+        private readonly float[] preferences = new float[FeatureEncoder.CardOutputs];
+        private readonly float[] networkValues = new float[FeatureEncoder.CardOutputs];
         private LateCardCorrectionModel.Evaluator lateCorrection;
+        private bool lastRollout;
         private SuitEnsembleEvaluator suitEnsemble;
 
         /// <summary>
@@ -80,6 +84,21 @@
 
         /// <summary>Gets or sets a value indicating whether the player may double and redouble.</summary>
         public bool MayDouble { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets how many game points a double or redouble must be worth over every other
+        /// bid before the player makes it (0, the default, takes it whenever it is the best).
+        /// </summary>
+        public double DoubleMargin { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the player bids only what a person would read
+        /// its bids as (see <see cref="Human.NaturalBidding"/>): a suit with its jack or nine and
+        /// another card of it, no trumps with an ace, all trumps with a jack. On by default: the
+        /// embedded networks were fine-tuned for it and no longer value the other bids. Turn it
+        /// off only for networks trained without it (the September 29 files).
+        /// </summary>
+        public bool NaturalBidding { get; set; } = true;
 
         /// <summary>
         /// Gets or sets a value indicating whether ordinary card values average every suit
@@ -223,7 +242,45 @@
         public int SearchDoubleDummyTricks
         {
             get => this.search.DoubleDummyTricks;
-            set => this.search.DoubleDummyTricks = value == 0 || value == 2 || value == 3 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+            set
+            {
+                this.search.DoubleDummyTricks = value == 0 || (value >= 2 && value <= 5) ? value : throw new ArgumentOutOfRangeException(nameof(value));
+                this.search.LeafSolver = value > 3 ? new EndgameSearch { UseTranspositions = true, PruneEquivalentCards = true, Equity = this.endgame.Equity } : null;
+            }
+        }
+
+        /// <summary>Gets or sets how many of the network's best cards the rollouts play out (0: all legal cards).</summary>
+        public int SearchCandidateCards
+        {
+            get => this.search.CandidateCards;
+            set => this.search.CandidateCards = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Gets or sets how far below the network's best a card may be and still be played out (0: no limit).</summary>
+        public double SearchCandidateMargin
+        {
+            get => this.search.CandidateMargin;
+            set => this.search.CandidateMargin = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>
+        /// Gets or sets how many of the network's best cards an endgame decision may choose from (0: all):
+        /// the solver's perfect-information values can favour a card only because every world is
+        /// solved knowing the others' hands, and the network's ranking keeps such cards out.
+        /// </summary>
+        public int EndgameCandidateCards { get; set; }
+
+        /// <summary>Gets or sets how far below the network's best a card may be and still be chosen by the endgame (0: no limit).</summary>
+        public double EndgameCandidateMargin { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the rollouts choose their candidate cards by the
+        /// suit-ensemble values (see <see cref="CardSuitEnsemble"/>) instead of one forward pass.
+        /// </summary>
+        public bool SearchEnsembleCandidates
+        {
+            get => this.search.PriorEnsemble != null;
+            set => this.search.PriorEnsemble = value ? new SuitEnsembleEvaluator() : null;
         }
 
         /// <summary>Gets or sets whether rollouts after the first trick condition on all declared combinations.</summary>
@@ -267,6 +324,78 @@
             set => this.search.PruneMargin = value;
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the player chooses among nearly equal cards the
+        /// way a strong human would (<see cref="HumanPreference"/>): by the points, the masters,
+        /// the trumps and the conventions of the game, instead of by the noise of a network or the
+        /// order of the cards. Off by default. Values within <see cref="HumanNetworkTolerance"/>
+        /// of the best (network values) or <see cref="HumanSearchTolerance"/> (searched values)
+        /// count as equal.
+        /// </summary>
+        public bool HumanStyle { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether a human-style player, before its exact endgames,
+        /// never plays a card <see cref="HumanPreference.Dominated"/> excludes (on by default).
+        /// </summary>
+        public bool HumanDominance { get; set; } = true;
+
+        /// <summary>Gets or sets how many game points below the best network value a card may be and still count as equal.</summary>
+        public double HumanNetworkTolerance { get; set; } = 0.3;
+
+        /// <summary>Gets or sets how many game points below the best searched value a card may be and still count as equal.</summary>
+        public double HumanSearchTolerance { get; set; } = 0.02;
+
+        /// <summary>Gets or sets how many game points below the best rollout value (<see cref="SearchDeals"/>) a card may be and still count as equal.</summary>
+        public double HumanRolloutTolerance { get; set; } = 0.3;
+
+        /// <summary>
+        /// Gets or sets how many game points below the best a card thrown away while the
+        /// opponents hold the trick may be and still count as equal: the partner reads the suit
+        /// thrown (see <see cref="EndgameSignalWeight"/>), so the convention is worth a little.
+        /// </summary>
+        public double HumanDiscardTolerance { get; set; } = 0.02;
+
+        /// <summary>
+        /// Gets or sets how many game points below the best a lead may be and still count as equal:
+        /// leading the suit the partner asked for, and not the one it threw away, reads its signals.
+        /// </summary>
+        public double HumanLeadTolerance { get; set; } = 0.02;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the searches value a finished deal by the chance
+        /// it leaves to win the match (<see cref="MatchEquity"/>) instead of its game points.
+        /// </summary>
+        public bool PlayForMatch
+        {
+            get => this.endgame.Equity != null;
+            set
+            {
+                this.endgame.Equity = value ? MatchEquity.Embedded : null;
+                if (this.search.LeafSolver != null)
+                {
+                    this.search.LeafSolver.Equity = this.endgame.Equity;
+                }
+            }
+        }
+
+        /// <summary>Gets or sets the endgame trust in the partner's discards (see <see cref="EndgameSearch.PartnerSignalWeight"/>).</summary>
+        public double EndgameSignalWeight
+        {
+            get => this.endgame.PartnerSignalWeight;
+            set => this.endgame.PartnerSignalWeight = value;
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether endgame results equal in game points are ordered
+        /// by the raw card points each team takes (see <see cref="EndgameSearch.RawTieBreak"/>).
+        /// </summary>
+        public bool EndgameRawTieBreak
+        {
+            get => this.endgame.RawTieBreak;
+            set => this.endgame.RawTieBreak = value;
+        }
+
         /// <summary>Gets how many decisions fell back to SmartPlayer (a context that did not add up).</summary>
         public int Fallbacks { get; private set; }
 
@@ -280,6 +409,12 @@
         internal CardOwnershipModel EndgameOwnershipModel
         {
             set => this.endgame.Ownership = value?.CreateEvaluator();
+        }
+
+        /// <summary>Sets the ownership model that weights the rollout worlds of <see cref="SearchDeals"/> (null: uniform).</summary>
+        internal CardOwnershipModel SearchOwnershipModel
+        {
+            set => this.search.Ownership = value?.CreateEvaluator();
         }
 
         internal double EndgameOwnershipPower
@@ -328,6 +463,25 @@
 
             this.evaluator.EvaluateBids(in deal, this.bidValues);
             var available = this.MayDouble ? context.AvailableBids : context.AvailableBids & ~(BidType.Double | BidType.ReDouble);
+            if (this.NaturalBidding)
+            {
+                available &= Human.NaturalBidding.Allowed(deal.Play.Hands[deal.ToBid]);
+            }
+
+            if (this.DoubleMargin > 0 && (available & (BidType.Double | BidType.ReDouble)) != 0)
+            {
+                // Double or redouble only when it is clearly better than every other bid, as people do.
+                var others = NeuralEvaluator.BidCandidates(available & ~(BidType.Double | BidType.ReDouble));
+                var best = this.bidValues[NeuralEvaluator.Best(this.bidValues, others)];
+                foreach (var doubling in new[] { BidType.Double, BidType.ReDouble })
+                {
+                    if (available.HasFlag(doubling) && this.bidValues[FeatureEncoder.BidIndex(doubling)] < best + this.DoubleMargin)
+                    {
+                        available &= ~doubling;
+                    }
+                }
+            }
+
             return FeatureEncoder.BidOfIndex(this.Choose(this.bidValues, NeuralEvaluator.BidCandidates(available)));
         }
 
@@ -341,13 +495,26 @@
                 return new PlayCardAction(available.FirstOrDefault());
             }
 
-            if (!this.Evaluate(context, out var legal))
+            if (!this.Evaluate(context, out var legal, out var deal, out var searched))
             {
                 this.Fallbacks++;
                 return this.smartPlayer.PlayCard(context);
             }
 
-            return new PlayCardAction(Card.AllCards[this.Choose(this.cardValues, legal)]);
+            // A human-style player plays its cards like a person even when it plays loose (the
+            // Expert): the temperature then only varies its bids. Before the exact endgames
+            // (network or rollout values) it never gives away a card a person would keep.
+            var choices = legal;
+            if (this.HumanStyle && this.HumanDominance && (!searched || this.lastRollout))
+            {
+                var dominated = HumanPreference.Dominated(in deal, legal);
+                choices = dominated != legal ? legal & ~dominated : legal;
+            }
+
+            var card = this.HumanStyle
+                ? this.ChooseLikeHuman(context, in deal, choices, this.Tolerance(in deal, legal, searched, searched && this.lastRollout))
+                : this.Choose(this.cardValues, legal);
+            return new PlayCardAction(Card.AllCards[card]);
         }
 
         /// <summary>
@@ -356,7 +523,7 @@
         /// </summary>
         public IReadOnlyList<CardValue> EvaluateCards(PlayerPlayCardContext context)
         {
-            if (!this.Evaluate(context, out var legal))
+            if (!this.Evaluate(context, out var legal, out _, out _))
             {
                 throw new ArgumentException("The context does not add up.", nameof(context));
             }
@@ -373,8 +540,9 @@
         }
 
         /// <summary>
-        /// Values every bid open to the player, best first: the game points its team gets from
-        /// the deal minus the other team's, if it makes that bid.
+        /// Values every bid open to the player (with <see cref="NaturalBidding"/>, the natural
+        /// ones), best first: the game points its team gets from the deal minus the other team's,
+        /// if it makes that bid.
         /// </summary>
         public IReadOnlyList<BidValue> EvaluateBids(PlayerGetBidContext context)
         {
@@ -384,7 +552,8 @@
             }
 
             this.evaluator.EvaluateBids(in deal, this.bidValues);
-            var candidates = NeuralEvaluator.BidCandidates(context.AvailableBids);
+            var available = this.NaturalBidding ? context.AvailableBids & Human.NaturalBidding.Allowed(deal.Play.Hands[deal.ToBid]) : context.AvailableBids;
+            var candidates = NeuralEvaluator.BidCandidates(available);
             var result = new List<BidValue>(BitOperations.PopCount(candidates));
             for (var rest = candidates; rest != 0; rest &= rest - 1)
             {
@@ -408,10 +577,12 @@
         {
         }
 
-        private bool Evaluate(PlayerPlayCardContext context, out uint legal)
+        private bool Evaluate(PlayerPlayCardContext context, out uint legal, out NeuralDeal deal, out bool searched)
         {
             legal = NeuralDeal.ToMask(context.AvailableCardsToPlay);
-            if (!NeuralDeal.FromPlayContext(context, this.simulator, out var deal)
+            searched = false;
+            this.lastRollout = false;
+            if (!NeuralDeal.FromPlayContext(context, this.simulator, out deal)
                 || this.simulator.LegalMoves(in deal.Play) != legal)
             {
                 return false;
@@ -432,6 +603,12 @@
                 if (solved)
                 {
                     this.EndgameDecisions++;
+                    searched = true;
+                    if (this.EndgameCandidateCards > 0 || this.EndgameCandidateMargin > 0)
+                    {
+                        this.KeepNetworkCandidates(in deal, legal);
+                    }
+
                     return true;
                 }
             }
@@ -441,6 +618,8 @@
             {
                 this.SearchNeuralVariance += this.search.NeuralDifferenceVariance;
                 this.SearchResidualVariance += this.search.ResidualDifferenceVariance;
+                searched = true;
+                this.lastRollout = true;
                 return true;
             }
 
@@ -456,6 +635,97 @@
 
             this.lateCorrection?.Apply(in deal, legal, this.cardValues);
             return true;
+        }
+
+        // Values the cards the network ranks outside its best (by count and margin) far below the others.
+        private void KeepNetworkCandidates(in NeuralDeal deal, uint legal)
+        {
+            this.evaluator.EvaluateCards(in deal, legal, this.networkValues);
+            var best = NeuralEvaluator.Best(this.networkValues, legal);
+            var kept = 1u << best;
+            var limit = this.EndgameCandidateCards > 0 ? this.EndgameCandidateCards : 32;
+            while (BitOperations.PopCount(kept) < limit)
+            {
+                var next = -1;
+                for (var rest = legal & ~kept; rest != 0; rest &= rest - 1)
+                {
+                    var card = BitOperations.TrailingZeroCount(rest);
+                    if ((this.EndgameCandidateMargin <= 0 || this.networkValues[card] >= this.networkValues[best] - this.EndgameCandidateMargin)
+                        && (next < 0 || this.networkValues[card] > this.networkValues[next]))
+                    {
+                        next = card;
+                    }
+                }
+
+                if (next < 0)
+                {
+                    break;
+                }
+
+                kept |= 1u << next;
+            }
+
+            for (var rest = legal & ~kept; rest != 0; rest &= rest - 1)
+            {
+                this.cardValues[BitOperations.TrailingZeroCount(rest)] -= 1000;
+            }
+        }
+
+        // How close to the best a card must be valued to count as equal: a lead or a discard while
+        // the opponents hold the trick is a signal, so the convention may cost a little there.
+        private double Tolerance(in NeuralDeal deal, uint legal, bool searched, bool rolledOut)
+        {
+            var tolerance = rolledOut ? this.HumanRolloutTolerance : searched ? this.HumanSearchTolerance : this.HumanNetworkTolerance;
+            ref readonly var play = ref deal.Play;
+            if (play.TrickCards == 0)
+            {
+                return Math.Max(tolerance, this.HumanLeadTolerance);
+            }
+
+            if (((play.WinnerSeat ^ play.Turn) & 1) != 0
+                && (legal & SimTables.SuitMasks[play.LedSuit]) == 0
+                && (deal.Kind >= SimTables.NoTrumps || (legal & SimTables.SuitMasks[deal.Kind]) != legal))
+            {
+                tolerance = Math.Max(tolerance, this.HumanDiscardTolerance);
+            }
+
+            return tolerance;
+        }
+
+        // Among the cards valued within the tolerance of the best, the one a strong human prefers.
+        private int ChooseLikeHuman(PlayerPlayCardContext context, in NeuralDeal deal, uint legal, double tolerance)
+        {
+            var best = NeuralEvaluator.Best(this.cardValues, legal);
+            var floor = this.cardValues[best] - tolerance;
+            var near = 0u;
+            for (var rest = legal; rest != 0; rest &= rest - 1)
+            {
+                var card = BitOperations.TrailingZeroCount(rest);
+                if (this.cardValues[card] >= floor)
+                {
+                    near |= 1u << card;
+                }
+            }
+
+            if ((near & (near - 1)) == 0)
+            {
+                return best;
+            }
+
+            var signals = PlaySignals.Read(context.RoundActions, deal.Kind);
+            HumanPreference.Score(in deal, in signals, near, this.preferences);
+            var choice = best;
+            for (var rest = near; rest != 0; rest &= rest - 1)
+            {
+                var card = BitOperations.TrailingZeroCount(rest);
+                if (this.preferences[card] > this.preferences[choice]
+                    || (this.preferences[card] == this.preferences[choice] && this.cardValues[card] > this.cardValues[choice]))
+                {
+                    choice = card;
+                }
+            }
+
+            return choice;
         }
 
         // The best candidate, or with a temperature a random one near it.

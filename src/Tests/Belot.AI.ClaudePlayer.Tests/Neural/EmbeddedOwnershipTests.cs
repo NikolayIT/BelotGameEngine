@@ -30,10 +30,10 @@
         }
 
         [Theory]
-        [InlineData("trump.bin", 11, "20D7BEC4D4BF20F8FEEBDA74D3AD40A422CC50C8342FE3131E352A8B678D6239")]
-        [InlineData("notrumps.bin", 12, "1CA6B99A48A163F3B36BBE2F89EF0B8EC54B5AD787D30BFAA4074B00666463CC")]
-        [InlineData("alltrumps.bin", 13, "57F12BCA5A310EC1985880F196BF6B7F3D8722789ED1C1BFE2124550FF4D8F1C")]
-        public void ResourcesAreTheExactCheckedCe12Exports(string name, int tag, string expectedHash)
+        [InlineData("trump.bin", 11, "FC3AE184C8DCD88F36CE4604EE508E66192F697327A20A9FE6D6464E5EE98F77")]
+        [InlineData("notrumps.bin", 12, "193C2C8B0F02B4E95A47FA2887C2B9CBEFA505775F099D1A01ECC1412844CC67")]
+        [InlineData("alltrumps.bin", 13, "0C4C4F84603861A816E9906ACB3CAA1A2F9257939A4C4E30F3516DF7255E8A9E")]
+        public void ResourcesAreTheExactCheckedNaturalBiddingExports(string name, int tag, string expectedHash)
         {
             using var stream = typeof(CardOwnershipModel).Assembly.GetManifestResourceStream(
                 "Belot.AI.ClaudePlayer.Neural.Weights.Ownership." + name);

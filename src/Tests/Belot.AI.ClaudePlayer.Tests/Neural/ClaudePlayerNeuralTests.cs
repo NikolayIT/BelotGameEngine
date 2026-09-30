@@ -36,7 +36,7 @@
         [Fact]
         public void ValuesEveryActionAndTakesTheBest()
         {
-            var player = new ClaudePlayerNeural(RandomModels.Create(2));
+            var player = new ClaudePlayerNeural(RandomModels.Create(2)) { NaturalBidding = false };
             var cards = 0;
             var bids = 0;
             ForEveryDecision(

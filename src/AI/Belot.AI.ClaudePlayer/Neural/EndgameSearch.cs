@@ -4,6 +4,7 @@
     using System.Diagnostics;
     using System.Numerics;
 
+    using Belot.AI.ClaudePlayer.Human;
     using Belot.AI.ClaudePlayer.Search;
     using Belot.Engine.Game;
     using Belot.Engine.Players;
@@ -17,6 +18,12 @@
     /// </summary>
     internal sealed class EndgameSearch
     {
+        /// <summary>Raw card points per game point when <see cref="RawTieBreak"/> orders equal results.</summary>
+        public const int RawScale = 1024;
+
+        /// <summary>Solver units per match won when <see cref="Equity"/> values the leaves.</summary>
+        public const int EquityUnits = 100000;
+
         private const int TranspositionCapacity = 8192;
 
         private readonly RoundKnowledge knowledge = new RoundKnowledge();
@@ -48,6 +55,14 @@
         private long deadline;
         private double totalWeight;
         private double squaredWeight;
+        private int matchOurs;
+        private int matchTheirs;
+        private double pointsPerEquity = 1;
+        private int signalSeat;
+        private uint signalHonours0;
+        private uint signalHonours1;
+        private uint signalHonours2;
+        private uint signalHonours3;
 
         public CardOwnershipModel.Evaluator Ownership { get; set; }
 
@@ -102,6 +117,29 @@
 
         /// <summary>Gets or sets whether equivalent zero-point cards share one internal minimax branch.</summary>
         public bool PruneEquivalentCards { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether results equal in game points are ordered by the raw card points
+        /// (tricks, belotes and the last ten) the team takes: game points still decide, but where
+        /// the rounding or a decided contract makes them equal, the solver keeps its points as a
+        /// person would. Values stay in game points, raw points adding 1/<see cref="RawScale"/> each.
+        /// </summary>
+        public bool RawTieBreak { get; set; }
+
+        /// <summary>
+        /// Gets or sets how much less likely a world is for each suit the partner threw away (by
+        /// the convention: while the opponents held the trick) in which that world gives the partner
+        /// an honour (an ace or ten, in all trumps a jack or nine): 1 (the default) reads nothing,
+        /// smaller values trust the convention more.
+        /// </summary>
+        public double PartnerSignalWeight { get; set; } = 1;
+
+        /// <summary>
+        /// Gets or sets the match equity that values finished deals (null: the deal's game points):
+        /// the chance to win the match from the scores the deal leaves. Values stay in game points,
+        /// converted at the current scores' exchange rate.
+        /// </summary>
+        public MatchEquity Equity { get; set; }
 
         public bool Evaluate(PlayerPlayCardContext context, in NeuralDeal deal, uint legal, BelotSimulator simulator, float[] values, Random random = null, NeuralEvaluator evaluator = null)
         {
@@ -159,6 +197,7 @@
 
             this.simulator = simulator;
             this.team = this.knowledge.Me & 1;
+            this.SetMatch(context, this.team);
             if (this.UseTranspositions)
             {
                 this.transpositions ??= new TranspositionEntry[TranspositionCapacity];
@@ -181,6 +220,7 @@
                 }
             }
 
+            this.ReadSignals(context, simulator.Kind);
             if (this.PolicyActions > 0)
             {
                 this.likelihood ??= new PlayLikelihood();
@@ -329,6 +369,73 @@
             return choices;
         }
 
+        /// <summary>Starts a new decision for <see cref="SolveWorld"/>: its table entries may not carry over.</summary>
+        internal void BeginWorlds(BelotSimulator simulator, int team, BasePlayerContext context = null)
+        {
+            this.simulator = simulator;
+            this.team = team;
+            this.SetMatch(context, team);
+            this.Nodes = 0;
+            this.deadline = long.MaxValue;
+            if (this.UseTranspositions)
+            {
+                this.transpositions ??= new TranspositionEntry[TranspositionCapacity];
+                this.transpositionGeneration = unchecked(this.transpositionGeneration + 1);
+                if (this.transpositionGeneration == 0)
+                {
+                    Array.Clear(this.transpositions);
+                    this.transpositionGeneration = 1;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Solves one fully known position (every hand in it) by partnership minimax for the team of
+        /// <see cref="BeginWorlds"/>, in game points (raw points order ties when <see cref="RawTieBreak"/>).
+        /// </summary>
+        internal double SolveWorld(in SimState state, int southNorthAnnounces, int eastWestAnnounces)
+        {
+            var limit = this.NodeLimit;
+            var time = this.TimeLimitMilliseconds;
+            this.NodeLimit = 0;
+            this.TimeLimitMilliseconds = 0;
+            this.SolveBounded(in state, southNorthAnnounces, eastWestAnnounces, int.MinValue, int.MaxValue, out var value);
+            this.NodeLimit = limit;
+            this.TimeLimitMilliseconds = time;
+            return this.ToPoints(value);
+        }
+
+        /// <summary>The team's value of a finished deal's award, in the solver's units.</summary>
+        internal int Utility(int southNorth, int eastWest, bool capot)
+        {
+            var gained = this.team == 0 ? southNorth : eastWest;
+            var lost = this.team == 0 ? eastWest : southNorth;
+            if (this.Equity == null)
+            {
+                return gained - lost;
+            }
+
+            return (int)Math.Round(this.Equity.AfterDeal(this.matchOurs, this.matchTheirs, gained, lost, capot) * EquityUnits);
+        }
+
+        /// <summary>The team's value of a finished deal's award, in game points (as <see cref="SolveWorld"/> gives them).</summary>
+        internal double FinishedValue(int southNorth, int eastWest, bool capot)
+        {
+            var value = this.Utility(southNorth, eastWest, capot);
+            return this.Equity == null ? value : (double)value / EquityUnits * this.pointsPerEquity;
+        }
+
+        /// <summary>A solver value (or an average of them) in game points.</summary>
+        internal double ToPoints(double value)
+        {
+            if (this.RawTieBreak)
+            {
+                value /= RawScale;
+            }
+
+            return this.Equity == null ? value : value / EquityUnits * this.pointsPerEquity;
+        }
+
         private static int Solve(in SimState state, BelotSimulator simulator, int team, int southNorthAnnounces, int eastWestAnnounces, int alpha, int beta)
         {
             if (state.TricksPlayed == 8)
@@ -363,6 +470,20 @@
             }
 
             return best;
+        }
+
+        private void SetMatch(BasePlayerContext context, int team)
+        {
+            if (this.Equity == null || context == null)
+            {
+                this.matchOurs = this.matchTheirs = 0;
+                this.pointsPerEquity = 1;
+                return;
+            }
+
+            this.matchOurs = team == 0 ? context.SouthNorthPoints : context.EastWestPoints;
+            this.matchTheirs = team == 0 ? context.EastWestPoints : context.SouthNorthPoints;
+            this.pointsPerEquity = this.Equity.PointsPerEquity(this.matchOurs, this.matchTheirs);
         }
 
         private bool EvaluateSamples(uint legal, float[] values, Random random)
@@ -458,7 +579,7 @@
                 return false;
             }
 
-            var weight = ownershipWeight * (this.PolicyActions > 0 ? this.likelihood.Weight(in state) : 1);
+            var weight = ownershipWeight * (this.PolicyActions > 0 ? this.likelihood.Weight(in state) : 1) * this.SignalWeight(in state);
             this.LikelihoodEvaluations = this.PolicyActions > 0 ? this.likelihood.Evaluations : 0;
 
             for (var rest = legal; rest != 0; rest &= rest - 1)
@@ -496,10 +617,85 @@
             for (var rest = legal; rest != 0; rest &= rest - 1)
             {
                 var card = BitOperations.TrailingZeroCount(rest);
-                values[card] = (float)(this.sums[card] / this.totalWeight);
+                values[card] = (float)this.ToPoints(this.sums[card] / this.totalWeight);
             }
 
             return true;
+        }
+
+        // The honours of each suit the partner threw away while the opponents held the trick.
+        private void ReadSignals(PlayerPlayCardContext context, int kind)
+        {
+            this.signalSeat = (this.knowledge.Me + 2) & 3;
+            this.signalHonours0 = this.signalHonours1 = this.signalHonours2 = this.signalHonours3 = 0;
+            if (this.PartnerSignalWeight >= 1)
+            {
+                return;
+            }
+
+            var signals = PlaySignals.Read(context.RoundActions, kind);
+            var suits = signals.WeakSuits(this.signalSeat);
+            var hidden = ~(this.knowledge.Played | this.knowledge.MyHand | this.knowledge.Known[this.signalSeat]);
+            for (var suit = 0; suit < 4; suit++)
+            {
+                if ((suits & (1 << suit)) == 0)
+                {
+                    continue;
+                }
+
+                var trumpSuit = kind == SimTables.AllTrumps || suit == kind;
+                var honours = trumpSuit
+                    ? (1u << ((suit * 8) + 4)) | (1u << ((suit * 8) + 2))
+                    : (1u << ((suit * 8) + 7)) | (1u << ((suit * 8) + 3));
+                honours &= hidden;
+                switch (suit)
+                {
+                    case 0:
+                        this.signalHonours0 = honours;
+                        break;
+                    case 1:
+                        this.signalHonours1 = honours;
+                        break;
+                    case 2:
+                        this.signalHonours2 = honours;
+                        break;
+                    default:
+                        this.signalHonours3 = honours;
+                        break;
+                }
+            }
+        }
+
+        private double SignalWeight(in SimState state)
+        {
+            if (this.PartnerSignalWeight >= 1)
+            {
+                return 1;
+            }
+
+            var hand = state.Hands[this.signalSeat];
+            var weight = 1.0;
+            if ((hand & this.signalHonours0) != 0)
+            {
+                weight *= this.PartnerSignalWeight;
+            }
+
+            if ((hand & this.signalHonours1) != 0)
+            {
+                weight *= this.PartnerSignalWeight;
+            }
+
+            if ((hand & this.signalHonours2) != 0)
+            {
+                weight *= this.PartnerSignalWeight;
+            }
+
+            if ((hand & this.signalHonours3) != 0)
+            {
+                weight *= this.PartnerSignalWeight;
+            }
+
+            return weight;
         }
 
         private bool TimeExpired() => this.TimeLimitMilliseconds > 0 && Stopwatch.GetTimestamp() >= this.deadline;
@@ -516,7 +712,13 @@
             if (state.TricksPlayed == 8)
             {
                 this.simulator.Score(in state, southNorth, eastWest, out var first, out var second, out _);
-                best = this.team == 0 ? first - second : second - first;
+                best = this.Utility(first, second, state.SouthNorthTricks == 0 || state.EastWestTricks == 0);
+                if (this.RawTieBreak)
+                {
+                    var raw = state.SouthNorthPoints - state.EastWestPoints + (state.LastTrickTeam == 0 ? 10 : -10);
+                    best = (best * RawScale) + (this.team == 0 ? raw : -raw);
+                }
+
                 return true;
             }
 
