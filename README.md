@@ -33,6 +33,10 @@ level on the device.
   and a strong human player's technique and conventions (it bids naturally, keeps its high cards,
   signals to its partner and reads its partner's signals); it beats every other bot here. See
   [HUMAN_PLAY.md](HUMAN_PLAY.md).
+- `ClaudePlayerHeuristic`: the written advice of the belot.bg academy and other Bulgarian sources
+  as rules, no networks, with the last five tricks played out exactly over the deals the play
+  allows (under 1 ms a card). It beats SmartPlayer 87.7% and the 2001 Belot 2.06 72.3%, and comes
+  within 33 ELO of ClaudePlayerIsmcts. See [HEURISTIC_PLAYER.md](HEURISTIC_PLAYER.md).
 
 ## Build status
 

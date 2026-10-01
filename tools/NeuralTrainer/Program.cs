@@ -77,6 +77,12 @@
                 case "audit":
                     Audit.Run(settings);
                     break;
+                case "regret":
+                    Regret.Run(settings);
+                    break;
+                case "timing":
+                    Timing(settings);
+                    break;
                 default:
                     Console.WriteLine($"Unknown command {args[0]}.");
                     return 1;
@@ -221,6 +227,32 @@
                 + $"ownership power {player.EndgameOwnershipPower}, ownership mix {player.EndgameOwnershipUniformMix}, "
                 + $"{players.Sum(x => x.EndgameDecisions) - warmupEndgames} endgames): {decisions} card decisions, "
                 + $"{ticks * 1_000_000.0 / Stopwatch.Frequency / decisions:0.0} µs per card through the engine ({games} games, warmup excluded)");
+        }
+
+        // The time of any catalog player's card decisions: four of it in whole games on one thread
+        // (twenty warmup games excluded); every card callback counts, a forced card included.
+        private static void Timing(TrainingSettings settings)
+        {
+            var factory = OpponentCatalog.Factory(settings.Player, NeuralModels.Embedded);
+            var players = Enumerable.Range(0, 4).Select(seat => factory(settings.Seed + seat)).ToArray();
+            for (var game = 0; game < 20; game++)
+            {
+                new Belot.Engine.BelotGame(players[0], players[1], players[2], players[3], new Random(-game - 1)).PlayGame();
+            }
+
+            var timed = players.Select(x => new TimedPlayer(x)).ToArray();
+            var games = settings.BenchGames > 0 ? settings.BenchGames : 100;
+            var clock = Stopwatch.StartNew();
+            for (var game = 0; game < games; game++)
+            {
+                new Belot.Engine.BelotGame(timed[0], timed[1], timed[2], timed[3], new Random(game)).PlayGame();
+            }
+
+            var samples = timed.SelectMany(x => x.DecisionTicks).Order().ToArray();
+            double Millis(long value) => value * 1000.0 / Stopwatch.Frequency;
+            double Percentile(double quantile) => Millis(samples[(int)Math.Ceiling(quantile * samples.Length) - 1]);
+            Console.WriteLine($"timing {settings.Player}: {games} games, {samples.Length} card callbacks in {clock.Elapsed}");
+            Console.WriteLine($"card ms: mean={samples.Average(x => Millis(x)):0.000}, p50={Percentile(.5):0.000}, p95={Percentile(.95):0.000}, p99={Percentile(.99):0.000}, p99.9={Percentile(.999):0.000}, max={Millis(samples[^1]):0.000}, over 8 ms={samples.Count(x => Millis(x) > 8)}, over 10 ms={samples.Count(x => Millis(x) > 10)}");
         }
 
         // The time of a decision: whole self-play deals with the networks, no labels.

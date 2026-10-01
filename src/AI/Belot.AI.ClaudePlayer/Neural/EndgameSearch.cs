@@ -35,6 +35,7 @@
         private readonly DeclaredAnnounce[] worldAnnounces = new DeclaredAnnounce[AnnounceScorer.MaxAnnounces];
         private readonly int[] worldValues = new int[32];
         private readonly float[] ownershipWeights = new float[CardOwnershipModel.Outputs];
+        private readonly uint[] bidHonours = new uint[4];
         private UniformWorldSampler sampler;
         private WeightedWorldSampler weightedSampler;
         private PlayLikelihood likelihood;
@@ -135,6 +136,13 @@
         public double PartnerSignalWeight { get; set; } = 1;
 
         /// <summary>
+        /// Gets or sets how much less likely a world is for each other seat that bid a suit as
+        /// trumps and holds in it neither its jack nor its nine, of those still unseen (natural
+        /// bids show one of them): 1 (the default) reads nothing from the bids.
+        /// </summary>
+        public double BidderHonourWeight { get; set; } = 1;
+
+        /// <summary>
         /// Gets or sets the match equity that values finished deals (null: the deal's game points):
         /// the chance to win the match from the scores the deal leaves. Values stay in game points,
         /// converted at the current scores' exchange rate.
@@ -221,6 +229,7 @@
             }
 
             this.ReadSignals(context, simulator.Kind);
+            this.ReadBids(context);
             if (this.PolicyActions > 0)
             {
                 this.likelihood ??= new PlayLikelihood();
@@ -579,7 +588,7 @@
                 return false;
             }
 
-            var weight = ownershipWeight * (this.PolicyActions > 0 ? this.likelihood.Weight(in state) : 1) * this.SignalWeight(in state);
+            var weight = ownershipWeight * (this.PolicyActions > 0 ? this.likelihood.Weight(in state) : 1) * this.SignalWeight(in state) * this.BidWeight(in state);
             this.LikelihoodEvaluations = this.PolicyActions > 0 ? this.likelihood.Evaluations : 0;
 
             for (var rest = legal; rest != 0; rest &= rest - 1)
@@ -664,6 +673,54 @@
                         break;
                 }
             }
+        }
+
+        // The unseen jack and nine of each suit another seat bid as trumps, if it has shown neither.
+        private void ReadBids(PlayerPlayCardContext context)
+        {
+            Array.Clear(this.bidHonours);
+            if (this.BidderHonourWeight >= 1)
+            {
+                return;
+            }
+
+            var hidden = ~(this.knowledge.Played | this.knowledge.MyHand);
+            foreach (var bid in context.Bids)
+            {
+                var type = bid.Type;
+                var seat = bid.Player.Index();
+                if (seat == this.knowledge.Me || (type != BidType.Clubs && type != BidType.Diamonds && type != BidType.Hearts && type != BidType.Spades))
+                {
+                    continue;
+                }
+
+                var suit = (int)type.ToCardSuit();
+                var honours = (1u << ((suit * 8) + 4)) | (1u << ((suit * 8) + 2));
+                if ((this.knowledge.PlayedBy[seat] & honours) == 0)
+                {
+                    this.bidHonours[seat] |= honours & hidden;
+                }
+            }
+        }
+
+        private double BidWeight(in SimState state)
+        {
+            if (this.BidderHonourWeight >= 1)
+            {
+                return 1;
+            }
+
+            var weight = 1.0;
+            for (var seat = 0; seat < 4; seat++)
+            {
+                var honours = this.bidHonours[seat];
+                if (honours != 0 && (state.Hands[seat] & honours) == 0)
+                {
+                    weight *= this.BidderHonourWeight;
+                }
+            }
+
+            return weight;
         }
 
         private double SignalWeight(in SimState state)

@@ -34,10 +34,14 @@
             var plus = name.IndexOf('+', StringComparison.Ordinal);
             if (plus > 0)
             {
-                // profile+option=value+...: a neural profile with some settings changed.
+                // profile+option=value+...: a neural or heuristic profile with some settings changed.
                 var profile = Factory(name[..plus], models);
                 var options = name[(plus + 1)..].Split('+');
-                return seed => Modify((ClaudePlayerNeural)profile(seed), options);
+                return seed =>
+                {
+                    var player = profile(seed);
+                    return player is ClaudePlayerHeuristic heuristic ? ModifyHeuristic(heuristic, options) : Modify((ClaudePlayerNeural)player, options);
+                };
             }
 
             var bar = name.IndexOf('|', StringComparison.Ordinal);
@@ -96,7 +100,9 @@
                 "human" => seed => Seed(Human(models), seed),
                 "master-raw" => seed => Raw(ClaudePlayerProfiles.CreateNeuralMaster(models), seed),
                 "rollout-master" => seed => Seed(ClaudePlayerProfiles.CreateRolloutMaster(models), seed),
-                _ => throw new ArgumentException($"Unknown player '{name}'. Use random, dummy, smart, sharpbelot, belot206, neural, fast, sampled4, expert, master, neural-master, human, rollout-master, ismcts:100, hybrid:deals[:tricks[:own]], bidder|player or profile+option=value.", nameof(name)),
+                "heuristic" => seed => new ClaudePlayerHeuristic { Rng = new Random(seed) },
+                "heuristic-endgame" => seed => Seed(ClaudePlayerProfiles.CreateHeuristic(), seed),
+                _ => throw new ArgumentException($"Unknown player '{name}'. Use random, dummy, smart, sharpbelot, belot206, neural, fast, sampled4, expert, master, neural-master, human, rollout-master, heuristic, heuristic-endgame, ismcts:100, hybrid:deals[:tricks[:own]], bidder|player or profile+option=value.", nameof(name)),
             };
         }
 
@@ -145,6 +151,23 @@
             EndgameTricks = 3,
             EndgameThreeTrickWorldLimit = 90,
         };
+
+        private static ClaudePlayerHeuristic Seed(ClaudePlayerHeuristic player, int seed)
+        {
+            player.Rng = new Random(seed);
+            return player;
+        }
+
+        private static ClaudePlayerHeuristic ModifyHeuristic(ClaudePlayerHeuristic player, string[] options)
+        {
+            foreach (var option in options)
+            {
+                var parts = option.Split('=');
+                player.Settings.Set(parts[0], parts.Length > 1 ? parts[1] : "1");
+            }
+
+            return player;
+        }
 
         private static ClaudePlayerNeural Modify(ClaudePlayerNeural player, string[] options)
         {

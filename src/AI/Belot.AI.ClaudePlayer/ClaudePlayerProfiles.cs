@@ -41,6 +41,24 @@
         /// <summary>The previous Master's rollout budget in milliseconds.</summary>
         public const int RolloutMasterMilliseconds = 400;
 
+        /// <summary>The heuristic player's endgame horizon: its last tricks played out exactly (see HEURISTIC_PLAYER.md).</summary>
+        public const int HeuristicEndgameTricks = 5;
+
+        /// <summary>
+        /// Creates the heuristic player: the rules of the belot.bg academy and the other sources,
+        /// with its last five tricks played out exactly over the deals the play allows (at most
+        /// 150,000 solver nodes and 8 ms a card). See HEURISTIC_PLAYER.md.
+        /// </summary>
+        public static ClaudePlayerHeuristic CreateHeuristic()
+        {
+            var player = new ClaudePlayerHeuristic();
+            player.Settings.EndgameTricks = HeuristicEndgameTricks;
+            return player;
+        }
+
+        /// <summary>Creates the heuristic player with the rules alone: no search of any kind.</summary>
+        public static ClaudePlayerHeuristic CreateRulesOnly() => new ClaudePlayerHeuristic();
+
         /// <summary>Creates a fresh fast player (the app's hints) using the embedded networks.</summary>
         public static ClaudePlayerNeural CreateFast() => CreateFast(NeuralModels.Embedded);
 

@@ -6,12 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A C# engine for **Belot** (Bridge-Belote), a 4-player (2v2) 32-card trick-taking game. The
 core engine ships as the `BelotGameEngine` NuGet package. The repository's real purpose is to
-**evolve card-playing AIs and measure each change in ELO**. There are three: the hand-written
+**evolve card-playing AIs and measure each change in ELO**. There are four: the hand-written
 `SmartPlayer`, measured against its previously committed version (see "The ELO benchmark
 workflow" below, the single most important thing to understand about it), the much stronger
-search player `ClaudePlayerIsmcts` (see "ClaudePlayerIsmcts design"), and the neural player
+search player `ClaudePlayerIsmcts` (see "ClaudePlayerIsmcts design"), the neural player
 `ClaudePlayerNeural`, trained by reinforcement learning in self-play (see "ClaudePlayerNeural
-design" and `NEURAL_NETWORK.md`), measured in mirrored matches. The app's Master is that neural
+design" and `NEURAL_NETWORK.md`), and `ClaudePlayerHeuristic`, the belot.bg academy's written
+advice as rules with exact endgames (see "ClaudePlayerHeuristic design" and
+`HEURISTIC_PLAYER.md`), measured in mirrored matches. The app's Master is that neural
 player with search in every trick and a strong human player's technique and conventions (see
 "The human-style Master" and `HUMAN_PLAY.md`). People play them in the MAUI app for Android and
 Windows (see "The MAUI app"). The full rules are in `etc/Rules.md`.
@@ -57,11 +59,16 @@ dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimula
 dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- validate --in <folder> --opponent ismcts:100
 dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- arena --player fast --opponent belot206 --pairs 10000 --seed 611 --data artifacts/fast-206
 # Player names in arena/audit/bench: master, neural-master (Sept 29), fast, expert, smart, belot206,
-# ismcts:100, ...; "bidder|player" mixes one's bids with another's play; "profile+option=value+..."
-# changes settings (see OpponentCatalog.Modify), e.g. master+ms=40+worlds=256.
+# heuristic (rules only), heuristic-endgame, ismcts:100, ...; "bidder|player" mixes one's bids with
+# another's play; "profile+option=value+..." changes settings (see OpponentCatalog.Modify and, for
+# the heuristic player, HeuristicSettings.Set), e.g. master+ms=40+worlds=256, heuristic+followvalue=0.
 # The audit flags human-obvious mistakes (with hindsight costs), the auction and the conventions;
 # --deals N prints N whole deals for reading.
 dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- audit --player master --opponent neural-master --pairs 300 --deals 5 --data artifacts/audit
+# Where the heuristic player loses: the fast neural player grades every card and bid of its games,
+# summed per situation and rule, with examples; card latency of any catalog player on one thread.
+dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- regret --player heuristic-endgame --opponent belot206 --pairs 300
+dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- timing --player heuristic-endgame --bench-games 200
 
 # The MAUI app (needs the MAUI workloads): run it on Windows, or build it for Android
 dotnet build src/UI/Belot.UI/Belot.UI.csproj -f net10.0-windows10.0.19041.0 -t:Run
@@ -303,6 +310,44 @@ first three tricks. What changed:
   CRLF. The engine's source and NuGet API are unchanged.
 - The Expert (`CreateExpert`) is the fast profile with the human style and a 5-point tolerance:
   weaker, never absurd, no random choices. Hints use the fast profile with the human style.
+
+## ClaudePlayerHeuristic design (the belot.bg rules, then exact endgames)
+
+`AI/Belot.AI.ClaudePlayer/ClaudePlayerHeuristic.cs` and `Heuristic/`; `HEURISTIC_PLAYER.md` has the
+rules with their sources (the twenty belot.bg academy articles, its blog, "Тактика при белот" and
+other Bulgarian and French advice), every measurement and the rejected ideas. No networks and no
+Monte Carlo in the early tricks: `ClaudePlayerProfiles.CreateRulesOnly()` decides every bid and card
+by rules (5 µs a card); `CreateHeuristic()` keeps them for tricks 1-3 and plays the last five out
+exactly (`Neural/EndgameSearch`, 48 sampled deals, 150,000 nodes, 8 ms; 0.83 ms a card on average,
+5.9 ms at most on one idle thread). It keeps no state between decisions (it decides the same from a
+`BelotSeatView`).
+
+- **`Heuristic/CardMemory`**: what a careful player remembers (`RoundKnowledge`'s voids and shown
+  cards, the trumps out, masters, bids, the partner's signals) and the chance that a seat holds an
+  unseen card (every placement alike, a suit bidder's jack and nine three times as likely).
+- **`Heuristic/HeuristicBidding`**: point counts per contract against thresholds (suit 9.5, all
+  trumps 16.5, no trumps 14.5), natural bids only, a first-bidder bonus in no trumps and all
+  trumps, all trumps helped by the partner's suit bid, **competing** (a bid needs 4 less when the
+  opponents hold the contract: the blog's "compete even with relatively weak cards", +27 Elo),
+  score-aware boldness; doubles almost never arise.
+- **`Heuristic/HeuristicCardPlay`**: leads by the sources (the partner's call answered, exhausted
+  suits cashed, trumps drawn by control from the top, the declarer's partner leading trumps, the
+  defenders cashing aces, a lone jack kept in all trumps' first tricks, no trumps' aces kept until
+  trick 4); every follow by **expected gain** (the chance of keeping the trick times the points at
+  stake, minus what the card is worth kept), with the discard convention ("what you discard, you
+  don't have").
+- **`HeuristicSettings`** holds every tunable rule; `Set(name, value)` changes one by its short name
+  for experiments (`heuristic+name=value` in the trainer). Rules from the sources that measured
+  worse stay there switched off (calls, covering, unblocking, forcing leads).
+- **Results (October 1, v7, mirrored pairs)**: with the endgames 87.7% against SmartPlayer, 84.2%
+  SharpBelot, 72.3% Belot 2.06, 61.9% Expert, 45.3% ± 1.3 ISMCTS100 (1,000 games), 42.1% fast, 36.4%
+  the September 29 Master, 30.8% Master; rules only 77.2%, 74.8%, 59.9%, 45.8%, 32.0%, 29.2%,
+  24.5%, 21.2%. The trainer's `regret` command (the fast neural player grading each decision) found
+  where the rules lost; the player itself uses no network.
+- **Tests**: `Heuristic/ClaudePlayerHeuristicTests` (whole matches against the other bots and random
+  bidders, decisions from a view equal to the context's, natural bids, chances that add up, the
+  settings). `EndgameSearch.BidderHonourWeight` (worlds where a suit bidder lacks its jack and nine
+  count less) is new and off for every other profile.
 
 ## ClaudePlayerNeural design (the September 29 Master, now `CreateNeuralMaster`)
 
