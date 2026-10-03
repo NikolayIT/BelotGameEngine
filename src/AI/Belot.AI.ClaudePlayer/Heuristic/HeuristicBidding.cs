@@ -16,7 +16,9 @@
     /// its jack or nine, which helps all trumps; another suit takes the contract from the partner
     /// only when it is clearly better. Ahead in the match the player bids more carefully,
     /// behind more boldly. It doubles only when its cards in the opponents' contract should
-    /// beat it, and every bid is natural: a person reads it as what it is.
+    /// beat it, and every bid is natural: a person reads it as what it is. Since October 3, 2026
+    /// the player bids by <see cref="LearnedBidding"/>; these written counts decide where its model
+    /// has no answer, and for every bid when <see cref="HeuristicSettings.Bids"/> is null.
     /// </summary>
     internal static class HeuristicBidding
     {

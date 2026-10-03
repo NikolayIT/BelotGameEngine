@@ -44,6 +44,20 @@
                 };
             }
 
+            var at = name.IndexOf('@', StringComparison.Ordinal);
+            if (at > 0)
+            {
+                // heuristic-profile@model.txt: the heuristic player bidding by learned weights (see BidLab).
+                var profile = Factory(name[..at], models);
+                var model = Belot.AI.ClaudePlayer.Heuristic.BidModel.Load(name[(at + 1)..]);
+                return seed =>
+                {
+                    var player = (ClaudePlayerHeuristic)profile(seed);
+                    player.Settings.Bids = model;
+                    return player;
+                };
+            }
+
             var bar = name.IndexOf('|', StringComparison.Ordinal);
             if (bar > 0)
             {
@@ -102,7 +116,7 @@
                 "rollout-master" => seed => Seed(ClaudePlayerProfiles.CreateRolloutMaster(models), seed),
                 "heuristic" => seed => new ClaudePlayerHeuristic { Rng = new Random(seed) },
                 "heuristic-endgame" => seed => Seed(ClaudePlayerProfiles.CreateHeuristic(), seed),
-                _ => throw new ArgumentException($"Unknown player '{name}'. Use random, dummy, smart, sharpbelot, belot206, neural, fast, sampled4, expert, master, neural-master, human, rollout-master, heuristic, heuristic-endgame, ismcts:100, hybrid:deals[:tricks[:own]], bidder|player or profile+option=value.", nameof(name)),
+                _ => throw new ArgumentException($"Unknown player '{name}'. Use random, dummy, smart, sharpbelot, belot206, neural, fast, sampled4, expert, master, neural-master, human, rollout-master, heuristic, heuristic-endgame, ismcts:100, hybrid:deals[:tricks[:own]], bidder|player, profile+option=value or heuristic-profile@model.txt.", nameof(name)),
             };
         }
 

@@ -207,6 +207,19 @@
         /// <summary>Gets or sets how much less likely an endgame world is per suit bidder holding neither its jack nor its nine (1: no reading).</summary>
         public double EndgameBidWeight { get; set; } = .3;
 
+        /// <summary>
+        /// Gets or sets the learned bidding's weights (see <see cref="LearnedBidding"/>), by default
+        /// the embedded <see cref="BidModel.Default"/>; null bids by the written point counts of
+        /// <see cref="HeuristicBidding"/> (the bidding until October 2026).
+        /// </summary>
+        public BidModel Bids { get; set; } = BidModel.Default;
+
+        /// <summary>Gets or sets the game points over passing a learned bid must be expected to bring.</summary>
+        public double BidMargin { get; set; }
+
+        /// <summary>Gets or sets the game points more a learned double must be expected to bring.</summary>
+        public double DoubleBidMargin { get; set; }
+
         public HeuristicSettings Clone() => (HeuristicSettings)this.MemberwiseClone();
 
         /// <summary>Changes one setting by its name (case-insensitive).</summary>
@@ -391,6 +404,15 @@
                     break;
                 case "bidsig":
                     this.EndgameBidWeight = number;
+                    break;
+                case "learned":
+                    this.Bids = number != 0 ? BidModel.Default : null;
+                    break;
+                case "bidmargin":
+                    this.BidMargin = number;
+                    break;
+                case "doublemargin":
+                    this.DoubleBidMargin = number;
                     break;
                 default:
                     throw new ArgumentException($"Unknown heuristic setting '{name}'.", nameof(name));

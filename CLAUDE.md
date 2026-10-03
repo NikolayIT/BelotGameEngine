@@ -12,8 +12,8 @@ workflow" below, the single most important thing to understand about it), the mu
 search player `ClaudePlayerIsmcts` (see "ClaudePlayerIsmcts design"), the neural player
 `ClaudePlayerNeural`, trained by reinforcement learning in self-play (see "ClaudePlayerNeural
 design" and `NEURAL_NETWORK.md`), and `ClaudePlayerHeuristic`, the belot.bg academy's written
-advice as rules with exact endgames (see "ClaudePlayerHeuristic design" and
-`HEURISTIC_PLAYER.md`), measured in mirrored matches. The app's Master is that neural
+advice as rules with exact endgames and bids learned from how every bid did (see
+"ClaudePlayerHeuristic design" and `HEURISTIC_PLAYER.md`), measured in mirrored matches. The app's Master is that neural
 player with search in every trick and a strong human player's technique and conventions (see
 "The human-style Master" and `HUMAN_PLAY.md`). People play them in the MAUI app for Android and
 Windows (see "The MAUI app"). The full rules are in `etc/Rules.md`.
@@ -69,6 +69,13 @@ dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- audi
 # summed per situation and rule, with examples; card latency of any catalog player on one thread.
 dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- regret --player heuristic-endgame --opponent belot206 --pairs 300
 dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- timing --player heuristic-endgame --bench-games 200
+
+# How the bids did: every bid of the subject is also replayed with each other natural bid on the same cards, to
+# the end of the deal (bidlab), and the numbers the learned bidding counts are added (bidfeatures); the fitting,
+# the tables and the embedding are in tools/NeuralTrainer/Bidding (Python, see its README). "heuristic@m.txt"
+# bids by a model file, "heuristic+learned=0" by the written point counts (the bidding before October 3).
+dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- bidlab --player heuristic --opponent belot206 --pairs 100000 --threads 18 --data artifacts/bidding/run
+dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- bidfeatures --data artifacts/bidding/run
 
 # The MAUI app (needs the MAUI workloads): run it on Windows, or build it for Android
 dotnet build src/UI/Belot.UI/Belot.UI.csproj -f net10.0-windows10.0.19041.0 -t:Run
@@ -325,11 +332,28 @@ exactly (`Neural/EndgameSearch`, 48 sampled deals, 150,000 nodes, 8 ms; 0.83 ms 
 - **`Heuristic/CardMemory`**: what a careful player remembers (`RoundKnowledge`'s voids and shown
   cards, the trumps out, masters, bids, the partner's signals) and the chance that a seat holds an
   unseen card (every placement alike, a suit bidder's jack and nine three times as likely).
-- **`Heuristic/HeuristicBidding`**: point counts per contract against thresholds (suit 9.5, all
-  trumps 16.5, no trumps 14.5), natural bids only, a first-bidder bonus in no trumps and all
-  trumps, all trumps helped by the partner's suit bid, **competing** (a bid needs 4 less when the
-  opponents hold the contract: the blog's "compete even with relatively weak cards", +27 Elo),
-  score-aware boldness; doubles almost never arise.
+- **Bidding: learned from how every bid did** (`Heuristic/LearnedBidding`, since October 3). The
+  trainer's `bidlab` replays every bid of the player with each other natural bid it could have made,
+  on the same cards, to the end of the deal: each bid's game points over passing. For every natural
+  bid the player counts its five cards and the auction (`BidFeatures`: trump honours, length, side
+  aces and tens, jacks and nines for all trumps, aces and tens for no trumps, who leads, who bid and
+  passed, its holding in the partner's and the opponents' suits) and a weight per number and
+  situation (who holds the contract times its kind; `BidModel`, ridge regression, the weights in
+  `BidModelWeights.cs`, fitted by `tools/NeuralTrainer/Bidding`) gives the bid's expected gain; the
+  best bid above passing is made. All trumps over the partner's no trumps and doubles bid by cells
+  (three jacks or two jacks with their nines; the trump jack with length or a top trump after an
+  overcall, three aces against no trumps), where the replays show a clear gain. Situations no model
+  covers keep the written counts of `Heuristic/HeuristicBidding` (thresholds suit 9.5, all trumps
+  16.5, no trumps 14.5, competing with 4 less; `Settings.Bids = null` for all of it). The replays
+  settled the questions people asked: competing over the opponents' suit pays (+3 to +7 game points
+  a bid against every opponent, even a bare nine doubleton +0.9; doubling such an overcall cost the
+  doubler 15.9 on average); all trumps over the partner's no trumps lost without three jacks. Every
+  holding cell of the learned bids gains over passing with the endgame player. Results (October 3,
+  the card play unchanged): 54.0% ± 0.3 against the written bidding (+28 Elo, 20,000 games), 52.0% with
+  Belot 2.06 as both teams' partner (+14); on the October 1 panel's deals +15 to +27 Elo against
+  every serious opponent (89.2% SmartPlayer, 85.2% SharpBelot, 74.0% Belot 2.06, 65.5% Expert, 45.6%
+  fast, 38.4% the September 29 Master, 34.3% Master; ISMCTS100 53.0% in 200 games). It matches the
+  neural networks' bidding with the same card play (50.8%, +5 Elo; the written one 47.1%). About 2 µs a bid.
 - **`Heuristic/HeuristicCardPlay`**: leads by the sources (the partner's call answered, exhausted
   suits cashed, trumps drawn by control from the top, the declarer's partner leading trumps, the
   defenders cashing aces, a lone jack kept in all trumps' first tricks, no trumps' aces kept until
@@ -339,14 +363,16 @@ exactly (`Neural/EndgameSearch`, 48 sampled deals, 150,000 nodes, 8 ms; 0.83 ms 
 - **`HeuristicSettings`** holds every tunable rule; `Set(name, value)` changes one by its short name
   for experiments (`heuristic+name=value` in the trainer). Rules from the sources that measured
   worse stay there switched off (calls, covering, unblocking, forcing leads).
-- **Results (October 1, v7, mirrored pairs)**: with the endgames 87.7% against SmartPlayer, 84.2%
+- **Results (October 1, v7, the written bidding, mirrored pairs)**: with the endgames 87.7% against SmartPlayer, 84.2%
   SharpBelot, 72.3% Belot 2.06, 61.9% Expert, 45.3% ± 1.3 ISMCTS100 (1,000 games), 42.1% fast, 36.4%
   the September 29 Master, 30.8% Master; rules only 77.2%, 74.8%, 59.9%, 45.8%, 32.0%, 29.2%,
   24.5%, 21.2%. The trainer's `regret` command (the fast neural player grading each decision) found
   where the rules lost; the player itself uses no network.
 - **Tests**: `Heuristic/ClaudePlayerHeuristicTests` (whole matches against the other bots and random
   bidders, decisions from a view equal to the context's, natural bids, chances that add up, the
-  settings). `EndgameSearch.BidderHonourWeight` (worlds where a suit bidder lacks its jack and nine
+  settings), `Heuristic/LearnedBiddingTests` (the embedded model, the auction from the bidder's seat,
+  all trumps over the partner's no trumps, doubles, legal natural bids in random auctions, the model
+  text) and the Python tests of `tools/NeuralTrainer/Bidding`. `EndgameSearch.BidderHonourWeight` (worlds where a suit bidder lacks its jack and nine
   count less) is new and off for every other profile.
 
 ## ClaudePlayerNeural design (the September 29 Master, now `CreateNeuralMaster`)

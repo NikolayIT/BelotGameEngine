@@ -80,6 +80,12 @@
                 case "regret":
                     Regret.Run(settings);
                     break;
+                case "bidlab":
+                    BidLab.Run(settings);
+                    break;
+                case "bidfeatures":
+                    BidLab.Featurize(settings);
+                    break;
                 case "timing":
                     Timing(settings);
                     break;

@@ -14,9 +14,10 @@
 
     /// <summary>
     /// A player of rules, no networks: the advice of the belot.bg academy and the other sources
-    /// collected in HEURISTIC_PLAYER.md, for the bids (<see cref="HeuristicBidding"/>) and the
-    /// card play (<see cref="HeuristicCardPlay"/>) over what a careful player remembers of the
-    /// cards (<see cref="CardMemory"/>). Optionally the last
+    /// collected in HEURISTIC_PLAYER.md, for the bids (<see cref="LearnedBidding"/>: a point count
+    /// fitted to how every bid did once the deal was over; <see cref="HeuristicBidding"/> where it
+    /// has no answer) and the card play (<see cref="HeuristicCardPlay"/>) over what a careful
+    /// player remembers of the cards (<see cref="CardMemory"/>). Optionally the last
     /// <see cref="HeuristicSettings.EndgameTricks"/> tricks are played out exactly over the deals
     /// the play allows, the rules choosing among the cards that do equally well. It keeps no state
     /// between decisions, so it decides the same from a <see cref="BelotSeatView"/>.
@@ -57,7 +58,8 @@
         /// <summary>Gets the rule that chose the last card (for the trainer's diagnostics).</summary>
         internal string LastRule { get; private set; }
 
-        public BidType GetBid(PlayerGetBidContext context) => HeuristicBidding.Choose(context, this.Settings);
+        public BidType GetBid(PlayerGetBidContext context) =>
+            this.Settings.Bids != null ? LearnedBidding.Choose(context, this.Settings, this.Settings.Bids) : HeuristicBidding.Choose(context, this.Settings);
 
         /// <summary>Declares every combination offered, carres first, as the other bots do.</summary>
         public IList<Announce> GetAnnounces(PlayerGetAnnouncesContext context) => context.AvailableAnnounces;

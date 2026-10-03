@@ -149,6 +149,9 @@
 
         public int Pairs { get; set; } = 200;
 
+        /// <summary>Gets or sets the subject's partner in "bidlab" (empty: the subject's own profile, both seats' bids replayed).</summary>
+        public string LabPartner { get; set; } = string.Empty;
+
         /// <summary>Gets or sets how many labelled deals "bench" times (0 = time 20000 deals without labels).</summary>
         public int Deals { get; set; }
 
