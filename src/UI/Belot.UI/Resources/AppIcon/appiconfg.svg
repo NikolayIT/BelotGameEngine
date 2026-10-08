@@ -1,37 +1,68 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="456" height="456" viewBox="0 0 456 456" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<svg width="456" height="456" viewBox="0 0 456 456" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Four jacks, the best declaration in Belot (a carre of jacks, 200): the jacks of diamonds, clubs,
+         hearts and spades, fanned. The felt is appicon.svg; this foreground is also Android's monochrome
+         (themed) icon, which uses only its alpha, so the cards are separated by gaps, not shadows.
+         Everything stays within 142 units of the centre: Android's masks show a circle of 152.
+         The J is an outline of STIX General Bold (STIX Font License, based on the SIL OFL); the suits
+         are outlines of DejaVu Sans (Bitstream Vera license). -->
 
-    <!-- Two cards fanned behind the hero card -->
-    <g transform="rotate(-16 228 400)">
-        <rect x="148" y="102" width="178" height="252" rx="16" fill="#000000" opacity="0.16" transform="translate(0,8)" />
-        <rect x="148" y="102" width="178" height="252" rx="16" fill="#ECEFF4" stroke="#CED4DE" stroke-width="2" />
-    </g>
-    <g transform="rotate(14 228 400)">
-        <rect x="148" y="102" width="178" height="252" rx="16" fill="#000000" opacity="0.16" transform="translate(0,8)" />
-        <rect x="148" y="102" width="178" height="252" rx="16" fill="#F4F6F9" stroke="#CED4DE" stroke-width="2" />
-        <g transform="translate(300,132) scale(0.7) translate(-16,-14.8)">
-            <path d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12,16-21.2C32,3.8,28.2,0,23.6,0z" fill="#E11D2A" />
+    <defs>
+        <!-- A card centred on 0,0 (98.2 x 137.5, corner 8.8) -->
+        <path id="card" d="M-40.3,-68.75 H40.3 A8.8,8.8 0 0 1 49.1,-59.95 V59.95 A8.8,8.8 0 0 1 40.3,68.75 H-40.3 A8.8,8.8 0 0 1 -49.1,59.95 V-59.95 A8.8,8.8 0 0 1 -40.3,-68.75 Z" />
+
+        <!-- The index: J (STIX General Bold) above the suit (DejaVu Sans), each with its top-left corner at 0,0 -->
+        <path id="j" d="M28.76 0V1.51Q25.43 1.76 24.43 2.85Q23.44 3.94 23.44 7.27V33.31Q23.44 46.75 10.6 46.75Q6.12 46.75 4.06 45.36Q2.3 44.15 1.15 42.33Q0 40.51 0 38.7Q0 37 1.3 35.61Q2.6 34.21 4.3 34.21Q6 34.21 7.33 35.61Q8.66 37 8.66 38.82Q8.66 39.73 7.84 40.91Q7.02 42.09 7.02 42.81Q7.02 44.75 9.75 44.75Q11.81 44.75 12.72 43.45Q13.63 42.15 13.63 39.3V6Q13.63 3.39 12.41 2.51Q11.2 1.64 7.51 1.51V0Z" />
+        <path id="diamond" d="M14.76 0 27.69 16.79Q29.46 18.97 29.46 19.31L14.76 38.35Q14.45 38.15 0 19.31Q0 18.95 2.85 15.4Z" />
+        <path id="club" d="M14.76 0Q19.33 0 21.49 4.85Q21.77 5.96 21.83 7.16Q21.83 9.66 19.27 13.07L17.99 14.36H18.05Q19.63 13.76 21.43 13.76H21.83Q26.92 13.76 28.97 18.07Q29.46 19.48 29.46 20.77Q29.46 25.14 25 27.37Q24.14 27.62 22.62 27.75Q17.45 27.75 15.3 21.9H15.23V22.09Q15.23 29.42 16.98 31.75V31.87H12.54L12.41 31.75Q14.23 29.01 14.23 21.9V21.83H14.16Q12.03 27.75 6.79 27.75Q2.71 27.75 0.53 23.46Q0 22 0 20.77Q0 15.79 5.26 14.01Q6.67 13.76 7.75 13.76H7.95Q9.78 13.76 11.45 14.36H11.51V14.29Q9.72 12.78 9.1 11.3Q7.82 8.95 7.82 7.22V6.92Q7.82 2.63 12.41 0.41Q13.93 0 14.76 0Z" />
+        <path id="heart" d="M7.4 0Q11.46 0 13.78 4.7Q14.62 6.56 14.66 7.54H14.72Q15.42 4.3 17.26 2.16Q19.42 0 22.12 0Q26.3 0 28.82 4.48Q29.46 6.14 29.46 7.6Q29.46 12.6 25.3 17.14L14.72 29.84H14.6L3.36 16.06Q0 11.96 0 7.6Q0 3.38 3.98 0.9Q5.66 0 7.4 0Z" />
+        <path id="spade" d="M14.79 0Q17.12 4.14 22.47 10.98Q28.35 17.86 28.49 19.28Q29.46 21.38 29.46 23.36V24.36Q29.46 28.49 25.45 30.87Q24.13 31.42 22.55 31.42Q18.73 31.42 16.38 25.94H15.34V26.24Q15.34 33.25 17.39 36.97H12.07V36.82Q14.17 33.08 14.17 26.02L14.1 25.94H13.16L11.99 28.12Q9.89 31.42 6.74 31.42Q2.11 31.42 0.22 26.24L0 24.43V23.29Q0 18.76 4.63 13.73Q12.44 4.16 14.64 0.07L14.72 0Z" />
+
+        <!-- Everything except a card above and a 5-unit margin around it: the gap that lets the felt show between the cards -->
+        <clipPath id="outside-club">
+            <path transform="translate(282.6,443.5) rotate(-19.8) translate(0,-219.9)" d="M-1000,-1000 H1000 V1000 H-1000 Z M40.3,-73.75 H-40.3 A13.8,13.8 0 0 0 -54.1,-59.95 V59.95 A13.8,13.8 0 0 0 -40.3,73.75 H40.3 A13.8,13.8 0 0 0 54.1,59.95 V-59.95 A13.8,13.8 0 0 0 40.3,-73.75 Z" />
+        </clipPath>
+        <clipPath id="outside-heart">
+            <path transform="translate(282.6,443.5) rotate(-7.4) translate(0,-219.9)" d="M-1000,-1000 H1000 V1000 H-1000 Z M40.3,-73.75 H-40.3 A13.8,13.8 0 0 0 -54.1,-59.95 V59.95 A13.8,13.8 0 0 0 -40.3,73.75 H40.3 A13.8,13.8 0 0 0 54.1,59.95 V-59.95 A13.8,13.8 0 0 0 40.3,-73.75 Z" />
+        </clipPath>
+        <clipPath id="outside-spade">
+            <path transform="translate(282.6,443.5) rotate(5) translate(0,-219.9)" d="M-1000,-1000 H1000 V1000 H-1000 Z M40.3,-73.75 H-40.3 A13.8,13.8 0 0 0 -54.1,-59.95 V59.95 A13.8,13.8 0 0 0 -40.3,73.75 H40.3 A13.8,13.8 0 0 0 54.1,59.95 V-59.95 A13.8,13.8 0 0 0 40.3,-73.75 Z" />
+        </clipPath>
+    </defs>
+
+    <!-- Fanned around a pivot at 282.6,443.5, each card 219.9 above it; each card is cut by the cards above it -->
+    <g clip-path="url(#outside-spade)">
+        <g clip-path="url(#outside-heart)">
+            <g clip-path="url(#outside-club)">
+                <!-- The jack of diamonds -->
+                <g transform="translate(282.6,443.5) rotate(-32.2) translate(0,-219.9)">
+                    <use xlink:href="#card" fill="#FFFFFF" />
+                    <use xlink:href="#j" x="-46.79" y="-59.12" fill="#D40000" />
+                    <use xlink:href="#diamond" x="-47.14" y="-8.25" fill="#D40000" />
+                </g>
+            </g>
+            <!-- The jack of clubs -->
+            <g transform="translate(282.6,443.5) rotate(-19.8) translate(0,-219.9)">
+                <use xlink:href="#card" fill="#FFFFFF" />
+                <use xlink:href="#j" x="-46.79" y="-59.12" fill="#111317" />
+                <use xlink:href="#club" x="-47.14" y="-8.25" fill="#111317" />
+            </g>
+        </g>
+        <!-- The jack of hearts -->
+        <g transform="translate(282.6,443.5) rotate(-7.4) translate(0,-219.9)">
+            <use xlink:href="#card" fill="#FFFFFF" />
+            <use xlink:href="#j" x="-46.79" y="-59.12" fill="#D40000" />
+            <use xlink:href="#heart" x="-47.14" y="-8.25" fill="#D40000" />
         </g>
     </g>
-
-    <!-- Hero card: the jack of spades, the top trump -->
-    <g transform="rotate(-2 228 228)">
-        <rect x="138" y="96" width="180" height="264" rx="18" fill="#000000" opacity="0.22" transform="translate(0,9)" />
-        <rect x="138" y="96" width="180" height="264" rx="18" fill="#FFFFFF" stroke="#E2E6EC" stroke-width="2" />
-
-        <!-- Big central spade -->
-        <g fill="#15171C" transform="translate(228,178) scale(2.6) translate(-16,-16)">
-            <path transform="rotate(180 16 14.8)" d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12,16-21.2C32,3.8,28.2,0,23.6,0z" />
-            <path d="M16,19 C15.4,25 13.6,29.5 10,32 L22,32 C18.4,29.5 16.6,25 16,19 Z" />
-        </g>
-
-        <!-- "J" drawn as a stroked vector path (no font dependency) -->
-        <path d="M244,262 L244,312 C244,330 234,338 222,338 C210,338 202,330 200,320" fill="none" stroke="#0B6B34" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" />
-
-        <!-- Top-left corner index pip -->
-        <g fill="#15171C" transform="translate(166,128) scale(0.72) translate(-16,-16)">
-            <path transform="rotate(180 16 14.8)" d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12,16-21.2C32,3.8,28.2,0,23.6,0z" />
-            <path d="M16,19 C15.4,25 13.6,29.5 10,32 L22,32 C18.4,29.5 16.6,25 16,19 Z" />
+    <!-- The jack of spades -->
+    <g transform="translate(282.6,443.5) rotate(5) translate(0,-219.9)">
+        <use xlink:href="#card" fill="#FFFFFF" />
+        <use xlink:href="#j" x="-46.79" y="-59.12" fill="#111317" />
+        <use xlink:href="#spade" x="-47.14" y="-8.25" fill="#111317" />
+        <g transform="rotate(180)">
+            <use xlink:href="#j" x="-46.79" y="-59.12" fill="#111317" />
+            <use xlink:href="#spade" x="-47.14" y="-8.25" fill="#111317" />
         </g>
     </g>
 </svg>

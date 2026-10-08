@@ -613,6 +613,16 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   recreating the activity. After the base callback it updates `UiScale.SystemFontScale`,
   refreshes existing MAUI font mappings and invalidates measurement, including formatted spans.
   The current match survives; this does not restore a match after process death.
+- **The icon is four jacks** (since October 7): `Resources/AppIcon/appiconfg.svg` fans the jacks
+  of diamonds, clubs, hearts and spades over the felt of `appicon.svg`; `Resources/Splash/splash.svg`
+  is the same fan. It stays within 142 units of the 456-unit canvas's centre (Android's masks
+  show 152). MAUI also uses the foreground as Android's monochrome (themed) icon, which keeps
+  only its alpha, so clipped gaps, not shadows, separate the cards. **The resizetizer does not
+  track `ForegroundFile`**: after changing `appiconfg.svg`, delete `obj/<configuration>/<framework>`'s
+  `resizetizer` folder (under `win-x64` on Windows) and the `mauiimage.stamp` and
+  `mauisplash.stamp` beside it, or incremental builds, the Play release script's publish
+  included, keep the old icon. `tools/StoreScreenshots/render_graphics.ps1` renders the Play icon
+  and the feature graphics, which fan the app's four jack cards in the same order.
 - **Rating**: an on-device ELO (`PlayerRatingStore`, start 1000, K = 32) by the team formula:
   expected = 1 / (1 + 10^((rivals − (person + partner) / 2) / 400)), the rivals rated as the
   average of their two levels (`Lineup.RivalsElo`). The levels' ratings in `AiLevels` are pair

@@ -1,6 +1,6 @@
 {
   "Generator": "tools/StoreScreenshots/render_graphics.ps1",
-  "BrowserVersion": "154.0.4258.37",
+  "BrowserVersion": "154.0.4258.62",
   "Source": "App icon vectors, Open Sans fonts, and native playing-card artwork from src/UI/Belot.UI/Resources. Feature artwork is promotional composition, not a gameplay screenshot.",
   "Assets": [
     {
@@ -8,24 +8,24 @@
       "Width": 512,
       "Height": 512,
       "Format": "24-bit RGB PNG, opaque",
-      "Sha256": "02954c1ac55735d2757637b7be5697ab62346cfcbcc31f94cfabd6a2528281c7",
-      "Bytes": 90887
+      "Sha256": "171797ddd641296c7590f0586801208aeda5de1fe80fb2e7cb012076a58b7937",
+      "Bytes": 107270
     },
     {
       "File": "store/google-play/graphics/feature-bg.png",
       "Width": 1024,
       "Height": 500,
       "Format": "24-bit RGB PNG, opaque",
-      "Sha256": "67e6b099225575b6f39dc0440d790324bd1b3c578305e5a8176bdac0357ecb57",
-      "Bytes": 330446
+      "Sha256": "f13feec54df3fc5e6501f7e69c92a5e074808de10c17bd7a371977ddca31ffb6",
+      "Bytes": 334787
     },
     {
       "File": "store/google-play/graphics/feature-en-US.png",
       "Width": 1024,
       "Height": 500,
       "Format": "24-bit RGB PNG, opaque",
-      "Sha256": "c142a013f10aed85ed5aad6030b76eebf53d7ee4545d4d6a5c5a418a8f44b051",
-      "Bytes": 330000
+      "Sha256": "efa1bbf2fe8a1eb4f37caeee79609b29e7263ccd14c5b257e72ccdee2fda0a98",
+      "Bytes": 334279
     }
   ]
 }

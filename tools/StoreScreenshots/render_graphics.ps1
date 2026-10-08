@@ -91,9 +91,8 @@ html,body{margin:0;width:512px;height:512px;overflow:hidden;background:#073A1D}s
 
 $regular = ConvertTo-DataUrl (Join-Path $resources 'Fonts\OpenSans-Regular.ttf') 'font/ttf'
 $semibold = ConvertTo-DataUrl (Join-Path $resources 'Fonts\OpenSans-Semibold.ttf') 'font/ttf'
-$king = ConvertTo-DataUrl (Join-Path $resources 'Images\card_kingspade.png') 'image/png'
-$queen = ConvertTo-DataUrl (Join-Path $resources 'Images\card_queenspade.png') 'image/png'
-$jack = ConvertTo-DataUrl (Join-Path $resources 'Images\card_jackspade.png') 'image/png'
+# The four jacks, fanned in the app icon's order: diamonds at the bottom, spades on top.
+$jacks = @('diamond', 'club', 'heart', 'spade') | ForEach-Object { ConvertTo-DataUrl (Join-Path $resources "Images\card_jack$_.png") 'image/png' }
 $locales = @(
     @{ Name = 'feature-bg'; Title = 'БЕЛОТ'; Eyebrow = 'КЛАСИЧЕСКА ИГРА НА КАРТИ'; Subtitle = 'Твоят ход.'; Features = '5 нива · Подсказки · Офлайн'; Language = 'bg' },
     @{ Name = 'feature-en-US'; Title = 'BELOT'; Eyebrow = 'THE BULGARIAN CARD GAME'; Subtitle = 'Your move.'; Features = '5 levels · Hints · Play offline'; Language = 'en' }
@@ -115,15 +114,16 @@ h1{font-size:104px;line-height:1.15;letter-spacing:2px;font-weight:600;margin:13
 .subtitle{font-size:32px;line-height:1.4;color:#E3EDE7;margin:0}
 .features{position:absolute;left:74px;top:369px;font-size:21px;letter-spacing:.15px;white-space:nowrap;color:#E3EDE7}
 .rule{width:44px;height:3px;background:#E2B864;margin-bottom:18px}
-.cards{position:absolute;left:643px;top:101px;width:208px;height:290px}
+.cards{position:absolute;left:640px;top:104px;width:208px;height:290px}
 .card{position:absolute;width:208px;height:290px;filter:drop-shadow(0 12px 12px rgba(0,0,0,.35));transform-origin:50% 96%}
-.king{transform:translate(-38px,13px) rotate(-17deg)}
-.queen{transform:translate(8px,-5px) rotate(-1deg)}
-.jack{transform:translate(51px,10px) rotate(17deg)}
+.diamond{transform:translate(-57px,14px) rotate(-18deg)}
+.club{transform:translate(-19px,-1px) rotate(-6deg)}
+.heart{transform:translate(19px,-1px) rotate(6deg)}
+.spade{transform:translate(57px,14px) rotate(18deg)}
 </style></head><body><div class="ring"></div><div class="ring inner"></div>
 <div class="copy"><div class="eyebrow">$($locale.Eyebrow)</div><h1>$($locale.Title)</h1><p class="subtitle">$($locale.Subtitle)</p></div>
 <div class="features"><div class="rule"></div>$($locale.Features)</div>
-<div class="cards"><img class="card king" src="$king" alt=""><img class="card queen" src="$queen" alt=""><img class="card jack" src="$jack" alt=""></div>
+<div class="cards"><img class="card diamond" src="$($jacks[0])" alt=""><img class="card club" src="$($jacks[1])" alt=""><img class="card heart" src="$($jacks[2])" alt=""><img class="card spade" src="$($jacks[3])" alt=""></div>
 </body></html>
 "@
     $records.Add((Write-Graphic $locale.Name $html 1024 500))
