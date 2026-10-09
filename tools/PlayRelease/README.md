@@ -1,6 +1,6 @@
 # Belot Google Play release tools
 
-Run commands from the repository root. These tools target `com.nksolutions.belot`. The API workflow is deliberately specific to the first **1.0 / version code 1** release; review and update its guards before preparing a later version.
+Run commands from the repository root. These tools target `com.nksolutions.belot`. The first release, **1.0 / version code 1**, went out while the app was a draft: listings, upload and complete were separate commits, sent for review together from Console. Later versions of the published app use `release` (below), which makes the listings, the bundle and the 100% production release one edit and one review submission.
 
 ## Build a signed AAB
 
@@ -14,8 +14,10 @@ Create two restricted, temporary UTF-8 password files outside the repository. Th
     -KeyAlias upload `
     -StorePasswordFile C:\Private\Belot\store-password.txt `
     -KeyPasswordFile C:\Private\Belot\key-password.txt `
-    -VersionName 1.0 -VersionCode 1
+    -VersionName 1.1 -VersionCode 2
 ```
+
+Every release needs a version code above every bundle Play already has; keep `ApplicationDisplayVersion` and `ApplicationVersion` in `Belot.UI.csproj` equal to the released ones.
 
 The script refuses missing/empty signing inputs and Android Debug certificates, publishes Release with warnings treated as errors, and verifies the signature, selected certificate, package/version, target API 36 and both ABIs. Defaults produce:
 
@@ -70,16 +72,24 @@ node tools/PlayRelease/play-release.mjs listings --key $playKey
 node tools/PlayRelease/play-release.mjs verify --key $playKey
 
 # Upload AAB, check returned hash/code, and prepare a draft production release:
-node tools/PlayRelease/play-release.mjs upload --key $playKey --bundle $bundle
+node tools/PlayRelease/play-release.mjs upload --key $playKey --bundle $bundle --version-name 1.0 --version-code 1
 
-# Select 100% production for the prepared version 1, then commit:
-node tools/PlayRelease/play-release.mjs complete --key $playKey
+# Select 100% production for the prepared version, then commit:
+node tools/PlayRelease/play-release.mjs complete --key $playKey --version-name 1.0 --version-code 1
+
+# A later version of the published app, in one edit: BG/EN text and images (verified by hash and
+# order), the AAB (code and hash checked) and the production release to everyone with the release
+# notes. First as a dry run (Google validates the edit, which is then discarded), then for real:
+node tools/PlayRelease/play-release.mjs release --key $playKey --bundle $bundle --version-name 1.1 --version-code 2 --dry-run true
+node tools/PlayRelease/play-release.mjs release --key $playKey --bundle $bundle --version-name 1.1 --version-code 2
 
 # Read back the resulting state:
-node tools/PlayRelease/play-release.mjs inspect --key $playKey
+node tools/PlayRelease/play-release.mjs inspect --key $playKey --version-name 1.1
 ```
 
-`listings`, `upload` and `complete` change Google Play. Run them only within an authorized release. Upload refuses to replace an existing production release; complete requires exactly the prepared version 1. `inspect` and `verify` only read app data and delete their temporary edits. All commands write receipts to `artifacts/play-release-1.0` by default; use `--receipts <folder>` to override it.
+`listings`, `upload`, `complete` and `release` change Google Play unless given `--dry-run true`. Run them only within an authorized release. Upload and release refuse to replace a production release that is not completed and a version code that is not above every uploaded bundle; complete requires exactly one prepared draft of the given version. `inspect` and `verify` only read app data and delete their temporary edits. All commands write receipts to `artifacts/play-release-<version name>` (`1.0` without one); use `--receipts <folder>` to override it.
+
+A published app sends every committed edit for review automatically, and a commit fails while another one is in review. So a release of the published app is one `release` edit, not `listings` followed by `upload` and `complete`.
 
 Commit uses `changesInReviewBehavior=ERROR_IF_IN_REVIEW`: this application's API requires automatic review submission and rejects `changesNotSentForReview`. The tool fails rather than cancels an existing review. Do not retry a mutation blindly after a network error; inspect current state and the saved receipt first.
 

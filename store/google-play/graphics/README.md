@@ -24,7 +24,7 @@ For another Chromium installation, pass `-BrowserPath` with the executable's abs
 
 ## Validation — 2026-10-08
 
-The icon was redrawn as four jacks, and the feature graphics show the application's four jacks instead of the king, queen, and jack of spades. All three were rendered with Edge 154.0.4258.62 and visually reviewed in full size. Text, card corners, and the complete fan remain visible in both languages. Independent checks passed for dimensions, 8-bit RGB color type, every PNG chunk CRC, full pixel decoding, and the manifest's SHA-256 hashes. The icon is 107,270 bytes; both feature graphics are below 335 KB. Google Play keeps the 1.0 graphics until the new ones are uploaded.
+The icon was redrawn as four jacks, and the feature graphics show the application's four jacks instead of the king, queen, and jack of spades. All three were rendered with Edge 154.0.4258.62 and visually reviewed in full size. Text, card corners, and the complete fan remain visible in both languages. Independent checks passed for dimensions, 8-bit RGB color type, every PNG chunk CRC, full pixel decoding, and the manifest's SHA-256 hashes. The icon is 107,270 bytes; both feature graphics are below 335 KB. All three went to Google Play with [release 1.1](../releases/1.1.md) on 2026-10-09, verified there by SHA-256.
 
 ## Validation — 2026-09-29
 

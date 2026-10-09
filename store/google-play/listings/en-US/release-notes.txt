@@ -1,6 +1,5 @@
-First release of Belot:
-• Offline play with five difficulty levels and a separate setting for each computer player.
-• Hints, built-in rules, rating and match history.
-• Every card you play waits for a tap.
-• Bulgarian and English interfaces.
-• A button to play online Belot at ednaigra.com in your browser.
+What's new in Belot 1.1:
+• A new icon: four jacks.
+• A new Master: it plays the way strong players play and teach Belot. It counts the cards, signals to its partner and calculates the last five tricks.
+• The levels' ratings are updated for the new Master.
+• Fixed: a game that ended while you were leaving the table now counts in your rating and history.

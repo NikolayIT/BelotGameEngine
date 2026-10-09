@@ -682,12 +682,16 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   checks the signing certificate, package/version/API 36 and both arm64/x64 ABIs.
   Password values never belong in command arguments, logs or Git.
 - `tools/PlayRelease/play-release.mjs` uses an explicitly supplied Play service-account
-  key. It targets only `com.nksolutions.belot`; `listings`, `upload`, and `complete`
-  are remote mutations. `inspect` and `verify` discard their temporary edit.
-  `upload` prepares version 1 as a draft; `complete` selects a 100% production release.
-  The API requires automatic review submission for this app. Always inspect Console
-  afterward: saved drafts and completed rollout configuration do not prove approval
-  or public availability. It refuses to cancel an existing review.
+  key. It targets only `com.nksolutions.belot`; `listings`, `upload`, `complete` and
+  `release` are remote mutations unless given `--dry-run true` (Google validates the edit,
+  which is then discarded). `inspect` and `verify` discard their temporary edit. A
+  published app sends every committed edit for review and a commit fails while another
+  is in review, so a new version is one `release` edit (`--version-name`/`--version-code`):
+  listings and images, the AAB and the 100% production release; `upload` + `complete`
+  were the draft app's 1.0 flow. Always inspect Console afterward: a committed,
+  completed track does not prove approval or public availability. It refuses to cancel
+  an existing review. The local, ignored `artifacts/play-release-1.1/publish-local.ps1`
+  shows where the publisher's keys are read from and how the password files are handled.
 - The canonical publisher site is `https://belot.nksolutions.com/`; its BG/EN privacy
   page is `https://belot.nksolutions.com/privacy-policy.html`. Play Console uses these
   addresses. Settings in the signed 1.0 bundle retains its original
@@ -702,6 +706,12 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   Quick checks were still running at the final capture; approval/public availability
   remain unverified. The user completed the declarations with target audience 9+.
   Submission and artifact evidence: `store/google-play/releases/1.0.md`.
+- Version 1.1 / code 2 was committed through the API on 9 October 2026 (one `release`
+  edit after a validated dry run): the four-jack icon and feature graphics, the
+  heuristic Master, the recalibrated ratings and the bug hunt's fix, 100% production.
+  Its review status in Console was not checked. The 16 screenshots are 1.0's, captured
+  before the September 30 ratings; recapturing needs a device, and the owner asked
+  that their BlueStacks not be used. Evidence: `store/google-play/releases/1.1.md`.
 
 ## NuGet engine release
 

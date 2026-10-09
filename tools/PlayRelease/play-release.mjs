@@ -13,14 +13,21 @@ for (let i = 0; i < args.length; i += 2) {
   assert(args[i].startsWith('--') && args[i + 1], 'Use --name value arguments.');
   options.set(args[i].slice(2), args[i + 1]);
 }
-assert(['inspect', 'listings', 'verify', 'upload', 'complete'].includes(command), 'Command: inspect | listings | verify | upload | complete');
+assert(['inspect', 'listings', 'verify', 'upload', 'complete', 'release'].includes(command), 'Command: inspect | listings | verify | upload | complete | release');
 assert(options.has('key'), '--key must point to an existing service-account JSON file.');
+const versionName = options.get('version-name');
+const versionCode = options.has('version-code') ? Number(options.get('version-code')) : undefined;
+// A dry run makes and validates every change of the edit, then discards the edit.
+const dryRun = options.get('dry-run') === 'true';
+if (['upload', 'complete', 'release'].includes(command)) {
+  assert(versionName && Number.isInteger(versionCode) && versionCode > 0, '--version-name and --version-code are required.');
+}
 const packageName = 'com.nksolutions.belot';
 const api = 'https://androidpublisher.googleapis.com/androidpublisher/v3';
 const media = 'https://androidpublisher.googleapis.com/upload/androidpublisher/v3';
 const root = `${api}/applications/${packageName}/edits`;
 const locales = ['bg', 'en-US'];
-const receiptDir = path.resolve(repo, options.get('receipts') ?? 'artifacts/play-release-1.0');
+const receiptDir = path.resolve(repo, options.get('receipts') ?? `artifacts/play-release-${versionName ?? '1.0'}`);
 await mkdir(receiptDir, { recursive: true });
 const key = JSON.parse(await readFile(options.get('key'), 'utf8'));
 const now = Math.floor(Date.now() / 1000);
@@ -43,7 +50,7 @@ async function listing(locale) {
   const fields = [['title', 'title', 30], ['shortDescription', 'short-description', 80], ['fullDescription', 'full-description', 4000]];
   const result = { language: locale };
   for (const [name, file, limit] of fields) {
-    const value = (await readFile(path.join(folder, `${file}.txt`), 'utf8')).replace(/^\uFEFF/, '').trim();
+    const value = (await readFile(path.join(folder, `${file}.txt`), 'utf8')).replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').trim();
     assert(value.length > 0 && [...value].length <= limit, `${locale} ${name} exceeds its limit.`);
     result[name] = value;
   }
@@ -82,52 +89,82 @@ async function verifyAssets() {
   }
   return verified;
 }
+async function putListings() {
+  for (const asset of assets) {
+    await request('PUT', `${editRoot}/listings/${asset.locale}`, asset.listing);
+    for (const [type, files] of Object.entries(asset.groups)) {
+      const imageRoot = `${editRoot}/listings/${asset.locale}/${type}`;
+      const existing = (await request('GET', imageRoot)).images ?? [];
+      if (existing.length === files.length && files.every((file, i) => sha(file.bytes) === existing[i].sha256)) continue;
+      if (existing.length) await request('DELETE', imageRoot);
+      for (const file of files) await request('POST', `${media}/applications/${packageName}/edits/${edit.id}/listings/${asset.locale}/${type}?uploadType=media`, file.bytes, 'image/png');
+    }
+    console.log(`Uploaded ${asset.locale}: text, icon, feature graphic, eight screenshots.`);
+  }
+}
+async function releaseNotes() {
+  const notes = await Promise.all(locales.map(async language => ({ language, text: (await readFile(path.join(repo, 'store/google-play/listings', language, 'release-notes.txt'), 'utf8')).replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').trim() })));
+  assert(notes.every(note => note.text.length > 0 && [...note.text].length <= 500), 'Release notes must have 1 to 500 characters.');
+  return notes;
+}
+// Uploads the AAB of the requested version: only over completed production releases, and only
+// with a version code above every bundle Play already has.
+async function uploadBundle() {
+  assert(options.has('bundle'), '--bundle is required.');
+  const production = receipt.before.tracks.tracks?.find(track => track.track === 'production');
+  assert((production?.releases ?? []).every(release => release.status === 'completed'), 'Refusing to replace a production release that is not completed.');
+  const used = (receipt.before.bundles.bundles ?? []).map(bundle => bundle.versionCode);
+  assert(used.every(code => code < versionCode), `Version code ${versionCode} must be above every uploaded bundle (${used.join(', ') || 'none'}).`);
+  const bytes = await readFile(options.get('bundle'));
+  receipt.upload = await request('POST', `${media}/applications/${packageName}/edits/${edit.id}/bundles?uploadType=media`, bytes, 'application/octet-stream');
+  assert.equal(receipt.upload.versionCode, versionCode, `This release must be version code ${versionCode}.`);
+  assert.equal(receipt.upload.sha256, sha(bytes), 'Uploaded AAB hash mismatch.');
+  receipt.bundleSha256 = sha(bytes);
+}
 try {
   receipt.before = { details: await request('GET', `${editRoot}/details`), tracks: await request('GET', `${editRoot}/tracks`), bundles: await request('GET', `${editRoot}/bundles`), listings: await request('GET', `${editRoot}/listings`) };
   if (command === 'listings') {
-    for (const asset of assets) {
-      await request('PUT', `${editRoot}/listings/${asset.locale}`, asset.listing);
-      for (const [type, files] of Object.entries(asset.groups)) {
-        const imageRoot = `${editRoot}/listings/${asset.locale}/${type}`;
-        const existing = (await request('GET', imageRoot)).images ?? [];
-        if (existing.length === files.length && files.every((file, i) => sha(file.bytes) === existing[i].sha256)) continue;
-        if (existing.length) await request('DELETE', imageRoot);
-        for (const file of files) await request('POST', `${media}/applications/${packageName}/edits/${edit.id}/listings/${asset.locale}/${type}?uploadType=media`, file.bytes, 'image/png');
-      }
-      console.log(`Uploaded ${asset.locale}: text, icon, feature graphic, eight screenshots.`);
-    }
+    await putListings();
     receipt.verified = await verifyAssets();
   } else if (command === 'verify') {
     receipt.verified = await verifyAssets();
   } else if (command === 'upload') {
-    assert(options.has('bundle'), '--bundle is required.');
-    const current = receipt.before.tracks.tracks?.find(track => track.track === 'production');
-    assert.equal(current?.releases?.length ?? 0, 0, 'Refusing to replace an existing production release.');
-    const bytes = await readFile(options.get('bundle'));
-    receipt.upload = await request('POST', `${media}/applications/${packageName}/edits/${edit.id}/bundles?uploadType=media`, bytes, 'application/octet-stream');
-    assert.equal(receipt.upload.versionCode, 1, 'This release must be version code 1.');
-    assert.equal(receipt.upload.sha256, sha(bytes), 'Uploaded AAB hash mismatch.');
-    receipt.bundleSha256 = sha(bytes);
-    const notes = await Promise.all(locales.map(async language => ({ language, text: (await readFile(path.join(repo, 'store/google-play/listings', language, 'release-notes.txt'), 'utf8')).replace(/^\uFEFF/, '').trim() })));
-    assert(notes.every(note => [...note.text].length <= 500), 'Release notes exceed 500 characters.');
-    receipt.track = await request('PUT', `${editRoot}/tracks/production`, { track: 'production', releases: [{ name: '1.0', versionCodes: ['1'], status: 'draft', releaseNotes: notes }] });
+    await uploadBundle();
+    // Play keeps the completed release serving until this draft is completed.
+    receipt.track = await request('PUT', `${editRoot}/tracks/production`, { track: 'production', releases: [{ name: versionName, versionCodes: [String(versionCode)], status: 'draft', releaseNotes: await releaseNotes() }] });
   } else if (command === 'complete') {
     const track = await request('GET', `${editRoot}/tracks/production`);
-    assert.equal(track.releases?.length, 1, 'Expected one prepared production release.');
-    assert.deepEqual(track.releases[0].versionCodes, ['1'], 'Unexpected production version.');
-    track.releases[0].status = 'completed';
-    delete track.releases[0].userFraction;
-    receipt.track = await request('PUT', `${editRoot}/tracks/production`, track);
+    const prepared = (track.releases ?? []).filter(release => release.versionCodes?.length === 1 && release.versionCodes[0] === String(versionCode));
+    assert.equal(prepared.length, 1, `Expected one prepared production release of version code ${versionCode}.`);
+    assert.equal(prepared[0].status, 'draft', 'The prepared release is not a draft.');
+    prepared[0].status = 'completed';
+    delete prepared[0].userFraction;
+    receipt.track = await request('PUT', `${editRoot}/tracks/production`, { track: 'production', releases: [prepared[0]] });
+  } else if (command === 'release') {
+    // A published app sends every committed edit for review, and a commit fails while another
+    // is in review: the listing, the bundle and the full production release go in one edit.
+    await putListings();
+    receipt.verified = await verifyAssets();
+    await uploadBundle();
+    receipt.track = await request('PUT', `${editRoot}/tracks/production`, { track: 'production', releases: [{ name: versionName, versionCodes: [String(versionCode)], status: 'completed', releaseNotes: await releaseNotes() }] });
+    receipt.trackAfter = await request('GET', `${editRoot}/tracks/production`);
+    const served = (receipt.trackAfter.releases ?? []).find(release => release.versionCodes?.includes(String(versionCode)));
+    assert(served?.status === 'completed' && served.userFraction === undefined, 'The production track does not give the new version to everyone.');
   }
-  if (['listings', 'upload', 'complete'].includes(command)) {
+  if (['listings', 'upload', 'complete', 'release'].includes(command)) {
     await request('POST', `${editRoot}:validate`);
-    // This application's Play API requires automatic review submission and
-    // explicitly rejects changesNotSentForReview. Never cancel another review.
-    receipt.commit = await request('POST', `${editRoot}:commit?changesInReviewBehavior=ERROR_IF_IN_REVIEW`);
-    committed = true;
+    if (dryRun) {
+      // Google validated the whole edit; it is discarded below, so nothing changes on Play.
+      receipt.dryRun = true;
+    } else {
+      // This application's Play API requires automatic review submission and
+      // explicitly rejects changesNotSentForReview. Never cancel another review.
+      receipt.commit = await request('POST', `${editRoot}:commit?changesInReviewBehavior=ERROR_IF_IN_REVIEW`);
+      committed = true;
+    }
   }
-  await writeFile(path.join(receiptDir, `${command}-${Date.now()}.json`), JSON.stringify(receipt, null, 2));
-  console.log(JSON.stringify({ command, committed, verifiedImages: receipt.verified?.length, bundle: receipt.upload, track: receipt.track, details: command === 'inspect' ? receipt.before : undefined }, null, 2));
+  await writeFile(path.join(receiptDir, `${command}${dryRun ? '-dry-run' : ''}-${Date.now()}.json`), JSON.stringify(receipt, null, 2));
+  console.log(JSON.stringify({ command, dryRun, committed, verifiedImages: receipt.verified?.length, bundle: receipt.upload, track: receipt.track, details: command === 'inspect' ? receipt.before : undefined }, null, 2));
 } catch (error) {
   receipt.error = String(error);
   await writeFile(path.join(receiptDir, `${command}-failed-${Date.now()}.json`), JSON.stringify(receipt, null, 2));
