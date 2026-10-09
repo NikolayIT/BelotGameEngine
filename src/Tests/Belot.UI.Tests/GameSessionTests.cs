@@ -246,6 +246,59 @@
             Assert.Null(await session.GetHintAsync());
         });
 
+        // The engine decides the game before the table shows the act that decided it: GameDecided
+        // comes once, before that act's cards and trick, with the result GameOver brings at the end.
+        [Theory]
+        [InlineData(11)]
+        [InlineData(12)]
+        [InlineData(13)]
+        public void TheGameShouldBeDecidedOnceBeforeTheTableShowsItsEnd(int seed) => UiThread.Run(async () =>
+        {
+            var session = NewSession(seed, pace: new GamePace(1, 1, 1));
+            var driver = new TableDriver(session, seed);
+            var decided = new List<(GameOverInfo Game, int EventsBefore, bool Recorded)>();
+            session.GameDecided += over => decided.Add((over, driver.Events.Count, session.GetRecord() != null));
+            await driver.PlayToTheEndAsync();
+
+            var (game, eventsBefore, recorded) = Assert.Single(decided);
+            Assert.True(recorded);
+            Assert.Same(game, driver.Over);
+            Assert.Equal(session.GetRecord()!.Winner, game.WinnerTeam);
+
+            // The decisive card and the last trick are shown after it, and the game ends with its deal.
+            var after = driver.Events.Skip(eventsBefore).ToList();
+            Assert.IsType<CardInfo>(after[0]);
+            Assert.Contains(after, e => e is TrickInfo);
+            Assert.Same(game.LastRound, after[^1]);
+            Assert.DoesNotContain(after, e => e is TurnInfo || e is DealInfo);
+        });
+
+        // Stopped as soon as the game is decided (the person leaves), the session raises nothing
+        // more, but the engine's game is finished and complete.
+        [Fact]
+        public void StoppingWhenTheGameIsDecidedShouldRaiseNothingMore() => UiThread.Run(async () =>
+        {
+            var session = NewSession(14, pace: new GamePace(3, 3, 3));
+            var driver = new TableDriver(session, 14);
+            var stoppedAt = -1;
+            session.GameDecided += over =>
+            {
+                session.Stop();
+                stoppedAt = driver.Events.Count;
+            };
+
+            session.Start();
+            await session.Completion.WaitAsync(TimeSpan.FromSeconds(60));
+            await Task.Delay(100);
+
+            Assert.True(stoppedAt > 0, "the game was never decided");
+            Assert.Equal(stoppedAt, driver.Events.Count);
+            Assert.Empty(driver.Errors);
+            Assert.Null(driver.Over);
+            Assert.False(session.IsRunning);
+            Assert.NotNull(session.GetRecord());
+        });
+
         // Restarted from a handler (Play again, or a new game from the menu), only the new game
         // goes on: the old one raises nothing more.
         [Theory]

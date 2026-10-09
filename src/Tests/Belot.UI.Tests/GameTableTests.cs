@@ -246,6 +246,52 @@
             table.Dispose();
         });
 
+        // The engine decides the game with its last card while the table still shows that card and
+        // the last trick. Leaving then keeps the finished game: it is rated and recorded once,
+        // although the game-over screen never shows.
+        [Fact]
+        public void LeavingWhileTheLastTrickIsShownShouldStillRecordTheFinishedGame() => UiThread.Run(async () =>
+        {
+            var (session, table, host) = Table("dummy", "smart", "random", seed: 5);
+            var tester = new TableTester(session, table, 5);
+            var left = false;
+            session.TrickCollected += _ =>
+            {
+                // The record exists once the engine has finished the game.
+                if (!left && session.GetRecord() != null)
+                {
+                    left = true;
+                    table.LeaveCommand.Execute(null);
+                }
+            };
+
+            table.StartGame();
+            while (!left)
+            {
+                await tester.Until(() => left || table.IsMyTurn || table.IsRoundOverlayVisible || table.IsGameOverlayVisible, "a decision, a result or leaving");
+                if (!left)
+                {
+                    Assert.True(await tester.StepAsync());
+                }
+            }
+
+            await Task.Delay(100);
+            Assert.Equal(1, host.Leaves);
+            Assert.False(session.IsRunning);
+            Assert.False(table.IsGameOverlayVisible);
+            Assert.Null(tester.Over);
+
+            var won = session.GetRecord()!.Winner == PlayerPosition.SouthNorthTeam;
+            Assert.Equal(1, PlayerRatingStore.GamesPlayed);
+            var entry = Assert.Single(MatchHistoryStore.All());
+            Assert.Equal(("dummy", "smart", "random", won), (entry.PartnerId, entry.WestId, entry.EastId, entry.Won));
+            Assert.Equal(1, OpponentStatsStore.For("smart").Games);
+            Assert.Equal(1, OpponentStatsStore.For("random").Games);
+            Assert.Equal(0, OpponentStatsStore.For("dummy").Games);
+            table.Dispose();
+            Assert.Equal(1, PlayerRatingStore.GamesPlayed);
+        });
+
         internal static (GameSession Session, GameViewModel Table, FakeTableHost Host) Table(
             string partner,
             string west,

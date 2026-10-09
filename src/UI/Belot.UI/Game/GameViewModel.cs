@@ -88,6 +88,10 @@
 
         private string ratingChangeText = string.Empty;
 
+        // The decided game whose result is already recorded, with the rating change it made, until
+        // the table shows its game-over screen.
+        private (GameOverInfo Game, RatingChange Change)? recorded;
+
         private bool isLeaving;
 
         private bool isDisposed;
@@ -122,6 +126,7 @@
             session.CardPlayed += this.OnCardPlayed;
             session.TrickCollected += this.OnTrickCollected;
             session.RoundFinished += this.OnRoundFinished;
+            session.GameDecided += this.OnGameDecided;
             session.GameOver += this.OnGameOver;
             session.GameError += this.OnGameError;
             LocalizationManager.Instance.PropertyChanged += this.OnLanguageChanged;
@@ -351,6 +356,7 @@
             this.session.CardPlayed -= this.OnCardPlayed;
             this.session.TrickCollected -= this.OnTrickCollected;
             this.session.RoundFinished -= this.OnRoundFinished;
+            this.session.GameDecided -= this.OnGameDecided;
             this.session.GameOver -= this.OnGameOver;
             this.session.GameError -= this.OnGameError;
             LocalizationManager.Instance.PropertyChanged -= this.OnLanguageChanged;
@@ -680,6 +686,10 @@
             this.HangingPoints = round.HangingAfter;
         }
 
+        // The engine has decided the game: its result is recorded now, while the table still shows
+        // the last cards, so leaving then cannot lose it. The screen changes only in OnGameOver.
+        private void OnGameDecided(GameOverInfo over) => this.recorded = (over, this.Record(over));
+
         private void OnGameOver(GameOverInfo over)
         {
             this.ShowRound(over.LastRound);
@@ -694,6 +704,23 @@
                 this.themMatchWins++;
             }
 
+            var change = this.recorded is { } decided && ReferenceEquals(decided.Game, over) ? decided.Change : this.Record(over);
+            this.recorded = null;
+            this.GameOverlayIcon = won ? "🏆" : "😞";
+            this.GameOverlayTitle = won ? text["GameOver_Won"] : text["GameOver_Lost"];
+            this.GameOverlayBody = text.Format("GameOver_Score", over.LastRound.SouthNorthGamePoints, over.LastRound.EastWestGamePoints);
+            this.RatingChangeText = text.Format("Rating_Change", change.OldElo, change.NewElo, change.Delta >= 0 ? $"+{change.Delta}" : change.Delta.ToString());
+            this.Raise(nameof(this.MatchScoreText), nameof(this.HasMatchHistory));
+            this.IsRoundOverlayVisible = false;
+            this.IsGameOverlayVisible = true;
+            this.Vibrate(true);
+        }
+
+        // What the game's result changes away from the table: the person's rating, the history
+        // and the records against the rivals' levels.
+        private RatingChange Record(GameOverInfo over)
+        {
+            var won = over.WeWon;
             var change = PlayerRatingStore.RecordResult(this.Lineup.Partner.Elo, this.Lineup.RivalsElo, won);
             MatchHistoryStore.Add(new MatchHistoryEntry(
                 this.Lineup.Partner.Id,
@@ -708,14 +735,7 @@
                 OpponentStatsStore.Record(rival.Id, won);
             }
 
-            this.GameOverlayIcon = won ? "🏆" : "😞";
-            this.GameOverlayTitle = won ? text["GameOver_Won"] : text["GameOver_Lost"];
-            this.GameOverlayBody = text.Format("GameOver_Score", over.LastRound.SouthNorthGamePoints, over.LastRound.EastWestGamePoints);
-            this.RatingChangeText = text.Format("Rating_Change", change.OldElo, change.NewElo, change.Delta >= 0 ? $"+{change.Delta}" : change.Delta.ToString());
-            this.Raise(nameof(this.MatchScoreText), nameof(this.HasMatchHistory));
-            this.IsRoundOverlayVisible = false;
-            this.IsGameOverlayVisible = true;
-            this.Vibrate(true);
+            return change;
         }
 
         private void OnGameError(Exception error)

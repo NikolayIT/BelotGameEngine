@@ -566,6 +566,10 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   events only** (the live view is already past them while they are replayed) and re-syncs from
   `GetView(South)` at each of the person's turns. Live cards and the last-trick miniature bind
   to each seat's chronological Z index; publish the index before the card/animation notification.
+  **A decided game is recorded before it is shown**: when an act ends the game the session raises
+  `GameDecided` before replaying it, and the table writes the rating, history and level records
+  there; `GameOver` (after the last trick's pauses) only shows the result. Recording in
+  `GameOver` lost a finished game when the person left during those pauses (October 8 bug hunt).
 - **The game layer is MAUI-free**: all of `Game/` except `PreferencesSettingsStore.cs`, plus
   `Localization/AppStrings.cs` (English and Bulgarian, in code; `{loc:Tr Key}` in XAML) and
   `LocalizationManager.cs`. MAUI sits behind two seams: `ISettingsStore` (`SettingsStore.Current`,

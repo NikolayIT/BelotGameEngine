@@ -113,7 +113,16 @@
         /// <summary>Fires after a deal that did not end the game; the game waits for <see cref="Continue"/>.</summary>
         public event Action<RoundEndInfo>? RoundFinished;
 
-        /// <summary>Fires once when the game is won, with the last deal.</summary>
+        /// <summary>
+        /// Fires once when the engine has decided the game, before the table shows the act that
+        /// decided it (its last cards and trick, with their pauses), with the result that
+        /// <see cref="GameOver"/> brings afterwards. What the result changes away from the table
+        /// (the rating, the history, the records) belongs here: leaving during those pauses
+        /// keeps it.
+        /// </summary>
+        public event Action<GameOverInfo>? GameDecided;
+
+        /// <summary>Fires once when the game is won and the table has shown it, with the last deal.</summary>
         public event Action<GameOverInfo>? GameOver;
 
         /// <summary>Fires if the game stops on an unexpected error.</summary>
@@ -345,7 +354,18 @@
                         throw new InvalidOperationException($"{this.GetName(seat)}'s {decision} ({action.Type}) was refused: {result}.");
                     }
 
-                    foreach (var step in ActReplay.Steps(before, game.GetView(Seats.Person), seat, action))
+                    // The engine has played the act through: if it ended the game, the result is
+                    // final now, before the table has shown it.
+                    var steps = ActReplay.Steps(before, game.GetView(Seats.Person), seat, action).ToList();
+                    GameOverInfo? decided = null;
+                    if (steps.OfType<RoundEndInfo>().FirstOrDefault(r => r.IsGameOver) is { } last)
+                    {
+                        decided = new GameOverInfo(game.Winner, last);
+                        this.GameDecided?.Invoke(decided);
+                        stop.ThrowIfCancellationRequested();
+                    }
+
+                    foreach (var step in steps)
                     {
                         var pause = step switch
                         {
@@ -365,7 +385,7 @@
                             if (round.IsGameOver)
                             {
                                 this.IsRunning = false;
-                                this.GameOver?.Invoke(new GameOverInfo(game.Winner, round));
+                                this.GameOver?.Invoke(decided ?? new GameOverInfo(game.Winner, round));
                                 return;
                             }
 
