@@ -1,6 +1,7 @@
 ﻿namespace Belot.UI.Tests
 {
     using Belot.AI.ClaudePlayer;
+    using Belot.AI.ClaudePlayer.Heuristic;
     using Belot.UI.Game;
 
     using Xunit;
@@ -18,7 +19,7 @@
             Assert.Equal(typeof(ClaudePlayerProfiles), expertLevel.Factory.Method.DeclaringType);
             Assert.Equal(typeof(ClaudePlayerProfiles), masterLevel.Factory.Method.DeclaringType);
             var expert = Assert.IsType<ClaudePlayerNeural>(expertLevel.CreatePlayer());
-            var master = Assert.IsType<ClaudePlayerNeural>(masterLevel.CreatePlayer());
+            var master = Assert.IsType<ClaudePlayerHeuristic>(masterLevel.CreatePlayer());
             Assert.Equal(0, expert.Temperature);
             Assert.True(expert.HumanStyle);
             Assert.Equal(AiLevels.ExpertTolerance, expert.HumanNetworkTolerance);
@@ -27,22 +28,20 @@
             Assert.Equal(3, expert.EndgameTricks);
             Assert.Equal(90, expert.EndgameThreeTrickWorldLimit);
             Assert.False(expert.CardSuitEnsemble);
-            Assert.True(master.HumanStyle);
-            Assert.True(master.EndgameRawTieBreak);
-            Assert.Equal(AiLevels.MasterSearchDeals, master.SearchDeals);
-            Assert.Equal(AiLevels.MasterSearchMilliseconds, master.SearchTimeLimitMilliseconds);
-            Assert.Equal(5, master.SearchDoubleDummyTricks);
-            Assert.Equal(AiLevels.MasterMilliseconds, master.EndgameTimeLimitMilliseconds);
-            Assert.True(master.UseEndgameSearch);
-            Assert.True(master.EndgameUseDeclarations);
-            Assert.Equal(5, master.EndgameTricks);
-            Assert.Equal(1680, master.EndgameThreeTrickWorldLimit);
-            Assert.Equal(256, master.EndgameSampledWorlds);
-            Assert.Equal(1500000, master.EndgameNodeLimit);
-            Assert.True(master.EndgameUseTranspositions);
-            Assert.True(master.CardSuitEnsemble);
+
+            // The Master is the heuristic player: learned bids, the taught rules, exact last five tricks.
+            Assert.Equal(5, AiLevels.MasterEndgameTricks);
+            Assert.Equal(AiLevels.MasterEndgameTricks, master.Settings.EndgameTricks);
+            Assert.Equal(48, master.Settings.EndgameWorlds);
+            Assert.Equal(150000, master.Settings.EndgameNodeLimit);
+            Assert.Same(BidModel.Default, master.Settings.Bids);
+
+            // Unlike a deterministic host, the app keeps the endgame's clock: slower phones search less, not longer.
+            Assert.True(master.Settings.EndgameMilliseconds > 0);
             Assert.NotSame(expert, expertLevel.CreatePlayer());
-            Assert.NotSame(master, masterLevel.CreatePlayer());
+            var another = Assert.IsType<ClaudePlayerHeuristic>(masterLevel.CreatePlayer());
+            Assert.NotSame(master, another);
+            Assert.NotSame(master.Settings, another.Settings);
         }
 
         [Fact]

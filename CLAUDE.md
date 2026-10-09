@@ -13,10 +13,11 @@ search player `ClaudePlayerIsmcts` (see "ClaudePlayerIsmcts design"), the neural
 `ClaudePlayerNeural`, trained by reinforcement learning in self-play (see "ClaudePlayerNeural
 design" and `NEURAL_NETWORK.md`), and `ClaudePlayerHeuristic`, the belot.bg academy's written
 advice as rules with exact endgames and bids learned from how every bid did (see
-"ClaudePlayerHeuristic design" and `HEURISTIC_PLAYER.md`), measured in mirrored matches. The app's Master is that neural
-player with search in every trick and a strong human player's technique and conventions (see
-"The human-style Master" and `HUMAN_PLAY.md`). People play them in the MAUI app for Android and
-Windows (see "The MAUI app"). The full rules are in `etc/Rules.md`.
+"ClaudePlayerHeuristic design" and `HEURISTIC_PLAYER.md`), measured in mirrored matches. The app's Master is that
+heuristic player since October 8 (before, the neural player with search in every trick and a
+strong human player's technique and conventions: see "The human-style Master" and
+`HUMAN_PLAY.md`). People play them in the MAUI app for Android and Windows (see "The MAUI app").
+The full rules are in `etc/Rules.md`.
 
 ## Commands
 
@@ -50,7 +51,7 @@ dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimula
 
 # The app's levels (and ISMCTS for reference) in a pair-vs-pair round robin,
 # printing the ratings for Game/AiLevels.cs: elo [fast pairs] [ISMCTS pairs] [Master pairs]
-# (defaults 20000, 150 and 3000: the Master searches in every trick, ISMCTS on every card).
+# (defaults 20000, 150 and 20000: ISMCTS searches on every card, the Master only its endgames).
 # The simulator writes UTF-16 to the console: pipe it through iconv -f UTF-16LE to grep it.
 dotnet run -c Release --project src/Tests/Belot.GamesSimulator/Belot.GamesSimulator.csproj -- elo
 
@@ -256,7 +257,7 @@ games (+375 ELO, +64 points a game), and one of it with a SmartPlayer partner wi
   30 ms: 49%, and 84% vs 86.5% against SmartPlayer): the greedy rollout's judgement, not the
   number of deals searched, is the limit, so that is where the next gains are.
 
-## The human-style Master (the app's Master since September 30)
+## The human-style Master (the app's Master from September 30 to October 8)
 
 `ClaudePlayerProfiles.CreateMaster()`; `HUMAN_PLAY.md` has the full account. People found the
 September 29 Master (now `CreateNeuralMaster`, below) foolish despite its ratings: it gave a ten
@@ -308,8 +309,8 @@ first three tricks. What changed:
   and no same-suit donations in tricks 1-3. Idle desktop timing: 13.1 ms a card on average,
   p99 40 ms, maximum 44.5 ms; the wall-clock caps make slower phones search less, not longer.
   Against the former 100-rollout Master: 60.8% +/- 1.7 pp (600 games).
-- **Deterministic hosts** (ednaigra.com level 6 runs `CreateMaster()` with
-  `EndgameTimeLimitMilliseconds = 0`) must now also set `SearchTimeLimitMilliseconds = 0`:
+- **Deterministic hosts** (ednaigra.com level 6 ran `CreateMaster()` with
+  `EndgameTimeLimitMilliseconds = 0` until its bots moved to `CreateHeuristic()` on October 1) must also set `SearchTimeLimitMilliseconds = 0`:
   fixed work then decides the same from a context and a view (`HumanMasterTests`) and takes
   14.2 ms a card on average, p99 41 ms, maximum 65 ms (idle desktop; Sept 29 Master ~1.5 ms).
 - **Checks** (September 30): 391 AI, 746 engine and 287 UI tests pass; Windows and Android
@@ -327,7 +328,10 @@ Monte Carlo in the early tricks: `ClaudePlayerProfiles.CreateRulesOnly()` decide
 by rules (5 µs a card); `CreateHeuristic()` keeps them for tricks 1-3 and plays the last five out
 exactly (`Neural/EndgameSearch`, 48 sampled deals, 150,000 nodes, 8 ms; 0.83 ms a card on average,
 5.9 ms at most on one idle thread). It keeps no state between decisions (it decides the same from a
-`BelotSeatView`).
+`BelotSeatView`). **It is the app's Master since October 8** (`CreateHeuristic()` as it is, with
+its 8-ms endgame clock) and every ednaigra.com level's bot since October 1 (there with
+`EndgameMilliseconds = 0`, and a random legal card now and then below level 6), chosen because it
+plays the way people play and teach the game, although the neural Master still beats it.
 
 - **`Heuristic/CardMemory`**: what a careful player remembers (`RoundKnowledge`'s voids and shown
   cards, the trumps out, masters, bids, the partner's signals) and the chance that a seat holds an
@@ -533,8 +537,9 @@ picks the level of each other seat separately: the partner (North) and the rival
 left) and East (on the right), from `Game/AiLevels.cs`: Random (`RandomPlayer`), Beginner
 (`DummyPlayer`), Skilled (`SmartPlayer`), Expert (`ClaudePlayerProfiles.CreateExpert()`: the
 network with bounded endgames choosing the most natural card within 5 game points of the best)
-and Master (`ClaudePlayerProfiles.CreateMaster()`, the human-style Master above: early-trick
-rollouts in 40 ms and belief-weighted endgames in 24 ms). Hints use
+and Master (`ClaudePlayerProfiles.CreateHeuristic()`, the heuristic player above since October 8:
+learned natural bids, the taught rules for the first three tricks and the last five solved
+exactly within 8 ms; no networks; until then the human-style Master). Hints use
 `AiLevels.CreateFastPlayer()`, the human-style neural/endgame profile. The Master keeps the id
 `claude` it had as ClaudePlayerIsmcts, so people's history and records carry over. The app
 references the three AI projects, so an `IPlayer` break in any of them breaks the app build too.
@@ -628,16 +633,16 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   average of their two levels (`Lineup.RivalsElo`). The levels' ratings in `AiLevels` are pair
   ratings from the simulator's `elo` suite (`EloTournament`: two of a level against two of
   another in mirrored pairs, a Bradley-Terry fit anchored at Dummy = 1200; ClaudePlayerIsmcts
-  plays too, for reference). Latest run (September 30, 2026, human-style Expert and Master,
-  `elo 20000 60 3000`, 1:26:04): Random 646 +/- 3.2, Beginner 1200 (fixed anchor),
-  Skilled 1490 +/- 1.9, Expert 1647 +/- 2.5, Master 1886 +/- 4.6, and ClaudePlayerIsmcts
-  1786 +/- 17.6. Errors are one standard deviation from 1,000 shared-seed mirrored-pair
-  bootstrap samples. Fast matchups use 20,000 pairs / 40,000 games (the fast levels each
-  played 126,120 games), the Master's 3,000 pairs / 6,000 games (24,120 in all: it searches in
-  every trick) and ISMCTS's 60 pairs / 120 games (600). The local log is
-  `artifacts/natural-20260930/final-elo.log`; the previous run (September 29, Master 1838)
-  and its method are in section 16 of `NEURAL_NETWORK.md`, with the UTF-16LE conversion
-  through `iconv`. Re-run the suite and re-paste ratings if the players change.
+  plays too, for reference). Latest run (October 8, 2026, human-style Expert and the heuristic
+  Master, `elo 20000 60 20000`, 51:31): Random 659 +/- 3.1, Beginner 1200 (fixed anchor),
+  Skilled 1483 +/- 1.9, Expert 1664 +/- 2.4, Master 1796 +/- 2.4, and ClaudePlayerIsmcts
+  1776 +/- 17.8. Errors are one standard deviation from 1,000 shared-seed mirrored-pair
+  bootstrap samples. Every matchup of the app's levels uses 20,000 pairs / 40,000 games (each
+  level played 160,120 games) and ISMCTS's 60 pairs / 120 games (600). The local log is
+  `artifacts/heuristic-master-20261008/elo.log`. The September 30 run (the human-style Master,
+  1886 +/- 4.6) is in `artifacts/natural-20260930/final-elo.log`; the September 29 run
+  (Master 1838) and the method are in section 16 of `NEURAL_NETWORK.md`, with the UTF-16LE
+  conversion through `iconv`. Re-run the suite and re-paste ratings if the players change.
 - **`src/Tests/Belot.UI.Tests`** compiles those files and plays whole games on a UI-like
   single-threaded `SynchronizationContext`: `ActReplayTests` (every act of 300 engine matches
   replays into exactly `GetRecord()`), `GameSessionTests` (every level, the table's event order,

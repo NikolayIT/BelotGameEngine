@@ -35,7 +35,7 @@
         /// <param name="parallelism">How many games run at once.</param>
         /// <param name="fastPairs">Mirrored pairs per matchup of the fast levels.</param>
         /// <param name="slowPairs">Mirrored pairs per matchup with ISMCTS, which searches on every card.</param>
-        /// <param name="masterPairs">Mirrored pairs per matchup with the Master, whose early tricks search.</param>
+        /// <param name="masterPairs">Mirrored pairs per matchup with the Master, which solves the last five tricks.</param>
         public static void Run(int parallelism, int fastPairs, int slowPairs, int masterPairs)
         {
             var levels = new[]
@@ -50,8 +50,8 @@
                     Tier.Fast),
                 new Level(
                     "claude",
-                    "Human-style Master",
-                    ClaudePlayerProfiles.CreateMaster,
+                    "Heuristic Master",
+                    ClaudePlayerProfiles.CreateHeuristic,
                     Tier.Master),
                 new Level("ismcts", "ClaudePlayerIsmcts", () => new ClaudePlayerIsmcts(), Tier.Slow),
             };

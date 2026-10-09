@@ -26,7 +26,15 @@ tables are under Results):
 | Belot 2.06 (the 2001 program) | 74.0% | 72.3% |
 | The app's Expert | 65.5% | 61.9% |
 | ISMCTS, 100 ms a card | 53.0% (200 games) | 47.5% (200 games) |
-| The app's Master | 34.3% | 30.8% |
+| The human-style Master (the app's Master until October 8) | 34.3% | 30.8% |
+
+**The app's Master since October 8**: `CreateHeuristic()` as it is (learned bidding, the 8-ms
+endgame clock) replaced the human-style Master, which still beats it, because it plays the way
+people play and teach the game (as on ednaigra.com since October 1). The app's pair-vs-pair
+round robin (`elo 20000 60 20000`, 40,000 games a matchup; local log
+`artifacts/heuristic-master-20261008/elo.log`) rates it 1796 +/- 2.4 against the human-style
+Master's 1886: two of it beat two Experts 64.6%, two SmartPlayers 89.9%, two Dummies 97.7%,
+and two ISMCTS100 59.2% (120 games). The other levels' ratings moved by at most 17 points.
 
 ## Sources
 

@@ -18,34 +18,29 @@
         public const double ExpertTolerance = ClaudePlayerProfiles.ExpertTolerance;
 
         /// <summary>
-        /// The Master plays out the network's best cards in the first three tricks (neural rollouts ending
-        /// in exact five-trick solutions), then bounded five-trick endgames with a learned model of unseen
-        /// card ownership, with a strong player's technique and conventions (see HUMAN_PLAY.md).
+        /// The Master is the heuristic player (see HEURISTIC_PLAYER.md): it bids by point counts learned from
+        /// how every bid did and plays its first tricks by the rules strong players teach (it counts the
+        /// cards, draws trumps from the top, signals to its partner and reads its partner's discards), then
+        /// plays this many last tricks out exactly over the deals the play allows. It needs no networks.
         /// </summary>
-        public const int MasterSearchDeals = ClaudePlayerProfiles.MasterSearchDeals;
-
-        /// <summary>The Master's rollout budget per card; managed execution is not a hard real-time deadline.</summary>
-        public const int MasterSearchMilliseconds = ClaudePlayerProfiles.MasterSearchMilliseconds;
-
-        /// <summary>The Master's endgame budget; managed execution is not a hard real-time deadline.</summary>
-        public const int MasterMilliseconds = ClaudePlayerProfiles.MasterMilliseconds;
+        public const int MasterEndgameTricks = ClaudePlayerProfiles.HeuristicEndgameTricks;
 
         // Pair ratings (two of a level against two of another) from the `elo` simulator round
-        // robin, anchored at Dummy = 1200 (September 30, 2026, elo 20000 60 3000, human-style
-        // Expert and Master). Re-run that suite and update these if the players change;
-        // uncertainty is in HUMAN_PLAY.md.
+        // robin, anchored at Dummy = 1200 (October 8, 2026, elo 20000 60 20000, human-style
+        // Expert and the heuristic Master). Re-run that suite and update these if the players
+        // change; uncertainty is in HEURISTIC_PLAYER.md.
         public static IReadOnlyList<AiLevel> All { get; } = new[]
         {
-            new AiLevel("random", "🎲", "Level_Random_Name", "Level_Random_Tag", 1, 646, () => new RandomPlayer()),
+            new AiLevel("random", "🎲", "Level_Random_Name", "Level_Random_Tag", 1, 659, () => new RandomPlayer()),
             new AiLevel("dummy", "🙂", "Level_Dummy_Name", "Level_Dummy_Tag", 2, 1200, () => new DummyPlayer()),
-            new AiLevel("smart", "🃏", "Level_Smart_Name", "Level_Smart_Tag", 3, 1490, () => new SmartPlayer()),
+            new AiLevel("smart", "🃏", "Level_Smart_Name", "Level_Smart_Tag", 3, 1483, () => new SmartPlayer()),
             new AiLevel(
                 "expert",
                 "🎓",
                 "Level_Expert_Name",
                 "Level_Expert_Tag",
                 4,
-                1647,
+                1664,
                 ClaudePlayerProfiles.CreateExpert),
             new AiLevel(
                 "claude",
@@ -53,8 +48,8 @@
                 "Level_Claude_Name",
                 "Level_Claude_Tag",
                 5,
-                1886,
-                ClaudePlayerProfiles.CreateMaster),
+                1796,
+                ClaudePlayerProfiles.CreateHeuristic),
         };
 
         /// <summary>The level with this id, or the Smart one for an unknown id.</summary>

@@ -1,6 +1,7 @@
 # Human-like play: why the Master looked foolish, and the fix
 
-September 30, 2026.
+September 30, 2026. Since October 8 the app's Master is the heuristic player instead
+(`CreateHeuristic()`, see HEURISTIC_PLAYER.md); this profile stays as `CreateMaster()`.
 
 ## The complaint
 

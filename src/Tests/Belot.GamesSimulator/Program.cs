@@ -28,8 +28,8 @@
         ///   neural-ab [pairs] [candidate] [baseline]: two folders of networks ("-" the embedded)
         ///   against each other;
         ///   elo [fastPairs] [slowPairs] [masterPairs]: the MAUI app's levels in a pair-vs-pair round
-        ///   robin (default 20000 mirrored pairs a matchup, 150 with ISMCTS, 3000 with the Master,
-        ///   whose early tricks search), printing the ratings to paste into the app's level list.
+        ///   robin (default 20000 mirrored pairs a matchup, 150 with ISMCTS, 20000 with the Master),
+        ///   printing the ratings to paste into the app's level list.
         /// </summary>
         /// <param name="args">The optional suite name and its arguments.</param>
         public static void Main(string[] args)
@@ -57,7 +57,7 @@
                     parallelism,
                     args.Length > 1 ? int.Parse(args[1], CultureInfo.InvariantCulture) : 20_000,
                     args.Length > 2 ? int.Parse(args[2], CultureInfo.InvariantCulture) : 150,
-                    args.Length > 3 ? int.Parse(args[3], CultureInfo.InvariantCulture) : 3_000);
+                    args.Length > 3 ? int.Parse(args[3], CultureInfo.InvariantCulture) : 20_000);
                 return;
             }
 
