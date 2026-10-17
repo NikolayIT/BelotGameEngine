@@ -135,7 +135,7 @@ cards require at most 800 positions.
 `--graphs` captures static batches rounded up to powers of two, reducing kernel
 launch overhead. Input/output buffers stay alive and a lock prevents concurrent
 capture or buffer reuse. Unused padded rows do not affect real rows. This follows
-the [PyTorch 2.9 CUDA graph constraints](https://docs.pytorch.org/docs/2.9/notes/cuda.html#cuda-graphs).
+the [PyTorch 2.14 CUDA graph constraints](https://docs.pytorch.org/docs/2.14/notes/cuda.html#cuda-graphs).
 Without `--graphs`, the server uses ordinary eager execution. Twelve Python
 tests cover the fitter, binary transport, hash rejection, legality, physical
 tie-breaking after suit rotation, and graph/eager agreement across changing
