@@ -130,7 +130,7 @@ def play_round(emu, contract, hands, leader, rng, cases, declarer=1, level=1):
                              "l1Count", "l2Count", "l3Count", "l4Count", "l5Count",
                              "trump", "longSide", "anyOppTrump", "trumpRanksOut",
                              "candidates", "buckets", "lists", "suitCount", "sureBySuit",
-                             "highTrump", "rngSeed")}
+                             "highTrump", "rngSeed", "callerSeed", "preselected")}
                         state["internals"]["mem"] = list(mem)
             except EmuError as e:
                 print(f"  [skip] play: {e}", file=sys.stderr)

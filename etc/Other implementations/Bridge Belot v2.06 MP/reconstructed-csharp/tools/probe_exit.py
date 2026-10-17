@@ -32,17 +32,22 @@ class ExitEmu(PlayEmu):
 
         self.uc.hook_add(UC_HOOK_MEM_WRITE, on_write)
 
-    def exits(self, contract, me, hand, trick, played, voids):
+    def exits(self, contract, me, hand, trick, played, voids, draw_default=True):
+        """Run one position and list the store sites that wrote the slot. No store at all means
+        the routine kept the card the group pre-selected."""
         self._build_state(contract, me, hand, trick, played, voids)
-        out = self.alloc(16)
-        self.w32(out, 0xFFFFFFFF)
-        self.out_addr = out
-        self.stores = []
         if self.force_seed is not None:
             self.w32(0x48B040, self.force_seed)
+        # A vector recorded at the routine's entry has no caller draw to repeat; its seed is
+        # already the routine's, and it never reads the slot it is handed.
+        pre = self.default_card() if draw_default else 0
+        out = self.alloc(16)
+        self.w32(out, pre)
+        self.out_addr = out
+        self.stores = []
         self.call(0x46F5C0, eax=self._form, edx=self._group, ecx=out,
                   timeout_insns=80_000_000)
-        return self.r32(out), self.stores
+        return self.r32(out), self.stores, pre
 
 
 def run(rec):
@@ -66,16 +71,24 @@ def run(rec):
         scan(h[i:i + 4])
     scan(trick)
 
-    e.force_seed = rec["internals"].get("rngSeed")
-    idx, stores = e.exits(CONTRACT[rec["contract"]], rec["seat"], hand, trick,
-                          played, voids)
-    print("chosen:", idx)
+    st = rec["internals"]
+    e.declarer = rec.get("declarer", 1)
+    if "mem" in st:
+        e.round_memory = bytearray(st["mem"])
+    caller = "callerSeed" in st
+    e.force_seed = st["callerSeed"] if caller else st.get("rngSeed")
+    idx, stores, pre = e.exits(CONTRACT[rec["contract"]], rec["seat"], hand, trick,
+                               played, voids, draw_default=caller)
+    print("chosen:", idx, "  pre-selected:", pre if caller else "-")
     for eip, val in stores:
         print("   store at %08x  value=%d" % (eip, val if val < 0x80000000 else val - (1 << 32)))
+    if not stores:
+        print("   no store: the routine kept the group's pre-selected card")
 
 
 def main():
-    vectors = json.load(open("vectors/golden_play.json"))["playai"]
+    path = sys.argv[3] if len(sys.argv) > 3 else "vectors/golden_play.json"
+    vectors = json.load(open(path))["playai"]
     want_hand = [list(x) for x in json.loads(sys.argv[1])]
     for rec in vectors:
         if rec["hand"] == want_hand and rec["contract"] == sys.argv[2]:

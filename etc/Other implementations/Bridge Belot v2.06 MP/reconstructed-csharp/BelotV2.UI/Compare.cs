@@ -76,7 +76,11 @@ namespace BelotV2
                         else
                         {
                             Card fromOriginal = original.PlayCard(ctx);
-                            Card fromPort = OriginalPlayAdapter.Play(ctx, rng);
+
+                            // Same question, same starting RandSeed: the group's pre-selection and
+                            // a few branches draw from it, so with the dealing RNG instead the two
+                            // would be compared by coin flip there rather than by logic.
+                            Card fromPort = OriginalPlayAdapter.Play(ctx, new DelphiRandom(original.LastSeed));
                             total++;
                             string key = trick.Count == 0 ? "lead"
                                 : (Seats.SameTeam(seat, trick[Rules.WinnerIndex(trick, contract)].Seat)

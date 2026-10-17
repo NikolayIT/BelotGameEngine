@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Disassemble a VA range of belot.exe (x86-32), showing x87 float ops clearly."""
+import os
 import sys
 import pefile
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 
-EXE = r"C:\Dev\BelotGameEngine\etc\Other implementations\Bridge Belot v2.06 MP\belot.exe"
+EXE = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "belot.exe"))
 pe = pefile.PE(EXE)
 data = open(EXE, "rb").read()
 IB = pe.OPTIONAL_HEADER.ImageBase

@@ -16,10 +16,13 @@ Request:
                                                   # (see memory.py); omitted = round-start state
    "seed":  12345}                                # optional: force Delphi's RandSeed
 Reply:
-  {"index": 2, "seed": 12345}   index into "hand", and the RandSeed the routine ran with
-                                (feed that to your own implementation before comparing:
-                                 some branches break ties with Random())
-  {"error": "..."}
+  {"index": 2, "seed": 12345, "preselected": 1, "kept": false}
+      index into "hand", and the RandSeed the decision started from. As in the game, the card
+      group first takes its own default card with Random (0x484DAC, reported as "preselected"),
+      then the routine runs and may break ties with further draws -- so seed your own
+      implementation with "seed" and make the same draw first before comparing. "kept" says the
+      routine stored nothing and the group's card was played as it stood.
+  {"error": "...", "seed": 12345}
 
 Contracts 1..6 = Clubs, Diamonds, Hearts, Spades, No-trumps, All-trumps.
 Suits "C","D","S","H"; ranks 7..14. Players 1..4 (1=South); ask only for seats 2..4 —
@@ -48,6 +51,7 @@ def main():
             continue
         if line == "quit":
             break
+        seed = None
         try:
             req = json.loads(line)
             hand = [parse_card(c) for c in req["hand"]]
@@ -62,17 +66,21 @@ def main():
             if "seed" in req:
                 emu.w32(0x48B040, int(req["seed"]) & 0xFFFFFFFF)
 
-            # Delphi's RandSeed as the routine will see it. Some branches break ties with
-            # Random(), so a caller comparing its own implementation against this one has to
-            # start from the same seed or it is comparing two coin flips.
+            # Delphi's RandSeed as the caller holds it. The group's default pick and some of the
+            # routine's branches draw from it, so a caller comparing its own implementation
+            # against this one has to start from the same seed or it is comparing coin flips.
             seed = emu.r32(0x48B040)
             idx = emu.choose_card_ex(int(req["contract"]), int(req["me"]), hand,
                                      trick, played, voids)
-            reply = {"index": idx, "seed": seed} if idx is not None else {"error": "no decision"}
+            reply = ({"index": idx, "seed": seed, "preselected": emu.last_preselected,
+                      "kept": not emu.stored}
+                     if idx is not None else {"error": "no decision"})
         except EmuError as e:
             reply = {"error": f"emulation: {e}"}
         except Exception as e:                      # noqa: BLE001 - protocol robustness
             reply = {"error": f"{type(e).__name__}: {e}"}
+        if "error" in reply and seed is not None:
+            reply["seed"] = seed                    # so a failed position can be replayed too
         sys.stdout.write(json.dumps(reply) + "\n")
         sys.stdout.flush()
 

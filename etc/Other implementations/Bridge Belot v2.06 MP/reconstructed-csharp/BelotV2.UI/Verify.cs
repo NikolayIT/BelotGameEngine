@@ -317,14 +317,21 @@ namespace BelotV2
                 var legal = Rules.ValidCards(hand, trick, contract, seat);
 
                 // Drive the RNG from the seed the original had on entry, so the branches that
-                // pick at random are reproducible rather than a coin flip.
+                // pick at random are reproducible rather than a coin flip. The vectors record it
+                // as the routine saw it, one draw after the caller's: the adapter makes the group's
+                // own pre-selection first, as the game does, so it starts a step earlier.
                 if (c.TryGetProperty("internals", out JsonElement inner)
                     && inner.TryGetProperty("rngSeed", out JsonElement seed))
                 {
-                    rng.Seed = seed.GetUInt32();
+                    rng.Seed = inner.TryGetProperty("callerSeed", out JsonElement callerSeed)
+                        ? callerSeed.GetUInt32()
+                        : DelphiRandom.Previous(seed.GetUInt32());
                 }
 
-                // Seat 1 (index 0) is the human in the game the vectors came from.
+                // Seat 1 (index 0) is the human in the game the self-play vectors came from;
+                // positions replayed from a match against another engine record their own
+                // ("humanSeat", 1-based, 0 = none), and the human's discards feed the memory.
+                int humanSeat = c.TryGetProperty("humanSeat", out JsonElement hs) ? hs.GetInt32() - 1 : 0;
                 Card got = OriginalPlayAdapter.Play(new PlayContext
                 {
                     Seat = seat,
@@ -333,7 +340,7 @@ namespace BelotV2
                     CurrentTrick = trick,
                     PlayedHistory = history,
                     Legal = legal,
-                    HumanSeat = 0,
+                    HumanSeat = humanSeat,
                     BidSuits = BidSuitsOf(c),
                 }, rng);
 

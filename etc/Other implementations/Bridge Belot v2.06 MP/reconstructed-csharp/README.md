@@ -55,6 +55,10 @@ VMT/RTTI class and method names, published field offsets, all CP1251 strings, an
 and following code cross-references. Decompiler output for the two big AI routines was made
 readable by marking the Delphi bounds-check raiser (`FUN_00402788`) `noreturn`, which collapses
 the `if (out-of-range) raise` guards that otherwise flood the output with phantom variables.
+The card group's side of the card-play call ([below](#the-caller-and-the-card-the-ai-leaves-alone))
+was found later with [REA](https://github.com/morluto/rea) driving Ghidra 12.1.4: the
+published-property RTTI gives the event's field offset, and a byte search for indirect calls
+through it lands on the dispatch.
 
 ## Verification: this port is diff-tested against the real binary
 
@@ -80,6 +84,8 @@ dotnet run --project BelotV2.UI -- verify tools/vectors/golden_play.json
 | card-play analysis + lookahead | `player2BeforePlay` internals | **100%** |
 | the AI's per-round memory | the block at 0x48BEB8, byte for byte | **5160/5160 (100%)** |
 | card-play final decision | `player2BeforePlay` | **5160/5160 (100%)** |
+| card-play in live matches against other engines | the real routine, same `RandSeed` | **35,760/35,760 (100%)** |
+| positions whose answer depends on the caller | `0x4853FC` + `0x484DAC`, stage by stage | **126/126 (100%)** |
 
 Diff-testing found and fixed two real bugs that reading the decompilation had missed:
 
@@ -105,6 +111,7 @@ Diff-testing found and fixed two real bugs that reading the decompilation had mi
 | Announcement detection | `FUN_00479EE8` |
 | **Bidding valuation** — per-card weight tables + the full suit formula (+6/trump, −10/trump-below-3, +3 K+Q, +1 J+9), no-trump/all-trump sums, declaration bonuses | `choosegame` @0x4778CC, tables @0x489DB4/DBC/DC4 |
 | First player = `Random(4)+1` then alternates by team | `wholegameinit` @0x475AE4 |
+| A computer seat's card starts as a random card of its hand, which the AI overrides or keeps | `TAvCardGroup` 0x4853FC, 0x484DAC |
 | Delphi RNG (LCG `seed*0x08088405+1`) | `FUN_00402B78` |
 | Match target = **151** | `choosegame` (`151 − score`) |
 
@@ -317,22 +324,46 @@ hold what" matrix from its own hand, the cards played and the voids seats have s
 public knowledge.
 
 Running the same match against the **real binary** (40 games, 4,706 decisions taken by the x86
-code itself) gives 27.5%, consistent with the transcription's 33% at that sample size. That run
-also re-checks the transcription on positions the golden vectors cannot contain, since those were
-recorded with the original playing itself rather than a different engine: with both sides started
-from the same `RandSeed` -- some branches break ties with `Random()`, so this matters -- the
-transcription reproduces the binary on **99.5%** of live decisions. The remaining handful are the
-only known daylight between the port and the binary.
+code itself) gives 27.5%, consistent with the transcription's 33% at that sample size. Such runs
+also re-check the transcription on positions the golden vectors cannot contain, since those were
+recorded with the original playing itself rather than a different engine. With both sides started
+from the same `RandSeed` -- the caller's pre-selection below and some branches draw from
+`Random()`, so this matters -- the transcription reproduces the binary on **every** live
+decision: 35,760 of 35,760 over 336 games against SmartPlayer, ClaudePlayerIsmcts (30 ms),
+`dummy` and `random` (October 2026; `arena <them> originalemu <games> <seed> dump.jsonl`, the seed
+choosing the deals). The 99.5% this section first reported predates the fixes since.
 
-A further 0.8% of positions the emulator declines to answer at all, and the reason is worth
-recording: `player2BeforePlay` is an **override hook**, not a chooser. The caller pre-selects a
-card and passes its index by reference; the routine either changes it or leaves it. Two sites
-(0x4731ad, 0x473bcf) read that index straight back and dereference the card, so a caller that
-passes "nothing chosen yet" gets a nil. On those positions the harness runs the routine once per
-possible incoming index and finds it hands back exactly what it was given -- it is declining to
-override -- and since the harness has no pre-selection for it to keep, there is no answer to
-report. The game's own caller is a published method invoked indirectly, with no dispatch site left
-in the binary to read the default off, so this stays a gap rather than a guess.
+### The caller, and the card the AI leaves alone
+
+`player2BeforePlay` is an **override hook**, not a chooser. It is the card group's published
+`BeforePlay` event (`TAvCardGroup+0x1C0`; the form binds it to seats 2-4 and gives the human's
+seat `Player1BeforePlay`), and the group's computer-play method at 0x4853FC dispatches it:
+
+```pascal
+Index := DefaultCard;                          // 0x484DAC
+BeforePlay(Self, Index, Flag, TablePlayPos);   // player2BeforePlay may change Index
+if (Index >= 0) and (Index < CardList.Count) then
+  PlayCard(Index, Flag, TablePlayPos);         // 0x4850F0
+```
+
+`DefaultCard` lists the group's non-empty slots (0x484CD0) and returns one of them with
+`Random(count)`: a random card of the hand, drawn from the same `RandSeed` just before the AI
+runs. The AI overrides it almost every time. One path stores nothing: leading, with only cards
+that always win for the partner, when the weakest of them is a trump, the routine jumps to its
+common tail (0x472CEF) and the random card goes down, after the tail's own adjustments, which read
+the slot back (0x473BCF; the suit-scoring lead reads it too, at 0x4731AD). In live play that is
+about one decision in a thousand, always a lead in a suit contract. The port used to play its
+first candidate there; it now draws the same card from the same seed (`OriginalPlayAdapter`,
+`OriginalPlayAi.Preselected`), and `tools/vectors/live_play.json` holds 126 such positions --
+49 where the routine stores nothing and 77 where it reads the slot back first -- checked stage by
+stage against the routine's own frame.
+
+The emulator used to hand the routine a "nothing chosen yet" marker instead. Those positions read
+a nil card, and about 0.8% of live decisions could not be answered at all; the harness now runs
+0x484DAC itself before every decision, and every position has an answer. The caller had seemed
+lost because nothing calls the routine directly: the `TAvCardGroup` RTTI gives `BeforePlay` at
+field +0x1C0, and a byte search for `call [reg+0x1C0]` finds exactly three, all in 0x4853FC, one
+per value of the group's `Controller`.
 
 Not recovered, and deliberately so: the deal/shuffle order. The original re-seeds from the clock,
 so it cannot be reproduced even in principle; a Fisher-Yates on the same RNG is behaviourally

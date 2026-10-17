@@ -2,9 +2,17 @@
 """
 Emulate the ORIGINAL card-play AI: TMainBelotForm_player2BeforePlay @0x46F5C0.
 
-The routine is an event handler `(Self, CardGroup, var ChosenIndex)` — it writes the index of
-the card it decides to play into its third parameter (~30 `*param_3 = idx` sites), so running it
-under emulation yields the original AI's actual decision.
+The routine is the card group's BeforePlay event (TAvCardGroup+0x1C0), and the game calls it
+from the group's computer-play method 0x4853FC:
+
+    index := DefaultCard;                      // 0x484DAC: Random over the non-empty slots
+    BeforePlay(Self, index, Flag, TablePlayPos);   // player2BeforePlay may change index
+    if index in range then PlayCard(index);    // 0x4850F0
+
+So the routine is an override hook: it writes the index of the card to play into its third
+parameter (48 store sites), and on the paths that store nothing the group's random card stands.
+This harness runs it the same way -- the real 0x484DAC first, on the real RandSeed -- so its
+answer is what the game would play, including the positions the AI leaves alone.
 
 Extra state it needs beyond the object graph used for the rule functions:
   0x48BFEC : 4 x 32-byte matrix "player p may still hold card c"
@@ -13,16 +21,22 @@ Extra state it needs beyond the object graph used for the rule functions:
 """
 import struct
 
-from unicorn import UC_HOOK_MEM_WRITE
+from unicorn import UC_HOOK_CODE, UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE
 from unicorn.x86_const import UC_X86_REG_EBP
 
-from emu import (BelotEmu, EmuError, SUITMAP, STUB_FUNCS,
+from emu import (BelotEmu, EmuError, SUITMAP, STUB_FUNCS, RET_MAGIC,
                  CLUBS, DIAMONDS, SPADES, HEARTS,
                  C_CLUBS, C_DIAMONDS, C_HEARTS, C_SPADES, C_NOTRUMPS, C_ALLTRUMPS,
                  CONTRACT_TRUMP_SUIT)
 
 MATRIX = 0x48BFEC
 APP_VAR = 0x48B7CC
+RAND_SEED = 0x48B040      # Delphi's RandSeed
+DEFAULT_CARD = 0x484DAC   # TAvCardGroup: the card the group plays unless BeforePlay overrides it
+COMMON_TAIL = 0x473BC2    # player2BeforePlay's post-adjust stage, which every path goes through
+# The caller's var parameter: one fixed dword on the return-magic page, outside the per-decision
+# heap, so the memory hooks can watch exactly those four bytes rather than every access.
+OUT_SLOT = (RET_MAGIC & ~0xFFF) + 0x100
 
 # Per-player AI memory, 1-based (index 1..4). choosegame resets these when a contract is
 # settled; leaving them as zeroed BSS would tell the AI that everybody bid clubs.
@@ -82,15 +96,38 @@ class PlayEmu(BelotEmu):
         self.declarer = 1
         self.capture = False
         self.frame = None
-        self._out_addr = None
+        self._out_addr = OUT_SLOT
+        self.last_preselected = None
+        # Whether the last decision stored a slot at all, and whether it read the caller's slot
+        # back before storing one -- the two ways a position depends on the pre-selection.
+        self.stored = False
+        self.read_back = False
+
+        def _snapshot(uc):
+            ebp = uc.reg_read(UC_X86_REG_EBP)
+            self.frame = (ebp, bytes(uc.mem_read(ebp - 0x340, 0x340)))
 
         def _on_write(uc, access, address, size, value, _):
-            if self.capture and address == self._out_addr and self.frame is None:
-                ebp = uc.reg_read(UC_X86_REG_EBP)
-                self.frame = (ebp, bytes(uc.mem_read(ebp - 0x340, 0x340)))
+            if self.capture and address == self._out_addr:
+                self.stored = True
+                if self.frame is None:
+                    _snapshot(uc)
             return True
 
-        self.uc.hook_add(UC_HOOK_MEM_WRITE, _on_write)
+        def _on_read(uc, access, address, size, value, _):
+            if self.capture and address == self._out_addr and not self.stored:
+                self.read_back = True
+            return True
+
+        # A path that stores nothing never triggers the write hook; the common tail still sees
+        # the same analysed frame.
+        def _on_tail(uc, address, size, _):
+            if self.capture and self.frame is None:
+                _snapshot(uc)
+
+        self.uc.hook_add(UC_HOOK_MEM_WRITE, _on_write, begin=OUT_SLOT, end=OUT_SLOT + 3)
+        self.uc.hook_add(UC_HOOK_MEM_READ, _on_read, begin=OUT_SLOT, end=OUT_SLOT + 3)
+        self.uc.hook_add(UC_HOOK_CODE, _on_tail, begin=COMMON_TAIL, end=COMMON_TAIL)
 
     def _fw(self, off):
         """dword at [ebp+off] from the captured frame"""
@@ -113,51 +150,59 @@ class PlayEmu(BelotEmu):
             st[name] = self._fb(_o(gh))
         return st
 
-    def choose_with_internals(self, contract, me, my_hand, played_in_trick, all_played, voids):
+    def default_card(self):
+        """
+        The card the group plays unless the AI overrides it: 0x484DAC, run for real.
+
+        It rebuilds the group's list of non-empty positions (0x484CD0) and returns one of them
+        with Random(count), so it advances RandSeed exactly as the game does before every
+        computer decision.
+        """
+        return self.call(DEFAULT_CARD, eax=self._group) & 0xFFFFFFFF
+
+    def choose_with_internals(self, contract, me, my_hand, played_in_trick, all_played, voids,
+                              preselected=None):
+        """
+        Decide the way the game does: the group's default card first, then player2BeforePlay.
+
+        Returns the slot played and the routine's own working state, which records the seed the
+        caller started from (callerSeed), the card the group pre-selected and the seed the
+        routine itself ran with (rngSeed). Pass `preselected` to hand the routine a given slot
+        instead of drawing the default; RandSeed is then left alone.
+        """
         self._build_state(contract, me, my_hand, played_in_trick, all_played, voids)
-        seed = self.r32(0x48B040)          # Delphi RandSeed, before the routine runs
-        out = self.alloc(16)
-        self.w32(out, 0xFFFFFFFF)
-        self._out_addr = out
+        caller_seed = self.r32(RAND_SEED)
+        pre = self.default_card() if preselected is None else preselected
+        seed = self.r32(RAND_SEED)          # Delphi RandSeed as the routine sees it
+        out = OUT_SLOT
+        self.w32(out, pre)
         self.frame = None
+        self.stored = False
+        self.read_back = False
         self.capture = True
         try:
             self._call_routine(out)
         finally:
             self.capture = False
+        self.last_preselected = pre
         idx = self.r32(out)
         st = self.internals()
         if st is not None:
             st["rngSeed"] = seed
+            st["callerSeed"] = caller_seed
+            st["preselected"] = pre
         return (None if idx in (0xFFFFFFFF, 0xFFFFFFFB) else idx), st
 
     def _call_routine(self, out):
         """
-        Run player2BeforePlay, naming the one position it cannot answer.
+        Run player2BeforePlay with `out` holding the caller's slot.
 
-        Two sites in the routine (0x4731ad and 0x473bcf) read the caller's index back out of the
-        var parameter -- `mov edx,[ebp-0xc]; mov edx,[edx]` -- and hand it to the accessor at
-        0x484c88, which returns nil for an out-of-range index; the caller then dereferences that
-        nil at +0x20 to read the chosen card's suit. In the real game the index is always valid
-        there, so whatever calls this passes a card index in rather than a "nothing chosen yet"
-        marker. What it passes is not recovered: the routine is a published method invoked
-        indirectly, and no dispatch site for it survives in the binary to read the answer off.
-
-        So the harness cannot invent one. Substituting a plausible index (0, say) does change the
-        answers -- regenerating the vectors that way turns roughly ninety "no decision" positions
-        into decisions -- and a guess dressed up as a measurement is worse than a gap.
+        Two sites read that slot back before (or without) choosing one: the suit-scoring lead at
+        0x4731AD and the post-adjust stage at 0x473BCF. With the group's real pre-selection in
+        place they read a real card, as they do in the game; a harness that passed a "nothing
+        chosen yet" marker instead got a nil card back from 0x484C88 and faulted there.
         """
-        try:
-            self.call(0x46F5C0, eax=self._form, edx=self._group, ecx=out, timeout_insns=80_000_000)
-        except EmuError as e:
-            idx = self.r32(out)
-            signed = idx - 0x100000000 if idx >= 0x80000000 else idx
-            if "Invalid memory read" in str(e):
-                raise EmuError(
-                    f"[out={signed}] position depends on the caller's incoming card index: the "
-                    "routine read it back (0x4731ad/0x473bcf) before choosing one, and what the "
-                    f"game passes in is not recovered. Underlying fault: {e}") from None
-            raise
+        self.call(0x46F5C0, eax=self._form, edx=self._group, ecx=out, timeout_insns=80_000_000)
 
     def install_round_memory(self, mem):
         """Write a whole 0x60-byte memory block at MEM_A (see memory.py).
@@ -215,57 +260,8 @@ class PlayEmu(BelotEmu):
         return self._run_choice(contract, me, my_hand, played_in_trick, all_played, None)
 
     def _run_choice(self, contract, me, my_hand, played_in_trick, all_played, voids):
-        self._build_state(contract, me, my_hand, played_in_trick, all_played, voids)
-        out = self.alloc(16)
-        self.w32(out, 0xFFFFFFFF)
-        try:
-            self._call_routine(out)
-        except EmuError as e:
-            if "incoming card index" not in str(e):
-                raise
-            return self._answer_regardless(contract, me, my_hand, played_in_trick, all_played, voids)
-
-        idx = self.r32(out)
-        return None if idx in (0xFFFFFFFF, 0xFFFFFFFB) else idx
-
-    def _answer_regardless(self, contract, me, my_hand, played_in_trick, all_played, voids):
-        """
-        For the positions where the routine reads the caller's index before choosing one.
-
-        What the game passes in is not recovered, but the answer does not have to depend on it:
-        run the position once for every index the caller could plausibly have held, and if they
-        all come out at the same card then that card is the routine's answer whatever the caller
-        did. Only when they disagree is the position genuinely unanswerable, and then it says so
-        rather than picking one.
-        """
-        got = []
-        for start in range(len(my_hand)):
-            self._build_state(contract, me, my_hand, played_in_trick, all_played, voids)
-            out = self.alloc(16)
-            self.w32(out, start)
-            try:
-                self.call(0x46F5C0, eax=self._form, edx=self._group, ecx=out,
-                          timeout_insns=80_000_000)
-            except EmuError as e:
-                raise EmuError(f"incoming index {start} faults too: {e}") from None
-
-            idx = self.r32(out)
-            got.append(None if idx in (0xFFFFFFFF, 0xFFFFFFFB) else idx)
-
-        if len(set(got)) == 1:
-            return got[0]
-
-        if got == list(range(len(my_hand))):
-            raise EmuError(
-                "the routine declines to override here: it hands back exactly the card index it "
-                "was given (tried 0.." f"{len(my_hand) - 1}" ", got the same back each time). "
-                "player2BeforePlay is an override hook -- the caller pre-selects a card and the "
-                "AI changes it or leaves it -- and the harness has no pre-selection for it to "
-                "leave alone, so there is no answer to report")
-
-        raise EmuError(
-            "the answer depends on the caller's incoming card index, which is not recovered: "
-            f"indices 0..{len(my_hand) - 1} give {got}")
+        idx, _ = self.choose_with_internals(contract, me, my_hand, played_in_trick, all_played, voids)
+        return idx
 
     def _build_state(self, contract, me, my_hand, played_in_trick, all_played, voids):
         self.reset_heap()

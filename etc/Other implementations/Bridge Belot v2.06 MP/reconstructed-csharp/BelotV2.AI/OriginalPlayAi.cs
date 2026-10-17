@@ -46,6 +46,18 @@ namespace BelotV2
         /// <summary>[player 1..4][suit 0..3][rank-7] — "this player may still hold that card".</summary>
         public readonly bool[,,] Possible = new bool[5, 4, 8];
 
+        /// <summary>
+        /// The card the game has already picked when it asks the routine. The routine is the card
+        /// group's <c>BeforePlay</c> event (TAvCardGroup+0x1C0), an override hook: the group's
+        /// computer-play method 0x4853FC first takes a card from 0x484DAC — <c>Random</c> over the
+        /// group's non-empty slots, so any card of the hand — passes its slot by reference, and
+        /// plays whatever slot comes back. A path of the tree that stores nothing therefore plays
+        /// this card, after the common tail has had its say. -1 when the caller does not model
+        /// the pre-selection; the routine then falls back to its first candidate, a guess the
+        /// binary never makes.
+        /// </summary>
+        public int Preselected = -1;
+
         // The memory the game carries across the tricks of a round, at 0x48BEB8..0x48BF17. The
         // routine indexes it with *overlapping* bases (0x48BEC1[team], 0x48BEC9[team] and so on),
         // so it is stored as one flat block addressed absolutely and the named arrays below are

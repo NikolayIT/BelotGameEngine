@@ -4,8 +4,9 @@
     /// Bridges the engine's <see cref="PlayContext"/> onto <see cref="OriginalPlayAi"/>, which
     /// works in the binary's own encodings (suit 0=C 1=D 2=S 3=H, ranks 7..14, players 1..4).
     ///
-    /// The card the original would play is reproduced exactly for the analysis and lookahead
-    /// stages, and for most of the decision tree; see the README for the measured agreement.
+    /// It also does what the game does around the routine: the card group's own random
+    /// pre-selection comes first, from the same RNG, so the positions where the routine keeps
+    /// that card play out as they do in belot.exe. See the README for the measured agreement.
     /// </summary>
     public static class OriginalPlayAdapter
     {
@@ -170,6 +171,11 @@
 
             byte[] mem = RoundMemory(ctx);
             Array.Copy(mem, ai.Mem, mem.Length);
+
+            // What the game does before it asks the routine (TAvCardGroup 0x4853FC): pick a card
+            // with Random over the group's non-empty slots (0x484DAC), from the same RandSeed the
+            // routine then breaks its ties with, and hand it over to be overridden -- or kept.
+            ai.Preselected = rng.Next(hand.Count);
 
             int slot = ai.Decide();
             if (slot < 0 || slot >= hand.Count)

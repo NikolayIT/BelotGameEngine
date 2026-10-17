@@ -1,6 +1,7 @@
 namespace BelotArena
 {
     using System.Diagnostics;
+    using System.Text.Json;
 
     using Belot.AI.ClaudePlayer;
     using Belot.AI.DummyPlayer;
@@ -19,11 +20,14 @@ namespace BelotArena
     /// for. The 2001 AI is wrapped (see OriginalEnginePlayer) rather than reimplemented, so what
     /// is measured is the original's judgement, not a translation of it.
     ///
-    ///   arena &lt;south-north&gt; &lt;east-west&gt; [games] [seed]
+    ///   arena &lt;south-north&gt; &lt;east-west&gt; [games] [seed] [dump.jsonl]
     ///
     /// where each side is one of: smart, dummy, random, claude (ClaudePlayerIsmcts; claude:30 sets
     /// its budget per card in ms, 100 by default), original (the C# transcription) or
-    /// originalemu (the real x86 routine under emulation, ~0.5s per decision).
+    /// originalemu (the real x86 routine under emulation, ~0.1s per decision). The seed also
+    /// selects the deals. With originalemu, a dump file collects, in full, every disagreement,
+    /// every position the emulator could not serve and every position where the game played the
+    /// card group's own random pick; tools/replay_live.py turns it into play vectors.
     ///
     /// Always run the controls before believing a result: `smart smart` must land near 50% or
     /// the harness itself is biased.
@@ -44,11 +48,17 @@ namespace BelotArena
             var toDispose = new List<IDisposable>();
             try
             {
+                if (args.Length > 4)
+                {
+                    Dump = new StreamWriter(args[4], append: true) { AutoFlush = true };
+                    toDispose.Add(Dump);
+                }
+
                 IPlayer south = Make(args[0], seed, toDispose);
                 IPlayer north = Make(args[0], seed + 10, toDispose);
                 IPlayer east = Make(args[1], seed + 20, toDispose);
                 IPlayer west = Make(args[1], seed + 30, toDispose);
-                return Play(args[0], args[1], games, south, east, north, west);
+                return Play(args[0], args[1], games, seed, south, east, north, west);
             }
             finally
             {
@@ -121,6 +131,7 @@ namespace BelotArena
                             // would make the run look cleaner than it is.
                             EmulatorFailures++;
                             LogFailure(ctx, ex.Message);
+                            DumpPosition("emulator-failed", ctx, server, transcribed, null, ex.Message);
                             return transcribed;
                         }
 
@@ -132,11 +143,20 @@ namespace BelotArena
                         if (mine.Equals(real))
                         {
                             Agreements++;
+
+                            // The positions where the game plays the card group's own random
+                            // pick are the ones self-play vectors cannot contain (the harness
+                            // that recorded them could not answer them), so keep them as well.
+                            if (server.LastKeptPreselection)
+                            {
+                                DumpPosition("preselection-played", ctx, server, mine, real, null);
+                            }
                         }
                         else
                         {
                             Console.WriteLine($"    DISAGREE seat {ctx.Seat + 1} contract {ctx.Contract.Type}: " +
                                               $"transcription {mine}, binary {real}");
+                            DumpPosition("disagree", ctx, server, mine, real, null);
                         }
 
                         return real;
@@ -162,6 +182,60 @@ namespace BelotArena
 
         private static V2.OriginalAiPlayer? Server { get; set; }
 
+        private static StreamWriter? Dump { get; set; }
+
+        /// <summary>
+        /// Appends one position to the dump file: the request exactly as the emulator received it,
+        /// the RandSeed it ran with, the completed tricks in play order (the request only carries
+        /// the set of cards seen), the bid suits and both answers. That is everything needed to
+        /// run the position through the routine and through the port again, stage by stage.
+        /// </summary>
+        private static void DumpPosition(
+            string kind, V2.PlayContext ctx, V2.OriginalAiPlayer server, V2.Card transcription, V2.Card? binary, string? error)
+        {
+            if (Dump == null || server.LastRequest == null)
+            {
+                return;
+            }
+
+            static object[] Letters(V2.Card c) => new object[] { "CDHS"[(int)c.Suit].ToString(), (int)c.Rank };
+
+            static object[] Placed(V2.Play p) =>
+                new object[] { p.Seat + 1, "CDHS"[(int)p.Card.Suit].ToString(), (int)p.Card.Rank };
+
+            // The binary's own suit numbering (0=C 1=D 2=S 3=H, 4 = none), as the vectors use it.
+            static int OrigSuit(V2.Suit? s) => s switch
+            {
+                V2.Suit.Clubs => 0,
+                V2.Suit.Diamonds => 1,
+                V2.Suit.Spades => 2,
+                V2.Suit.Hearts => 3,
+                _ => 4,
+            };
+
+            var record = new
+            {
+                kind,
+                contract = ctx.Contract.Type.ToString(),
+                seat = ctx.Seat + 1,
+                declarer = ctx.Contract.Declarer + 1,
+                level = ctx.Contract.Redoubled ? 4 : ctx.Contract.Doubled ? 2 : 1,
+                humanSeat = ctx.HumanSeat + 1,
+                history = ctx.PlayedHistory.Select(Placed),
+                trick = ctx.CurrentTrick.Select(Placed),
+                legal = ctx.Legal.Select(Letters),
+                bidSuits = Enumerable.Range(0, 4).Select(p => OrigSuit(ctx.BidSuits?[p])),
+                seed = server.LastSeed,
+                transcription = Letters(transcription),
+                binary = binary is { } b ? Letters(b) : null,
+                binarySubstituted = server.LastSubstituted,
+                error,
+                request = JsonDocument.Parse(server.LastRequest).RootElement,
+            };
+
+            Dump.WriteLine(JsonSerializer.Serialize(record));
+        }
+
         /// <summary>Writes the first few unsupported positions out so they can be replayed.</summary>
         private static void LogFailure(V2.PlayContext ctx, string message)
         {
@@ -178,8 +252,13 @@ namespace BelotArena
         }
 
         private static int Play(
-            string northSouthKind, string eastWestKind, int games, IPlayer south, IPlayer east, IPlayer north, IPlayer west)
+            string northSouthKind, string eastWestKind, int games, uint seed, IPlayer south, IPlayer east, IPlayer north, IPlayer west)
         {
+            // The deals come from the seed too. Left to BelotGame's shared default, every run --
+            // whatever its seed -- replays the same deals, and two runs that differ only in seed
+            // can come out identical.
+            var deals = new Random(unchecked((int)seed));
+
             // Tallies the round outcomes, which is the only way to see WHY a side is winning:
             // who is taking the contracts, in what, and how many rounds nobody bids at all.
             var stats = new StatsObserver();
@@ -194,7 +273,7 @@ namespace BelotArena
 
             for (var i = 0; i < games; i++)
             {
-                var game = new BelotGame(southObserved, east, north, west);
+                var game = new BelotGame(southObserved, east, north, west, deals);
 
                 // Alternate who opens, so neither side keeps the first-to-play advantage.
                 GameResult result = game.PlayGame((i & 1) == 0 ? PlayerPosition.South : PlayerPosition.East);

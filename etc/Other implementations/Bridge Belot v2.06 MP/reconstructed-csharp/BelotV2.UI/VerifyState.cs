@@ -169,6 +169,13 @@ namespace BelotV2
                     freshAi.Rng = new DelphiRandom(seedEl.GetUInt32());
                 }
 
+                // The card the group handed the routine (vectors recorded before the caller was
+                // recovered have none, and never reach a path that keeps it).
+                if (st.TryGetProperty("preselected", out JsonElement preEl))
+                {
+                    freshAi.Preselected = preEl.GetInt32();
+                }
+
                 int dec = freshAi.Decide();
                 lastBranch = freshAi.LastBranch;
                 branchHits[lastBranch] = branchHits.GetValueOrDefault(lastBranch) + 1;
@@ -196,7 +203,7 @@ namespace BelotV2
             var everTagged = new List<string>
             {
                 "feed-partner", "two-sure-endgame", "lead-partner-memD", "lead-with-trumps",
-                "lead-cash", "L1-random", "no-mixed", "L2-lead", "L2-cheap", "L2-loser-top",
+                "lead-cash", "L1-random", "no-mixed", "L2-lead", "L2-keep-preselected", "L2-cheap", "L2-loser-top",
                 "L3-random-lead", "L3-pick", "mx-opptrump|mixed", "mx-memC|mixed", "mx-memB|mixed",
                 "mx-follow|mixed", "mx-suitscore|mixed",
             };
@@ -232,7 +239,8 @@ namespace BelotV2
         /// <summary>
         /// Rebuild the AI's per-round memory the way the port does in real play, so it can be
         /// compared with the block the original actually had. Seat 1 is the human in the game the
-        /// vectors were generated from, and is the only seat whose discards can signal.
+        /// vectors were generated from, and is the only seat whose discards can signal; positions
+        /// replayed from a match against another engine say otherwise ("humanSeat": 0 = none).
         /// </summary>
         private static byte[] ReplayMemory(JsonElement c)
         {
@@ -259,9 +267,10 @@ namespace BelotV2
             }
 
             int level = c.TryGetProperty("level", out JsonElement lv) ? lv.GetInt32() : 1;
+            int humanSeat = c.TryGetProperty("humanSeat", out JsonElement hs) ? hs.GetInt32() : 1;
             return PlayMemory.Replay(
                 ContractId(c.GetProperty("contract").GetString()!), plays, bidSuits,
-                humanSeat: 1, cardsDealt: 8, level: level);
+                humanSeat: humanSeat, cardsDealt: 8, level: level);
         }
 
         private static OriginalPlayAi Build(JsonElement c)

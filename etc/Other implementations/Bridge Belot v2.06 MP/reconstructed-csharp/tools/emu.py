@@ -6,13 +6,18 @@ It maps the PE, builds the Delphi object graph the AI/rule functions expect
 (cards, collections, card groups, the table, the form) and calls functions with
 the Delphi register calling convention (EAX, EDX, ECX, then stack).
 
-Recovered layouts (all address-cited in the notes):
-  TAvSingleCard(0x54): +0x14 owner-player obj (0 = slot empty), +0x20 suit(0..3),
-                       +0x23 hidden flag, +0x28 combined index, +0x2c rank(7..14)
+Recovered layouts (all address-cited in the notes; names in quotes are published properties):
+  TAvSingleCard(0x54): +0x14 owner-player obj (0 = slot empty), +0x20 "Suit"(0..3),
+                       +0x23 "Empty" (the slot holds no card), +0x28 "ID" (combined index),
+                       +0x2c "Value" (rank 7..14), +0x30 position in its group (set from
+                       TCollectionItem.Index at 0x484918 / 0x484ADD; no game logic reads it)
   TAvCardItem:         +0x10 -> TAvSingleCard
   TList:               +4 -> array of ptrs, +8 count, +12 capacity
   TCollection:         +8 -> TList
-  TAvCardGroup:        +0xc Tag(player 1..4), +0x168 -> TAvCardList collection
+  TAvCardGroup:        +0xc Tag(player 1..4), +0x168 -> TAvCardList collection "CardList",
+                       +0x16c dynamic array of the non-empty positions (0x484CD0 rebuilds it),
+                       +0x189 "TablePlayPos", +0x18a "Controller" (0 = computer),
+                       +0x1c0 "BeforePlay" event (player2BeforePlay on seats 2..4)
   TAvCardTable:        +0x168 -> GameOptions(+0x10 = trump suit),
                        +0x190(400) = led suit (4 = none),
                        played slots: idx0 +0x180, idx1 +0x174, idx2 +0x184, idx3 +0x17c
@@ -21,13 +26,15 @@ Recovered layouts (all address-cited in the notes):
   card index: k = SUITMAP[suit]*13 + rank ,  SUITMAP = [0,1,3,2] @0x489D74
   internal suit order: 0=Clubs 1=Diamonds 2=Spades 3=Hearts
 """
+import os
 import struct
 
 import pefile
 from unicorn import *
 from unicorn.x86_const import *
 
-EXE = r"C:\Dev\BelotGameEngine\etc\Other implementations\Bridge Belot v2.06 MP\belot.exe"
+# The binary sits two folders up (Bridge Belot v2.06 MP/belot.exe), wherever the repository lives.
+EXE = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "belot.exe"))
 
 STACK_BASE = 0x00200000
 STACK_SIZE = 0x00100000
@@ -333,9 +340,15 @@ class BelotEmu:
         return p
 
     def make_group(self, tag, cards):
-        g = self.alloc(0x180)
+        # The published fields run to +0x204; a smaller block lets writes to +0x18a (Controller)
+        # land in whatever object is allocated next.
+        g = self.alloc(0x210)
         self.w32(g + 0xC, tag)
         self.w32(g + 0x168, self.make_collection(cards))
+        # Each card knows its slot: the group's default pick (0x484CD0/0x484DAC) hands that
+        # number out as the card to play.
+        for slot, card in enumerate(cards):
+            self.w32(card + 0x30, slot)
         return g
 
     def make_table(self, led_suit, trump_suit, played):

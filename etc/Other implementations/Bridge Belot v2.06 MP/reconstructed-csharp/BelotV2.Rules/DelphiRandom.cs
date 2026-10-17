@@ -22,6 +22,12 @@ namespace BelotV2
             set => this.seed = value;
         }
 
+        /// <summary>
+        /// The seed one draw earlier. The step <c>RandSeed * $08088405 + 1</c> is a bijection on
+        /// 32 bits (the multiplier is odd), and $D94FA8CD is the multiplier's inverse.
+        /// </summary>
+        public static uint Previous(uint seed) => (seed - 1u) * 0xD94FA8CDu;
+
         /// <summary>Delphi Random(range): returns an int in [0, range).</summary>
         public int Next(int range)
         {

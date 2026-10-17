@@ -40,14 +40,14 @@ namespace BelotV2
             }
 
             int chosen = ChooseCard();
-            // The original leaves its answer in a variable it initialised to -1, and every path
-            // through the tree writes to it before the common exit, so this fallback does not
-            // fire on any position measured against the binary. It is kept because a caller that
-            // hands the routine a state it could never reach in a real game (an empty candidate
-            // list, say) should still get a legal card rather than -1.
+            // The answer lives in the caller's variable, which already holds the card the group
+            // pre-selected (see Preselected). A path that stores nothing -- leading a trump that
+            // only wins for the partner, say -- leaves that card to be played, and the common tail
+            // below still gets to adjust it. Only a caller that does not model the pre-selection
+            // gets the first candidate instead.
             if (chosen < 0)
             {
-                chosen = this.Candidates[1];
+                chosen = this.Preselected >= 0 ? this.Preselected : this.Candidates[1];
             }
 
             return PostAdjust(chosen);
@@ -186,6 +186,9 @@ namespace BelotV2
                     return this.exitsDirectly ? pick : AvoidLeadingTrump(pick);
                 }
 
+                // Not reachable from a real position: the binary's mixed branch always stores. Its
+                // one candidate for a miss, the lowest mixed trump when Mixed[1] is a trump, exists
+                // whenever that test passes (uStack_74, built over the same list).
                 this.LastBranch = "UNHANDLED-mixed";
                 return -1;
             }
@@ -196,9 +199,18 @@ namespace BelotV2
                 // only "partner takes it" winners
                 if (this.PlayersLeft == 3)
                 {
+                    // Lead the weakest of them -- unless it is a trump, in which case the routine
+                    // jumps to the common tail without storing anything (0x472CEF) and the card the
+                    // group pre-selected at random is the one that goes down.
                     int first = this.AlwaysWinsPartner[1];
-                    this.LastBranch = this.SlotSuit[first] != this.Trump48 ? "L2-lead" : "UNHANDLED-L2";
-                    return this.SlotSuit[first] != this.Trump48 ? first : -1;
+                    if (this.SlotSuit[first] != this.Trump48)
+                    {
+                        this.LastBranch = "L2-lead";
+                        return first;
+                    }
+
+                    this.LastBranch = "L2-keep-preselected";
+                    return -1;
                 }
 
                 if (this.LoserCount < 1)

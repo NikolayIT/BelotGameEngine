@@ -60,10 +60,32 @@ namespace BelotV2
         /// </summary>
         public uint LastSeed { get; private set; }
 
+        /// <summary>
+        /// The request line sent on the last call, exactly as the emulator received it (null when
+        /// the only legal card was played without asking). Together with <see cref="LastSeed"/>
+        /// it replays the position: tools/replay_live.py feeds it back to the routine.
+        /// </summary>
+        public string? LastRequest { get; private set; }
+
+        /// <summary>
+        /// Whether the binary's last answer was not a legal card and was replaced by the first
+        /// legal one. A disagreement on such a position is about the substitution, not the AI.
+        /// </summary>
+        public bool LastSubstituted { get; private set; }
+
+        /// <summary>
+        /// Whether the routine stored nothing on the last call, so the card the group had
+        /// pre-selected at random before asking it was played as it stood.
+        /// </summary>
+        public bool LastKeptPreselection { get; private set; }
+
         public BidType GetBid(BidContext context) => BiddingAi.ChooseBid(context, this.rng);
 
         public Card PlayCard(PlayContext context)
         {
+            this.LastRequest = null;
+            this.LastSubstituted = false;
+            this.LastKeptPreselection = false;
             if (context.Legal.Count == 1)
             {
                 return context.Legal[0];
@@ -134,24 +156,29 @@ namespace BelotV2
                 mem = OriginalPlayAdapter.RoundMemory(context).Select(b => (int)b).ToArray(),
             };
 
-            this.input.WriteLine(JsonSerializer.Serialize(req));
+            this.LastRequest = JsonSerializer.Serialize(req);
+            this.input.WriteLine(this.LastRequest);
             this.input.Flush();
             string? line = this.output.ReadLine()
                 ?? throw new InvalidOperationException("ai_server closed the connection");
 
             using JsonDocument doc = JsonDocument.Parse(line);
-            if (doc.RootElement.TryGetProperty("error", out JsonElement err))
-            {
-                throw new InvalidOperationException($"original AI: {err.GetString()}");
-            }
-
             if (doc.RootElement.TryGetProperty("seed", out JsonElement s))
             {
                 this.LastSeed = s.GetUInt32();
             }
 
-            Card chosen = hand[doc.RootElement.GetProperty("index").GetInt32()];
-            return context.Legal.Contains(chosen) ? chosen : context.Legal[0];
+            if (doc.RootElement.TryGetProperty("error", out JsonElement err))
+            {
+                throw new InvalidOperationException($"original AI: {err.GetString()}");
+            }
+
+            int index = doc.RootElement.GetProperty("index").GetInt32();
+            this.LastKeptPreselection = doc.RootElement.TryGetProperty("kept", out JsonElement kept)
+                                        && kept.GetBoolean();
+            Card chosen = hand[index];
+            this.LastSubstituted = !context.Legal.Contains(chosen);
+            return this.LastSubstituted ? context.Legal[0] : chosen;
         }
 
         private static int ContractId(BidType t) => t switch
