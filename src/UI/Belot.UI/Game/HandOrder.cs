@@ -10,7 +10,8 @@
     /// How the person's hand is laid out: by suit, colours alternating (spades, hearts, clubs,
     /// diamonds), the trump suit first in a suit contract; within a suit from the strongest card
     /// down, in trump order for trumps (J 9 A 10 K Q 8 7; every suit in all trumps) and otherwise in
-    /// plain order (A 10 K Q J 9 8 7). During the bidding every suit is in plain order.
+    /// plain order (A 10 K Q J 9 8 7). During the bidding, with no contract yet, every suit is in
+    /// trump order, as for all trumps.
     /// </summary>
     public static class HandOrder
     {
@@ -18,9 +19,10 @@
 
         public static IReadOnlyList<Card> Sort(IEnumerable<Card> cards, BidType contract)
         {
-            var allTrumps = contract.HasFlag(BidType.AllTrumps);
+            var bidding = (contract & ~(BidType.Double | BidType.ReDouble)) == BidType.Pass;
+            var allTrumps = bidding || contract.HasFlag(BidType.AllTrumps);
             var noTrumps = contract.HasFlag(BidType.NoTrumps);
-            var hasTrumpSuit = !allTrumps && !noTrumps && (contract & ~(BidType.Double | BidType.ReDouble)) != BidType.Pass;
+            var hasTrumpSuit = !allTrumps && !noTrumps;
             var trump = hasTrumpSuit ? contract.ToCardSuit() : CardSuit.Spade;
             var start = hasTrumpSuit ? System.Array.IndexOf(SuitCycle, trump) : 0;
 

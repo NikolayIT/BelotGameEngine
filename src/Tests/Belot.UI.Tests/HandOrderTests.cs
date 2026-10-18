@@ -14,10 +14,11 @@
     public class HandOrderTests
     {
         [Fact]
-        public void DuringTheBiddingSuitsShouldAlternateInPlainOrder()
+        public void DuringTheBiddingSuitsShouldAlternateInTrumpOrderAsForAllTrumps()
         {
             var hand = Cards("7♦ J♠ 10♠ A♥ K♣ Q♠ 9♥");
-            Assert.Equal(Cards("10♠ Q♠ J♠ A♥ 9♥ K♣ 7♦"), HandOrder.Sort(hand, BidType.Pass));
+            Assert.Equal(Cards("J♠ 10♠ Q♠ 9♥ A♥ K♣ 7♦"), HandOrder.Sort(hand, BidType.Pass));
+            Assert.Equal(HandOrder.Sort(hand, BidType.AllTrumps), HandOrder.Sort(hand, BidType.Pass));
         }
 
         [Fact]
