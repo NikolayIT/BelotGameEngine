@@ -257,7 +257,7 @@
             var handler = code[start..end];
             Assert.Contains("OnlinePlay.OpenAsync(", handler);
             Assert.Contains("this.actions,", handler);
-            Assert.Contains("Browser.Default.OpenAsync(url, BrowserLaunchMode.SystemPreferred)", handler);
+            Assert.Contains("ExternalBrowser.OpenAsync", handler);
             Assert.Contains("text[\"Start_OnlineUnavailable\"]", handler);
             Assert.Contains("this.DisplayAlertAsync", handler);
         }
@@ -277,11 +277,47 @@
             var handler = code[start..end];
             Assert.Contains("PrivacyPolicy.OpenAsync(", handler);
             Assert.Contains("this.actions,", handler);
-            Assert.Contains("Browser.Default.OpenAsync(url, BrowserLaunchMode.SystemPreferred)", handler);
+            Assert.Contains("ExternalBrowser.OpenAsync", handler);
             Assert.Contains("text[\"Settings_PrivacyPolicyUnavailable\"]", handler);
             Assert.Contains("this.DisplayAlertAsync", handler);
             Assert.Contains("this.actions.Activate();", code);
             Assert.Contains("this.actions.Deactivate();", code);
+        }
+
+        // The age rating ("no open web access") and the privacy policy rest on this on iOS.
+        [Fact]
+        public void LinksLeaveTheAppForSafariOnIosAndKeepTheSystemBrowserElsewhere()
+        {
+            var code = File.ReadAllText(Path.Combine(PagesDirectory(), "ExternalBrowser.cs"));
+            var ios = code.IndexOf("#if IOS", StringComparison.Ordinal);
+            var other = code.IndexOf("#else", ios, StringComparison.Ordinal);
+            var end = code.IndexOf("#endif", other, StringComparison.Ordinal);
+            Assert.Contains("BrowserLaunchMode.External", code[ios..other]);
+            Assert.Contains("BrowserLaunchMode.SystemPreferred", code[other..end]);
+
+            foreach (var page in new[] { "StartPage.xaml.cs", "SettingsPage.xaml.cs" })
+            {
+                Assert.DoesNotContain("Browser.Default", File.ReadAllText(Path.Combine(PagesDirectory(), page)));
+            }
+        }
+
+        // iOS's swipe from the edge asks the Shell, and must not leave a game without the question.
+        [Fact]
+        public void TheShellRefusesToPopTheTableUnlessThePageIsLeaving()
+        {
+            var shell = File.ReadAllText(Path.Combine(PagesDirectory(), "..", "AppShell.xaml.cs"));
+            Assert.Contains("args.Source == ShellNavigationSource.Pop && args.CanCancel && this.CurrentPage is GamePage { IsLeaving: false }", shell);
+            Assert.Contains("args.Cancel();", shell);
+
+            var page = File.ReadAllText(Path.Combine(PagesDirectory(), "GamePage.xaml.cs"));
+            var goBacks = 0;
+            for (var goBack = page.IndexOf("GoToAsync(\"..\")", StringComparison.Ordinal); goBack >= 0; goBack = page.IndexOf("GoToAsync(\"..\")", goBack + 1, StringComparison.Ordinal))
+            {
+                Assert.Contains("this.IsLeaving = true;", page[Math.Max(0, goBack - 80)..goBack]);
+                goBacks++;
+            }
+
+            Assert.Equal(2, goBacks);
         }
 
         [Fact]

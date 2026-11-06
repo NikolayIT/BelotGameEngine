@@ -8,6 +8,8 @@ plist="$app/Info.plist"
 buddy() { /usr/libexec/PlistBuddy -c "Print :$1" "$plist" 2>/dev/null || echo "(missing)"; }
 
 du -sh "$app"
+echo "Largest files:"
+find "$app" -type f -exec du -k {} + | sort -rn | head -14 | sed "s|$app/||"
 for key in CFBundleIdentifier CFBundleName CFBundleDisplayName CFBundleShortVersionString CFBundleVersion \
   MinimumOSVersion UIDeviceFamily UISupportedInterfaceOrientations UIUserInterfaceStyle UIStatusBarStyle \
   ITSAppUsesNonExemptEncryption CFBundleLocalizations UILaunchStoryboardName CFBundleIconName; do

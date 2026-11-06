@@ -64,7 +64,8 @@ run() {
       failed=1
       break
     fi
-    if ! xcrun simctl spawn "$udid" launchctl list | grep -q "UIKitApplication:$bundle"; then
+    # Not grep -q: closing the pipe early kills launchctl, which pipefail reports as a failure.
+    if ! xcrun simctl spawn "$udid" launchctl list 2> /dev/null | grep "UIKitApplication:$bundle" > /dev/null; then
       sleep 2
       if [ ! -f "$data/shots-done.txt" ]; then
         echo "::error::The app stopped during the $name pass."

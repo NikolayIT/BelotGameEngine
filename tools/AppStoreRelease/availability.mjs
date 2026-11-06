@@ -50,7 +50,8 @@ async function setFree() {
 }
 
 async function setTerritories() {
-  const territories = (await getAll('/v1/territories?limit=200')).filter(t => !settings.excludedTerritories.includes(t.id));
+  // Every territory is named: Apple refuses a list that leaves the excluded ones out.
+  const territories = await getAll('/v1/territories?limit=200');
   await post('/v2/appAvailabilities', {
     data: {
       type: 'appAvailabilities',
@@ -63,14 +64,16 @@ async function setTerritories() {
     included: territories.map(t => ({
       type: 'territoryAvailabilities',
       id: `\${${t.id}}`,
-      attributes: { available: true },
+      attributes: { available: !settings.excludedTerritories.includes(t.id) },
       relationships: { territory: { data: { type: 'territories', id: t.id } } },
     })),
   });
 }
 
+const hasPrice = async () => (await get(`/v1/apps/${APP_APPLE_ID}/appPriceSchedule`).catch(() => null)) !== null;
+
 if (process.argv.includes('--apply')) {
-  await setFree();
+  if (!(await hasPrice())) await setFree();
   await setTerritories();
 }
 await show();

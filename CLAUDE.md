@@ -16,7 +16,7 @@ advice as rules with exact endgames and bids learned from how every bid did (see
 "ClaudePlayerHeuristic design" and `HEURISTIC_PLAYER.md`), measured in mirrored matches. The app's Master is that
 heuristic player since October 8 (before, the neural player with search in every trick and a
 strong human player's technique and conventions: see "The human-style Master" and
-`HUMAN_PLAY.md`). People play them in the MAUI app for Android and Windows (see "The MAUI app").
+`HUMAN_PLAY.md`). People play them in the MAUI app for Android, iPhone and Windows (see "The MAUI app").
 The full rules are in `etc/Rules.md`.
 
 ## Commands
@@ -79,6 +79,8 @@ dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- bidl
 dotnet run -c Release --project tools/NeuralTrainer/NeuralTrainer.csproj -- bidfeatures --data artifacts/bidding/run
 
 # The MAUI app (needs the MAUI workloads): run it on Windows, or build it for Android
+# (iPhone builds run on a Mac in .github/workflows/ios.yml; store/app-store/README.md has a
+# compile check for Windows)
 dotnet build src/UI/Belot.UI/Belot.UI.csproj -f net10.0-windows10.0.19041.0 -t:Run
 dotnet build src/UI/Belot.UI/Belot.UI.csproj -f net10.0-android
 
@@ -531,8 +533,8 @@ have UTF-8 BOM and CRLF; engine production source and its NuGet API are unchange
 
 ## The MAUI app (`src/UI/Belot.UI`)
 
-Android and Windows (`net10.0-android`; `net10.0-windows10.0.19041.0` only when building on
-Windows), modelled file for file on the Santase engine's `Santase.UI`. The person plays South and
+Android, Windows and iPhone (`net10.0-android`; `net10.0-windows10.0.19041.0` only when building on
+Windows; `net10.0-ios` alone on a Mac, see "App Store release"), modelled file for file on the Santase engine's `Santase.UI`. The person plays South and
 picks the level of each other seat separately: the partner (North) and the rivals West (on the
 left) and East (on the right), from `Game/AiLevels.cs`: Random (`RandomPlayer`), Beginner
 (`DummyPlayer`), Skilled (`SmartPlayer`), Expert (`ClaudePlayerProfiles.CreateExpert()`: the
@@ -712,6 +714,19 @@ references the three AI projects, so an `IPlayer` break in any of them breaks th
   Its review status in Console was not checked. The 16 screenshots are 1.0's, captured
   before the September 30 ratings; recapturing needs a device, and the owner asked
   that their BlueStacks not be used. Evidence: `store/google-play/releases/1.1.md`.
+
+## App Store release
+
+`store/app-store/README.md` has all of it; the Gods & Magic pipeline, adapted. App Store Connect
+app `6831489651`, bundle `com.nksolutions.belot`, iPhone only. `.github/workflows/ios.yml` runs on
+`macos-26`: `-f task=screenshots` plays the real app on a simulator (`Platforms/iOS/StoreShotsDriver.cs`,
+only built with `-p:StoreShots=true`) and takes the store's screenshots; `-f task=upload` builds,
+signs and uploads, from `master` only and after its reviewer approves the run. **This repository is
+public: no Apple key ever enters it** (`tools/AppStoreRelease` reads the team's from outside it,
+the workflow from the secrets of the `app-store` environment). The App Store has no Bulgarian, and
+Bulgaria's storefront reads English (U.K.), so `en-GB` carries the Bulgarian listing and `en-US` the
+English one. On iOS `AppShell.OnNavigating` refuses the swipe from the edge on the table, and links
+open in Safari (`Pages/ExternalBrowser.cs`).
 
 ## NuGet engine release
 
