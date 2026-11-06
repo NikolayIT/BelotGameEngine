@@ -17,9 +17,6 @@
 name: iOS
 
 on:
-  push:
-    branches:
-      - app-store-ios
   workflow_dispatch:
     inputs:
       task:
@@ -47,7 +44,7 @@ env:
 jobs:
   screenshots:
     name: Simulator and screenshots
-    if: github.event_name == 'push' || inputs.task == 'screenshots'
+    if: inputs.task == 'screenshots'
     # Apple Silicon: the simulator build runs ahead-of-time compiled there, like a device's.
     runs-on: macos-26
     timeout-minutes: 90
@@ -84,7 +81,7 @@ jobs:
 
   upload:
     name: Signed build for App Store Connect
-    if: github.event_name == 'workflow_dispatch' && inputs.task == 'upload' && github.ref == 'refs/heads/master'
+    if: inputs.task == 'upload' && github.ref == 'refs/heads/master'
     runs-on: macos-26
     timeout-minutes: 60
     environment: app-store
