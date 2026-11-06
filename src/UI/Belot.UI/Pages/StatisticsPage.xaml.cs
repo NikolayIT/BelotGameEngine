@@ -21,6 +21,7 @@
         public StatisticsPage()
         {
             this.InitializeComponent();
+            PageBackground.CoverTheWholeScreen(this);
         }
 
         protected override void OnAppearing()

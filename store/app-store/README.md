@@ -91,6 +91,12 @@ Differences from Android:
   keyboard match it, and the status bar stays light.
 - **Ahead of time.** iOS has no JIT. Release builds compile everything ahead of time and keep the
   interpreter for what the compiler could not foresee (`MtouchInterpreter=-all`), rather than crash.
+  Measured on `macos-26` (November 2026), for a device: 59 MB and 23.4 MB zipped with it, 52 MB and
+  20.8 MB without, both in about 8 minutes. The simulator is another matter, keeping every assembly
+  whole (476 MB and 47 minutes with it, 107 MB and 8 minutes without), so the simulator pass runs
+  without it, which is also the stricter check.
+- **The felt covers the whole screen** (`Pages/PageBackground.cs`): a gradient on a page's content
+  would end in a hard edge at the safe area, and result screens darken the page around their dimming.
 - **Text size.** `AppDelegate` follows Dynamic Type as `MainActivity` follows the font scale.
 - **The workload is pinned** to set `10.0.401` (iOS SDK 26.5, Xcode 26.6) in `select-xcode.sh`:
   newer sets carry iOS SDK 27, which needs Xcode 27, and GitHub's newest image, `macos-26`, stops at
@@ -103,11 +109,12 @@ Differences from Android:
 simulator, so it cannot reach a store build), plays the real app on the newest 6.9" iPhone
 simulator on an Apple Silicon runner, where the build runs ahead-of-time compiled like a device's:
 
-1. a whole game against each of the five levels, through the table's own commands, with hints, at
-   no pace, so the AI's code paths run and the statistics hold real games;
+1. three whole games against each of the five levels, through the table's own commands, following
+   the app's own hints at no pace, so the AI's code paths run and the statistics hold real games;
 2. the eight store scenes on the real pages, in each language: it writes a scene's name to a file
    in the app's Documents, and `capture-shots.sh` takes it with `simctl io` (1320×2868, the 6.9"
-   iPhone's size, status bar set to Apple's usual 9:41), with `09-settings` for checking only;
+   iPhone's size, status bar set to Apple's usual 9:41, then flattened, since Apple refuses an alpha
+   channel), with `09-settings` for checking only;
 3. a run with no language chosen on a Bulgarian iPhone, which must start in Bulgarian.
 
 The artifact holds the shots, each pass's `log.txt` and, after a failure, the crash reports.

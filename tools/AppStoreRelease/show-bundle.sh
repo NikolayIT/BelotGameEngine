@@ -9,18 +9,21 @@ buddy() { /usr/libexec/PlistBuddy -c "Print :$1" "$plist" 2>/dev/null || echo "(
 
 du -sh "$app"
 echo "Largest files:"
-find "$app" -type f -exec du -k {} + | sort -rn | head -14 | sed "s|$app/||"
+find "$app" -type f -exec du -k {} + | sort -rn | awk 'NR <= 14' | sed "s|$app/||"
 for key in CFBundleIdentifier CFBundleName CFBundleDisplayName CFBundleShortVersionString CFBundleVersion \
   MinimumOSVersion UIDeviceFamily UISupportedInterfaceOrientations UIUserInterfaceStyle UIStatusBarStyle \
   ITSAppUsesNonExemptEncryption CFBundleLocalizations UILaunchStoryboardName CFBundleIconName; do
   echo "$key: $(buddy "$key" | tr '\n' ' ')"
 done
 
+echo "CFBundleIcons: $(buddy CFBundleIcons | tr -s ' 
+' ' ')"
 ls -d "$app"/*.lproj
 ls "$app" | grep -i -E 'PrivacyInfo|AppIcon|Assets.car' || true
 
 test -f "$app/PrivacyInfo.xcprivacy"
 test -f "$app/bg.lproj/InfoPlist.strings"
 test "$(buddy CFBundleIdentifier)" = "com.nksolutions.belot"
+test "$(buddy CFBundleIconName)" = "appicon"
 test "$(buddy ITSAppUsesNonExemptEncryption)" = "false"
 echo "Bundle checks pass."

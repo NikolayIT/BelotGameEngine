@@ -13,6 +13,11 @@
     [SuppressMessage("Design", "CA1001", Justification = "The view model is disposed in OnDisappearing, when the page leaves the screen.")]
     public sealed partial class GamePage : ContentPage, IGameTableHost
     {
+        // As dark as the table under a result screen's dimming.
+        private static readonly SolidColorBrush ResultBackdrop = new(Color.FromArgb("#020605"));
+
+        private readonly Brush felt;
+
         // One leave prompt at a time (the back button and Menu both ask).
         private readonly OneAtATime leaving = new();
 
@@ -30,6 +35,8 @@
             UiScale.Current.UpdateSystemFontScale(UIKit.UIFontMetrics.DefaultMetrics.GetScaledValue(1));
 #endif
             this.InitializeComponent();
+            PageBackground.CoverTheWholeScreen(this);
+            this.felt = this.Background;
 
             // The hand's cards overlap more on a narrow screen, so all eight fit the width.
             this.HandStack.SetBinding(StackBase.SpacingProperty, new Binding(nameof(UiScale.HandSpacing), source: UiScale.Current));
@@ -70,6 +77,7 @@
         {
             base.OnAppearing();
             this.IsLeaving = false;
+            this.Background = this.felt;
             SetKeepScreenOn(true);
             if (this.started)
             {
@@ -211,6 +219,13 @@
             if (vm == null)
             {
                 return;
+            }
+
+            // A result screen dims the table inside the safe area, and on an iPhone the page around
+            // it, behind the status bar and the home indicator, has to go as dark.
+            if (e.PropertyName is nameof(GameViewModel.IsRoundOverlayVisible) or nameof(GameViewModel.IsGameOverlayVisible))
+            {
+                this.Background = vm.IsRoundOverlayVisible || vm.IsGameOverlayVisible ? ResultBackdrop : this.felt;
             }
 
             switch (e.PropertyName)

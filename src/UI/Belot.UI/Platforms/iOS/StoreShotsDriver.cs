@@ -92,8 +92,8 @@ namespace Belot.UI
             }
         }
 
-        // Whole games at no pace through a real table, every computer level in every seat kind,
-        // with hints: the code paths of the AI that nothing else on this list would reach.
+        // Whole games at no pace through a real table, against every computer level, playing by the
+        // app's own hints: the AI's code paths, and statistics like a real player's.
         private static async Task PlayEveryLevelAsync(int gamesPerLineup)
         {
             var names = SeatNames.Create(AppSettings.PlayerName, AppSettings.PartnerName, AppSettings.WestName, AppSettings.EastName);
@@ -129,11 +129,8 @@ namespace Belot.UI
                             continue;
                         }
 
-                        if (++decisions % 7 == 0 && table.IsHintVisible)
-                        {
-                            await HintAsync(table);
-                        }
-
+                        decisions++;
+                        await HintAsync(table);
                         Move(table);
                         await Task.Yield();
                     }
@@ -219,8 +216,10 @@ namespace Belot.UI
 
                 if (table.IsRoundOverlayVisible)
                 {
-                    if (wanted.Remove("05-result"))
+                    // A deal that was played, and won: not everybody passing.
+                    if (wanted.Contains("05-result") && table.RoundResult is { IsPlayed: true } result && result.UsInDeal > result.ThemInDeal)
                     {
+                        wanted.Remove("05-result");
                         await ShootAsync("05-result");
                     }
 
@@ -262,6 +261,7 @@ namespace Belot.UI
                     }
                 }
 
+                await HintAsync(table);
                 Move(table);
                 await Task.Delay(50);
             }
@@ -311,25 +311,27 @@ namespace Belot.UI
             }
         }
 
-        // A plausible table: mostly passes, sometimes a bid, combinations declared, a legal card.
+        // What the hint says, as a person following it would; without one, a pass or a legal card.
         private static void Move(GameViewModel table)
         {
             if (table.IsBidPanelVisible)
             {
-                var options = Biddable(table);
-                var bid = options.Count > 0 && Random.Next(3) == 0
-                    ? options[Random.Next(options.Count)]
-                    : table.BidOptions.First(x => x.Bid == BidType.Pass);
-                table.BidCommand.Execute(bid);
+                table.BidCommand.Execute(table.BidOptions.FirstOrDefault(x => x.IsHinted && x.IsEnabled)
+                    ?? table.BidOptions.First(x => x.Bid == BidType.Pass));
             }
             else if (table.IsAnnouncePanelVisible)
             {
+                foreach (var option in table.AnnounceOptions.Where(x => x.IsHinted && !x.IsSelected).ToList())
+                {
+                    table.ToggleAnnounceCommand.Execute(option);
+                }
+
                 table.DeclareCommand.Execute(null);
             }
             else
             {
                 var playable = table.MyHand.Where(x => x.IsPlayable).ToList();
-                table.TapCardCommand.Execute(playable[Random.Next(playable.Count)]);
+                table.TapCardCommand.Execute(playable.FirstOrDefault(x => x.IsHinted) ?? playable[Random.Next(playable.Count)]);
             }
         }
 
@@ -341,7 +343,7 @@ namespace Belot.UI
             var temporary = request + ".tmp";
             await File.WriteAllTextAsync(temporary, name);
             File.Move(temporary, request);
-            await Until(() => !File.Exists(request), "the screenshot " + name, 60);
+            await Until(() => !File.Exists(request), "the screenshot " + name, 300);
             Log("Shot " + name);
         }
 

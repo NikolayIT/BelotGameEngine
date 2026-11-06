@@ -19,6 +19,8 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+	<key>CFBundleIconName</key>
+	<string>appicon</string>
 	<!-- Every page is dark felt with light text, whatever the system's appearance. -->
 	<key>UIUserInterfaceStyle</key>
 	<string>Dark</string>

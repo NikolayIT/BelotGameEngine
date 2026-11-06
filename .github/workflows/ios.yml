@@ -46,15 +46,11 @@ env:
 
 jobs:
   screenshots:
-    name: Simulator and screenshots (interpreter '${{ matrix.interpreter }}')
+    name: Simulator and screenshots
     if: github.event_name == 'push' || inputs.task == 'screenshots'
     # Apple Silicon: the simulator build runs ahead-of-time compiled there, like a device's.
     runs-on: macos-26
-    timeout-minutes: 150
-    strategy:
-      fail-fast: false
-      matrix:
-        interpreter: ['-all', '']
+    timeout-minutes: 90
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -67,8 +63,10 @@ jobs:
       - name: Install the iOS workload and pick its Xcode
         run: bash tools/AppStoreRelease/select-xcode.sh
 
+      # Without the interpreter: 8 minutes instead of 47, as the simulator build keeps every
+      # assembly whole, and a stricter check, as code the compiler missed crashes rather than runs.
       - name: Build the app for the simulator
-        run: dotnet build "$APP_PROJECT" -c Release -f net10.0-ios -p:StoreShots=true "-p:MtouchInterpreter=${{ matrix.interpreter }}" -v:m
+        run: dotnet build "$APP_PROJECT" -c Release -f net10.0-ios -p:StoreShots=true -p:MtouchInterpreter= -v:m
 
       - name: Show what is inside the app
         run: bash tools/AppStoreRelease/show-bundle.sh "$(find src/UI/Belot.UI/bin/Release/net10.0-ios/iossimulator-arm64 -maxdepth 1 -name '*.app' | head -1)"
@@ -80,46 +78,15 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: app-store-screenshots${{ matrix.interpreter }}
+          name: app-store-screenshots
           path: ${{ runner.temp }}/shots
           if-no-files-found: warn
-
-  device-size:
-    name: Device build size (interpreter '${{ matrix.interpreter }}')
-    if: github.event_name == 'push'
-    runs-on: macos-26
-    timeout-minutes: 150
-    strategy:
-      fail-fast: false
-      matrix:
-        interpreter: ['-all', '']
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: '10.0.403'
-
-      - name: Install the iOS workload and pick its Xcode
-        run: bash tools/AppStoreRelease/select-xcode.sh
-
-      - name: Build for a device, unsigned
-        run: dotnet build "$APP_PROJECT" -c Release -f net10.0-ios -p:EnableCodeSigning=false "-p:MtouchInterpreter=${{ matrix.interpreter }}" -v:m
-
-      - name: How big it is, zipped as an IPA would be
-        run: |
-          app="$(find src/UI/Belot.UI/bin/Release/net10.0-ios/ios-arm64 -maxdepth 1 -name '*.app' | head -1)"
-          bash tools/AppStoreRelease/show-bundle.sh "$app" || true
-          ditto -c -k --keepParent "$app" "$RUNNER_TEMP/app.zip"
-          ls -l "$RUNNER_TEMP/app.zip"
 
   upload:
     name: Signed build for App Store Connect
     if: github.event_name == 'workflow_dispatch' && inputs.task == 'upload' && github.ref == 'refs/heads/master'
     runs-on: macos-26
-    timeout-minutes: 150
+    timeout-minutes: 60
     environment: app-store
     steps:
       - name: Checkout
