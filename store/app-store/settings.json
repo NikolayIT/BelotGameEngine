@@ -1,0 +1,55 @@
+{
+  "appleId": "",
+  "sku": "belot-ios",
+  "copyright": "2026 NK Solutions EOOD",
+  "supportUrl": "https://belot.nksolutions.com/",
+  "marketingUrl": "https://belot.nksolutions.com/",
+  "privacyPolicyUrl": "https://belot.nksolutions.com/privacy-policy.html",
+  "categories": {
+    "primaryCategory": "GAMES",
+    "primarySubcategoryOne": "GAMES_CARD",
+    "primarySubcategoryTwo": "GAMES_STRATEGY"
+  },
+  "contentRightsDeclaration": "DOES_NOT_USE_THIRD_PARTY_CONTENT",
+  "ageRating": {
+    "parentalControls": false,
+    "ageAssurance": false,
+    "unrestrictedWebAccess": false,
+    "userGeneratedContent": false,
+    "socialMedia": false,
+    "messagingAndChat": false,
+    "advertising": false,
+    "profanityOrCrudeHumor": "NONE",
+    "horrorOrFearThemes": "NONE",
+    "alcoholTobaccoOrDrugUseOrReferences": "NONE",
+    "medicalOrTreatmentInformation": "NONE",
+    "healthOrWellnessTopics": false,
+    "matureOrSuggestiveThemes": "NONE",
+    "sexualContentOrNudity": "NONE",
+    "sexualContentGraphicAndNudity": "NONE",
+    "violenceCartoonOrFantasy": "NONE",
+    "violenceRealistic": "NONE",
+    "violenceRealisticProlongedGraphicOrSadistic": "NONE",
+    "gunsOrOtherWeapons": "NONE",
+    "gambling": false,
+    "gamblingSimulated": "NONE",
+    "contests": "NONE",
+    "lootBox": false
+  },
+  "reviewNotes": "Belot opens on its setup screen, so no sign-in, demo account or internet connection is needed: tap Play to start a game against the computer. The app is in English and Bulgarian (the language button is at the top of the home screen).\n\nBelot is a Bulgarian trick-taking card game for four players in two teams. \"How to play\" on the home screen has the rules. The person plays the bottom seat, and the Hint button shows a suggested bid or card. A game is left through the Menu button, which asks first; for that reason the swipe from the screen's edge is off on the table only.\n\nThe game is played for points alone: there is no betting, no money of any kind, no in-app purchases, no ads and no account. All data stays on the device.\n\nThe \"Play people online\" button on the home screen opens our separate website ednaigra.com in Safari, and the links in Settings open in Safari as well. There is no multiplayer inside the app.",
+  "screenshotFolders": {
+    "en-US": "en",
+    "en-GB": "bg"
+  },
+  "screenshots": [
+    "01-gameplay.png",
+    "02-bidding.png",
+    "03-hint.png",
+    "04-declarations.png",
+    "05-result.png",
+    "06-setup.png",
+    "07-statistics.png",
+    "08-rules.png"
+  ],
+  "excludedTerritories": ["CHN"]
+}
