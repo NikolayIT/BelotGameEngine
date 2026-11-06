@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<!-- iPhone only: four seats around a table are laid out for a phone held upright. -->
+	<key>UIDeviceFamily</key>
+	<array>
+		<integer>1</integer>
+	</array>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>XSAppIconAssets</key>
+	<string>Assets.xcassets/appicon.appiconset</string>
+	<!-- Every page is dark felt with light text, whatever the system's appearance. -->
+	<key>UIUserInterfaceStyle</key>
+	<string>Dark</string>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleLightContent</string>
+	<!-- The app uses no encryption of its own (no network code, no accounts). -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<!-- Without Bulgarian here iOS reports English to the app on a Bulgarian iPhone, and the App Store lists English alone. -->
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>bg</string>
+	</array>
+</dict>
+</plist>

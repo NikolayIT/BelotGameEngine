@@ -1,2 +1,5 @@
 # The neural player's trained networks (16-bit floats): never touch their bytes.
 *.bin binary
+
+# Shell scripts that run on a Mac.
+*.sh text eol=lf

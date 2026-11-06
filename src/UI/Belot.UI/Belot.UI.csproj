@@ -1,9 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<!-- Android and Windows (the Windows target only builds on Windows). -->
+		<!-- Android and Windows (the Windows target only builds on Windows); iPhone on a Mac (.github/workflows/ios.yml),
+		     or for a compile check on Windows with the environment variable BelotIos=true and -t:Compile. -->
 		<TargetFrameworks>net10.0-android</TargetFrameworks>
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('osx')) Or '$(BelotIos)' == 'true'">net10.0-ios</TargetFrameworks>
 
 		<OutputType>Exe</OutputType>
 		<RootNamespace>Belot.UI</RootNamespace>
@@ -30,7 +32,22 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
 	</PropertyGroup>
+
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+		<!-- A device for the store; -p:StoreShots=true builds the screenshot driver for an Apple Silicon simulator instead. -->
+		<RuntimeIdentifier Condition="'$(StoreShots)' != 'true'">ios-arm64</RuntimeIdentifier>
+		<RuntimeIdentifier Condition="'$(StoreShots)' == 'true'">iossimulator-arm64</RuntimeIdentifier>
+		<DefineConstants Condition="'$(StoreShots)' == 'true'">$(DefineConstants);STORE_SHOTS</DefineConstants>
+
+		<!-- All code is compiled ahead of time, as iOS has no JIT; the interpreter only runs what that compiler could not foresee instead of crashing. -->
+		<MtouchInterpreter Condition="'$(Configuration)' == 'Release'">-all</MtouchInterpreter>
+	</PropertyGroup>
+
+	<ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+		<BundleResource Include="Platforms\iOS\PrivacyInfo.xcprivacy" LogicalName="PrivacyInfo.xcprivacy" />
+	</ItemGroup>
 
 	<PropertyGroup>
 		<CodeAnalysisRuleSet>..\..\Rules.ruleset</CodeAnalysisRuleSet>

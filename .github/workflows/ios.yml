@@ -1,0 +1,177 @@
+# iOS: the iPhone app in a simulator (screenshots, and the check that it works compiled ahead of
+# time), and the signed build for App Store Connect. See store/app-store/README.md.
+#
+#   gh workflow run ios.yml --ref master -f task=screenshots
+#   gh workflow run ios.yml --ref master -f task=upload
+#
+# The screenshots need nothing secret. The upload runs from master only and in the app-store
+# environment, whose secrets tools/AppStoreRelease/setup-signing.mjs writes and whose reviewer
+# has to approve each run, because this repository is public:
+#   IOS_DIST_CERT_P12_BASE64  base64 of the Apple Distribution certificate + key (p12)
+#   IOS_DIST_CERT_PASSWORD    its password
+#   IOS_PROFILE_BASE64        base64 of the "Belot App Store" provisioning profile
+#   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8_BASE64   the App Store Connect API team key
+#
+# Version = ApplicationDisplayVersion in Belot.UI.csproj; build number = this workflow's run number.
+
+name: iOS
+
+on:
+  push:
+    branches:
+      - app-store-ios
+  workflow_dispatch:
+    inputs:
+      task:
+        description: What to do
+        required: true
+        type: choice
+        default: screenshots
+        options:
+          - screenshots
+          - upload
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}-${{ inputs.task }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  APP_PROJECT: src/UI/Belot.UI/Belot.UI.csproj
+
+jobs:
+  screenshots:
+    name: Simulator and screenshots
+    if: github.event_name == 'push' || inputs.task == 'screenshots'
+    # Apple Silicon: the simulator build runs ahead-of-time compiled there, like a device's.
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install the iOS workload and pick its Xcode
+        run: bash tools/AppStoreRelease/select-xcode.sh
+
+      - name: Build the app for the simulator
+        run: dotnet build "$APP_PROJECT" -c Release -f net10.0-ios -p:StoreShots=true -v:m
+
+      - name: Show what is inside the app
+        run: bash tools/AppStoreRelease/show-bundle.sh "$(find src/UI/Belot.UI/bin/Release/net10.0-ios/iossimulator-arm64 -maxdepth 1 -name '*.app' | head -1)"
+
+      - name: Play and take the screenshots
+        run: bash tools/AppStoreRelease/capture-shots.sh "$(find src/UI/Belot.UI/bin/Release/net10.0-ios/iossimulator-arm64 -maxdepth 1 -name '*.app' | head -1)" "$RUNNER_TEMP/shots"
+
+      - name: Keep the screenshots and the logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-store-screenshots
+          path: ${{ runner.temp }}/shots
+          if-no-files-found: warn
+
+  upload:
+    name: Signed build for App Store Connect
+    if: github.event_name == 'workflow_dispatch' && inputs.task == 'upload' && github.ref == 'refs/heads/master'
+    runs-on: macos-26
+    timeout-minutes: 60
+    environment: app-store
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install the iOS workload and pick its Xcode
+        run: bash tools/AppStoreRelease/select-xcode.sh
+
+      - name: Test the game layer
+        run: dotnet test src/Tests/Belot.UI.Tests/Belot.UI.Tests.csproj -c Release -v:m
+
+      - name: Install the signing certificate and provisioning profile
+        env:
+          P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+          PROFILE_BASE64: ${{ secrets.IOS_PROFILE_BASE64 }}
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          printf '%s' "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/distribution.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$RUNNER_TEMP/distribution.p12" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | sed -n 's/.*"\(Apple Distribution[^"]*\)".*/\1/p' | head -1)"
+          test -n "$IDENTITY"
+
+          PROFILE="$RUNNER_TEMP/app-store.mobileprovision"
+          printf '%s' "$PROFILE_BASE64" | base64 --decode > "$PROFILE"
+          security cms -D -i "$PROFILE" > "$RUNNER_TEMP/app-store-profile.plist"
+          UUID="$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$RUNNER_TEMP/app-store-profile.plist")"
+          NAME="$(/usr/libexec/PlistBuddy -c 'Print :Name' "$RUNNER_TEMP/app-store-profile.plist")"
+          echo "Profile: $NAME ($UUID), expires $(/usr/libexec/PlistBuddy -c 'Print :ExpirationDate' "$RUNNER_TEMP/app-store-profile.plist")"
+          for dir in "$HOME/Library/MobileDevice/Provisioning Profiles" "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
+            mkdir -p "$dir"
+            cp "$PROFILE" "$dir/$UUID.mobileprovision"
+          done
+          {
+            echo "KEYCHAIN=$KEYCHAIN"
+            echo "SIGNING_IDENTITY=$IDENTITY"
+            echo "SIGNING_PROFILE=$NAME"
+          } >> "$GITHUB_ENV"
+
+      - name: Publish the signed IPA
+        run: |
+          dotnet publish "$APP_PROJECT" -c Release -f net10.0-ios \
+            -p:ArchiveOnBuild=true \
+            -p:CodesignKey="$SIGNING_IDENTITY" \
+            -p:CodesignProvision="$SIGNING_PROFILE" \
+            -p:CodesignKeychain="$KEYCHAIN" \
+            -p:ApplicationVersion="$GITHUB_RUN_NUMBER" \
+            -v:m
+          IPA="$(find src/UI/Belot.UI/bin/Release/net10.0-ios/ios-arm64/publish -name '*.ipa' | head -1)"
+          test -n "$IPA"
+          ls -l "$IPA"
+          shasum -a 256 "$IPA"
+          echo "IPA=$IPA" >> "$GITHUB_ENV"
+
+      - name: Show what is inside the app
+        run: |
+          mkdir -p "$RUNNER_TEMP/ipa"
+          unzip -q "$IPA" -d "$RUNNER_TEMP/ipa"
+          bash tools/AppStoreRelease/show-bundle.sh "$(find "$RUNNER_TEMP/ipa/Payload" -maxdepth 1 -name '*.app' | head -1)"
+
+      - name: Upload to App Store Connect
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+        run: |
+          # altool looks for AuthKey_<id>.p8 in ~/.appstoreconnect/private_keys.
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          printf '%s' "$ASC_KEY_P8_BASE64" | base64 --decode > "$HOME/.appstoreconnect/private_keys/AuthKey_$ASC_KEY_ID.p8"
+          xcrun altool --validate-app --type ios --file "$IPA" --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" --output-format normal
+          xcrun altool --upload-app --type ios --file "$IPA" --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID" --output-format normal
+          echo "::notice::Uploaded build $GITHUB_RUN_NUMBER. It appears in App Store Connect once Apple has processed it."
+
+      - name: Remove the signing material
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN:-}" ]; then security delete-keychain "$KEYCHAIN" || true; fi
+          rm -f "$RUNNER_TEMP"/*.p12 "$RUNNER_TEMP"/*.mobileprovision "$RUNNER_TEMP"/app-store-profile.plist
+          rm -rf "$HOME/.appstoreconnect/private_keys"

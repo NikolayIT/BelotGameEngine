@@ -369,3 +369,9 @@ FodyWeavers.xsd
 tools/NeuralTrainer/checkpoints/
 tools/NeuralTrainer/data/
 *.samples
+
+# Apple signing material lives outside this public repository (tools/AppStoreRelease/README.md).
+keys/
+*.p8
+*.p12
+*.mobileprovision

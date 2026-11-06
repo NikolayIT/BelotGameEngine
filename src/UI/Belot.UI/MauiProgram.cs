@@ -11,6 +11,11 @@
 
 #if ANDROID
             Game.UiScale.Current.UpdateSystemFontScale(global::Android.App.Application.Context.Resources?.Configuration?.FontScale ?? 1);
+#elif IOS
+            Game.UiScale.Current.UpdateSystemFontScale(UIKit.UIFontMetrics.DefaultMetrics.GetScaledValue(1));
+#endif
+#if STORE_SHOTS
+            StoreShotsDriver.Prepare();
 #endif
 
             var builder = MauiApp.CreateBuilder();

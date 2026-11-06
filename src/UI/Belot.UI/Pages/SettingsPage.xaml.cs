@@ -156,7 +156,7 @@
         {
             await PrivacyPolicy.OpenAsync(
                 this.actions,
-                url => Browser.Default.OpenAsync(url, BrowserLaunchMode.SystemPreferred),
+                ExternalBrowser.OpenAsync,
                 () =>
                 {
                     var text = LocalizationManager.Instance;
@@ -168,7 +168,7 @@
         {
             try
             {
-                await this.actions.RunAsync(() => Browser.Default.OpenAsync(RepoUrl, BrowserLaunchMode.SystemPreferred));
+                await this.actions.RunAsync(() => ExternalBrowser.OpenAsync(RepoUrl));
             }
             catch
             {

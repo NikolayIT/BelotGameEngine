@@ -26,6 +26,8 @@
         {
 #if ANDROID
             UiScale.Current.UpdateSystemFontScale(global::Android.App.Application.Context.Resources?.Configuration?.FontScale ?? 1);
+#elif IOS
+            UiScale.Current.UpdateSystemFontScale(UIKit.UIFontMetrics.DefaultMetrics.GetScaledValue(1));
 #endif
             this.InitializeComponent();
 
@@ -41,6 +43,9 @@
 
         public string EastId { get; set; } = "smart";
 
+        // The page itself is going back, not a gesture of the system (see AppShell.OnNavigating).
+        internal bool IsLeaving { get; private set; }
+
         void IGameTableHost.After(TimeSpan delay, Action action) => this.Dispatcher.DispatchDelayed(delay, action);
 
         void IGameTableHost.Vibrate(bool isLong)
@@ -55,11 +60,16 @@
             }
         }
 
-        void IGameTableHost.Leave() => _ = Shell.Current?.GoToAsync("..");
+        void IGameTableHost.Leave()
+        {
+            this.IsLeaving = true;
+            _ = Shell.Current?.GoToAsync("..");
+        }
 
         protected override void OnAppearing()
         {
             base.OnAppearing();
+            this.IsLeaving = false;
             SetKeepScreenOn(true);
             if (this.started)
             {
@@ -175,6 +185,7 @@
         {
             if (this.viewModel == null)
             {
+                this.IsLeaving = true;
                 await Shell.Current.GoToAsync("..");
                 return;
             }
