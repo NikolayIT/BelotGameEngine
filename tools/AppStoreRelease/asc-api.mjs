@@ -59,11 +59,22 @@ export class AscError extends Error {
 
 export async function api(method, apiPath, body) {
   const url = apiPath.startsWith('http') ? apiPath : `https://api.appstoreconnect.apple.com${apiPath}`;
-  const response = await fetch(url, {
+  const send = () => fetch(url, {
     method,
     headers: { Authorization: `Bearer ${token()}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined,
   });
+
+  // A read may be repeated after a dropped connection; a write may have gone through.
+  let response;
+  for (let attempt = 1; !response; attempt++) {
+    try {
+      response = await send();
+    } catch (error) {
+      if (method !== 'GET' || attempt === 4) throw error;
+      await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+    }
+  }
   if (response.status === 204) return null;
   const text = await response.text();
   const json = text ? JSON.parse(text) : null;

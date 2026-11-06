@@ -5,6 +5,9 @@ App Store Connect app **Belot: Bulgarian Card Game** · Apple ID `6831489651` ·
 Studio. The pipeline follows the Gods & Magic one (its `store/APP_STORE.md`), with the differences
 a public repository and a MAUI app need. The Google Play counterpart is `../google-play`.
 
+Version 1.1 (build 5) went to App Review on 6 November 2026, to release to everyone on approval:
+[`releases/1.1.md`](releases/1.1.md).
+
 ## Files
 
 - `<locale>.json` – each locale's `name`, `subtitle`, `keywords`, `promotionalText` and

@@ -725,8 +725,10 @@ signs and uploads, from `master` only and after its reviewer approves the run. *
 public: no Apple key ever enters it** (`tools/AppStoreRelease` reads the team's from outside it,
 the workflow from the secrets of the `app-store` environment). The App Store has no Bulgarian, and
 Bulgaria's storefront reads English (U.K.), so `en-GB` carries the Bulgarian listing and `en-US` the
-English one. On iOS `AppShell.OnNavigating` refuses the swipe from the edge on the table, and links
-open in Safari (`Pages/ExternalBrowser.cs`).
+English one. On iOS `AppShell.OnNavigating` refuses the swipe from the edge on the table, links
+open in Safari (`Pages/ExternalBrowser.cs`) and the felt covers the whole screen
+(`Pages/PageBackground.cs`). Version 1.1 (build 5) went to App Review on 6 November 2026, released
+to everyone on approval; it has only run on a simulator so far: `store/app-store/releases/1.1.md`.
 
 ## NuGet engine release
 
